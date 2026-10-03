@@ -64,6 +64,7 @@ struct TaskEditorView: View {
                 Section("When") {
                     DatePicker("Day", selection: $draft.date, in: dateRange, displayedComponents: .date)
                     Toggle("Use deadline", isOn: $draft.hasDeadline)
+                        .tint(Theme.textSecondary)
                     if draft.hasDeadline {
                         DatePicker("Deadline", selection: $draft.deadlineTime, displayedComponents: .hourAndMinute)
                     }
@@ -74,6 +75,7 @@ struct TaskEditorView: View {
 
                 Section {
                     Toggle("Custom weight", isOn: $usesCustomWeight)
+                        .tint(Theme.textSecondary)
                     if usesCustomWeight {
                         Stepper("Weight: \(draft.weight)", value: $draft.weight, in: UserSettings.weightRange)
                     } else {

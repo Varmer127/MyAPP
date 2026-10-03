@@ -72,7 +72,7 @@ struct WeekView: View {
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("COMMITTED").labelStyle(Theme.textPrimary)
-                    Text("\(plan.committedTasks.count) commitments · \(committedAt.stampText)")
+                    Text("\(plan.committedTasks.count) \(plan.committedTasks.count == 1 ? "commitment" : "commitments") · \(committedAt.stampText)")
                         .font(.system(size: 14))
                         .foregroundStyle(Theme.textSecondary)
                 }

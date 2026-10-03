@@ -43,10 +43,10 @@ struct MetricTile: View {
                 .minimumScaleFactor(0.7)
             Text(label.uppercased())
                 .font(.system(size: 10, weight: .semibold))
-                .tracking(0.8)
+                .tracking(0.4)
                 .foregroundStyle(Theme.textSecondary)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
         }
         .card(padding: 14)
     }
