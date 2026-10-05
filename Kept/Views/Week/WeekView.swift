@@ -8,6 +8,7 @@ struct WeekView: View {
     @Binding var showsNextWeek: Bool
     @State private var editor: EditorRequest?
     @State private var planToCommit: WeeklyPlan?
+    @State private var showsQuickPlan = false
 
     private var weekStart: Date { Date.now.weekStart.addingDays(showsNextWeek ? 7 : 0) }
     private var plan: WeeklyPlan? { plans.first { $0.weekStart == weekStart } }
@@ -31,8 +32,24 @@ struct WeekView: View {
                 VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                     header
                     statusCard
+                    if Date.now < weekStart.addingDays(7) {
+                        Button("RYCHLÉ PLÁNOVÁNÍ") { showsQuickPlan = true }
+                            .buttonStyle(SecondaryButtonStyle())
+                    }
                     if !goals.isEmpty {
                         WeeklyGoalsCard(goals: goals)
+                    }
+                    if !showsNextWeek, plan?.tasks.isEmpty == false {
+                        NavigationLink {
+                            WeeklyReviewView(weekStart: weekStart)
+                        } label: {
+                            HStack {
+                                Text("PŘEHLED TÝDNE").labelStyle(Theme.textPrimary)
+                                Spacer()
+                                Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
+                            }
+                            .card()
+                        }
                     }
                     VStack(spacing: 20) {
                         ForEach(days, id: \.self) { day in
@@ -60,6 +77,7 @@ struct WeekView: View {
         }
         .sheet(item: $editor) { TaskEditorView(task: $0.task, defaultDate: $0.date, suggestion: $0.suggestion) }
         .sheet(item: $planToCommit) { CommitSummaryView(plan: $0) }
+        .sheet(isPresented: $showsQuickPlan) { QuickPlanView(weekStart: weekStart) }
     }
 
     private var header: some View {

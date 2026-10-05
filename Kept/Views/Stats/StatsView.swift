@@ -9,6 +9,7 @@ struct StatsView: View {
     @State private var period: Period = .week
 
     private static let monthDays = 30
+    private static let longTermDays = 90
 
     enum Period: String, CaseIterable, Identifiable {
         case today = "Dnes", week = "Týden", month = "Měsíc"
@@ -52,8 +53,12 @@ struct StatsView: View {
                     }
                     scores
                     counts
-                    excuses
+                    CategorySection(tasks: scoped)
+                    StreaksSection(tasks: tasks)
+                    TrendSection(tasks: tasks)
+                    longTerm
                     weightProgress
+                    ReviewHistorySection(tasks: tasks)
                 }
                 .padding(.horizontal, Theme.screenPadding)
                 .padding(.bottom, 32)
@@ -180,34 +185,25 @@ struct StatsView: View {
         }
     }
 
+    /// Excuses and patterns always look at the last 90 days, whatever period is selected.
     @ViewBuilder
-    private var excuses: some View {
-        let inRange = failures.filter { range.contains($0.taskDate) }
-        let grouped = Dictionary(grouping: inRange, by: \.reason)
-            .map { (reason: $0.key, count: $0.value.count) }
-            .sorted { $0.count > $1.count }
-        let maximum = grouped.first?.count ?? 0
-
-        if !grouped.isEmpty {
+    private var longTerm: some View {
+        let since = Date.now.startOfDay.addingDays(-Self.longTermDays)
+        let recentFailures = failures.filter { $0.taskDate >= since }
+        let insights = PatternDetectionService.insights(
+            tasks: tasks.filter { $0.scheduledDate >= since }, failures: recentFailures,
+            plans: plans.filter { $0.weekEnd > since })
+        if !insights.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: "Tvoje výmluvy")
-                VStack(spacing: 14) {
-                    ForEach(grouped, id: \.reason) { item in
-                        VStack(spacing: 6) {
-                            HStack {
-                                Text(item.reason.title)
-                                    .font(.system(size: 15))
-                                    .foregroundStyle(Theme.textPrimary)
-                                Spacer()
-                                Text("\(item.count)×")
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundStyle(Theme.textPrimary)
-                            }
-                            ThinBar(value: Double(item.count) / Double(maximum), color: Theme.red)
-                        }
-                    }
-                }
-                .card()
+                SectionLabel(text: "Zjištěné vzorce")
+                InsightList(insights: insights)
+            }
+        }
+        let counts = StatisticsService.excuseCounts(recentFailures)
+        if !counts.isEmpty {
+            VStack(spacing: 10) {
+                SectionLabel(text: "Výmluvy za \(Self.longTermDays) dní")
+                ExcuseList(counts: counts)
             }
         }
     }

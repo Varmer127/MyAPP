@@ -5,6 +5,7 @@ struct TodayView: View {
     @Query private var tasks: [TaskItem]
     @Query private var plans: [WeeklyPlan]
     @Query private var settingsList: [UserSettings]
+    @Query private var failures: [FailureRecord]
     /// Start of the day (as a timestamp) on which the Morning Brief was last dismissed.
     @AppStorage("briefDismissedDay") private var briefDismissedDay = 0.0
     /// "<day seed>:<category>,<category>" — suggestions the user declined today.
@@ -264,6 +265,7 @@ struct TodayView: View {
                 TaskCard(
                     task: task,
                     now: now,
+                    warning: PatternDetectionService.warning(for: task, tasks: self.tasks, failures: failures, now: now),
                     onTap: { if task.status == .pending { editor = EditorRequest(task: task) } },
                     onDone: { complete(task) },
                     onFail: { excuse = ExcuseRequest(task: task, kind: task.isMissed(now) ? .missed : .skipped) }

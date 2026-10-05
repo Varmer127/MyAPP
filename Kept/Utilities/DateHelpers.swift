@@ -62,6 +62,8 @@ extension Date {
     var longDayText: String { text(Date.FormatStyle(locale: .app).weekday(.wide).day().month(.wide)).capitalizedFirst }
     /// "Wed 7"
     var shortDayText: String { text(Date.FormatStyle(locale: .app).weekday(.abbreviated).day()) }
+    /// "st"
+    var weekdayShortText: String { text(Date.FormatStyle(locale: .app).weekday(.abbreviated)) }
     /// "Wednesday"
     var weekdayText: String { text(Date.FormatStyle(locale: .app).weekday(.wide)) }
     /// "7 Oct"

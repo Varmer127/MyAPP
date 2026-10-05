@@ -3,6 +3,8 @@ import SwiftUI
 struct TaskCard: View {
     let task: TaskItem
     let now: Date
+    /// Failure-memory line shown when this task keeps being failed.
+    var warning: String?
     var onTap: () -> Void = {}
     var onDone: () -> Void = {}
     var onFail: () -> Void = {}
@@ -38,6 +40,12 @@ struct TaskCard: View {
                 Text(metadata)
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.textSecondary)
+            }
+            if let warning, task.status == .pending {
+                Text(warning)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Theme.red)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             if task.status == .pending {
                 actions
