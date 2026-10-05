@@ -8,6 +8,7 @@ struct SettingsView: View {
     @Query private var settingsList: [UserSettings]
     @State private var authorization: UNAuthorizationStatus = .notDetermined
     @State private var newPreset = ""
+    @AppStorage("introEnabled") private var introEnabled = true
 
     fileprivate static let multiplierRange = 0.2...1.0
     fileprivate static let multiplierStep = 0.05
@@ -27,6 +28,14 @@ struct SettingsView: View {
                     presetsSection(settings)
                     weightsSection(settings)
                 }
+                Section {
+                    Toggle("Úvodní video", isOn: $introEnabled)
+                        .tint(Theme.textSecondary)
+                } footer: {
+                    Text("Přehraje se při spuštění aplikace, ve výchozím stavu bez zvuku. Klepnutím ho přeskočíš.")
+                }
+                .listRowBackground(Theme.card)
+
                 Section("O aplikaci") {
                     LabeledContent("Verze", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—")
                     LabeledContent("Data", value: "Jen v tomto zařízení")

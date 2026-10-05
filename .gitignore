@@ -4,3 +4,5 @@ DerivedData/
 build/
 *.xcuserstate
 .claude/settings.local.json
+# Third-party clip used as the personal intro video; kept out of the repository
+Kept/Intro.mp4

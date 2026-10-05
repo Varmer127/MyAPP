@@ -15,6 +15,8 @@ struct RootView: View {
     @State private var tab: AppTab = .today
     @State private var weekShowsNext = false
     @State private var showsRealityCheck = false
+    /// Called once the data store is set up and the first screen can be used.
+    var onReady: () -> Void = {}
 
     /// Changes whenever something that scheduled notifications depend on changes.
     private var notificationSignature: Int {
@@ -56,6 +58,7 @@ struct RootView: View {
         .fullScreenCover(isPresented: $showsRealityCheck) { RealityCheckView() }
         .task {
             _ = UserSettings.current(in: context)
+            onReady()
             await NotificationManager.requestAuthorization()
             await NotificationManager.reschedule(context: context)
         }
