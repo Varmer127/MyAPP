@@ -125,4 +125,48 @@ enum PatternDetectionService {
         }
         return text
     }
+
+    // MARK: Planning assistant
+
+    private static let historyWeeks = 4
+    private static let weekdayHistoryWeeks = 8
+    private static let oversizedPlanFactor = 1.3
+
+    /// Reality check before committing: is the plan bigger than what recent weeks say is doable,
+    /// and does it put important work on a day that keeps going badly? Advice only — nothing is blocked.
+    static func planningAdvice(planned: [TaskItem], history: [TaskItem], weekStart: Date, now: Date = .now) -> [String] {
+        var advice: [String] = []
+
+        let completedPerWeek = (1...historyWeeks).compactMap { offset -> Int? in
+            let week = weekStart.addingDays(-7 * offset)
+            let tasks = history.filter { $0.scheduledDate.weekStart == week && $0.isClosed(now) && !$0.isRecovery }
+            return tasks.isEmpty ? nil : tasks.filter(\.isDone).count
+        }
+        if completedPerWeek.count >= 2 {
+            let average = Double(completedPerWeek.reduce(0, +)) / Double(completedPerWeek.count)
+            if average > 0, Double(planned.count) > average * oversizedPlanFactor {
+                let extra = Int(((Double(planned.count) / average - 1) * 100).rounded())
+                let averageText = average.formatted(.number.precision(.fractionLength(0...1)).locale(.app))
+                advice.append("Plánuješ \(planned.count) úkolů, v posledních týdnech jsi jich průměrně splnil \(averageText). To je o \(extra) % víc. Je to reálné?")
+            }
+        }
+
+        let since = weekStart.addingDays(-7 * weekdayHistoryWeeks)
+        let recent = history.filter { $0.scheduledDate >= since && $0.scheduledDate < weekStart && $0.isClosed(now) && !$0.isRecovery }
+        if let overall = ScoreEngine.productivity(recent, now: now) {
+            let byWeekday = Dictionary(grouping: recent) { Calendar.app.component(.weekday, from: $0.scheduledDate) }
+            for (weekday, group) in byWeekday.sorted(by: { $0.key < $1.key }) {
+                guard group.count >= minimumSample, let score = ScoreEngine.productivity(group, now: now),
+                      overall - score >= weakDayGap else { continue }
+                let important = planned.filter {
+                    Calendar.app.component(.weekday, from: $0.scheduledDate) == weekday
+                        && $0.priority.rank >= TaskPriority.high.rank
+                }
+                if let day = important.first?.scheduledDate {
+                    advice.append("\(day.weekdayText.capitalizedFirst) ti dlouhodobě nejde (\(score.percentText)). Důležité úkoly na ten den: \(important.count). Zvaž jiný den.")
+                }
+            }
+        }
+        return advice
+    }
 }

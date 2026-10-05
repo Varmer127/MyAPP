@@ -9,6 +9,7 @@ struct WeekView: View {
     @State private var editor: EditorRequest?
     @State private var planToCommit: WeeklyPlan?
     @State private var showsQuickPlan = false
+    @State private var detailTask: TaskItem?
 
     private var weekStart: Date { Date.now.weekStart.addingDays(showsNextWeek ? 7 : 0) }
     private var plan: WeeklyPlan? { plans.first { $0.weekStart == weekStart } }
@@ -23,7 +24,7 @@ struct WeekView: View {
 
     private var canCommit: Bool {
         guard let plan else { return false }
-        return !plan.isCommitted && !plan.activeTasks.isEmpty && Date.now < plan.weekEnd
+        return !plan.isCommitted && !plan.committableTasks.isEmpty && Date.now < plan.weekEnd
     }
 
     var body: some View {
@@ -77,6 +78,7 @@ struct WeekView: View {
         }
         .sheet(item: $editor) { TaskEditorView(task: $0.task, defaultDate: $0.date, suggestion: $0.suggestion) }
         .sheet(item: $planToCommit) { CommitSummaryView(plan: $0) }
+        .sheet(item: $detailTask) { TaskDetailView(task: $0) }
         .sheet(isPresented: $showsQuickPlan) { QuickPlanView(weekStart: weekStart) }
     }
 
@@ -160,7 +162,11 @@ struct WeekView: View {
                         WeekTaskRow(task: task)
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                if task.status == .pending { editor = EditorRequest(task: task) }
+                                if task.status == .pending, !task.isMissed(.now) {
+                                    editor = EditorRequest(task: task)
+                                } else {
+                                    detailTask = task
+                                }
                             }
                     }
                 }

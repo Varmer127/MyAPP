@@ -43,6 +43,7 @@ enum NotificationManager {
     private static let failureWindowDays = 30
     private static let repeatedFailureCount = 3
     private static let weakPromisesKept = 0.6
+    private static let focusEndID = "focus.end"
 
     private struct Planned {
         let id: String
@@ -67,7 +68,9 @@ enum NotificationManager {
 
     static func reschedule(context: ModelContext, now: Date = .now) async {
         let planned = plan(context: context, now: now)
-        center.removeAllPendingNotificationRequests()
+        // Everything is replaced except the running focus timer's end notification.
+        let stale = await center.pendingNotificationRequests().map(\.identifier).filter { $0 != focusEndID }
+        center.removePendingNotificationRequests(withIdentifiers: stale)
         for item in planned {
             let content = UNMutableNotificationContent()
             content.title = item.title
@@ -80,6 +83,20 @@ enum NotificationManager {
         }
         let summary = planned.map { "\($0.date.stampText) [\($0.id.prefix(12))] \($0.body)" }.joined(separator: "\n")
         logger.info("Scheduled \(planned.count) notifications:\n\(summary, privacy: .public)")
+    }
+
+    static func scheduleFocusEnd(title: String, in seconds: TimeInterval) async {
+        let content = UNMutableNotificationContent()
+        content.title = title.uppercased()
+        content.body = "Naplánovaný čas vypršel. Dokonči úkol, nebo pokračuj."
+        content.sound = .default
+        content.userInfo = [NotificationRouter.routeKey: AppRoute.today.rawValue]
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(seconds, 1), repeats: false)
+        try? await center.add(UNNotificationRequest(identifier: focusEndID, content: content, trigger: trigger))
+    }
+
+    static func cancelFocusEnd() {
+        center.removePendingNotificationRequests(withIdentifiers: [focusEndID])
     }
 
     /// Fires one sample of the chosen tone a few seconds from now.

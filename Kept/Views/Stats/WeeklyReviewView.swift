@@ -8,6 +8,8 @@ struct WeeklyReviewView: View {
     @Query private var plans: [WeeklyPlan]
     @Query private var failures: [FailureRecord]
     let weekStart: Date
+    /// Drives the bars growing in when the report opens.
+    @State private var chartProgress = 0.0
 
     private static let daysInWeek = 7
     private static let truthGood = 0.8
@@ -99,7 +101,7 @@ struct WeeklyReviewView: View {
             SectionLabel(text: "Produktivita po dnech")
             Chart(dayScores) { score in
                 BarMark(x: .value("Den", score.day.weekdayShortText.uppercased()),
-                        y: .value("Produktivita", (score.productivity ?? 0) * 100))
+                        y: .value("Produktivita", (score.productivity ?? 0) * 100 * chartProgress))
                     .foregroundStyle(Theme.performanceColor(score.productivity))
                     .cornerRadius(3)
                     .annotation(position: .top) {
@@ -117,6 +119,9 @@ struct WeeklyReviewView: View {
             }
             .frame(height: 180)
             .card()
+            .onAppear {
+                withAnimation(.easeOut(duration: 0.7)) { chartProgress = 1 }
+            }
         }
     }
 

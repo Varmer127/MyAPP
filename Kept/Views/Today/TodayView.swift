@@ -13,11 +13,19 @@ struct TodayView: View {
     @State private var showsRealityCheck = false
     @State private var editor: EditorRequest?
     @State private var workoutTask: TaskItem?
+    @State private var proofTask: TaskItem?
+    @State private var focusTask: TaskItem?
+    @State private var detailTask: TaskItem?
+    /// Task to complete once the focus screen has finished closing.
+    @State private var completeAfterFocus: TaskItem?
     @State private var excuse: ExcuseRequest?
     let openWeek: () -> Void
 
     private static let refreshInterval: TimeInterval = 60
     private static let briefVisibleUntilHour = 12
+    private static let comebackThreshold = 0.6
+    private static let slippingAfterMinutes = 18 * 60
+    private static let slippingCriticalCount = 2
 
     var body: some View {
         NavigationStack {
@@ -36,16 +44,32 @@ struct TodayView: View {
             }
             .toolbarBackground(Theme.background, for: .navigationBar)
         }
-        .sheet(item: $editor) { TaskEditorView(task: $0.task, defaultDate: $0.date, suggestion: $0.suggestion) }
+        .sheet(item: $editor) {
+            TaskEditorView(task: $0.task, defaultDate: $0.date, suggestion: $0.suggestion, isRecovery: $0.isRecovery)
+        }
         .fullScreenCover(item: $excuse) { NoExcusesView(task: $0.task, kind: $0.kind) }
         .fullScreenCover(isPresented: $showsRealityCheck) { RealityCheckView() }
         .sheet(item: $workoutTask) { WorkoutLogView(task: $0) }
+        .sheet(item: $proofTask) { ProofView(task: $0) }
+        .sheet(item: $detailTask) { TaskDetailView(task: $0) }
+        .fullScreenCover(item: $focusTask, onDismiss: {
+            if let task = completeAfterFocus {
+                completeAfterFocus = nil
+                complete(task)
+            }
+        }) { task in
+            FocusView(task: task) { completeAfterFocus = task }
+        }
     }
 
-    /// Gym tasks ask what was trained before they count as done.
+    /// Gym tasks ask what was trained and proof tasks ask for proof before they count as done.
     private func complete(_ task: TaskItem) {
+        // Finishing a task by hand also ends a focus session left running for it.
+        task.activeFocusSession?.finish()
         if task.category == .gym {
             workoutTask = task
+        } else if task.requiresProof {
+            proofTask = task
         } else {
             withAnimation { task.markDone() }
         }
@@ -66,15 +90,20 @@ struct TodayView: View {
 
     private func content(now: Date) -> some View {
         let day = TodaySnapshot(tasks: tasks, plans: plans, now: now)
+        let slipping = isSlipping(day, now: now)
         return ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                 header(now: now)
+                if slipping {
+                    slippingBanner(day)
+                }
                 if showsBrief(day, now: now) {
                     MorningBriefCard(tasks: tasks, todayTasks: day.visible, promisesKeptThisWeek: day.promisesKept,
                                      streak: day.streak, now: now) {
                         withAnimation { briefDismissedDay = now.startOfDay.timeIntervalSince1970 }
                     }
                 }
+                comebackCard(day, now: now)
                 hero(day)
                 metrics(day)
                 if showsRealityCheckCard(day, now: now) {
@@ -103,6 +132,39 @@ struct TodayView: View {
             .padding(.horizontal, Theme.screenPadding)
             .padding(.bottom, 32)
         }
+        .background(alignment: .top) {
+            // Savage tone only: a quiet dark-red wash at the top while the day is being lost.
+            LinearGradient(colors: [Theme.red.opacity(slipping ? 0.22 : 0), .clear], startPoint: .top, endPoint: .bottom)
+                .frame(height: 340)
+                .ignoresSafeArea()
+                .animation(.easeInOut(duration: 0.6), value: slipping)
+        }
+    }
+
+    /// The failure state exists only in the savage tone and only when the day is really going wrong:
+    /// several critical tasks overdue or all of them lost, or under 50 % by the evening.
+    private func isSlipping(_ day: TodaySnapshot, now: Date) -> Bool {
+        guard settingsList.first?.tone == .savage else { return false }
+        let critical = day.scored.filter { $0.scoringPriority == .critical && !$0.isRemoved }
+        let overdue = critical.filter { $0.isOverdue(now) }.count
+        let allCriticalGone = critical.count >= Self.slippingCriticalCount
+            && critical.allSatisfy { $0.isLost(now) || $0.isOverdue(now) }
+        let weakEvening = now.minutesIntoDay >= Self.slippingAfterMinutes
+            && !day.scored.isEmpty && (day.productivity ?? 0) < Theme.poorThreshold
+        return overdue >= Self.slippingCriticalCount || allCriticalGone || weakEvening
+    }
+
+    private func slippingBanner(_ day: TodaySnapshot) -> some View {
+        let critical = day.scored.filter { $0.scoringPriority == .critical && !$0.isRemoved }
+        return VStack(alignment: .leading, spacing: 6) {
+            Text("DNEŠEK TI UTÍKÁ")
+                .font(.system(size: 26, weight: .heavy))
+                .foregroundStyle(Theme.red)
+            if !critical.isEmpty {
+                Text("KRITICKÉ ÚKOLY \(critical.filter(\.isDone).count) / \(critical.count)")
+                    .labelStyle(Theme.red)
+            }
+        }
     }
 
     private func header(now: Date) -> some View {
@@ -120,6 +182,7 @@ struct TodayView: View {
                 .font(.system(size: 72, weight: .heavy))
                 .foregroundStyle(heroColor(day.accountability?.score))
                 .contentTransition(.numericText())
+                .animation(.easeOut(duration: 0.6), value: day.accountability?.score)
             Text("SPOLEHLIVOST").labelStyle()
             Text(day.accountability?.subtitle ?? "Zatím žádná historie. Zavaž se k týdnu a dodrž slovo.")
                 .font(.system(size: 14))
@@ -226,6 +289,47 @@ struct TodayView: View {
         }
     }
 
+    /// After a day under 60 %, today is framed as a comeback: orange until today is back above 80 %.
+    @ViewBuilder
+    private func comebackCard(_ day: TodaySnapshot, now: Date) -> some View {
+        let yesterdayTasks = tasks.filter { $0.scheduledDate.isSameDay(as: now.startOfDay.addingDays(-1)) }
+        if let yesterday = ScoreEngine.productivity(yesterdayTasks, now: now), yesterday < Self.comebackThreshold {
+            let today = day.productivity ?? 0
+            let succeeded = today >= ScoreEngine.Config.streakThreshold
+            let color = succeeded ? Theme.green : Theme.orange
+            VStack(alignment: .leading, spacing: 14) {
+                Text(succeeded ? "COMEBACK SE POVEDL" : "COMEBACK DAY").labelStyle(color)
+                HStack(spacing: 28) {
+                    comebackFigure("Včera", yesterday.percentText, Theme.textSecondary)
+                    comebackFigure("Dnes", today.percentText, color)
+                }
+                Text(succeeded ? "Včerejšek jsi nezměnil. Dnešek ano." : "Včerejšek nezměníš. Dnešek ano.")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                if !succeeded {
+                    Button("VYTVOŘIT RECOVERY ÚKOL") {
+                        editor = EditorRequest(date: now, isRecovery: true)
+                    }
+                    .buttonStyle(PrimaryButtonStyle(color: Theme.orange))
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.card)
+            .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
+            .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(color.opacity(0.5), lineWidth: 1))
+        }
+    }
+
+    private func comebackFigure(_ label: String, _ value: String, _ color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label.uppercased()).labelStyle()
+            Text(value)
+                .font(.system(size: 34, weight: .heavy))
+                .foregroundStyle(color)
+        }
+    }
+
     private var realityCheckCard: some View {
         Button {
             showsRealityCheck = true
@@ -266,9 +370,16 @@ struct TodayView: View {
                     task: task,
                     now: now,
                     warning: PatternDetectionService.warning(for: task, tasks: self.tasks, failures: failures, now: now),
-                    onTap: { if task.status == .pending { editor = EditorRequest(task: task) } },
+                    onTap: {
+                        if task.status == .pending, !task.isMissed(now) {
+                            editor = EditorRequest(task: task)
+                        } else {
+                            detailTask = task
+                        }
+                    },
                     onDone: { complete(task) },
-                    onFail: { excuse = ExcuseRequest(task: task, kind: task.isMissed(now) ? .missed : .skipped) }
+                    onFail: { excuse = ExcuseRequest(task: task, kind: task.isMissed(now) ? .missed : .skipped) },
+                    onFocus: { focusTask = task }
                 )
                 .contextMenu {
                     if task.isDone {

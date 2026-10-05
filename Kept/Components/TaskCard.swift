@@ -8,6 +8,7 @@ struct TaskCard: View {
     var onTap: () -> Void = {}
     var onDone: () -> Void = {}
     var onFail: () -> Void = {}
+    var onFocus: () -> Void = {}
 
     private static let deadlineWarningWindow: TimeInterval = 3600
 
@@ -18,10 +19,12 @@ struct TaskCard: View {
         return now <= deadline && deadline.timeIntervalSince(now) <= Self.deadlineWarningWindow
     }
 
+    private var isFocusing: Bool { task.status == .pending && task.activeFocusSession != nil }
+
     private var accent: Color {
         if task.isDone { return Theme.green }
         if isOverdue || task.status == .failed || task.status == .skipped { return Theme.red }
-        if isApproaching { return Theme.orange }
+        if isApproaching || isFocusing { return Theme.orange }
         return .clear
     }
 
@@ -31,7 +34,10 @@ struct TaskCard: View {
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 8) {
                     if task.isDone {
-                        Image(systemName: "checkmark.circle.fill").foregroundStyle(Theme.green)
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(Theme.green)
+                            .symbolEffect(.bounce, options: .nonRepeating, value: task.isDone)
+                            .transition(.scale.combined(with: .opacity))
                     }
                     Text(task.title)
                         .font(.system(size: 18, weight: .semibold))
@@ -94,6 +100,9 @@ struct TaskCard: View {
         }
         if task.moveCount > 0 { items.append(("Přesunuto", Theme.textSecondary)) }
         if task.isAddedAfterCommitment { items.append(("Přidáno později", Theme.textSecondary)) }
+        if task.isRecovery { items.append(("Recovery", Theme.orange)) }
+        if isFocusing { items.append(("Focus běží", Theme.orange)) }
+        if task.requiresProof, task.status == .pending { items.append(("Důkaz", Theme.textSecondary)) }
         return items
     }
 
@@ -114,11 +123,24 @@ struct TaskCard: View {
     }
 
     private var actions: some View {
-        HStack(spacing: 10) {
-            Button(isMissed ? "SPLNĚNO POZDĚ" : "HOTOVO", action: onDone)
-                .buttonStyle(PrimaryButtonStyle())
-            Button(isMissed ? "BEZ VÝMLUV" : "PŘESKOČIT", action: onFail)
-                .buttonStyle(SecondaryButtonStyle(textColor: isMissed ? Theme.red : Theme.textPrimary))
+        VStack(spacing: 10) {
+            // With a focus timer the main action is to start working; DONE moves to the second row.
+            let offersFocus = (task.usesFocus || isFocusing) && !isMissed
+            if offersFocus {
+                Button(isFocusing ? "POKRAČOVAT VE FOCUSU" : "SPUSTIT FOCUS", action: onFocus)
+                    .buttonStyle(PrimaryButtonStyle())
+            }
+            HStack(spacing: 10) {
+                if offersFocus {
+                    Button("HOTOVO", action: onDone)
+                        .buttonStyle(SecondaryButtonStyle())
+                } else {
+                    Button(isMissed ? "SPLNĚNO POZDĚ" : "HOTOVO", action: onDone)
+                        .buttonStyle(PrimaryButtonStyle())
+                }
+                Button(isMissed ? "BEZ VÝMLUV" : "PŘESKOČIT", action: onFail)
+                    .buttonStyle(SecondaryButtonStyle(textColor: isMissed ? Theme.red : Theme.textPrimary))
+            }
         }
     }
 }

@@ -42,9 +42,15 @@ final class TaskItem {
     /// Body weight in kg logged with the workout, if any.
     var bodyWeight: Double?
 
+    /// Proof of completion, for tasks that require it.
+    var proofNote: String = ""
+    @Attribute(.externalStorage) var proofPhoto: Data?
+
     var plan: WeeklyPlan?
     @Relationship(deleteRule: .cascade, inverse: \FailureRecord.task)
     var failures: [FailureRecord] = []
+    @Relationship(deleteRule: .cascade, inverse: \FocusSession.task)
+    var focusSessions: [FocusSession] = []
 
     init(title: String, category: TaskCategory, priority: TaskPriority, weight: Int, scheduledDate: Date) {
         self.title = title
@@ -91,7 +97,10 @@ final class TaskItem {
         return original
     }
 
-    var isAddedAfterCommitment: Bool { !isCommitted && plan?.isCommitted == true }
+    var isAddedAfterCommitment: Bool { !isCommitted && !isRecovery && plan?.isCommitted == true }
+
+    /// The focus session that was started and not yet ended, if any.
+    var activeFocusSession: FocusSession? { focusSessions.first { !$0.isFinished } }
 
     var dueDate: Date { deadline ?? scheduledDate.endOfDay }
 

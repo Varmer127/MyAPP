@@ -6,6 +6,7 @@ struct StatsView: View {
     @Query private var tasks: [TaskItem]
     @Query(sort: \WeeklyPlan.weekStart) private var plans: [WeeklyPlan]
     @Query private var failures: [FailureRecord]
+    @Query private var sessions: [FocusSession]
     @State private var period: Period = .week
 
     private static let monthDays = 30
@@ -56,7 +57,9 @@ struct StatsView: View {
                     CategorySection(tasks: scoped)
                     StreaksSection(tasks: tasks)
                     TrendSection(tasks: tasks)
+                    EffortSection(tasks: tasks, sessions: sessions)
                     longTerm
+                    RecordsSection(tasks: tasks, sessions: sessions)
                     weightProgress
                     ReviewHistorySection(tasks: tasks)
                 }

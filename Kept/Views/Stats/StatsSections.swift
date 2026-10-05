@@ -147,3 +147,94 @@ struct ReviewHistorySection: View {
         }
     }
 }
+
+/// Planned task time against time actually spent in the focus timer.
+struct EffortSection: View {
+    let tasks: [TaskItem]
+    let sessions: [FocusSession]
+
+    private static let weeks = 6
+
+    private static func hours(_ minutes: Int) -> String {
+        "\(minutes / 60) h \(String(format: "%02d", minutes % 60)) min"
+    }
+
+    var body: some View {
+        let effort = StatisticsService.effort(tasks: tasks, sessions: sessions, weeks: Self.weeks)
+        if let current = effort.last, effort.contains(where: { $0.plannedMinutes > 0 }) {
+            let ratio = current.plannedMinutes > 0 ? Double(current.focusedMinutes) / Double(current.plannedMinutes) : nil
+            VStack(spacing: 10) {
+                SectionLabel(text: "Plán vs. skutečnost")
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack(spacing: 10) {
+                        MetricTile(value: Self.hours(current.plannedMinutes), label: "Plán tento týden")
+                        MetricTile(value: Self.hours(current.focusedMinutes), label: "Soustředění")
+                    }
+                    PerformanceBar(label: "Odpracováno z plánu", value: ratio.map { min($0, 1) })
+                    Chart(effort) { week in
+                        BarMark(x: .value("Týden", "T\(week.weekStart.weekNumber)"),
+                                y: .value("Hodiny", Double(week.plannedMinutes) / 60))
+                            .foregroundStyle(by: .value("Typ", "Plán"))
+                            .position(by: .value("Typ", "Plán"))
+                        BarMark(x: .value("Týden", "T\(week.weekStart.weekNumber)"),
+                                y: .value("Hodiny", Double(week.focusedMinutes) / 60))
+                            .foregroundStyle(by: .value("Typ", "Soustředění"))
+                            .position(by: .value("Typ", "Soustředění"))
+                    }
+                    .chartForegroundStyleScale(["Plán": Theme.textTertiary, "Soustředění": Theme.textPrimary])
+                    .chartXAxis { AxisMarks { AxisValueLabel().foregroundStyle(Theme.textSecondary) } }
+                    .chartYAxis {
+                        AxisMarks(values: .automatic(desiredCount: 3)) {
+                            AxisGridLine().foregroundStyle(Theme.border)
+                            AxisValueLabel().foregroundStyle(Theme.textSecondary)
+                        }
+                    }
+                    .chartLegend(position: .bottom, alignment: .leading)
+                    .frame(height: 170)
+                    Text("Počítá se jen čas odměřený focus timerem.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Theme.textTertiary)
+                }
+                .card()
+            }
+        }
+    }
+}
+
+struct RecordsSection: View {
+    let tasks: [TaskItem]
+    let sessions: [FocusSession]
+
+    var body: some View {
+        let records = StatisticsService.records(tasks: tasks, sessions: sessions)
+        if !records.isEmpty {
+            VStack(spacing: 10) {
+                SectionLabel(text: "Osobní rekordy")
+                VStack(spacing: 0) {
+                    ForEach(Array(records.enumerated()), id: \.element.id) { index, record in
+                        if index > 0 {
+                            Divider().overlay(Theme.border)
+                        }
+                        HStack {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(record.label)
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(Theme.textPrimary)
+                                Text(record.detail)
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Theme.textSecondary)
+                            }
+                            Spacer()
+                            Text(record.value)
+                                .font(.system(size: 17, weight: .bold))
+                                .foregroundStyle(Theme.textPrimary)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 12)
+                    }
+                }
+                .card(padding: 0)
+            }
+        }
+    }
+}

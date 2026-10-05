@@ -95,6 +95,8 @@ struct EditorRequest: Identifiable {
     var date: Date = .now
     /// Category to prefill a new task from (used by suggestions).
     var suggestion: TaskCategory?
+    /// Creates the task as a recovery task (extra work after a bad day).
+    var isRecovery = false
 }
 
 struct ExcuseRequest: Identifiable {

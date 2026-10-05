@@ -12,6 +12,7 @@ struct WorkoutLogView: View {
     @State private var custom = ""
     @State private var includesAbs = false
     @State private var weightText = ""
+    @State private var proof = ProofDraft()
 
     private static let plausibleWeight = 30.0...300.0
 
@@ -74,6 +75,9 @@ struct WorkoutLogView: View {
                                 .foregroundStyle(Theme.orange)
                         }
                     }
+                    if task.requiresProof {
+                        ProofInput(draft: $proof)
+                    }
                 }
                 .padding(Theme.screenPadding)
                 .padding(.top, 16)
@@ -82,7 +86,7 @@ struct WorkoutLogView: View {
             VStack(spacing: 10) {
                 Button("ULOŽIT A SPLNIT", action: save)
                     .buttonStyle(PrimaryButtonStyle())
-                    .disabled(workout == nil || weightIsInvalid)
+                    .disabled(workout == nil || weightIsInvalid || (task.requiresProof && !proof.isValid))
                 Button("ZRUŠIT") { dismiss() }
                     .buttonStyle(SecondaryButtonStyle())
             }
@@ -124,6 +128,9 @@ struct WorkoutLogView: View {
         task.workoutType = workout
         task.workoutAbs = includesAbs
         task.bodyWeight = weight
+        if task.requiresProof {
+            proof.apply(to: task)
+        }
         task.markDone()
         dismiss()
     }

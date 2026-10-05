@@ -13,6 +13,9 @@ struct TaskDraft {
     var weight = 2
     var notes = ""
     var why = ""
+    var requiresProof = false
+    var usesFocus = false
+    var isRecovery = false
 
     init(date: Date) {
         self.date = date.startOfDay
@@ -30,6 +33,9 @@ struct TaskDraft {
         weight = task.weight
         notes = task.notes
         why = task.why
+        requiresProof = task.requiresProof
+        usesFocus = task.usesFocus
+        isRecovery = task.isRecovery
     }
 
     var trimmedTitle: String { title.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -51,7 +57,7 @@ enum PlanService {
 
     /// Freezes the current plan as the original commitment.
     static func commit(_ plan: WeeklyPlan, at now: Date = .now) {
-        let tasks = plan.activeTasks
+        let tasks = plan.committableTasks
         for task in tasks {
             task.isCommitted = true
             task.originalDate = task.scheduledDate
@@ -82,8 +88,11 @@ enum PlanService {
         } else {
             task = TaskItem(title: draft.trimmedTitle, category: draft.category, priority: draft.priority,
                             weight: draft.weight, scheduledDate: day)
+            task.isRecovery = draft.isRecovery
             context.insert(task)
         }
+        task.requiresProof = draft.requiresProof
+        task.usesFocus = draft.usesFocus
         task.deadline = deadline
         task.plannedMinutes = draft.plannedMinutes
         task.notes = draft.notes
@@ -91,7 +100,7 @@ enum PlanService {
 
         if task.plan !== plan {
             task.plan = plan
-            if plan.isCommitted, !task.isCommitted {
+            if plan.isCommitted, !task.isCommitted, !task.isRecovery {
                 log(.addedLater, task: task, detail: day.shortDayText, in: plan)
             }
         }

@@ -19,6 +19,7 @@ struct KeptApp: App {
             WeeklyPlan.self,
             CommitmentEdit.self,
             FailureRecord.self,
+            FocusSession.self,
             UserSettings.self,
         ])
     }

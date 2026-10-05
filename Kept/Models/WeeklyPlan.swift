@@ -24,6 +24,8 @@ final class WeeklyPlan {
     var lastDay: Date { weekStart.addingDays(6) }
 
     var activeTasks: [TaskItem] { tasks.filter { !$0.isRemoved } }
+    /// Recovery tasks are extra work on top of the plan, never part of the promise.
+    var committableTasks: [TaskItem] { activeTasks.filter { !$0.isRecovery } }
     var committedTasks: [TaskItem] { tasks.filter(\.isCommitted) }
 
     var originalSnapshot: [TaskSnapshot] {

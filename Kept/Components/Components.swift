@@ -39,6 +39,7 @@ struct MetricTile: View {
                 .font(.system(size: 26, weight: .bold))
                 .foregroundStyle(color)
                 .contentTransition(.numericText())
+                .animation(.easeOut(duration: 0.5), value: value)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             Text(label.uppercased())

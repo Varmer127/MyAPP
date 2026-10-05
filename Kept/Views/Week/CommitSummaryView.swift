@@ -4,6 +4,7 @@ import SwiftData
 struct CommitSummaryView: View {
     @Environment(\.dismiss) private var dismiss
     @Query private var settingsList: [UserSettings]
+    @Query private var allTasks: [TaskItem]
     let plan: WeeklyPlan
 
     /// Weekly targets the plan does not cover.
@@ -16,7 +17,7 @@ struct CommitSummaryView: View {
         }
     }
 
-    private var tasks: [TaskItem] { plan.activeTasks }
+    private var tasks: [TaskItem] { plan.committableTasks }
 
     private var categoryCounts: [(category: TaskCategory, count: Int)] {
         TaskCategory.allCases.compactMap { category in
@@ -72,6 +73,19 @@ struct CommitSummaryView: View {
                                 Text("\(item.category.title): v plánu \(item.planned), cíl \(item.target)")
                                     .font(.system(size: 14))
                                     .foregroundStyle(Theme.textPrimary)
+                            }
+                        }
+                    }
+                    let advice = PatternDetectionService.planningAdvice(planned: tasks, history: allTasks,
+                                                                        weekStart: plan.weekStart)
+                    if !advice.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("NEŽ SE ZAVÁŽEŠ").labelStyle(Theme.orange)
+                            ForEach(advice, id: \.self) { line in
+                                Text(line)
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(Theme.textPrimary)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
                         }
                     }

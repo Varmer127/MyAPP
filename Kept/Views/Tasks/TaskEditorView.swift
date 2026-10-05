@@ -16,13 +16,16 @@ struct TaskEditorView: View {
     private static let minimumDuration = 15
     private static let maximumHours = 16
 
-    init(task: TaskItem?, defaultDate: Date, suggestion: TaskCategory? = nil) {
+    init(task: TaskItem?, defaultDate: Date, suggestion: TaskCategory? = nil, isRecovery: Bool = false) {
         self.task = task
         var draft = task.map(TaskDraft.init(task:)) ?? TaskDraft(date: defaultDate)
         if task == nil, let suggestion {
             draft.title = suggestion.suggestionTitle
             draft.category = suggestion
             draft.plannedMinutes = suggestion.suggestionMinutes
+        }
+        if task == nil {
+            draft.isRecovery = isRecovery
         }
         _draft = State(initialValue: draft)
     }
@@ -126,6 +129,22 @@ struct TaskEditorView: View {
                     Text("Body")
                 } footer: {
                     Text("Váha určuje, jak moc úkol hýbe produktivitou. Ve výchozím stavu vychází z kategorie a priority.")
+                }
+                .listRowBackground(Theme.card)
+
+                Section {
+                    Toggle("Focus timer", isOn: $draft.usesFocus)
+                        .tint(Theme.textSecondary)
+                    Toggle("Vyžadovat důkaz", isOn: $draft.requiresProof)
+                        .tint(Theme.textSecondary)
+                    if task == nil {
+                        Toggle("Recovery úkol", isOn: $draft.isRecovery)
+                            .tint(Theme.textSecondary)
+                    }
+                } header: {
+                    Text("Režim")
+                } footer: {
+                    Text("Důkaz = fotka nebo poznámka před splněním. Recovery úkol je práce navíc po špatném dni: přidá bonus, ale původní selhání nesmaže.")
                 }
                 .listRowBackground(Theme.card)
 
