@@ -81,7 +81,7 @@ struct CategorySection: View {
                     ForEach(rates) { item in
                         VStack(spacing: 6) {
                             HStack {
-                                Text(item.category.title)
+                                Label(item.category.title, systemImage: item.category.symbol)
                                     .font(.system(size: 15))
                                     .foregroundStyle(Theme.textPrimary)
                                 Text("\(item.count)×")

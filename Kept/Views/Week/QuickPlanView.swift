@@ -15,6 +15,7 @@ struct QuickPlanView: View {
 
     private static let durationOptions = [15, 30, 45, 60, 90, 120, 180, 240, 300, 360]
     private static let daysInWeek = 7
+    private static let categoryChipHeight: CGFloat = 48
 
     private var days: [Date] { (0..<Self.daysInWeek).map { weekStart.addingDays($0) } }
     private var trimmedTitle: String { title.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -33,7 +34,7 @@ struct QuickPlanView: View {
                     group("Co") {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 8)], spacing: 8) {
                             ForEach(TaskCategory.allCases) { option in
-                                chip(option.title, isSelected: category == option) { select(option) }
+                                chip(option.title, symbol: option.symbol, isSelected: category == option) { select(option) }
                             }
                         }
                         TextField("Název", text: $title)
@@ -95,14 +96,19 @@ struct QuickPlanView: View {
         }
     }
 
-    private func chip(_ text: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+    private func chip(_ text: String, symbol: String? = nil, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(text)
+            VStack(spacing: 5) {
+                if let symbol {
+                    Image(systemName: symbol).font(.system(size: 17))
+                }
+                Text(text)
+            }
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(isSelected ? .black : Theme.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: .infinity, minHeight: symbol == nil ? nil : Self.categoryChipHeight)
                 .padding(.vertical, 11)
                 .padding(.horizontal, 6)
                 .background(isSelected ? Color.white : Theme.card)

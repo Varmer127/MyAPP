@@ -59,7 +59,7 @@ struct CommitSummaryView: View {
                                     .font(.system(size: 22, weight: .bold))
                                     .foregroundStyle(Theme.textPrimary)
                                     .frame(width: 48, alignment: .leading)
-                                Text(item.category.title)
+                                Label(item.category.title, systemImage: item.category.symbol)
                                     .font(.system(size: 18))
                                     .foregroundStyle(Theme.textPrimary)
                             }

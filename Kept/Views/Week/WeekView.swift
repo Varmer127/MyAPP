@@ -204,9 +204,12 @@ private struct WeekTaskRow: View {
                 Text(task.title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(task.status == .pending ? Theme.textPrimary : Theme.textSecondary)
-                Text(subtitle)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Theme.textSecondary)
+                HStack(spacing: 5) {
+                    Image(systemName: task.category.symbol)
+                    Text(subtitle)
+                }
+                .font(.system(size: 12))
+                .foregroundStyle(Theme.textSecondary)
             }
             Spacer()
             if task.priority.rank >= TaskPriority.high.rank {

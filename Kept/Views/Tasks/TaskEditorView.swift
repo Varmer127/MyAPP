@@ -81,7 +81,7 @@ struct TaskEditorView: View {
                 Section("Úkol") {
                     TextField("Název", text: $draft.title)
                     Picker("Kategorie", selection: $draft.category) {
-                        ForEach(TaskCategory.allCases) { Text($0.title).tag($0) }
+                        ForEach(TaskCategory.allCases) { Label($0.title, systemImage: $0.symbol).tag($0) }
                     }
                     Picker("Priorita", selection: $draft.priority) {
                         ForEach(TaskPriority.allCases) { Text($0.title).tag($0) }

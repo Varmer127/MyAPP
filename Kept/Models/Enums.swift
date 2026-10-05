@@ -21,6 +21,22 @@ enum TaskCategory: String, CaseIterable, Identifiable, Codable {
         }
     }
 
+    /// SF Symbol shown next to the category name.
+    var symbol: String {
+        switch self {
+        case .newSkill: "lightbulb"
+        case .building: "hammer"
+        case .work: "briefcase"
+        case .education: "graduationcap"
+        case .reading: "book"
+        case .administration: "doc.text"
+        case .gym: "dumbbell"
+        case .sport: "figure.run"
+        case .nature: "leaf"
+        case .other: "circle.grid.2x2"
+        }
+    }
+
     /// Multiplier applied to the priority's base points to get a task's default weight.
     var defaultMultiplier: Double {
         switch self {

@@ -259,7 +259,7 @@ struct TodayView: View {
                 ForEach(suggestions) { suggestion in
                     VStack(alignment: .leading, spacing: 12) {
                         VStack(alignment: .leading, spacing: 5) {
-                            Text(suggestion.category.suggestionTitle)
+                            Label(suggestion.category.suggestionTitle, systemImage: suggestion.category.symbol)
                                 .font(.system(size: 18, weight: .semibold))
                                 .foregroundStyle(Theme.textPrimary)
                             Text(suggestion.reason)

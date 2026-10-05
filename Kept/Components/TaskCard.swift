@@ -43,9 +43,12 @@ struct TaskCard: View {
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(task.status == .pending ? Theme.textPrimary : Theme.textSecondary)
                 }
-                Text(metadata)
-                    .font(.system(size: 13))
-                    .foregroundStyle(Theme.textSecondary)
+                HStack(spacing: 6) {
+                    Image(systemName: task.category.symbol)
+                    Text(metadata)
+                }
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.textSecondary)
             }
             if let warning, task.status == .pending {
                 Text(warning)
