@@ -39,6 +39,8 @@ final class TaskItem {
     /// What was trained, for gym tasks. Empty until the workout is logged.
     var workoutType: String = ""
     var workoutAbs: Bool = false
+    /// Body weight in kg logged with the workout, if any.
+    var bodyWeight: Double?
 
     var plan: WeeklyPlan?
     @Relationship(deleteRule: .cascade, inverse: \FailureRecord.task)
@@ -74,7 +76,11 @@ final class TaskItem {
     /// "Nohy + břicho"
     var workoutSummary: String? {
         guard !workoutType.isEmpty else { return nil }
-        return workoutAbs ? "\(workoutType) + břicho" : workoutType
+        var parts = [workoutAbs ? "\(workoutType) + břicho" : workoutType]
+        if let bodyWeight {
+            parts.append(bodyWeight.kilogramText)
+        }
+        return parts.joined(separator: " · ")
     }
 
     /// Lowering weight or priority after committing must not make a failure cheaper.

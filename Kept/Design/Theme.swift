@@ -65,6 +65,11 @@ extension View {
 extension Double {
     /// "86%"
     var percentText: String { "\(Int((self * 100).rounded()))%" }
+
+    /// "82,5 kg"
+    var kilogramText: String {
+        "\(formatted(.number.precision(.fractionLength(0...1)).locale(.app))) kg"
+    }
 }
 
 extension Optional where Wrapped == Double {
