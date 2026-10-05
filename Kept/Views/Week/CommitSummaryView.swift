@@ -7,6 +7,15 @@ struct CommitSummaryView: View {
     @Query private var allTasks: [TaskItem]
     let plan: WeeklyPlan
 
+    private var minimum: Int { settingsList.first?.minimumWeeklyTasks ?? UserSettings.defaultMinimumWeeklyTasks }
+    private var missingActivities: Int { max(0, minimum - tasks.count) }
+
+    /// The minimum is a hard rule for a week planned ahead (up to the end of its Monday).
+    /// A week that is already running can still be committed, with a warning.
+    private var minimumBlocksCommit: Bool {
+        missingActivities > 0 && Date.now < plan.weekStart.addingDays(1)
+    }
+
     /// Weekly targets the plan does not cover.
     private var shortfalls: [(category: TaskCategory, planned: Int, target: Int)] {
         let settings = settingsList.first
@@ -66,6 +75,19 @@ struct CommitSummaryView: View {
                             .foregroundStyle(Theme.textSecondary)
                             .padding(.top, 4)
                     }
+                    if missingActivities > 0 {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("POD MINIMEM").labelStyle(minimumBlocksCommit ? Theme.red : Theme.orange)
+                            Text("Minimum je \(minimum) aktivit týdně, v plánu máš \(tasks.count). Chybí \(missingActivities).")
+                                .font(.system(size: 14))
+                                .foregroundStyle(Theme.textPrimary)
+                            Text(minimumBlocksCommit
+                                 ? "Dokud je nedoplníš, zavázat se nejde."
+                                 : "Týden už běží, takže se zavázat můžeš i tak.")
+                                .font(.system(size: 13))
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                    }
                     if !shortfalls.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("POD TÝDENNÍM CÍLEM").labelStyle(Theme.orange)
@@ -102,6 +124,7 @@ struct CommitSummaryView: View {
                     dismiss()
                 }
                 .buttonStyle(PrimaryButtonStyle())
+                .disabled(minimumBlocksCommit)
                 Button("JEŠTĚ NE") { dismiss() }
                     .buttonStyle(SecondaryButtonStyle())
             }

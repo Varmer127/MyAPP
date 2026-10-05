@@ -22,6 +22,13 @@ struct WeekView: View {
         }
     }
 
+    private var weeklyTotal: (planned: Int, done: Int, minimum: Int)? {
+        let minimum = settingsList.first?.minimumWeeklyTasks ?? UserSettings.defaultMinimumWeeklyTasks
+        guard minimum > 0 else { return nil }
+        let week = (plan?.committableTasks ?? [])
+        return (week.count, week.filter(\.isDone).count, minimum)
+    }
+
     private var canCommit: Bool {
         guard let plan else { return false }
         return !plan.isCommitted && !plan.committableTasks.isEmpty && Date.now < plan.weekEnd
@@ -37,8 +44,8 @@ struct WeekView: View {
                         Button("RYCHLÉ PLÁNOVÁNÍ") { showsQuickPlan = true }
                             .buttonStyle(SecondaryButtonStyle())
                     }
-                    if !goals.isEmpty {
-                        WeeklyGoalsCard(goals: goals)
+                    if !goals.isEmpty || weeklyTotal != nil {
+                        WeeklyGoalsCard(goals: goals, total: weeklyTotal)
                     }
                     if !showsNextWeek, plan?.tasks.isEmpty == false {
                         NavigationLink {

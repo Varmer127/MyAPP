@@ -143,6 +143,8 @@ struct SettingsView: View {
 
     private func targetsSection(_ settings: UserSettings) -> some View {
         Section {
+            Stepper(settings.minimumWeeklyTasks == 0 ? "Minimum aktivit: vypnuto" : "Minimum aktivit: \(settings.minimumWeeklyTasks) týdně",
+                    value: Bindable(settings).minimumWeeklyTasks, in: UserSettings.minimumWeeklyTasksRange)
             ForEach(TaskCategory.allCases) { category in
                 let target = settings.weeklyTarget(for: category)
                 Stepper(target == 0 ? "\(category.title): bez cíle" : "\(category.title): \(target)× týdně",
@@ -152,7 +154,7 @@ struct SettingsView: View {
         } header: {
             Text("Týdenní cíle")
         } footer: {
-            Text("Když za cílem zaostáváš, aplikace ti úkol sama navrhne na obrazovce Dnes a při plánování týdne upozorní, že ho plán nepokrývá.")
+            Text("Plán s méně aktivitami, než je minimum, nejde na nový týden potvrdit. Když za cílem kategorie zaostáváš, aplikace ti úkol sama navrhne na obrazovce Dnes a při plánování týdne upozorní, že ho plán nepokrývá.")
         }
         .listRowBackground(Theme.card)
     }

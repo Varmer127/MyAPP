@@ -24,11 +24,15 @@ final class UserSettings {
     var weeklyTargetsData: Data = Data()
     /// JSON-encoded `[String]` of gym workout presets. Empty data means "never edited".
     var workoutPresetsData: Data = Data()
+    /// Fewest activities a weekly plan must contain. 0 turns the rule off.
+    var minimumWeeklyTasks: Int = 7
 
     init() {}
 
     static let defaultWorkoutPresets = ["Ruce a ramena", "Záda a prsa", "Nohy"]
     static let weeklyTargetRange = 0...7
+    static let minimumWeeklyTasksRange = 0...40
+    static let defaultMinimumWeeklyTasks = 7
 
     private var targetOverrides: [String: Int] {
         get { (try? JSONDecoder().decode([String: Int].self, from: weeklyTargetsData)) ?? [:] }
