@@ -3,13 +3,22 @@ import SwiftData
 
 struct WeekView: View {
     @Query(sort: \WeeklyPlan.weekStart) private var plans: [WeeklyPlan]
-    @State private var showsNextWeek = false
+    @Query private var tasks: [TaskItem]
+    @Query private var settingsList: [UserSettings]
+    @Binding var showsNextWeek: Bool
     @State private var editor: EditorRequest?
     @State private var planToCommit: WeeklyPlan?
 
     private var weekStart: Date { Date.now.weekStart.addingDays(showsNextWeek ? 7 : 0) }
     private var plan: WeeklyPlan? { plans.first { $0.weekStart == weekStart } }
     private var days: [Date] { (0..<7).map { weekStart.addingDays($0) } }
+
+    private var goals: [WeeklyGoal] {
+        let settings = settingsList.first
+        return SuggestionService.goals(tasks: tasks, weekStart: weekStart) {
+            settings?.weeklyTarget(for: $0) ?? $0.defaultWeeklyTarget
+        }
+    }
 
     private var canCommit: Bool {
         guard let plan else { return false }
@@ -22,6 +31,9 @@ struct WeekView: View {
                 VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                     header
                     statusCard
+                    if !goals.isEmpty {
+                        WeeklyGoalsCard(goals: goals)
+                    }
                     VStack(spacing: 20) {
                         ForEach(days, id: \.self) { day in
                             daySection(day)
@@ -37,7 +49,7 @@ struct WeekView: View {
             .screenBackground()
             .safeAreaInset(edge: .bottom) {
                 if canCommit, let plan {
-                    Button("REVIEW & COMMIT") { planToCommit = plan }
+                    Button("ZKONTROLOVAT A ZAVÁZAT SE") { planToCommit = plan }
                         .buttonStyle(PrimaryButtonStyle())
                         .padding(.horizontal, Theme.screenPadding)
                         .padding(.vertical, 12)
@@ -46,21 +58,21 @@ struct WeekView: View {
             }
             .toolbarBackground(Theme.background, for: .navigationBar)
         }
-        .sheet(item: $editor) { TaskEditorView(task: $0.task, defaultDate: $0.date) }
+        .sheet(item: $editor) { TaskEditorView(task: $0.task, defaultDate: $0.date, suggestion: $0.suggestion) }
         .sheet(item: $planToCommit) { CommitSummaryView(plan: $0) }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("WEEK \(weekStart.weekNumber)").labelStyle()
+                Text("TÝDEN \(weekStart.weekNumber)").labelStyle()
                 Text("\(weekStart.dayMonthText) – \(weekStart.addingDays(6).dayMonthText)")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundStyle(Theme.textPrimary)
             }
-            Picker("Week", selection: $showsNextWeek) {
-                Text("This week").tag(false)
-                Text("Next week").tag(true)
+            Picker("Týden", selection: $showsNextWeek) {
+                Text("Tento týden").tag(false)
+                Text("Příští týden").tag(true)
             }
             .pickerStyle(.segmented)
         }
@@ -71,21 +83,21 @@ struct WeekView: View {
         if let plan, let committedAt = plan.committedAt {
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("COMMITTED").labelStyle(Theme.textPrimary)
-                    Text("\(plan.committedTasks.count) \(plan.committedTasks.count == 1 ? "commitment" : "commitments") · \(committedAt.stampText)")
+                    Text("ZAVÁZÁNO").labelStyle(Theme.textPrimary)
+                    Text("Závazky: \(plan.committedTasks.count) · \(committedAt.stampText)")
                         .font(.system(size: 14))
                         .foregroundStyle(Theme.textSecondary)
                 }
-                PerformanceBar(label: "Promises kept", value: ScoreEngine.promisesKept(plan.tasks))
-                PerformanceBar(label: "Commitment integrity", value: ScoreEngine.commitmentIntegrity(plan))
+                PerformanceBar(label: "Dodržené sliby", value: ScoreEngine.promisesKept(plan.tasks))
+                PerformanceBar(label: "Věrnost plánu", value: ScoreEngine.commitmentIntegrity(plan))
             }
             .card()
         } else {
             VStack(alignment: .leading, spacing: 4) {
-                Text("NOT COMMITTED").labelStyle(Theme.orange)
+                Text("BEZ ZÁVAZKU").labelStyle(Theme.orange)
                 Text(plan?.activeTasks.isEmpty == false
-                     ? "This is still a draft. It becomes a promise when you commit."
-                     : "Plan the week, then commit to it.")
+                     ? "Zatím je to jen návrh. Slibem se stane, až se zavážeš."
+                     : "Naplánuj si týden a pak se k němu zavaž.")
                     .font(.system(size: 14))
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -117,7 +129,7 @@ struct WeekView: View {
                 }
             }
             if tasks.isEmpty {
-                Text("No commitments")
+                Text("Žádné závazky")
                     .font(.system(size: 14))
                     .foregroundStyle(Theme.textTertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -167,7 +179,7 @@ private struct WeekTaskRow: View {
             }
             Spacer()
             if task.priority.rank >= TaskPriority.high.rank {
-                Badge(text: task.priority.title,
+                Badge(text: task.priority.badge,
                       color: task.priority == .critical ? Theme.textPrimary : Theme.textSecondary)
             }
         }
@@ -178,8 +190,8 @@ private struct WeekTaskRow: View {
     private var subtitle: String {
         var parts = [task.category.title, "\(task.plannedMinutes) min"]
         if let deadline = task.deadline { parts.append(deadline.timeText) }
-        if task.moveCount > 0 { parts.append("moved") }
-        if task.isAddedAfterCommitment { parts.append("added later") }
+        if task.moveCount > 0 { parts.append("přesunuto") }
+        if task.isAddedAfterCommitment { parts.append("přidáno později") }
         return parts.joined(separator: " · ")
     }
 }
@@ -195,17 +207,17 @@ private struct PlanChangesView: View {
 
     var body: some View {
         VStack(spacing: 10) {
-            SectionLabel(text: "Original vs current plan")
+            SectionLabel(text: "Původní vs. aktuální plán")
             HStack(spacing: 10) {
-                MetricTile(value: "\(plan.committedTasks.count)", label: "Original")
-                MetricTile(value: "\(plan.activeTasks.count)", label: "Current")
-                MetricTile(value: "\(removed.count)", label: "Removed",
+                MetricTile(value: "\(plan.committedTasks.count)", label: "Původní")
+                MetricTile(value: "\(plan.activeTasks.count)", label: "Aktuální")
+                MetricTile(value: "\(removed.count)", label: "Odstraněno",
                            color: removed.isEmpty ? Theme.textPrimary : Theme.red)
-                MetricTile(value: "\(movedCount)", label: "Moved",
+                MetricTile(value: "\(movedCount)", label: "Přesunuto",
                            color: movedCount == 0 ? Theme.textPrimary : Theme.orange)
             }
             if addedCount > 0 {
-                Text("\(addedCount) added after commitment — they count for productivity, not as promises.")
+                Text("Přidáno po závazku: \(addedCount). Počítají se do produktivity, ne jako sliby.")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)

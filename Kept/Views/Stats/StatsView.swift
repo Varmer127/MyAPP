@@ -10,7 +10,7 @@ struct StatsView: View {
     private static let monthDays = 30
 
     enum Period: String, CaseIterable, Identifiable {
-        case today = "Today", week = "Week", month = "Month"
+        case today = "Dnes", week = "Týden", month = "Měsíc"
         var id: String { rawValue }
     }
 
@@ -41,10 +41,10 @@ struct StatsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                     VStack(alignment: .leading, spacing: 14) {
-                        Text("Stats")
+                        Text("Statistiky")
                             .font(.system(size: 24, weight: .bold))
                             .foregroundStyle(Theme.textPrimary)
-                        Picker("Period", selection: $period) {
+                        Picker("Období", selection: $period) {
                             ForEach(Period.allCases) { Text($0.rawValue).tag($0) }
                         }
                         .pickerStyle(.segmented)
@@ -70,21 +70,21 @@ struct StatsView: View {
                     .font(.system(size: 48, weight: .heavy))
                     .foregroundStyle(Theme.textPrimary)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("ACCOUNTABILITY").labelStyle()
-                    Text("Rolling \(ScoreEngine.Config.accountabilityWindowDays) days")
+                    Text("SPOLEHLIVOST").labelStyle()
+                    Text("Posledních \(ScoreEngine.Config.accountabilityWindowDays) dní")
                         .font(.system(size: 12))
                         .foregroundStyle(Theme.textTertiary)
                 }
             }
-            PerformanceBar(label: "Promises kept", value: ScoreEngine.promisesKept(scoped, now: now))
-            PerformanceBar(label: "Productivity", value: ScoreEngine.productivity(scoped, now: now))
-            PerformanceBar(label: "Commitment integrity", value: integrity)
+            PerformanceBar(label: "Dodržené sliby", value: ScoreEngine.promisesKept(scoped, now: now))
+            PerformanceBar(label: "Produktivita", value: ScoreEngine.productivity(scoped, now: now))
+            PerformanceBar(label: "Věrnost plánu", value: integrity)
             if ScoreEngine.isBusyNotProductive(scoped, now: now) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Task completion \(ScoreEngine.completionRate(scoped).percentText)")
+                    Text("Splněno úkolů: \(ScoreEngine.completionRate(scoped).percentText)")
                         .font(.system(size: 13))
                         .foregroundStyle(Theme.textSecondary)
-                    Text("You were busy. You weren't productive.")
+                    Text("Byl jsi aktivní. Nebyl jsi produktivní.")
                         .font(.system(size: 17, weight: .bold))
                         .foregroundStyle(Theme.red)
                 }
@@ -103,17 +103,17 @@ struct StatsView: View {
         let critical = scoped.filter { $0.scoringPriority == .critical }
 
         return VStack(spacing: 10) {
-            SectionLabel(text: "Outcomes")
+            SectionLabel(text: "Výsledky")
             HStack(spacing: 10) {
-                MetricTile(value: "\(completed)", label: "On time")
-                MetricTile(value: "\(late)", label: "Late", color: late > 0 ? Theme.orange : Theme.textPrimary)
-                MetricTile(value: "\(skipped)", label: "Skipped", color: skipped > 0 ? Theme.red : Theme.textPrimary)
+                MetricTile(value: "\(completed)", label: "Včas")
+                MetricTile(value: "\(late)", label: "Pozdě", color: late > 0 ? Theme.orange : Theme.textPrimary)
+                MetricTile(value: "\(skipped)", label: "Přeskočeno", color: skipped > 0 ? Theme.red : Theme.textPrimary)
             }
             HStack(spacing: 10) {
-                MetricTile(value: "\(missed)", label: "Missed", color: missed > 0 ? Theme.red : Theme.textPrimary)
-                MetricTile(value: "\(removed)", label: "Removed", color: removed > 0 ? Theme.red : Theme.textPrimary)
+                MetricTile(value: "\(missed)", label: "Nesplněno", color: missed > 0 ? Theme.red : Theme.textPrimary)
+                MetricTile(value: "\(removed)", label: "Odstraněno", color: removed > 0 ? Theme.red : Theme.textPrimary)
                 MetricTile(value: critical.isEmpty ? "—" : "\(critical.filter(\.isDone).count) / \(critical.count)",
-                           label: "Critical done")
+                           label: "Kritické splněno")
             }
         }
     }
@@ -128,7 +128,7 @@ struct StatsView: View {
 
         if !grouped.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: "Your excuses")
+                SectionLabel(text: "Tvoje výmluvy")
                 VStack(spacing: 14) {
                     ForEach(grouped, id: \.reason) { item in
                         VStack(spacing: 6) {

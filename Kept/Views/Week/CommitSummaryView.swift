@@ -3,7 +3,18 @@ import SwiftData
 
 struct CommitSummaryView: View {
     @Environment(\.dismiss) private var dismiss
+    @Query private var settingsList: [UserSettings]
     let plan: WeeklyPlan
+
+    /// Weekly targets the plan does not cover.
+    private var shortfalls: [(category: TaskCategory, planned: Int, target: Int)] {
+        let settings = settingsList.first
+        return TaskCategory.allCases.compactMap { category in
+            let target = settings?.weeklyTarget(for: category) ?? category.defaultWeeklyTarget
+            let planned = tasks.filter { $0.category == category }.count
+            return planned < target ? (category, planned, target) : nil
+        }
+    }
 
     private var tasks: [TaskItem] { plan.activeTasks }
 
@@ -16,7 +27,7 @@ struct CommitSummaryView: View {
 
     private var plannedText: String {
         let minutes = tasks.reduce(0) { $0 + $1.plannedMinutes }
-        return "\(minutes / 60) h \(String(format: "%02d", minutes % 60)) min planned"
+        return "Naplánováno \(minutes / 60) h \(String(format: "%02d", minutes % 60)) min"
     }
 
     private var criticalCount: Int { tasks.filter { $0.priority == .critical }.count }
@@ -26,8 +37,8 @@ struct CommitSummaryView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("WEEK \(plan.weekStart.weekNumber)").labelStyle()
-                        Text("THIS WEEK I COMMIT TO:")
+                        Text("TÝDEN \(plan.weekStart.weekNumber)").labelStyle()
+                        Text("TENTO TÝDEN SE ZAVAZUJI K:")
                             .font(.system(size: 24, weight: .bold))
                             .foregroundStyle(Theme.textPrimary)
                     }
@@ -48,13 +59,23 @@ struct CommitSummaryView: View {
                         Text("\(tasks.count)")
                             .font(.system(size: 64, weight: .heavy))
                             .foregroundStyle(Theme.textPrimary)
-                        Text("TOTAL COMMITMENTS").labelStyle()
-                        Text("\(plannedText) · \(criticalCount) critical")
+                        Text("ZÁVAZKŮ CELKEM").labelStyle()
+                        Text("\(plannedText) · kritické: \(criticalCount)")
                             .font(.system(size: 14))
                             .foregroundStyle(Theme.textSecondary)
                             .padding(.top, 4)
                     }
-                    Text("After this, removing, moving or downgrading a task is recorded. A removed task still counts as a broken promise.")
+                    if !shortfalls.isEmpty {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("POD TÝDENNÍM CÍLEM").labelStyle(Theme.orange)
+                            ForEach(shortfalls, id: \.category) { item in
+                                Text("\(item.category.title): v plánu \(item.planned), cíl \(item.target)")
+                                    .font(.system(size: 14))
+                                    .foregroundStyle(Theme.textPrimary)
+                            }
+                        }
+                    }
+                    Text("Od této chvíle se každé odstranění, přesun nebo snížení úkolu zaznamená. Odstraněný úkol se dál počítá jako porušený slib.")
                         .font(.system(size: 13))
                         .foregroundStyle(Theme.textSecondary)
                 }
@@ -62,12 +83,12 @@ struct CommitSummaryView: View {
                 .padding(.top, 16)
             }
             VStack(spacing: 10) {
-                Button("I COMMIT") {
+                Button("ZAVAZUJI SE") {
                     PlanService.commit(plan)
                     dismiss()
                 }
                 .buttonStyle(PrimaryButtonStyle())
-                Button("NOT YET") { dismiss() }
+                Button("JEŠTĚ NE") { dismiss() }
                     .buttonStyle(SecondaryButtonStyle())
             }
             .padding(Theme.screenPadding)

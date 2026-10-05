@@ -4,7 +4,7 @@ import SwiftData
 /// Editable copy of a task used by the editor.
 struct TaskDraft {
     var title = ""
-    var category: TaskCategory = .selfDevelopment
+    var category: TaskCategory = .newSkill
     var priority: TaskPriority = .medium
     var date: Date = .now
     var hasDeadline = false
@@ -127,7 +127,7 @@ enum PlanService {
         let oldTime = task.deadline?.minutesIntoDay
         let newTime = deadline?.minutesIntoDay
         if oldTime != newTime {
-            let detail = "\(task.deadline?.timeText ?? "none") → \(deadline?.timeText ?? "none")"
+            let detail = "\(task.deadline?.timeText ?? "žádný") → \(deadline?.timeText ?? "žádný")"
             log(.deadlineChanged, task: task, detail: detail, in: plan)
             changed = true
         }

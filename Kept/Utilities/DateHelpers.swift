@@ -12,8 +12,8 @@ extension Calendar {
 }
 
 extension Locale {
-    /// The UI is English with 24h time, regardless of device language.
-    static let app = Locale(identifier: "en_GB")
+    /// The UI is Czech regardless of device language.
+    static let app = Locale(identifier: "cs_CZ")
 }
 
 extension Date {
@@ -42,6 +42,9 @@ extension Date {
         return Calendar.app.date(bySettingHour: parts.hour ?? 0, minute: parts.minute ?? 0, second: 0, of: startOfDay) ?? self
     }
 
+    /// Stable per-day number, used to pick the same copy for a day across launches.
+    var daySeed: Int { Int(startOfDay.timeIntervalSinceReferenceDate / 86_400) }
+
     var minutesIntoDay: Int {
         let parts = Calendar.app.dateComponents([.hour, .minute], from: self)
         return (parts.hour ?? 0) * 60 + (parts.minute ?? 0)
@@ -55,14 +58,27 @@ extension Date {
 
     /// "18:00"
     var timeText: String { text(Date.FormatStyle(locale: .app).hour(.twoDigits(amPM: .omitted)).minute(.twoDigits)) }
-    /// "Wednesday 7 October"
-    var longDayText: String { text(Date.FormatStyle(locale: .app).weekday(.wide).day().month(.wide)) }
+    /// "Středa 7. října"
+    var longDayText: String { text(Date.FormatStyle(locale: .app).weekday(.wide).day().month(.wide)).capitalizedFirst }
     /// "Wed 7"
     var shortDayText: String { text(Date.FormatStyle(locale: .app).weekday(.abbreviated).day()) }
     /// "Wednesday"
     var weekdayText: String { text(Date.FormatStyle(locale: .app).weekday(.wide)) }
     /// "7 Oct"
-    var dayMonthText: String { text(Date.FormatStyle(locale: .app).day().month(.abbreviated)) }
-    /// "Wed 7 Oct, 18:00"
-    var stampText: String { "\(shortDayText) \(text(Date.FormatStyle(locale: .app).month(.abbreviated))), \(timeText)" }
+    var dayMonthText: String { text(Date.FormatStyle(locale: .app).day().month(.defaultDigits)) }
+    /// "7. 10. 18:00"
+    var stampText: String { "\(dayMonthText) \(timeText)" }
+}
+
+extension String {
+    var capitalizedFirst: String { prefix(1).uppercased() + dropFirst() }
+
+    /// "1 den", "3 dny", "5 dní"
+    static func days(_ count: Int) -> String {
+        switch count {
+        case 1: "1 den"
+        case 2...4: "\(count) dny"
+        default: "\(count) dní"
+        }
+    }
 }

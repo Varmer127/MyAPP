@@ -135,13 +135,13 @@ enum ScoreEngine {
         let unexplained: Int
 
         var subtitle: String {
-            if unexplained > 0 { return "You have failures you haven't even explained yet." }
-            if criticalLost > 0, score >= 60 { return "Generally reliable, but you keep dropping critical work." }
+            if unexplained > 0 { return "Máš selhání, která jsi ještě ani nevysvětlil." }
+            if criticalLost > 0, score >= 60 { return "Většinou spolehlivý, ale kritickou práci necháváš padat." }
             switch score {
-            case 85...: return "You keep your word."
-            case 70..<85: return "Mostly reliable. The gaps are where the growth is."
-            case 50..<70: return "You break too many of your own promises."
-            default: return "Right now your word means little. Change that today."
+            case 85...: return "Držíš slovo."
+            case 70..<85: return "Většinou spolehlivý. Růst je v tom, co ti uniká."
+            case 50..<70: return "Porušuješ příliš mnoho vlastních slibů."
+            default: return "Tvoje slovo teď moc neznamená. Změň to ještě dnes."
             }
         }
     }

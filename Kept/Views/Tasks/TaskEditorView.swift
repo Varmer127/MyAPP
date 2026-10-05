@@ -10,13 +10,38 @@ struct TaskEditorView: View {
     @State private var draft: TaskDraft
     @State private var usesCustomWeight = false
     @State private var confirmsRemoval = false
+    @State private var showsDurationPicker = false
 
-    private static let durationStep = 15
-    private static let durationRange = 15...480
+    private static let minuteOptions = [0, 15, 30, 45]
+    private static let minimumDuration = 15
+    private static let maximumHours = 16
 
-    init(task: TaskItem?, defaultDate: Date) {
+    init(task: TaskItem?, defaultDate: Date, suggestion: TaskCategory? = nil) {
         self.task = task
-        _draft = State(initialValue: task.map(TaskDraft.init(task:)) ?? TaskDraft(date: defaultDate))
+        var draft = task.map(TaskDraft.init(task:)) ?? TaskDraft(date: defaultDate)
+        if task == nil, let suggestion {
+            draft.title = suggestion.suggestionTitle
+            draft.category = suggestion
+            draft.plannedMinutes = suggestion.suggestionMinutes
+        }
+        _draft = State(initialValue: draft)
+    }
+
+    private var hoursBinding: Binding<Int> {
+        Binding(get: { draft.plannedMinutes / 60 },
+                set: { draft.plannedMinutes = max(Self.minimumDuration, $0 * 60 + draft.plannedMinutes % 60) })
+    }
+
+    private var minutesBinding: Binding<Int> {
+        Binding(get: { draft.plannedMinutes % 60 },
+                set: { draft.plannedMinutes = max(Self.minimumDuration, draft.plannedMinutes / 60 * 60 + $0) })
+    }
+
+    private var durationText: String {
+        let hours = draft.plannedMinutes / 60
+        let minutes = draft.plannedMinutes % 60
+        if hours == 0 { return "\(minutes) min" }
+        return minutes == 0 ? "\(hours) h" : "\(hours) h \(minutes) min"
     }
 
     private var isCommitted: Bool { task?.isCommitted == true }
@@ -43,85 +68,101 @@ struct TaskEditorView: View {
             Form {
                 if isCommitted {
                     Section {
-                        Text("This task is part of your commitment. Moving it, lowering its priority or weight, or changing its deadline is recorded and lowers your Commitment Integrity.")
+                        Text("Tento úkol je součástí tvého závazku. Přesun, snížení priority nebo váhy a změna deadlinu se zaznamenají a sníží věrnost plánu.")
                             .font(.system(size: 13))
                             .foregroundStyle(Theme.orange)
                     }
                     .listRowBackground(Theme.card)
                 }
 
-                Section("Task") {
-                    TextField("Title", text: $draft.title)
-                    Picker("Category", selection: $draft.category) {
+                Section("Úkol") {
+                    TextField("Název", text: $draft.title)
+                    Picker("Kategorie", selection: $draft.category) {
                         ForEach(TaskCategory.allCases) { Text($0.title).tag($0) }
                     }
-                    Picker("Priority", selection: $draft.priority) {
+                    Picker("Priorita", selection: $draft.priority) {
                         ForEach(TaskPriority.allCases) { Text($0.title).tag($0) }
                     }
                 }
                 .listRowBackground(Theme.card)
 
-                Section("When") {
-                    DatePicker("Day", selection: $draft.date, in: dateRange, displayedComponents: .date)
-                    Toggle("Use deadline", isOn: $draft.hasDeadline)
+                Section("Kdy") {
+                    DatePicker("Den", selection: $draft.date, in: dateRange, displayedComponents: .date)
+                    Toggle("Použít deadline", isOn: $draft.hasDeadline)
                         .tint(Theme.textSecondary)
                     if draft.hasDeadline {
                         DatePicker("Deadline", selection: $draft.deadlineTime, displayedComponents: .hourAndMinute)
                     }
-                    Stepper("Duration: \(draft.plannedMinutes) min", value: $draft.plannedMinutes,
-                            in: Self.durationRange, step: Self.durationStep)
+                    Button {
+                        withAnimation { showsDurationPicker.toggle() }
+                    } label: {
+                        LabeledContent("Délka", value: durationText)
+                    }
+                    .foregroundStyle(Theme.textPrimary)
+                    if showsDurationPicker {
+                        HStack(spacing: 0) {
+                            Picker("Hodiny", selection: hoursBinding) {
+                                ForEach(0...Self.maximumHours, id: \.self) { Text("\($0) h").tag($0) }
+                            }
+                            Picker("Minuty", selection: minutesBinding) {
+                                ForEach(Self.minuteOptions, id: \.self) { Text("\($0) min").tag($0) }
+                            }
+                        }
+                        .pickerStyle(.wheel)
+                        .frame(height: 130)
+                    }
                 }
                 .listRowBackground(Theme.card)
 
                 Section {
-                    Toggle("Custom weight", isOn: $usesCustomWeight)
+                    Toggle("Vlastní váha", isOn: $usesCustomWeight)
                         .tint(Theme.textSecondary)
                     if usesCustomWeight {
-                        Stepper("Weight: \(draft.weight)", value: $draft.weight, in: UserSettings.weightRange)
+                        Stepper("Váha: \(draft.weight)", value: $draft.weight, in: UserSettings.weightRange)
                     } else {
-                        LabeledContent("Weight", value: "\(automaticWeight)")
+                        LabeledContent("Váha", value: "\(automaticWeight)")
                     }
                 } header: {
-                    Text("Points")
+                    Text("Body")
                 } footer: {
-                    Text("Weight decides how much this task moves your Productivity Score. By default it follows category and priority.")
+                    Text("Váha určuje, jak moc úkol hýbe produktivitou. Ve výchozím stavu vychází z kategorie a priority.")
                 }
                 .listRowBackground(Theme.card)
 
-                Section("Why does this matter?") {
-                    TextField("Your own reason — it will be used against you", text: $draft.why, axis: .vertical)
+                Section("Proč na tom záleží?") {
+                    TextField("Tvůj vlastní důvod — bude použit proti tobě", text: $draft.why, axis: .vertical)
                         .lineLimit(2...5)
                 }
                 .listRowBackground(Theme.card)
 
-                Section("Notes") {
-                    TextField("Optional", text: $draft.notes, axis: .vertical)
+                Section("Poznámky") {
+                    TextField("Volitelné", text: $draft.notes, axis: .vertical)
                         .lineLimit(2...6)
                 }
                 .listRowBackground(Theme.card)
 
                 if task != nil {
                     Section {
-                        Button("Remove task", role: .destructive) { confirmsRemoval = true }
+                        Button("Odstranit úkol", role: .destructive) { confirmsRemoval = true }
                     }
                     .listRowBackground(Theme.card)
                 }
             }
             .scrollContentBackground(.hidden)
             .screenBackground()
-            .navigationTitle(task == nil ? "New task" : "Edit task")
+            .navigationTitle(task == nil ? "Nový úkol" : "Upravit úkol")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Zrušit") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save", action: save)
+                    Button("Uložit", action: save)
                         .disabled(draft.trimmedTitle.isEmpty)
                 }
             }
             .confirmationDialog(removalMessage, isPresented: $confirmsRemoval, titleVisibility: .visible) {
-                Button(isCommitted ? "Break this promise" : "Delete", role: .destructive, action: remove)
+                Button(isCommitted ? "Porušit slib" : "Smazat", role: .destructive, action: remove)
             }
             .onAppear {
                 if let task {
@@ -134,8 +175,8 @@ struct TaskEditorView: View {
 
     private var removalMessage: String {
         isCommitted
-            ? "You committed to this. Removing it counts as a broken promise and stays in your history."
-            : "This task isn't committed yet, so it will simply be deleted."
+            ? "K tomuhle ses zavázal. Odstranění se počítá jako porušený slib a zůstane v historii."
+            : "Úkol ještě není součástí závazku, takže se prostě smaže."
     }
 
     private func save() {

@@ -23,9 +23,9 @@ struct NoExcusesView: View {
 
         var title: String {
             switch self {
-            case .reason: "WHY DID YOU FAIL?"
-            case .critique: "SELF-CRITIQUE"
-            case .prevention: "WHAT WILL YOU DO DIFFERENTLY?"
+            case .reason: "PROČ JSI SELHAL?"
+            case .critique: "SEBEKRITIKA"
+            case .prevention: "CO UDĚLÁŠ JINAK?"
             }
         }
     }
@@ -62,7 +62,7 @@ struct NoExcusesView: View {
                 .padding(.top, 8)
             }
             .scrollDismissesKeyboard(.interactively)
-            Button(step == .prevention ? "I OWN THIS" : "CONTINUE", action: advance)
+            Button(step == .prevention ? "BERU TO NA SEBE" : "POKRAČOVAT", action: advance)
                 .buttonStyle(PrimaryButtonStyle(color: step == .prevention ? Theme.red : .white,
                                                 textColor: step == .prevention ? .white : .black))
                 .disabled(!canContinue)
@@ -86,7 +86,7 @@ struct NoExcusesView: View {
                     dismiss()
                 }
             } label: {
-                Text(step == .reason ? "Cancel" : "Back")
+                Text(step == .reason ? "Zrušit" : "Zpět")
                     .font(.system(size: 15))
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -97,7 +97,7 @@ struct NoExcusesView: View {
 
     private var heading: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(kind == .missed ? "MISSED · \(task.scheduledDate.weekdayText.uppercased())" : "SKIPPING")
+            Text(kind == .missed ? "NESPLNĚNO · \(task.scheduledDate.weekdayText.uppercased())" : "PŘESKAKUJEŠ")
                 .labelStyle(Theme.red)
             Text(task.title)
                 .font(.system(size: 28, weight: .bold))
@@ -114,8 +114,8 @@ struct NoExcusesView: View {
             }
             if !task.why.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("YOU SAID THIS MATTERS BECAUSE").labelStyle()
-                    Text("“\(task.why)”")
+                    Text("ŘEKL JSI, ŽE NA TOM ZÁLEŽÍ, PROTOŽE").labelStyle()
+                    Text("„\(task.why)“")
                         .font(.system(size: 15))
                         .foregroundStyle(Theme.textPrimary)
                 }
@@ -147,15 +147,15 @@ struct NoExcusesView: View {
 
     private func memoryCard(_ last: FailureRecord) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("FAILED \(previousFailures.count)× BEFORE").labelStyle(Theme.red)
-            Text("Last time (\(last.date.weekdayText), \(last.date.dayMonthText)) you chose “\(last.reason.title)” and wrote:")
+            Text("UŽ \(previousFailures.count)× NESPLNĚNO").labelStyle(Theme.red)
+            Text("Minule (\(last.date.weekdayText) \(last.date.dayMonthText)) jsi zvolil „\(last.reason.title)“ a napsal:")
                 .font(.system(size: 13))
                 .foregroundStyle(Theme.textSecondary)
-            Text("“\(last.critique)”")
+            Text("„\(last.critique)“")
                 .font(.system(size: 15))
                 .foregroundStyle(Theme.textPrimary)
             if !last.prevention.isEmpty {
-                Text("You promised: “\(last.prevention)”")
+                Text("Slíbil jsi: „\(last.prevention)“")
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -164,12 +164,12 @@ struct NoExcusesView: View {
     }
 
     private var critiqueStep: some View {
-        textStep(prompt: "Why did this actually happen?", text: $critique,
+        textStep(prompt: "Proč se to doopravdy stalo?", text: $critique,
                  length: critiqueLength, minimum: Self.minimumCritiqueLength)
     }
 
     private var preventionStep: some View {
-        textStep(prompt: "What will prevent this from happening again?", text: $prevention,
+        textStep(prompt: "Co zabrání tomu, aby se to opakovalo?", text: $prevention,
                  length: preventionLength, minimum: Self.minimumPreventionLength)
     }
 
@@ -178,11 +178,11 @@ struct NoExcusesView: View {
             Text(prompt)
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(Theme.textPrimary)
-            TextField("Be honest. Nobody else reads this.", text: text, axis: .vertical)
+            TextField("Buď upřímný. Nikdo jiný to nečte.", text: text, axis: .vertical)
                 .lineLimit(5...12)
                 .font(.system(size: 16))
                 .card()
-            Text(length >= minimum ? "\(length) characters" : "\(minimum - length) more characters required")
+            Text(length >= minimum ? "Znaků: \(length)" : "Chybí ještě znaků: \(minimum - length)")
                 .font(.system(size: 12))
                 .foregroundStyle(length >= minimum ? Theme.textTertiary : Theme.orange)
         }

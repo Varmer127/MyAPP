@@ -68,24 +68,24 @@ struct TaskCard: View {
     private var badgeItems: [(text: String, color: Color)] {
         var items: [(String, Color)] = []
         switch task.status {
-        case .completedLate: items.append(("Late", Theme.orange))
-        case .skipped: items.append(("Skipped", Theme.red))
-        case .failed: items.append(("Failed", Theme.red))
+        case .completedLate: items.append(("Pozdě", Theme.orange))
+        case .skipped: items.append(("Přeskočeno", Theme.red))
+        case .failed: items.append(("Nesplněno", Theme.red))
         case .pending:
             if isMissed {
-                items.append(("Missed \(task.scheduledDate.weekdayText)", Theme.red))
+                items.append(("Nesplněno: \(task.scheduledDate.weekdayText)", Theme.red))
             } else if isOverdue {
-                items.append(("Overdue \(overdueText)", Theme.red))
+                items.append(("Po termínu \(overdueText)", Theme.red))
             }
         case .completed: break
         }
         if task.priority == .critical {
-            items.append(("Critical", task.status == .pending ? Theme.textPrimary : Theme.textSecondary))
+            items.append((TaskPriority.critical.badge, task.status == .pending ? Theme.textPrimary : Theme.textSecondary))
         } else if task.priority == .high {
-            items.append(("High", Theme.textSecondary))
+            items.append((TaskPriority.high.badge, Theme.textSecondary))
         }
-        if task.moveCount > 0 { items.append(("Moved", Theme.textSecondary)) }
-        if task.isAddedAfterCommitment { items.append(("Added later", Theme.textSecondary)) }
+        if task.moveCount > 0 { items.append(("Přesunuto", Theme.textSecondary)) }
+        if task.isAddedAfterCommitment { items.append(("Přidáno později", Theme.textSecondary)) }
         return items
     }
 
@@ -99,14 +99,17 @@ struct TaskCard: View {
         if let deadline = task.deadline {
             parts.append("Deadline \(deadline.timeText)")
         }
+        if let workout = task.workoutSummary {
+            parts.append(workout)
+        }
         return parts.joined(separator: " · ")
     }
 
     private var actions: some View {
         HStack(spacing: 10) {
-            Button(isMissed ? "DID IT LATE" : "DONE", action: onDone)
+            Button(isMissed ? "SPLNĚNO POZDĚ" : "HOTOVO", action: onDone)
                 .buttonStyle(PrimaryButtonStyle())
-            Button(isMissed ? "NO EXCUSES" : "SKIP", action: onFail)
+            Button(isMissed ? "BEZ VÝMLUV" : "PŘESKOČIT", action: onFail)
                 .buttonStyle(SecondaryButtonStyle(textColor: isMissed ? Theme.red : Theme.textPrimary))
         }
     }

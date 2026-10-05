@@ -2,41 +2,88 @@ import Foundation
 
 /// Ordered by default importance: long-term development first, sport and chores last.
 enum TaskCategory: String, CaseIterable, Identifiable, Codable {
-    case selfDevelopment, work, education, reading, administration, sport, other
+    case newSkill, building, work, education, reading, administration, gym, sport, nature, other
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .selfDevelopment: "Self Development"
-        case .work: "Work"
-        case .education: "School"
-        case .reading: "Reading"
-        case .administration: "Administration"
+        case .newSkill: "Nový skill"
+        case .building: "Claude a aplikace"
+        case .work: "Práce"
+        case .education: "Škola"
+        case .reading: "Čtení"
+        case .administration: "Administrativa"
+        case .gym: "Gym"
         case .sport: "Sport"
-        case .other: "Other"
+        case .nature: "Příroda"
+        case .other: "Ostatní"
         }
     }
 
     /// Multiplier applied to the priority's base points to get a task's default weight.
     var defaultMultiplier: Double {
         switch self {
-        case .selfDevelopment, .work: 1.0
+        case .newSkill, .building, .work: 1.0
         case .education: 0.9
         case .reading: 0.75
-        case .administration, .sport: 0.5
-        case .other: 0.4
+        case .administration, .gym, .sport: 0.5
+        case .nature, .other: 0.4
         }
     }
 
-    var isHighValue: Bool { self == .selfDevelopment || self == .work || self == .education }
+    var isHighValue: Bool { self == .newSkill || self == .building || self == .work || self == .education }
+
+    /// How many times a week this category should happen by default. 0 = no weekly goal.
+    var defaultWeeklyTarget: Int {
+        switch self {
+        case .gym: 4
+        case .newSkill: 2
+        case .reading, .nature: 1
+        case .building, .work, .education, .administration, .sport, .other: 0
+        }
+    }
+
+    var suggestionTitle: String {
+        switch self {
+        case .newSkill: "Naučit se něco nového"
+        case .nature: "Procházka v přírodě"
+        case .building: "Práce na aplikaci"
+        default: title
+        }
+    }
+
+    var suggestionMinutes: Int {
+        switch self {
+        case .reading: 30
+        case .sport: 45
+        default: 60
+        }
+    }
 }
 
 enum TaskPriority: String, CaseIterable, Identifiable, Codable {
     case low, medium, high, critical
 
     var id: String { rawValue }
-    var title: String { rawValue.capitalized }
+    var title: String {
+        switch self {
+        case .low: "Nízká"
+        case .medium: "Střední"
+        case .high: "Vysoká"
+        case .critical: "Kritická"
+        }
+    }
+
+    /// Short label shown on a task.
+    var badge: String {
+        switch self {
+        case .low: "Nízká priorita"
+        case .medium: "Střední priorita"
+        case .high: "Vysoká priorita"
+        case .critical: "Kritický"
+        }
+    }
 
     var rank: Int {
         switch self {
@@ -68,15 +115,15 @@ enum FailureReason: String, CaseIterable, Identifiable, Codable {
 
     var title: String {
         switch self {
-        case .forgot: "I forgot"
-        case .procrastinated: "I procrastinated"
-        case .lazy: "I was lazy"
-        case .didNotFeelLikeIt: "I didn't feel like it"
-        case .plannedBadly: "I planned badly"
-        case .noTime: "I didn't have enough time"
-        case .unexpected: "Unexpected situation"
-        case .health: "Health"
-        case .other: "Other"
+        case .forgot: "Zapomněl jsem"
+        case .procrastinated: "Prokrastinoval jsem"
+        case .lazy: "Byl jsem líný"
+        case .didNotFeelLikeIt: "Nechtělo se mi"
+        case .plannedBadly: "Špatně jsem si to naplánoval"
+        case .noTime: "Neměl jsem dost času"
+        case .unexpected: "Nečekaná situace"
+        case .health: "Zdraví"
+        case .other: "Jiné"
         }
     }
 }
@@ -93,14 +140,14 @@ enum EditKind: String, Codable {
 
     var title: String {
         switch self {
-        case .removed: "Removed"
-        case .moved: "Moved"
-        case .priorityLowered: "Priority lowered"
-        case .priorityRaised: "Priority raised"
-        case .deadlineChanged: "Deadline changed"
-        case .weightLowered: "Weight lowered"
-        case .weightRaised: "Weight raised"
-        case .addedLater: "Added after commitment"
+        case .removed: "Odstraněno"
+        case .moved: "Přesunuto"
+        case .priorityLowered: "Snížená priorita"
+        case .priorityRaised: "Zvýšená priorita"
+        case .deadlineChanged: "Změněný deadline"
+        case .weightLowered: "Snížená váha"
+        case .weightRaised: "Zvýšená váha"
+        case .addedLater: "Přidáno po závazku"
         }
     }
 
