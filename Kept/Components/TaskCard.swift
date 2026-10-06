@@ -104,7 +104,6 @@ struct TaskCard: View {
         if task.moveCount > 0 { items.append(("Přesunuto", Theme.textSecondary)) }
         if task.isAddedAfterCommitment { items.append(("Přidáno později", Theme.textSecondary)) }
         if task.isRecovery { items.append(("Recovery", Theme.orange)) }
-        if isFocusing { items.append(("Focus běží", Theme.orange)) }
         if task.requiresProof, task.status == .pending { items.append(("Důkaz", Theme.textSecondary)) }
         return items
     }
@@ -125,13 +124,59 @@ struct TaskCard: View {
         return parts.joined(separator: " · ")
     }
 
+    /// The running focus timer, ticking right on the card. Tapping it opens the full-screen timer.
+    private func liveTimer(_ session: FocusSession) -> some View {
+        TimelineView(.periodic(from: .now, by: 1)) { timeline in
+            let remaining = session.remaining(at: timeline.date)
+            let isOvertime = remaining < 0
+            let highlighted = session.isPaused || isOvertime
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(isOvertime ? "PŘES ČAS" : (session.isPaused ? "FOCUS POZASTAVEN" : "FOCUS BĚŽÍ"))
+                        .labelStyle(highlighted ? Theme.orange : Theme.textSecondary)
+                    Text("\(isOvertime ? "+" : "")\(FocusView.clock(abs(remaining)))")
+                        .font(.system(size: 34, weight: .heavy))
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.textPrimary)
+                }
+                Spacer()
+                Button {
+                    FocusView.togglePause(session, title: task.title)
+                } label: {
+                    timerIcon(session.isPaused ? "play.fill" : "pause.fill")
+                }
+                .buttonStyle(.plain)
+                timerIcon("arrow.up.left.and.arrow.down.right")
+            }
+            .padding(14)
+            .background(Theme.cardRaised)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.border, lineWidth: 1))
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onFocus)
+        }
+    }
+
+    private func timerIcon(_ name: String) -> some View {
+        Image(systemName: name)
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(Theme.textPrimary)
+            .frame(width: 44, height: 44)
+            .background(Theme.card)
+            .clipShape(Circle())
+    }
+
     private var actions: some View {
         VStack(spacing: 10) {
             // With a focus timer the main action is to start working; DONE moves to the second row.
             let offersFocus = (task.usesFocus || isFocusing) && !isMissed
             if offersFocus {
-                Button(isFocusing ? "POKRAČOVAT VE FOCUSU" : "SPUSTIT FOCUS", action: onFocus)
-                    .buttonStyle(PrimaryButtonStyle())
+                if let session = task.activeFocusSession {
+                    liveTimer(session)
+                } else {
+                    Button("SPUSTIT FOCUS", action: onFocus)
+                        .buttonStyle(PrimaryButtonStyle())
+                }
             }
             HStack(spacing: 10) {
                 if offersFocus {

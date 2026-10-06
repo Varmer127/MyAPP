@@ -6,7 +6,37 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		B10000000000000000000007 /* KeptWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* KeptWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B10000000000000000000009 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A10000000000000000000009 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B1000000000000000000000A;
+			remoteInfo = KeptWidgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		B10000000000000000000008 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				B10000000000000000000007 /* KeptWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		B10000000000000000000001 /* KeptWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = KeptWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B1000000000000000000000F /* KeptWidgets-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "KeptWidgets-Info.plist"; sourceTree = "<group>"; };
 		A10000000000000000000001 /* Kept.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Kept.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -16,10 +46,27 @@
 			path = Kept;
 			sourceTree = "<group>";
 		};
+		B10000000000000000000002 /* KeptWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = KeptWidgets;
+			sourceTree = "<group>";
+		};
+		B10000000000000000000003 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A10000000000000000000003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B10000000000000000000004 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -33,6 +80,9 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000002 /* Kept */,
+				B10000000000000000000002 /* KeptWidgets */,
+				B10000000000000000000003 /* Shared */,
+				B1000000000000000000000F /* KeptWidgets-Info.plist */,
 				A10000000000000000000005 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +91,7 @@
 			isa = PBXGroup;
 			children = (
 				A10000000000000000000001 /* Kept.app */,
+				B10000000000000000000001 /* KeptWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -55,13 +106,16 @@
 				A10000000000000000000007 /* Sources */,
 				A10000000000000000000003 /* Frameworks */,
 				A10000000000000000000008 /* Resources */,
+				B10000000000000000000008 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				B1000000000000000000000B /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A10000000000000000000002 /* Kept */,
+				B10000000000000000000003 /* Shared */,
 			);
 			name = Kept;
 			packageProductDependencies = (
@@ -69,6 +123,29 @@
 			productName = Kept;
 			productReference = A10000000000000000000001 /* Kept.app */;
 			productType = "com.apple.product-type.application";
+		};
+		B1000000000000000000000A /* KeptWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B1000000000000000000000C /* Build configuration list for PBXNativeTarget "KeptWidgets" */;
+			buildPhases = (
+				B10000000000000000000005 /* Sources */,
+				B10000000000000000000004 /* Frameworks */,
+				B10000000000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B10000000000000000000002 /* KeptWidgets */,
+				B10000000000000000000003 /* Shared */,
+			);
+			name = KeptWidgets;
+			packageProductDependencies = (
+			);
+			productName = KeptWidgets;
+			productReference = B10000000000000000000001 /* KeptWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -81,6 +158,9 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					A10000000000000000000006 = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					B1000000000000000000000A = {
 						CreatedOnToolsVersion = 26.0;
 					};
 				};
@@ -100,12 +180,20 @@
 			projectRoot = "";
 			targets = (
 				A10000000000000000000006 /* Kept */,
+				B1000000000000000000000A /* KeptWidgets */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		A10000000000000000000008 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B10000000000000000000006 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -122,7 +210,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B10000000000000000000005 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B1000000000000000000000B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B1000000000000000000000A /* KeptWidgets */;
+			targetProxy = B10000000000000000000009 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A1000000000000000000000E /* Debug */ = {
@@ -187,6 +290,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Kept;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -215,6 +319,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Kept;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -226,6 +331,54 @@
 				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = cz.philipstryka.kept;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		B1000000000000000000000D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 869PST2DT3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "KeptWidgets-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Kept;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = cz.philipstryka.kept.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		B1000000000000000000000E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 869PST2DT3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "KeptWidgets-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Kept;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = cz.philipstryka.kept.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -249,6 +402,15 @@
 			buildConfigurations = (
 				A1000000000000000000000E /* Debug */,
 				A1000000000000000000000F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B1000000000000000000000C /* Build configuration list for PBXNativeTarget "KeptWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B1000000000000000000000D /* Debug */,
+				B1000000000000000000000E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

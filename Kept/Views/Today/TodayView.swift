@@ -65,7 +65,11 @@ struct TodayView: View {
     /// Gym tasks ask what was trained and proof tasks ask for proof before they count as done.
     private func complete(_ task: TaskItem) {
         // Finishing a task by hand also ends a focus session left running for it.
-        task.activeFocusSession?.finish()
+        if let session = task.activeFocusSession {
+            session.finish()
+            NotificationManager.cancelFocusEnd()
+            FocusActivityManager.end()
+        }
         if task.category == .gym {
             workoutTask = task
         } else if task.requiresProof {

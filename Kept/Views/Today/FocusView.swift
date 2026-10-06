@@ -23,6 +23,9 @@ struct FocusView: View {
             }
             UIApplication.shared.isIdleTimerDisabled = true
             scheduleEndNotification()
+            if let session {
+                FocusActivityManager.sync(session, title: task.title)
+            }
         }
         .onDisappear {
             UIApplication.shared.isIdleTimerDisabled = false
@@ -92,18 +95,29 @@ struct FocusView: View {
 
     private func togglePause() {
         guard let session else { return }
+        Self.togglePause(session, title: task.title)
+    }
+
+    /// Pauses or resumes a session and keeps its end-of-time notification in step.
+    /// Shared with the timer shown on the task card.
+    static func togglePause(_ session: FocusSession, title: String) {
         if session.isPaused {
             session.resume()
-            scheduleEndNotification()
+            let remaining = session.remaining()
+            if remaining > 0 {
+                Task { await NotificationManager.scheduleFocusEnd(title: title, in: remaining) }
+            }
         } else {
             session.pause()
             NotificationManager.cancelFocusEnd()
         }
+        FocusActivityManager.sync(session, title: title)
     }
 
     private func end(completing: Bool) {
         session?.finish()
         NotificationManager.cancelFocusEnd()
+        FocusActivityManager.end()
         dismiss()
         if completing {
             onComplete()

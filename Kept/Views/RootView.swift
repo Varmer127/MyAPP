@@ -64,6 +64,7 @@ struct RootView: View {
         }
         // `task(id:)` cancels the previous run, so a burst of edits reschedules once.
         .task(id: notificationSignature) {
+            FocusActivityManager.reconcile(tasks)
             await NotificationManager.reschedule(context: context)
         }
         .onChange(of: scenePhase) { _, phase in
