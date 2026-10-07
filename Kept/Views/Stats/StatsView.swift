@@ -58,7 +58,7 @@ struct StatsView: View {
                     CategorySection(tasks: scoped)
                     StreaksSection(tasks: tasks)
                     TrendSection(tasks: tasks)
-                    YearHeatmapSection(tasks: tasks)
+                    CalendarSection(tasks: tasks)
                     EffortSection(tasks: tasks, sessions: sessions)
                     longTerm
                     RecordsSection(tasks: tasks, sessions: sessions)
