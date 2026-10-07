@@ -8,6 +8,7 @@ enum FocusActivityManager {
 
     /// Starts the Live Activity for a session, or brings an existing one up to date (pause, resume).
     static func sync(_ session: FocusSession, title: String, now: Date = .now) {
+        WidgetBridge.setFocus(session, title: title, now: now)
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         let remaining = session.remaining(at: now)
         let endDate = now.addingTimeInterval(remaining)
@@ -25,6 +26,7 @@ enum FocusActivityManager {
     }
 
     static func end() {
+        WidgetBridge.setFocus(nil, title: "")
         for activity in FocusActivity.activities {
             Task { await activity.end(nil, dismissalPolicy: .immediate) }
         }

@@ -26,12 +26,16 @@ final class UserSettings {
     var workoutPresetsData: Data = Data()
     /// Fewest activities a weekly plan must contain. 0 turns the rule off.
     var minimumWeeklyTasks: Int = 7
+    /// How many tasks a month may be postponed without penalty. Can only be lowered below the maximum.
+    var postponeLimit: Int = 3
+    var healthEnabled: Bool = false
 
     init() {}
 
     static let defaultWorkoutPresets = ["Ruce a ramena", "Záda a prsa", "Nohy"]
     static let weeklyTargetRange = 0...7
     static let minimumWeeklyTasksRange = 0...40
+    static let postponeLimitRange = 0...3
     static let defaultMinimumWeeklyTasks = 7
 
     private var targetOverrides: [String: Int] {

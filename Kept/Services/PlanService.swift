@@ -16,6 +16,7 @@ struct TaskDraft {
     var requiresProof = false
     var usesFocus = false
     var isRecovery = false
+    var stake = ""
 
     init(date: Date) {
         self.date = date.startOfDay
@@ -34,6 +35,7 @@ struct TaskDraft {
         notes = task.notes
         why = task.why
         requiresProof = task.requiresProof
+        stake = task.stake
         usesFocus = task.usesFocus
         isRecovery = task.isRecovery
     }
@@ -92,6 +94,7 @@ enum PlanService {
             context.insert(task)
         }
         task.requiresProof = draft.requiresProof
+        task.stake = draft.stake.trimmingCharacters(in: .whitespacesAndNewlines)
         task.usesFocus = draft.usesFocus
         task.deadline = deadline
         task.plannedMinutes = draft.plannedMinutes
@@ -116,6 +119,28 @@ enum PlanService {
         task.isRemoved = true
         task.removedAt = now
         log(.removed, task: task, detail: task.scheduledDate.shortDayText, in: plan)
+    }
+
+    // MARK: Postponing
+
+    static func postponementsUsed(_ postponements: [Postponement], now: Date = .now) -> Int {
+        postponements.filter { Calendar.app.isDate($0.date, equalTo: now, toGranularity: .month) }.count
+    }
+
+    /// Moves a task to another day as one of the month's penalty-free postponements:
+    /// no failure, no commitment edit, the promise simply moves with it.
+    static func postpone(_ task: TaskItem, to day: Date, in context: ModelContext, now: Date = .now) {
+        let from = task.scheduledDate
+        let target = day.startOfDay
+        if let deadline = task.deadline {
+            task.deadline = target.settingTime(from: deadline)
+        }
+        task.scheduledDate = target
+        let plan = plan(forWeekOf: target, in: context)
+        if task.plan !== plan {
+            task.plan = plan
+        }
+        context.insert(Postponement(task: task, from: from, to: target, now: now))
     }
 
     private static func recordChanges(to task: TaskItem, day: Date, deadline: Date?, draft: TaskDraft) {

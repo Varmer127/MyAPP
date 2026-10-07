@@ -7,6 +7,7 @@ struct StatsView: View {
     @Query(sort: \WeeklyPlan.weekStart) private var plans: [WeeklyPlan]
     @Query private var failures: [FailureRecord]
     @Query private var sessions: [FocusSession]
+    @Query private var reflections: [WeekReflection]
     @State private var period: Period = .week
 
     private static let monthDays = 30
@@ -57,10 +58,21 @@ struct StatsView: View {
                     CategorySection(tasks: scoped)
                     StreaksSection(tasks: tasks)
                     TrendSection(tasks: tasks)
+                    YearHeatmapSection(tasks: tasks)
                     EffortSection(tasks: tasks, sessions: sessions)
                     longTerm
                     RecordsSection(tasks: tasks, sessions: sessions)
-                    weightProgress
+                    NavigationLink {
+                        GymProgressView()
+                    } label: {
+                        HStack {
+                            Label("GYM – PROGRES", systemImage: TaskCategory.gym.symbol).labelStyle(Theme.textPrimary)
+                            Spacer()
+                            Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
+                        }
+                        .card()
+                    }
+                    JournalLinkSection(count: reflections.count)
                     ReviewHistorySection(tasks: tasks)
                 }
                 .padding(.horizontal, Theme.screenPadding)
@@ -124,66 +136,6 @@ struct StatsView: View {
                 MetricTile(value: "\(removed)", label: "Odstraněno", color: removed > 0 ? Theme.red : Theme.textPrimary)
                 MetricTile(value: critical.isEmpty ? "—" : "\(critical.filter(\.isDone).count) / \(critical.count)",
                            label: "Kritické splněno")
-            }
-        }
-    }
-
-    /// Body weight logged with gym workouts, across all time (not limited by the period picker).
-    @ViewBuilder
-    private var weightProgress: some View {
-        let entries = tasks.compactMap { task -> (date: Date, weight: Double)? in
-            guard let weight = task.bodyWeight, task.isDone else { return nil }
-            return (task.completedAt ?? task.scheduledDate, weight)
-        }.sorted { $0.date < $1.date }
-
-        if let first = entries.first, let last = entries.last {
-            let change = last.weight - first.weight
-            let weights = entries.map(\.weight)
-            let low = (weights.min() ?? last.weight) - 1
-            let high = (weights.max() ?? last.weight) + 1
-            VStack(spacing: 10) {
-                SectionLabel(text: "Váha")
-                VStack(alignment: .leading, spacing: 16) {
-                    HStack(alignment: .firstTextBaseline, spacing: 10) {
-                        Text(last.weight.kilogramText)
-                            .font(.system(size: 34, weight: .bold))
-                            .foregroundStyle(Theme.textPrimary)
-                        if entries.count > 1 {
-                            Text("\(change >= 0 ? "+" : "−")\(abs(change).kilogramText) od \(first.date.dayMonthText)")
-                                .font(.system(size: 13))
-                                .foregroundStyle(Theme.textSecondary)
-                        }
-                    }
-                    if entries.count > 1 {
-                        Chart(entries, id: \.date) { entry in
-                            LineMark(x: .value("Den", entry.date), y: .value("Váha", entry.weight))
-                                .foregroundStyle(Theme.textPrimary)
-                                .interpolationMethod(.monotone)
-                            PointMark(x: .value("Den", entry.date), y: .value("Váha", entry.weight))
-                                .foregroundStyle(Theme.textPrimary)
-                                .symbolSize(24)
-                        }
-                        .chartYScale(domain: low...high)
-                        .chartXAxis {
-                            AxisMarks(values: .automatic(desiredCount: 4)) {
-                                AxisValueLabel(format: Date.FormatStyle(locale: .app).day().month(.defaultDigits))
-                                    .foregroundStyle(Theme.textSecondary)
-                            }
-                        }
-                        .chartYAxis {
-                            AxisMarks(values: .automatic(desiredCount: 4)) {
-                                AxisGridLine().foregroundStyle(Theme.border)
-                                AxisValueLabel().foregroundStyle(Theme.textSecondary)
-                            }
-                        }
-                        .frame(height: 180)
-                    } else {
-                        Text("Graf se ukáže po druhém zápisu váhy.")
-                            .font(.system(size: 13))
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                }
-                .card()
             }
         }
     }

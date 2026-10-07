@@ -64,11 +64,14 @@ struct RootView: View {
         }
         // `task(id:)` cancels the previous run, so a burst of edits reschedules once.
         .task(id: notificationSignature) {
+            FocusSession.closeAbandoned(in: tasks)
             FocusActivityManager.reconcile(tasks)
+            WidgetBridge.update(tasks: tasks, plans: plans)
             await NotificationManager.reschedule(context: context)
         }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
+            FocusSession.closeAbandoned(in: tasks)
             Task { await NotificationManager.reschedule(context: context) }
         }
         .onChange(of: router.route) { _, route in

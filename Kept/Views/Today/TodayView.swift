@@ -6,6 +6,13 @@ struct TodayView: View {
     @Query private var plans: [WeeklyPlan]
     @Query private var settingsList: [UserSettings]
     @Query private var failures: [FailureRecord]
+    @Query private var postponements: [Postponement]
+    @Query private var reflections: [WeekReflection]
+    /// Day on which the weekly reflection last opened by itself, so it only interrupts once a day.
+    @AppStorage("reflectionPromptDay") private var reflectionPromptDay = 0.0
+    @State private var reflection: ReflectionRequest?
+    /// Minutes of a gym workout Apple Health recorded today, if any.
+    @State private var healthGymMinutes: Int?
     /// Start of the day (as a timestamp) on which the Morning Brief was last dismissed.
     @AppStorage("briefDismissedDay") private var briefDismissedDay = 0.0
     /// "<day seed>:<category>,<category>" — suggestions the user declined today.
@@ -14,16 +21,21 @@ struct TodayView: View {
     @State private var editor: EditorRequest?
     @State private var workoutTask: TaskItem?
     @State private var proofTask: TaskItem?
+    @State private var postponeTask: TaskItem?
+    /// Task the user wants to give up on; asks whether to postpone or to skip.
+    @State private var failChoice: TaskItem?
     @State private var focusTask: TaskItem?
     @State private var detailTask: TaskItem?
     /// Task to complete once the focus screen has finished closing.
     @State private var completeAfterFocus: TaskItem?
     @State private var excuse: ExcuseRequest?
     let openWeek: () -> Void
+    @Environment(\.scenePhase) private var scenePhase
 
     private static let refreshInterval: TimeInterval = 60
     private static let briefVisibleUntilHour = 12
     private static let comebackThreshold = 0.6
+    private static let stakeQuestionDays = 7
     private static let slippingAfterMinutes = 18 * 60
     private static let slippingCriticalCount = 2
 
@@ -51,6 +63,25 @@ struct TodayView: View {
         .fullScreenCover(isPresented: $showsRealityCheck) { RealityCheckView() }
         .sheet(item: $workoutTask) { WorkoutLogView(task: $0) }
         .sheet(item: $proofTask) { ProofView(task: $0) }
+        .fullScreenCover(item: $reflection) { ReflectionView(weekStart: $0.weekStart) }
+        .task(id: scenePhase) {
+            // Opens the reflection by itself the first time the app is used after the week ends.
+            let today = Date.now.startOfDay.timeIntervalSince1970
+            guard scenePhase == .active, reflectionPromptDay != today,
+                  let pending = ReflectionRequest.pending(tasks: tasks, reflections: reflections) else { return }
+            reflectionPromptDay = today
+            reflection = pending
+        }
+        .task(id: scenePhase) {
+            guard scenePhase == .active, settingsList.first?.healthEnabled == true else { return }
+            healthGymMinutes = await HealthService.gymMinutesToday()
+        }
+        .sheet(item: $postponeTask) { PostponeView(task: $0, remaining: postponesLeft, limit: postponeLimit) }
+        .confirmationDialog("Co s tím úkolem?", isPresented: Binding(get: { failChoice != nil }, set: { if !$0 { failChoice = nil } }),
+                            titleVisibility: .visible, presenting: failChoice) { task in
+            Button("Odložit bez postihu (zbývá \(postponesLeft) z \(postponeLimit))") { postponeTask = task }
+            Button("Přeskočit a vysvětlit", role: .destructive) { excuse = ExcuseRequest(task: task, kind: .skipped) }
+        }
         .sheet(item: $detailTask) { TaskDetailView(task: $0) }
         .fullScreenCover(item: $focusTask, onDismiss: {
             if let task = completeAfterFocus {
@@ -59,6 +90,20 @@ struct TodayView: View {
             }
         }) { task in
             FocusView(task: task) { completeAfterFocus = task }
+        }
+    }
+
+    private var postponeLimit: Int { settingsList.first?.postponeLimit ?? UserSettings.postponeLimitRange.upperBound }
+    private var postponesLeft: Int { max(0, postponeLimit - PlanService.postponementsUsed(postponements)) }
+
+    /// Skipping first offers a penalty-free postponement while the month's allowance lasts.
+    private func giveUp(on task: TaskItem, now: Date) {
+        if task.isMissed(now) {
+            excuse = ExcuseRequest(task: task, kind: .missed)
+        } else if postponesLeft > 0, !task.isRecovery {
+            failChoice = task
+        } else {
+            excuse = ExcuseRequest(task: task, kind: .skipped)
         }
     }
 
@@ -97,7 +142,7 @@ struct TodayView: View {
         let slipping = isSlipping(day, now: now)
         return ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
-                header(now: now)
+                header(now: now, streak: day.streak)
                 if slipping {
                     slippingBanner(day)
                 }
@@ -107,7 +152,12 @@ struct TodayView: View {
                         withAnimation { briefDismissedDay = now.startOfDay.timeIntervalSince1970 }
                     }
                 }
+                if let pending = ReflectionRequest.pending(tasks: tasks, reflections: reflections, now: now) {
+                    reflectionCard(pending)
+                }
                 comebackCard(day, now: now)
+                stakeCards(now: now)
+                healthWorkoutCard(day)
                 hero(day)
                 metrics(day)
                 if showsRealityCheckCard(day, now: now) {
@@ -171,12 +221,26 @@ struct TodayView: View {
         }
     }
 
-    private func header(now: Date) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("DNES").labelStyle()
-            Text(now.longDayText)
-                .font(.system(size: 24, weight: .bold))
-                .foregroundStyle(Theme.textPrimary)
+    private func header(now: Date, streak: Int) -> some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("DNES").labelStyle()
+                Text(now.longDayText)
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(Theme.textPrimary)
+            }
+            Spacer()
+            // Days in a row at 80 % or better. Lit only while the streak is alive.
+            VStack(spacing: 0) {
+                Image(systemName: "flame.fill")
+                    .font(.system(size: 30))
+                    .symbolEffect(.bounce, options: .nonRepeating, value: streak)
+                Text("\(streak)")
+                    .font(.system(size: 17, weight: .heavy))
+                    .contentTransition(.numericText())
+            }
+            .foregroundStyle(streak > 0 ? Theme.orange : Theme.textTertiary)
+            .animation(.easeOut(duration: 0.4), value: streak)
         }
     }
 
@@ -334,6 +398,72 @@ struct TodayView: View {
         }
     }
 
+    /// After failing a task with a stake on it, asks whether the stake was honoured.
+    @ViewBuilder
+    private func stakeCards(now: Date) -> some View {
+        let since = now.startOfDay.addingDays(-Self.stakeQuestionDays)
+        let open = tasks.filter {
+            !$0.stake.isEmpty && $0.stakeOutcome == 0 && $0.scheduledDate >= since
+                && ($0.status == .skipped || $0.status == .failed)
+        }
+        ForEach(open) { task in
+            VStack(alignment: .leading, spacing: 12) {
+                Text("SÁZKA").labelStyle(Theme.orange)
+                Text("Nesplnil jsi „\(task.title)“. Vsadil ses o tohle:")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Theme.textSecondary)
+                Text("„\(task.stake)“")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                HStack(spacing: 10) {
+                    Button("DODRŽEL JSEM") { withAnimation { task.stakeOutcome = 1 } }
+                        .buttonStyle(SecondaryButtonStyle())
+                    Button("NEDODRŽEL") { withAnimation { task.stakeOutcome = 2 } }
+                        .buttonStyle(SecondaryButtonStyle(textColor: Theme.red))
+                }
+            }
+            .card()
+        }
+    }
+
+    /// Apple Health saw a workout today while a gym task is still open: one tap to log and close it.
+    @ViewBuilder
+    private func healthWorkoutCard(_ day: TodaySnapshot) -> some View {
+        if let minutes = healthGymMinutes,
+           let gym = (day.critical + day.open).first(where: { $0.category == .gym }) {
+            VStack(alignment: .leading, spacing: 12) {
+                Label("APPLE HEALTH", systemImage: "heart.fill").labelStyle(Theme.green)
+                Text("Dnes máš zaznamenaný trénink (\(minutes) min). Zapiš, co jsi jel, a „\(gym.title)“ je splněný.")
+                    .font(.system(size: 15))
+                    .foregroundStyle(Theme.textPrimary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button("ZAPSAT TRÉNINK") { complete(gym) }
+                    .buttonStyle(PrimaryButtonStyle())
+            }
+            .card()
+        }
+    }
+
+    private func reflectionCard(_ pending: ReflectionRequest) -> some View {
+        Button {
+            reflection = pending
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("SEBEREFLEXE TÝDNE \(pending.weekStart.weekNumber)").labelStyle(Theme.textPrimary)
+                    Text("Projdi si týden a zapiš do deníčku, jak jsi se sebou spokojený.")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Theme.textSecondary)
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
+            }
+            .card()
+        }
+        .buttonStyle(.plain)
+    }
+
     private var realityCheckCard: some View {
         Button {
             showsRealityCheck = true
@@ -382,7 +512,7 @@ struct TodayView: View {
                         }
                     },
                     onDone: { complete(task) },
-                    onFail: { excuse = ExcuseRequest(task: task, kind: task.isMissed(now) ? .missed : .skipped) },
+                    onFail: { giveUp(on: task, now: now) },
                     onFocus: { focusTask = task }
                 )
                 .contextMenu {

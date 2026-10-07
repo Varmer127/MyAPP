@@ -112,6 +112,18 @@ struct NoExcusesView: View {
             if let last = previousFailures.first {
                 memoryCard(last)
             }
+            if !task.stake.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("TVOJE SÁZKA").labelStyle(Theme.orange)
+                    Text("„\(task.stake)“")
+                        .font(.system(size: 15))
+                        .foregroundStyle(Theme.textPrimary)
+                    Text("Vsadil ses sám se sebou. Zeptám se tě, jestli jsi ji dodržel.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                .card()
+            }
             if !task.why.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("ŘEKL JSI, ŽE NA TOM ZÁLEŽÍ, PROTOŽE").labelStyle()

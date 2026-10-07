@@ -26,6 +26,8 @@ enum ScoreEngine {
         static let repeatedFailureThreshold = 3
         static let repeatedFailurePenalty = 2.0
         static let repeatedFailurePenaltyCap = 6.0
+        static let brokenStakePenalty = 2.0
+        static let brokenStakePenaltyCap = 6.0
         static let recoveryPointBonus = 1.0
         static let recoveryPointBonusCap = 5.0
         static let streakPointBonus = 0.5
@@ -180,6 +182,9 @@ enum ScoreEngine {
         let penalties = min(Double(unexplained) * Config.unexplainedPenalty, Config.unexplainedPenaltyCap)
             + min(Double(criticalLost) * Config.criticalLostPenalty, Config.criticalLostPenaltyCap)
             + min(Double(repeated) * Config.repeatedFailurePenalty, Config.repeatedFailurePenaltyCap)
+            // Failing a task and then not even honouring the stake set on it.
+            + min(Double(window.filter { $0.stakeOutcome == 2 }.count) * Config.brokenStakePenalty,
+                  Config.brokenStakePenaltyCap)
 
         let recoveries = window.filter { $0.isRecovery && $0.isDone }.count
         let bonus = min(Double(recoveries) * Config.recoveryPointBonus, Config.recoveryPointBonusCap)

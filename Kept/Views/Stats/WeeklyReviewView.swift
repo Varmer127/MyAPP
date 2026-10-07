@@ -10,6 +10,7 @@ struct WeeklyReviewView: View {
     let weekStart: Date
     /// Drives the bars growing in when the report opens.
     @State private var chartProgress = 0.0
+    @State private var reflection: ReflectionRequest?
 
     private static let daysInWeek = 7
     private static let truthGood = 0.8
@@ -45,6 +46,8 @@ struct WeeklyReviewView: View {
                     patterns
                     selfCritique
                     truth
+                    Button("SEBEREFLEXE A DENÍČEK") { reflection = ReflectionRequest(weekStart: weekStart) }
+                        .buttonStyle(SecondaryButtonStyle())
                 }
             }
             .padding(.horizontal, Theme.screenPadding)
@@ -53,6 +56,7 @@ struct WeeklyReviewView: View {
         .screenBackground()
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Theme.background, for: .navigationBar)
+        .fullScreenCover(item: $reflection) { ReflectionView(weekStart: $0.weekStart) }
     }
 
     private var header: some View {

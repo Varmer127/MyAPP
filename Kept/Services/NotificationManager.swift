@@ -44,6 +44,7 @@ enum NotificationManager {
     private static let repeatedFailureCount = 3
     private static let weakPromisesKept = 0.6
     private static let focusEndID = "focus.end"
+    private static let reflectionHour = 18
 
     private struct Planned {
         let id: String
@@ -122,6 +123,14 @@ enum NotificationManager {
         var planned: [Planned] = []
         if settings.sundayRemindersEnabled {
             planned += sundayReminders(settings: settings, plans: plans, now: now)
+        }
+        let reflections = (try? context.fetch(FetchDescriptor<WeekReflection>())) ?? []
+        let weekHasTasks = tasks.contains { $0.scheduledDate.weekStart == now.weekStart && !$0.isRemoved }
+        if weekHasTasks, !reflections.contains(where: { $0.weekStart == now.weekStart }) {
+            planned.append(Planned(
+                id: "reflection", date: time(reflectionHour * 60, on: now.weekStart.addingDays(6)),
+                title: "SEBEREFLEXE TÝDNE", body: "Týden končí. Projdi si ho a zapiš do deníčku, jak jsi se sebou spokojený.",
+                route: .today))
         }
         if settings.morningBriefEnabled {
             planned += morningBriefs(settings: settings, tasks: tasks, now: now)

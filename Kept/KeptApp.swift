@@ -37,6 +37,8 @@ struct KeptApp: App {
             CommitmentEdit.self,
             FailureRecord.self,
             FocusSession.self,
+            Postponement.self,
+            WeekReflection.self,
             UserSettings.self,
         ])
     }

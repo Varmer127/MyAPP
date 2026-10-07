@@ -63,4 +63,15 @@ final class FocusSession {
         pausedSince = nil
         endedAt = now
     }
+
+    /// Ends sessions that were left running on a task that is no longer open today.
+    /// A forgotten timer is not focus, so it counts for the planned time at most.
+    static func closeAbandoned(in tasks: [TaskItem], now: Date = .now) {
+        for task in tasks {
+            guard let session = task.activeFocusSession,
+                  task.status != .pending || task.isRemoved || task.dayHasPassed(now) else { continue }
+            session.finish(at: min(now, max(task.scheduledDate.endOfDay, session.startedAt)))
+            session.activeSeconds = min(session.activeSeconds, Double(session.plannedMinutes * 60))
+        }
+    }
 }

@@ -148,6 +148,16 @@ struct TaskEditorView: View {
                 }
                 .listRowBackground(Theme.card)
 
+                Section {
+                    TextField("Co se stane, když to nesplníš", text: $draft.stake, axis: .vertical)
+                        .lineLimit(1...3)
+                } header: {
+                    Text("Sázka")
+                } footer: {
+                    Text("Např. „večer bez seriálu“. Po selhání se tě aplikace zeptá, jestli jsi ji dodržel.")
+                }
+                .listRowBackground(Theme.card)
+
                 Section("Proč na tom záleží?") {
                     TextField("Tvůj vlastní důvod — bude použit proti tobě", text: $draft.why, axis: .vertical)
                         .lineLimit(2...5)

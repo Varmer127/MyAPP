@@ -26,6 +26,7 @@ struct SettingsView: View {
                     sundaySection(settings)
                     targetsSection(settings)
                     presetsSection(settings)
+                    healthSection(settings)
                     weightsSection(settings)
                 }
                 Section {
@@ -152,6 +153,8 @@ struct SettingsView: View {
 
     private func targetsSection(_ settings: UserSettings) -> some View {
         Section {
+            Stepper(settings.postponeLimit == 0 ? "Odklady: vypnuto" : "Odklady: \(settings.postponeLimit)× za měsíc",
+                    value: Bindable(settings).postponeLimit, in: UserSettings.postponeLimitRange)
             Stepper(settings.minimumWeeklyTasks == 0 ? "Minimum aktivit: vypnuto" : "Minimum aktivit: \(settings.minimumWeeklyTasks) týdně",
                     value: Bindable(settings).minimumWeeklyTasks, in: UserSettings.minimumWeeklyTasksRange)
             ForEach(TaskCategory.allCases) { category in
@@ -163,7 +166,7 @@ struct SettingsView: View {
         } header: {
             Text("Týdenní cíle")
         } footer: {
-            Text("Plán s méně aktivitami, než je minimum, nejde na nový týden potvrdit. Když za cílem kategorie zaostáváš, aplikace ti úkol sama navrhne na obrazovce Dnes a při plánování týdne upozorní, že ho plán nepokrývá.")
+            Text("Odklad přesune úkol na jiný den bez postihu; víc než 3 za měsíc nastavit nejde, jen míň. Plán s méně aktivitami, než je minimum, nejde na nový týden potvrdit. Když za cílem kategorie zaostáváš, aplikace ti úkol sama navrhne na obrazovce Dnes a při plánování týdne upozorní, že ho plán nepokrývá.")
         }
         .listRowBackground(Theme.card)
     }
@@ -199,6 +202,28 @@ struct SettingsView: View {
             Text("Nabízí se při splnění úkolu v kategorii Gym. Břicho se zaškrtává zvlášť ke každému tréninku.")
         }
         .listRowBackground(Theme.card)
+    }
+
+    @ViewBuilder
+    private func healthSection(_ settings: UserSettings) -> some View {
+        if HealthService.isAvailable {
+            Section {
+                Toggle("Apple Health", isOn: Binding(
+                    get: { settings.healthEnabled },
+                    set: { enabled in
+                        settings.healthEnabled = enabled
+                        if enabled {
+                            Task { await HealthService.requestAccess() }
+                        }
+                    }))
+                    .tint(Theme.textSecondary)
+            } header: {
+                Text("Zdraví")
+            } footer: {
+                Text("Kept jen čte: váhu doplní do zápisu tréninku a do grafu, a když Health zaznamená trénink, nabídne ti rovnou splnění Gymu. Nic do Health nezapisuje. Oprávnění změníš v aplikaci Zdraví.")
+            }
+            .listRowBackground(Theme.card)
+        }
     }
 
     private func weightsSection(_ settings: UserSettings) -> some View {

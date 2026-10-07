@@ -41,6 +41,15 @@ final class TaskItem {
     var workoutAbs: Bool = false
     /// Body weight in kg logged with the workout, if any.
     var bodyWeight: Double?
+    /// Main lift of the workout, to follow strength over time.
+    var liftName: String = ""
+    var liftWeight: Double?
+    var liftReps: Int = 0
+
+    /// What the user bet on this task: the consequence they accept if it is not done.
+    var stake: String = ""
+    /// 0 = not answered yet, 1 = the stake was honoured after failing, 2 = it was not.
+    var stakeOutcome: Int = 0
 
     /// Proof of completion, for tasks that require it.
     var proofNote: String = ""
