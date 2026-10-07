@@ -18,9 +18,7 @@ struct FocusView: View {
         .screenBackground()
         .preferredColorScheme(.dark)
         .onAppear {
-            if session == nil {
-                context.insert(FocusSession(task: task))
-            }
+            task.startFocusIfNeeded(in: context)
             UIApplication.shared.isIdleTimerDisabled = true
             scheduleEndNotification()
             if let session {
@@ -114,10 +112,14 @@ struct FocusView: View {
         FocusActivityManager.sync(session, title: title)
     }
 
+    /// Completing leaves the timer running until the task is actually marked done, so cancelling
+    /// the proof or workout sheet that follows does not throw the session away.
     private func end(completing: Bool) {
-        session?.finish()
-        NotificationManager.cancelFocusEnd()
-        FocusActivityManager.end()
+        if !completing {
+            task.finishFocusSessions()
+            NotificationManager.cancelFocusEnd()
+            FocusActivityManager.end()
+        }
         dismiss()
         if completing {
             onComplete()

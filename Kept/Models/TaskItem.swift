@@ -109,7 +109,25 @@ final class TaskItem {
     var isAddedAfterCommitment: Bool { !isCommitted && !isRecovery && plan?.isCommitted == true }
 
     /// The focus session that was started and not yet ended, if any.
-    var activeFocusSession: FocusSession? { focusSessions.first { !$0.isFinished } }
+    /// Relationship arrays have no stable order, so "the" running session is always the most recently started one.
+    var activeFocusSession: FocusSession? {
+        focusSessions.filter { !$0.isFinished }.max { $0.startedAt < $1.startedAt }
+    }
+
+    /// Returns the running session, starting one only if there is none.
+    @discardableResult
+    func startFocusIfNeeded(in context: ModelContext, now: Date = .now) -> FocusSession {
+        if let running = activeFocusSession { return running }
+        let session = FocusSession(task: self, now: now)
+        context.insert(session)
+        return session
+    }
+
+    func finishFocusSessions(at now: Date = .now) {
+        for session in focusSessions where !session.isFinished {
+            session.finish(at: now)
+        }
+    }
 
     var dueDate: Date { deadline ?? scheduledDate.endOfDay }
 
@@ -137,6 +155,9 @@ final class TaskItem {
     }
 
     func markDone(at now: Date = .now) {
+        // The timer ends here, when the task is really done — not when the user merely taps DONE
+        // and may still cancel the proof or workout sheet.
+        finishFocusSessions(at: now)
         completedAt = now
         status = now > dueDate ? .completedLate : .completed
     }

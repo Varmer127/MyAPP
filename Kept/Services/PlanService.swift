@@ -132,6 +132,7 @@ enum PlanService {
     static func postpone(_ task: TaskItem, to day: Date, in context: ModelContext, now: Date = .now) {
         let from = task.scheduledDate
         let target = day.startOfDay
+        task.finishFocusSessions(at: now)
         if let deadline = task.deadline {
             task.deadline = target.settingTime(from: deadline)
         }

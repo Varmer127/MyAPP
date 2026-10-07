@@ -67,7 +67,8 @@ struct TodayView: View {
         .task(id: scenePhase) {
             // Opens the reflection by itself the first time the app is used after the week ends.
             let today = Date.now.startOfDay.timeIntervalSince1970
-            guard scenePhase == .active, reflectionPromptDay != today,
+            // Never on top of the focus timer: presenting a second cover would close the first.
+            guard scenePhase == .active, reflectionPromptDay != today, focusTask == nil,
                   let pending = ReflectionRequest.pending(tasks: tasks, reflections: reflections) else { return }
             reflectionPromptDay = today
             reflection = pending
@@ -109,12 +110,6 @@ struct TodayView: View {
 
     /// Gym tasks ask what was trained and proof tasks ask for proof before they count as done.
     private func complete(_ task: TaskItem) {
-        // Finishing a task by hand also ends a focus session left running for it.
-        if let session = task.activeFocusSession {
-            session.finish()
-            NotificationManager.cancelFocusEnd()
-            FocusActivityManager.end()
-        }
         if task.category == .gym {
             workoutTask = task
         } else if task.requiresProof {

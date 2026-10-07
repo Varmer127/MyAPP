@@ -34,10 +34,13 @@ enum FocusActivityManager {
 
     /// Removes a leftover Live Activity when no open task has a session running any more
     /// (for example after the task was skipped or removed).
-    static func reconcile(_ tasks: [TaskItem]) {
+    /// Returns whether a focus session is still running.
+    @discardableResult
+    static func reconcile(_ tasks: [TaskItem]) -> Bool {
         let isFocusing = tasks.contains { $0.status == .pending && !$0.isRemoved && $0.activeFocusSession != nil }
         if !isFocusing {
             end()
         }
+        return isFocusing
     }
 }

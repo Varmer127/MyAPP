@@ -65,7 +65,9 @@ struct RootView: View {
         // `task(id:)` cancels the previous run, so a burst of edits reschedules once.
         .task(id: notificationSignature) {
             FocusSession.closeAbandoned(in: tasks)
-            FocusActivityManager.reconcile(tasks)
+            if !FocusActivityManager.reconcile(tasks) {
+                NotificationManager.cancelFocusEnd()
+            }
             WidgetBridge.update(tasks: tasks, plans: plans)
             await NotificationManager.reschedule(context: context)
         }
