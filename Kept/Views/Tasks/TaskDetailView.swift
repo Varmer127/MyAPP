@@ -4,17 +4,9 @@ import SwiftUI
 struct TaskDetailView: View {
     @Environment(\.dismiss) private var dismiss
     let task: TaskItem
+    @State private var confirmsReopen = false
 
-    private var statusText: (text: String, color: Color) {
-        if task.isRemoved { return ("Odstraněno po závazku", Theme.red) }
-        switch task.status {
-        case .completed: return ("Splněno včas", Theme.green)
-        case .completedLate: return ("Splněno pozdě", Theme.orange)
-        case .skipped: return ("Přeskočeno", Theme.red)
-        case .failed: return ("Nesplněno", Theme.red)
-        case .pending: return ("Otevřené", Theme.textSecondary)
-        }
-    }
+    private var statusText: (text: String, color: Color) { task.outcome() }
 
     private var finishedSessions: [FocusSession] { task.focusSessions.filter(\.isFinished) }
 
@@ -31,8 +23,39 @@ struct TaskDetailView: View {
                             .font(.system(size: 14))
                             .foregroundStyle(Theme.textSecondary)
                     }
+                    if !task.partialNote.isEmpty {
+                        block("Co chybělo") { quote(task.partialNote) }
+                    }
+                    if !task.notes.isEmpty {
+                        block("Poznámka") { quote(task.notes) }
+                    }
+                    if !task.stake.isEmpty {
+                        block("Sázka") {
+                            quote(task.stake)
+                            if task.stakeOutcome != 0 {
+                                Text(task.stakeOutcome == 1 ? "Dodržena" : "Nedodržena")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(task.stakeOutcome == 1 ? Theme.green : Theme.red)
+                            }
+                        }
+                    }
                     if let workout = task.workoutSummary {
                         block("Trénink") { quote(workout) }
+                    }
+                    if !task.exercises.isEmpty {
+                        block("Cviky") {
+                            ForEach(task.exercises.sorted { $0.name < $1.name }) { exercise in
+                                HStack {
+                                    Text(exercise.name)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundStyle(Theme.textPrimary)
+                                    Spacer()
+                                    Text(exercise.summary)
+                                        .font(.system(size: 14))
+                                        .foregroundStyle(Theme.textSecondary)
+                                }
+                            }
+                        }
                     }
                     if !finishedSessions.isEmpty {
                         let active = finishedSessions.reduce(0) { $0 + $1.activeSeconds }
@@ -72,12 +95,27 @@ struct TaskDetailView: View {
                 .padding(Theme.screenPadding)
                 .padding(.top, 16)
             }
-            Button("ZAVŘÍT") { dismiss() }
-                .buttonStyle(SecondaryButtonStyle())
-                .padding(Theme.screenPadding)
+            VStack(spacing: 10) {
+                if task.canReopen() {
+                    Button("ZMĚNIT ROZHODNUTÍ") { confirmsReopen = true }
+                        .buttonStyle(SecondaryButtonStyle(textColor: Theme.orange))
+                }
+                Button("ZAVŘÍT") { dismiss() }
+                    .buttonStyle(SecondaryButtonStyle())
+            }
+            .padding(Theme.screenPadding)
         }
         .screenBackground()
         .preferredColorScheme(.dark)
+        .confirmationDialog(
+            task.isDone ? "Úkol se vrátí mezi otevřené a přestane se počítat jako splněný. Zapsaný trénink, důkaz a procenta se smažou."
+                        : "Úkol se vrátí mezi otevřené. To, co jsi napsal v Bez výmluv, zůstane v historii.",
+            isPresented: $confirmsReopen, titleVisibility: .visible) {
+            Button(task.isDone ? "Nesplnil jsem to – vrátit" : "Vrátit mezi otevřené", role: .destructive) {
+                task.reopen()
+                dismiss()
+            }
+        }
     }
 
     private func block(_ label: String, @ViewBuilder content: () -> some View) -> some View {

@@ -47,6 +47,7 @@ final class FocusSession {
         self.runningSince = nil
         pausedSince = now
         pauseCount += 1
+        persist()
     }
 
     func resume(at now: Date = .now) {
@@ -54,6 +55,7 @@ final class FocusSession {
         pauseSeconds += now.timeIntervalSince(pausedSince)
         self.pausedSince = nil
         runningSince = now
+        persist()
     }
 
     func finish(at now: Date = .now) {
@@ -62,6 +64,13 @@ final class FocusSession {
         runningSince = nil
         pausedSince = nil
         endedAt = now
+        persist()
+    }
+
+    /// SwiftData saves on its own schedule; a timer must be on disk the moment it changes,
+    /// otherwise force-quitting the app right after starting or pausing would lose that state.
+    func persist() {
+        try? modelContext?.save()
     }
 
     /// Ends sessions that were left running on a task that is no longer open today.

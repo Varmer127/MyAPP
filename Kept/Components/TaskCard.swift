@@ -9,6 +9,7 @@ struct TaskCard: View {
     var onDone: () -> Void = {}
     var onFail: () -> Void = {}
     var onFocus: () -> Void = {}
+    var onPartial: () -> Void = {}
 
     private static let deadlineWarningWindow: TimeInterval = 3600
 
@@ -22,6 +23,7 @@ struct TaskCard: View {
     private var isFocusing: Bool { task.status == .pending && task.activeFocusSession != nil }
 
     private var accent: Color {
+        if task.isPartial { return Theme.orange }
         if task.isDone { return Theme.green }
         if isOverdue || task.status == .failed || task.status == .skipped { return Theme.red }
         if isApproaching || isFocusing { return Theme.orange }
@@ -34,8 +36,8 @@ struct TaskCard: View {
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 8) {
                     if task.isDone {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(Theme.green)
+                        Image(systemName: task.isPartial ? "circle.lefthalf.filled" : "checkmark.circle.fill")
+                            .foregroundStyle(task.isPartial ? Theme.orange : Theme.green)
                             .symbolEffect(.bounce, options: .nonRepeating, value: task.isDone)
                             .transition(.scale.combined(with: .opacity))
                     }
@@ -96,6 +98,9 @@ struct TaskCard: View {
             }
         case .completed: break
         }
+        if task.isPartial {
+            items.append(("Částečně \(Int((task.completionShare * 100).rounded())) %", Theme.orange))
+        }
         if task.priority == .critical {
             items.append((TaskPriority.critical.badge, task.status == .pending ? Theme.textPrimary : Theme.textSecondary))
         } else if task.priority == .high {
@@ -129,10 +134,12 @@ struct TaskCard: View {
         TimelineView(.periodic(from: .now, by: 1)) { timeline in
             let remaining = session.remaining(at: timeline.date)
             let isOvertime = remaining < 0
-            let highlighted = session.isPaused || isOvertime
+            // Running over the plan is neutral, unless a deadline is set — then it means falling behind.
+            let isBehind = isOvertime && task.deadline != nil
+            let highlighted = session.isPaused || isBehind
             HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(isOvertime ? "PŘES ČAS" : (session.isPaused ? "FOCUS POZASTAVEN" : "FOCUS BĚŽÍ"))
+                    Text(session.isPaused ? "FOCUS POZASTAVEN" : (isBehind ? "NESTÍHÁŠ PLÁN" : (isOvertime ? "NAD PLÁN" : "FOCUS BĚŽÍ")))
                         .labelStyle(highlighted ? Theme.orange : Theme.textSecondary)
                     Text("\(isOvertime ? "+" : "")\(FocusView.clock(abs(remaining)))")
                         .font(.system(size: 34, weight: .heavy))
@@ -157,6 +164,32 @@ struct TaskCard: View {
         }
     }
 
+    /// The running workout stopwatch: total time, or the current rest between sets.
+    private func gymTimer(_ session: FocusSession) -> some View {
+        TimelineView(.periodic(from: .now, by: 1)) { timeline in
+            let rest = session.pausedSince.map { timeline.date.timeIntervalSince($0) }
+            let total = session.active(at: timeline.date) + session.paused(at: timeline.date)
+            HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(rest == nil ? "TRÉNINK BĚŽÍ" : "PAUZA")
+                        .labelStyle(rest == nil ? Theme.textSecondary : Theme.orange)
+                    Text(FocusView.clock(rest ?? total))
+                        .font(.system(size: 34, weight: .heavy))
+                        .monospacedDigit()
+                        .foregroundStyle(Theme.textPrimary)
+                }
+                Spacer()
+                timerIcon("arrow.up.left.and.arrow.down.right")
+            }
+            .padding(14)
+            .background(Theme.cardRaised)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.border, lineWidth: 1))
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onFocus)
+        }
+    }
+
     private func timerIcon(_ name: String) -> some View {
         Image(systemName: name)
             .font(.system(size: 15, weight: .semibold))
@@ -169,25 +202,35 @@ struct TaskCard: View {
     private var actions: some View {
         VStack(spacing: 10) {
             // With a focus timer the main action is to start working; DONE moves to the second row.
-            let offersFocus = (task.usesFocus || isFocusing) && !isMissed
+            let isGym = task.category == .gym
+            let offersFocus = (task.usesFocus || isFocusing || isGym) && !isMissed
             if offersFocus {
                 if let session = task.activeFocusSession {
-                    liveTimer(session)
+                    if isGym {
+                        gymTimer(session)
+                    } else {
+                        liveTimer(session)
+                    }
                 } else {
-                    Button("SPUSTIT FOCUS", action: onFocus)
+                    Button(isGym ? "SPUSTIT TRÉNINK" : "SPUSTIT FOCUS", action: onFocus)
                         .buttonStyle(PrimaryButtonStyle())
                 }
             }
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
+                // Colour follows the outcome each button leads to: green done, orange partial or late, red giving up.
                 if offersFocus {
                     Button("HOTOVO", action: onDone)
-                        .buttonStyle(SecondaryButtonStyle())
+                        .buttonStyle(SecondaryButtonStyle(textColor: Theme.green))
                 } else {
                     Button(isMissed ? "SPLNĚNO POZDĚ" : "HOTOVO", action: onDone)
-                        .buttonStyle(PrimaryButtonStyle())
+                        .buttonStyle(PrimaryButtonStyle(color: isMissed ? Theme.orange : Theme.green))
+                }
+                if !isMissed {
+                    Button("ČÁSTEČNĚ", action: onPartial)
+                        .buttonStyle(SecondaryButtonStyle(textColor: Theme.orange))
                 }
                 Button(isMissed ? "BEZ VÝMLUV" : "PŘESKOČIT", action: onFail)
-                    .buttonStyle(SecondaryButtonStyle(textColor: isMissed ? Theme.red : Theme.textPrimary))
+                    .buttonStyle(SecondaryButtonStyle(textColor: Theme.red))
             }
         }
     }

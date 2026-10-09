@@ -11,6 +11,8 @@ struct WidgetSnapshot: Codable {
         var isPaused: Bool
         /// Time left at the moment of pausing; negative in overtime. Only shown while paused.
         var remainingSeconds: Double
+        /// The task has a deadline, so running over the planned time is shown as falling behind.
+        var hasDeadline: Bool?
     }
 
     var day: Date

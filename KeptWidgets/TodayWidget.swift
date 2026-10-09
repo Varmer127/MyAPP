@@ -133,8 +133,12 @@ struct TodayWidgetView: View {
         focus.isPaused ? focus.remainingSeconds < 0 : focus.endDate <= entry.date
     }
 
+    private func isBehind(_ focus: WidgetSnapshot.Focus) -> Bool {
+        isOvertime(focus) && focus.hasDeadline == true
+    }
+
     private func statusText(_ focus: WidgetSnapshot.Focus) -> String {
-        focus.isPaused ? "FOCUS POZASTAVEN" : (isOvertime(focus) ? "PŘES ČAS" : "FOCUS BĚŽÍ")
+        focus.isPaused ? "FOCUS POZASTAVEN" : (isBehind(focus) ? "NESTÍHÁŠ PLÁN" : (isOvertime(focus) ? "NAD PLÁN" : "FOCUS BĚŽÍ"))
     }
 
     /// Running: a system-driven timer that keeps ticking without the app. Paused: the frozen time.
@@ -148,7 +152,7 @@ struct TodayWidgetView: View {
     }
 
     private func focusPanel(_ focus: WidgetSnapshot.Focus, timerSize: CGFloat) -> some View {
-        let highlighted = focus.isPaused || isOvertime(focus)
+        let highlighted = focus.isPaused || isBehind(focus)
         return VStack(alignment: .leading, spacing: 6) {
             Text(statusText(focus))
                 .font(.system(size: 9, weight: .bold))

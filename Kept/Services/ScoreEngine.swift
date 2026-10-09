@@ -82,7 +82,8 @@ enum ScoreEngine {
     static func promisesKept(_ tasks: [TaskItem], now: Date = .now) -> Double? {
         let promises = tasks.filter { $0.isCommitted && $0.isClosed(now) }
         guard !promises.isEmpty else { return nil }
-        return Double(promises.filter(\.isDone).count) / Double(promises.count)
+        // A partially completed task keeps only its share of the promise.
+        return promises.reduce(0.0) { $0 + $1.keptShare } / Double(promises.count)
     }
 
     // MARK: Commitment Integrity

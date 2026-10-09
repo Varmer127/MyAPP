@@ -6,8 +6,10 @@ import Charts
 struct GymProgressView: View {
     @Query private var tasks: [TaskItem]
     @Query private var settingsList: [UserSettings]
+    @Query private var exerciseLogs: [ExerciseLog]
     @State private var healthWeights: [(date: Date, kilograms: Double)] = []
     @State private var selectedLift = ""
+    @State private var liftMetric: LiftMetric = .weight
 
     private static let recentDays = 30
     private static let neglectDays = 10
@@ -122,18 +124,24 @@ struct GymProgressView: View {
     // MARK: Strength
 
     private struct LiftEntry: Identifiable {
+        let id = UUID()
         let date: Date
         let weight: Double
         let reps: Int
-        var id: Date { date }
+        let sets: Int
+
+        var estimatedMax: Double { ExerciseLog.estimatedMax(weight: weight, reps: reps) }
+        var volume: Double { weight * Double(reps * sets) }
     }
 
+    /// Every logged exercise by name, oldest first. Includes single lifts recorded by older versions.
     private var lifts: [String: [LiftEntry]] {
-        let logged = workouts.compactMap { task -> (String, LiftEntry)? in
+        var all = exerciseLogs.map { ($0.name, LiftEntry(date: $0.date, weight: $0.weight, reps: $0.reps, sets: $0.sets)) }
+        all += workouts.compactMap { task -> (String, LiftEntry)? in
             guard !task.liftName.isEmpty, let weight = task.liftWeight else { return nil }
-            return (task.liftName, LiftEntry(date: Self.date(of: task), weight: weight, reps: task.liftReps))
+            return (task.liftName, LiftEntry(date: Self.date(of: task), weight: weight, reps: max(task.liftReps, 1), sets: 1))
         }
-        return Dictionary(grouping: logged, by: { $0.0 }).mapValues { $0.map(\.1) }
+        return Dictionary(grouping: all, by: { $0.0 }).mapValues { $0.map(\.1).sorted { $0.date < $1.date } }
     }
 
     @ViewBuilder
@@ -141,9 +149,9 @@ struct GymProgressView: View {
         let all = lifts
         let names = all.keys.sorted()
         VStack(spacing: 10) {
-            SectionLabel(text: "Síla")
+            SectionLabel(text: "Cviky a síla")
             if names.isEmpty {
-                Text("Při zápisu tréninku vyplň hlavní cvik a váhu na čince. Tady pak uvidíš, jak sílíš.")
+                Text("Při zápisu tréninku vyber cviky a zapiš váhu, opakování a série. Tady pak uvidíš, jak sílíš.")
                     .font(.system(size: 14))
                     .foregroundStyle(Theme.textSecondary)
                     .card()
@@ -151,32 +159,83 @@ struct GymProgressView: View {
                 let current = names.contains(selectedLift) ? selectedLift : names[0]
                 let entries = all[current] ?? []
                 VStack(alignment: .leading, spacing: 16) {
-                    if names.count > 1 {
-                        Picker("Cvik", selection: Binding(get: { current }, set: { selectedLift = $0 })) {
-                            ForEach(names, id: \.self) { Text($0).tag($0) }
-                        }
-                        .pickerStyle(.menu)
-                        .tint(.white)
-                    } else {
-                        Text(current)
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(Theme.textPrimary)
+                    Picker("Cvik", selection: Binding(get: { current }, set: { selectedLift = $0 })) {
+                        ForEach(names, id: \.self) { Text($0).tag($0) }
                     }
+                    .pickerStyle(.menu)
+                    .tint(.white)
                     if let first = entries.first, let last = entries.last {
                         let best = entries.map(\.weight).max() ?? last.weight
+                        let bestMax = entries.map(\.estimatedMax).max() ?? last.estimatedMax
                         HStack(spacing: 10) {
-                            MetricTile(value: last.weight.kilogramText, label: last.reps > 0 ? "Naposledy × \(last.reps)" : "Naposledy")
-                            MetricTile(value: best.kilogramText, label: "Maximum")
-                            MetricTile(value: "\(last.weight >= first.weight ? "+" : "−")\(abs(last.weight - first.weight).kilogramText)",
-                                       label: "Od začátku",
-                                       color: last.weight > first.weight ? Theme.green : Theme.textPrimary)
+                            MetricTile(value: last.weight.kilogramText, label: "Naposledy × \(last.reps)")
+                            MetricTile(value: best.kilogramText, label: "Nejtěžší váha")
+                            MetricTile(value: bestMax.kilogramText, label: "Odhad maxima")
                         }
                         if entries.count > 1 {
-                            lineChart(entries.map { ($0.date, $0.weight) })
+                            let change = last.estimatedMax - first.estimatedMax
+                            Text("Odhad maxima na jedno opakování: \(change >= 0 ? "+" : "−")\(abs(change).kilogramText) od \(first.date.dayMonthText)")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(change > 0 ? Theme.green : (change < 0 ? Theme.red : Theme.textSecondary))
+                            Picker("Graf", selection: $liftMetric) {
+                                ForEach(LiftMetric.allCases) { Text($0.rawValue).tag($0) }
+                            }
+                            .pickerStyle(.segmented)
+                            lineChart(entries.map { ($0.date, liftMetric.value($0.weight, $0.estimatedMax, $0.volume)) })
+                        } else {
+                            Text("Graf se ukáže po druhém zápisu tohoto cviku.")
+                                .font(.system(size: 13))
+                                .foregroundStyle(Theme.textSecondary)
                         }
+                        Text("Odhad maxima počítá z váhy a opakování, takže jde porovnat 80 kg × 8 s 90 kg × 4. Objem = váha × opakování × série.")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Theme.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                 }
                 .card()
+                VStack(spacing: 0) {
+                    ForEach(Array(names.enumerated()), id: \.element) { index, name in
+                        if index > 0 {
+                            Divider().overlay(Theme.border)
+                        }
+                        let entries = all[name] ?? []
+                        HStack {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(name)
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(Theme.textPrimary)
+                                Text("\(entries.count)× · naposledy \(entries.last?.date.dayMonthText ?? "—")")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Theme.textSecondary)
+                            }
+                            Spacer()
+                            if let last = entries.last {
+                                Text("\(last.weight > 0 ? last.weight.kilogramText : "vl. váha") × \(last.reps)")
+                                    .font(.system(size: 15, weight: .bold))
+                                    .foregroundStyle(Theme.textPrimary)
+                            }
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 11)
+                        .contentShape(Rectangle())
+                        .onTapGesture { selectedLift = name }
+                    }
+                }
+                .card(padding: 0)
+            }
+        }
+    }
+
+    private enum LiftMetric: String, CaseIterable, Identifiable {
+        case weight = "Váha", estimatedMax = "Odhad maxima", volume = "Objem"
+        var id: String { rawValue }
+
+        func value(_ weight: Double, _ estimatedMax: Double, _ volume: Double) -> Double {
+            switch self {
+            case .weight: weight
+            case .estimatedMax: estimatedMax
+            case .volume: volume
             }
         }
     }

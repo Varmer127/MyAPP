@@ -33,6 +33,8 @@ struct FocusView: View {
     private func content(now: Date) -> some View {
         let remaining = session?.remaining(at: now) ?? TimeInterval(task.plannedMinutes * 60)
         let isOvertime = remaining < 0
+        // Running over is neutral by itself; with a deadline set it means falling behind, so it is flagged.
+        let isBehind = isOvertime && task.deadline != nil
         return VStack(spacing: 0) {
             HStack {
                 Spacer()
@@ -43,8 +45,8 @@ struct FocusView: View {
             .padding(Theme.screenPadding)
             Spacer()
             VStack(spacing: 14) {
-                Text(isOvertime ? "PŘES ČAS" : (session?.isPaused == true ? "POZASTAVENO" : "FOCUS"))
-                    .labelStyle(isOvertime || session?.isPaused == true ? Theme.orange : Theme.textSecondary)
+                Text(session?.isPaused == true ? "POZASTAVENO" : (isBehind ? "NESTÍHÁŠ PLÁN" : (isOvertime ? "NAD PLÁN" : "FOCUS")))
+                    .labelStyle(session?.isPaused == true || isBehind ? Theme.orange : Theme.textSecondary)
                 Text("\(isOvertime ? "+" : "")\(Self.clock(abs(remaining)))")
                     .font(.system(size: 76, weight: .heavy))
                     .monospacedDigit()
@@ -56,6 +58,14 @@ struct FocusView: View {
                     .tracking(1)
                     .foregroundStyle(Theme.textPrimary)
                     .multilineTextAlignment(.center)
+                if isOvertime {
+                    Text(isBehind
+                         ? "Jsi přes plánovaný čas a deadline máš v \(task.deadline?.timeText ?? "")."
+                         : "Trvá to déle, než jsi plánoval. Na skóre to nemá žádný vliv.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(isBehind ? Theme.orange : Theme.textSecondary)
+                        .multilineTextAlignment(.center)
+                }
             }
             .padding(.horizontal, Theme.screenPadding)
             Spacer()

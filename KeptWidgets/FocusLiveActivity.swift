@@ -65,11 +65,12 @@ struct FocusLiveActivity: Widget {
 
     private func statusLabel(_ context: ActivityViewContext<FocusActivityAttributes>) -> some View {
         let overtime = isOvertime(context)
-        let text = context.state.isPaused ? "FOCUS POZASTAVEN" : (overtime ? "PŘES ČAS" : "FOCUS BĚŽÍ")
+        let behind = overtime && context.attributes.hasDeadline
+        let text = context.state.isPaused ? "FOCUS POZASTAVEN" : (behind ? "NESTÍHÁŠ PLÁN" : (overtime ? "NAD PLÁN" : "FOCUS BĚŽÍ"))
         return Text(text)
             .font(.system(size: 11, weight: .bold))
             .tracking(1)
-            .foregroundStyle(context.state.isPaused || overtime ? Self.orange : .white.opacity(0.6))
+            .foregroundStyle(context.state.isPaused || behind ? Self.orange : .white.opacity(0.6))
     }
 
     /// Running: a system-driven timer that counts down to the end and then up into overtime.

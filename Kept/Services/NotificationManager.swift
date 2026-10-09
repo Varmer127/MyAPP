@@ -44,6 +44,7 @@ enum NotificationManager {
     private static let repeatedFailureCount = 3
     private static let weakPromisesKept = 0.6
     private static let focusEndID = "focus.end"
+    private static let restEndID = "gym.rest"
     private static let reflectionHour = 18
 
     private struct Planned {
@@ -70,7 +71,7 @@ enum NotificationManager {
     static func reschedule(context: ModelContext, now: Date = .now) async {
         let planned = plan(context: context, now: now)
         // Everything is replaced except the running focus timer's end notification.
-        let stale = await center.pendingNotificationRequests().map(\.identifier).filter { $0 != focusEndID }
+        let stale = await center.pendingNotificationRequests().map(\.identifier).filter { $0 != focusEndID && $0 != restEndID }
         center.removePendingNotificationRequests(withIdentifiers: stale)
         for item in planned {
             let content = UNMutableNotificationContent()
@@ -94,6 +95,21 @@ enum NotificationManager {
         content.userInfo = [NotificationRouter.routeKey: AppRoute.today.rawValue]
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(seconds, 1), repeats: false)
         try? await center.add(UNNotificationRequest(identifier: focusEndID, content: content, trigger: trigger))
+    }
+
+    /// Tells the user the rest between sets is over, also with the screen locked.
+    static func scheduleRestEnd(in seconds: TimeInterval) async {
+        let content = UNMutableNotificationContent()
+        content.title = "PAUZA SKONČILA"
+        content.body = "Jdi na další sérii."
+        content.sound = .default
+        content.userInfo = [NotificationRouter.routeKey: AppRoute.today.rawValue]
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(seconds, 1), repeats: false)
+        try? await center.add(UNNotificationRequest(identifier: restEndID, content: content, trigger: trigger))
+    }
+
+    static func cancelRestEnd() {
+        center.removePendingNotificationRequests(withIdentifiers: [restEndID])
     }
 
     static func cancelFocusEnd() {

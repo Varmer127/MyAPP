@@ -20,7 +20,8 @@ enum FocusActivityManager {
         if let activity = FocusActivity.activities.first {
             Task { await activity.update(content) }
         } else {
-            let attributes = FocusActivityAttributes(title: title, plannedMinutes: session.plannedMinutes)
+            let attributes = FocusActivityAttributes(title: title, plannedMinutes: session.plannedMinutes,
+                                                     hasDeadline: session.task?.deadline != nil)
             _ = try? FocusActivity.request(attributes: attributes, content: content, pushType: nil)
         }
     }

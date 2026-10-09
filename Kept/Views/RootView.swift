@@ -67,6 +67,7 @@ struct RootView: View {
             FocusSession.closeAbandoned(in: tasks)
             if !FocusActivityManager.reconcile(tasks) {
                 NotificationManager.cancelFocusEnd()
+                NotificationManager.cancelRestEnd()
             }
             WidgetBridge.update(tasks: tasks, plans: plans)
             await NotificationManager.reschedule(context: context)

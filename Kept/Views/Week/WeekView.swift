@@ -189,6 +189,7 @@ private struct WeekTaskRow: View {
     private var statusIcon: (name: String, color: Color) {
         let now = Date.now
         if task.isDone {
+            if task.isPartial { return ("circle.lefthalf.filled", Theme.orange) }
             return ("checkmark.circle.fill", task.status == .completedLate ? Theme.orange : Theme.green)
         }
         if task.status != .pending || task.isMissed(now) { return ("xmark.circle.fill", Theme.red) }

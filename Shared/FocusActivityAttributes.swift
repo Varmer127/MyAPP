@@ -14,4 +14,6 @@ struct FocusActivityAttributes: ActivityAttributes {
 
     var title: String
     var plannedMinutes: Int
+    /// The task has a deadline, so running over the planned time is shown as falling behind.
+    var hasDeadline: Bool = false
 }

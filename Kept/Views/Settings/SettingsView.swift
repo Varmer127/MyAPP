@@ -8,6 +8,7 @@ struct SettingsView: View {
     @Query private var settingsList: [UserSettings]
     @State private var authorization: UNAuthorizationStatus = .notDetermined
     @State private var newPreset = ""
+    @State private var newExercise = ""
     @AppStorage("introEnabled") private var introEnabled = true
 
     fileprivate static let multiplierRange = 0.2...1.0
@@ -26,6 +27,7 @@ struct SettingsView: View {
                     sundaySection(settings)
                     targetsSection(settings)
                     presetsSection(settings)
+                    exercisesSection(settings)
                     healthSection(settings)
                     weightsSection(settings)
                 }
@@ -167,6 +169,39 @@ struct SettingsView: View {
             Text("Týdenní cíle")
         } footer: {
             Text("Odklad přesune úkol na jiný den bez postihu; víc než 3 za měsíc nastavit nejde, jen míň. Plán s méně aktivitami, než je minimum, nejde na nový týden potvrdit. Když za cílem kategorie zaostáváš, aplikace ti úkol sama navrhne na obrazovce Dnes a při plánování týdne upozorní, že ho plán nepokrývá.")
+        }
+        .listRowBackground(Theme.card)
+    }
+
+    private func exercisesSection(_ settings: UserSettings) -> some View {
+        Section {
+            ForEach(settings.exercisePresets, id: \.self) { preset in
+                HStack {
+                    Text(preset)
+                    Spacer()
+                    Button {
+                        settings.exercisePresets.removeAll { $0 == preset }
+                    } label: {
+                        Image(systemName: "minus.circle").foregroundStyle(Theme.red)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            HStack {
+                TextField("Nový cvik", text: $newExercise)
+                Button("Přidat") {
+                    let name = newExercise.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !name.isEmpty, !settings.exercisePresets.contains(name) {
+                        settings.exercisePresets.append(name)
+                    }
+                    newExercise = ""
+                }
+                .disabled(newExercise.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+        } header: {
+            Text("Gym – cviky")
+        } footer: {
+            Text("Nabízejí se při zápisu tréninku. Odebrání cviku ze seznamu nesmaže jeho historii ve statistikách.")
         }
         .listRowBackground(Theme.card)
     }

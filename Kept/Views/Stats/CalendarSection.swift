@@ -13,6 +13,7 @@ struct CalendarSection: View {
     /// First day of the month shown in month mode.
     @State private var month = CalendarSection.monthStart(of: .now)
     @State private var year = Calendar.app.component(.year, from: .now)
+    @State private var selectedDay: DayRequest?
 
     private static let weekdayLabels = ["PO", "ÚT", "ST", "ČT", "PÁ", "SO", "NE"]
     private static let daysInWeek = 7
@@ -54,6 +55,7 @@ struct CalendarSection: View {
             }
             .card()
         }
+        .sheet(item: $selectedDay) { DayDetailView(day: $0.day) }
     }
 
     // MARK: Month
@@ -72,6 +74,10 @@ struct CalendarSection: View {
                 }
             }
             monthGrid(month, spacing: 4, showsNumbers: true)
+            Text("Klepni na den a uvidíš, co jsi ten den udělal.")
+                .font(.system(size: 12))
+                .foregroundStyle(Theme.textTertiary)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -108,6 +114,12 @@ struct CalendarSection: View {
                             .stroke(score.day == today ? Color.white : (isFuture ? Theme.border : .clear),
                                     lineWidth: score.day == today ? 1.5 : 1)
                     }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        // Only the large month view opens a day; in the year view the whole month is one button.
+                        if showsNumbers, !isFuture { selectedDay = DayRequest(day: score.day) }
+                    }
+                    .allowsHitTesting(showsNumbers)
             }
         }
     }

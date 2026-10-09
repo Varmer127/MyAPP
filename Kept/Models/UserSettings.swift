@@ -24,6 +24,8 @@ final class UserSettings {
     var weeklyTargetsData: Data = Data()
     /// JSON-encoded `[String]` of gym workout presets. Empty data means "never edited".
     var workoutPresetsData: Data = Data()
+    /// JSON-encoded `[String]` of gym exercise presets. Empty data means "never edited".
+    var exercisePresetsData: Data = Data()
     /// Fewest activities a weekly plan must contain. 0 turns the rule off.
     var minimumWeeklyTasks: Int = 7
     /// How many tasks a month may be postponed without penalty. Can only be lowered below the maximum.
@@ -33,6 +35,15 @@ final class UserSettings {
     init() {}
 
     static let defaultWorkoutPresets = ["Ruce a ramena", "Záda a prsa", "Nohy"]
+    static let defaultExercisePresets = ["Bench press", "Dřep", "Mrtvý tah", "Tlaky nad hlavu", "Shyby", "Přítahy v předklonu"]
+
+    var exercisePresets: [String] {
+        get {
+            guard !exercisePresetsData.isEmpty else { return UserSettings.defaultExercisePresets }
+            return (try? JSONDecoder().decode([String].self, from: exercisePresetsData)) ?? UserSettings.defaultExercisePresets
+        }
+        set { exercisePresetsData = (try? JSONEncoder().encode(newValue)) ?? Data() }
+    }
     static let weeklyTargetRange = 0...7
     static let minimumWeeklyTasksRange = 0...40
     static let postponeLimitRange = 0...3

@@ -60,11 +60,11 @@ enum StatisticsService {
         guard let earliest = byDay.keys.min() else { return 0 }
         let today = now.startOfDay
         var streak = 0
-        if let todays = byDay[today], todays.allSatisfy(\.isDone) { streak += 1 }
+        if let todays = byDay[today], todays.allSatisfy(\.isFullyDone) { streak += 1 }
         var day = today.addingDays(-1)
         while day >= earliest {
             if let group = byDay[day] {
-                guard group.allSatisfy(\.isDone) else { break }
+                guard group.allSatisfy(\.isFullyDone) else { break }
                 streak += 1
             }
             day = day.addingDays(-1)
@@ -159,7 +159,7 @@ enum StatisticsService {
         if strong > 0 {
             records.append(Record(label: "Nejdelší série dní nad 80 %", value: String.days(strong), detail: "Dny bez úkolů sérii nepřeruší"))
         }
-        let perfect = longestRun(days) { (byDay[$0] ?? []).filter { !$0.isRecovery }.allSatisfy(\.isDone) }
+        let perfect = longestRun(days) { (byDay[$0] ?? []).filter { !$0.isRecovery }.allSatisfy(\.isFullyDone) }
         if perfect > 0 {
             records.append(Record(label: "Nejdelší perfektní série", value: String.days(perfect), detail: "Všechny úkoly dne splněné"))
         }

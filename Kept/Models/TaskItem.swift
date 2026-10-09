@@ -51,6 +51,10 @@ final class TaskItem {
     /// 0 = not answered yet, 1 = the stake was honoured after failing, 2 = it was not.
     var stakeOutcome: Int = 0
 
+    /// How much of the task was really done (0...1). Below 1 the task counts as partially completed.
+    var completionShare: Double = 1
+    var partialNote: String = ""
+
     /// Proof of completion, for tasks that require it.
     var proofNote: String = ""
     @Attribute(.externalStorage) var proofPhoto: Data?
@@ -60,6 +64,8 @@ final class TaskItem {
     var failures: [FailureRecord] = []
     @Relationship(deleteRule: .cascade, inverse: \FocusSession.task)
     var focusSessions: [FocusSession] = []
+    @Relationship(deleteRule: .cascade, inverse: \ExerciseLog.task)
+    var exercises: [ExerciseLog] = []
 
     init(title: String, category: TaskCategory, priority: TaskPriority, weight: Int, scheduledDate: Date) {
         self.title = title
@@ -120,6 +126,7 @@ final class TaskItem {
         if let running = activeFocusSession { return running }
         let session = FocusSession(task: self, now: now)
         context.insert(session)
+        try? context.save()
         return session
     }
 
@@ -132,6 +139,12 @@ final class TaskItem {
     var dueDate: Date { deadline ?? scheduledDate.endOfDay }
 
     var isDone: Bool { !isRemoved && (status == .completed || status == .completedLate) }
+
+    /// Done, but only in part.
+    var isPartial: Bool { isDone && completionShare < 1 }
+    var isFullyDone: Bool { isDone && completionShare >= 1 }
+    /// What the task counts for as a kept promise: 0 if not done, otherwise the completed share.
+    var keptShare: Double { isDone ? min(max(completionShare, 0), 1) : 0 }
 
     func dayHasPassed(_ now: Date) -> Bool { now >= scheduledDate.endOfDay }
 
@@ -150,8 +163,8 @@ final class TaskItem {
     /// Share of the task's weight that was earned (0...1).
     var completionFactor: Double {
         guard isDone else { return 0 }
-        guard status == .completedLate, let completedAt else { return 1 }
-        return ScoreEngine.lateFactor(delay: completedAt.timeIntervalSince(dueDate))
+        guard status == .completedLate, let completedAt else { return keptShare }
+        return keptShare * ScoreEngine.lateFactor(delay: completedAt.timeIntervalSince(dueDate))
     }
 
     func markDone(at now: Date = .now) {
@@ -162,8 +175,29 @@ final class TaskItem {
         status = now > dueDate ? .completedLate : .completed
     }
 
+    /// Takes back a completion, skip or failure and makes the task open again.
+    /// What was logged with the completion goes with it, so re-completing does not duplicate it.
+    /// Failure records stay: an excuse that was written remains part of the history.
     func reopen() {
         completedAt = nil
+        completionShare = 1
+        partialNote = ""
+        workoutType = ""
+        workoutAbs = false
+        bodyWeight = nil
+        proofNote = ""
+        proofPhoto = nil
+        stakeOutcome = 0
+        for exercise in exercises {
+            modelContext?.delete(exercise)
+        }
         status = .pending
+    }
+
+    /// A done task can always be taken back; a skip or failure only on the day itself,
+    /// so old failures cannot be quietly erased later.
+    func canReopen(now: Date = .now) -> Bool {
+        guard !isRemoved, status != .pending else { return false }
+        return isDone || !dayHasPassed(now)
     }
 }

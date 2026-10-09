@@ -54,14 +54,6 @@ struct StatsView: View {
                         .pickerStyle(.segmented)
                     }
                     scores
-                    counts
-                    CategorySection(tasks: scoped)
-                    StreaksSection(tasks: tasks)
-                    TrendSection(tasks: tasks)
-                    CalendarSection(tasks: tasks)
-                    EffortSection(tasks: tasks, sessions: sessions)
-                    longTerm
-                    RecordsSection(tasks: tasks, sessions: sessions)
                     NavigationLink {
                         GymProgressView()
                     } label: {
@@ -72,6 +64,14 @@ struct StatsView: View {
                         }
                         .card()
                     }
+                    counts
+                    CategorySection(tasks: scoped)
+                    StreaksSection(tasks: tasks)
+                    TrendSection(tasks: tasks)
+                    CalendarSection(tasks: tasks)
+                    EffortSection(tasks: tasks, sessions: sessions)
+                    longTerm
+                    RecordsSection(tasks: tasks, sessions: sessions)
                     JournalLinkSection(count: reflections.count)
                     ReviewHistorySection(tasks: tasks)
                 }

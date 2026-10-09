@@ -21,13 +21,19 @@ struct TodayView: View {
     @State private var editor: EditorRequest?
     @State private var workoutTask: TaskItem?
     @State private var proofTask: TaskItem?
+    @State private var partialTask: TaskItem?
+    /// Partial completion confirmed in the sheet; applied once the sheet has finished closing.
+    @State private var pendingPartial: (task: TaskItem, share: Double, note: String)?
     @State private var postponeTask: TaskItem?
     /// Task the user wants to give up on; asks whether to postpone or to skip.
     @State private var failChoice: TaskItem?
     @State private var focusTask: TaskItem?
+    @State private var gymTimerTask: TaskItem?
     @State private var detailTask: TaskItem?
     /// Task to complete once the focus screen has finished closing.
     @State private var completeAfterFocus: TaskItem?
+    /// Task waiting for the "did you really do it as planned?" confirmation.
+    @State private var confirmDone: TaskItem?
     @State private var excuse: ExcuseRequest?
     let openWeek: () -> Void
     @Environment(\.scenePhase) private var scenePhase
@@ -63,12 +69,20 @@ struct TodayView: View {
         .fullScreenCover(isPresented: $showsRealityCheck) { RealityCheckView() }
         .sheet(item: $workoutTask) { WorkoutLogView(task: $0) }
         .sheet(item: $proofTask) { ProofView(task: $0) }
+        .sheet(item: $partialTask, onDismiss: {
+            if let partial = pendingPartial {
+                pendingPartial = nil
+                complete(partial.task, share: partial.share, note: partial.note)
+            }
+        }) { task in
+            PartialView(task: task) { share, note in pendingPartial = (task, share, note) }
+        }
         .fullScreenCover(item: $reflection) { ReflectionView(weekStart: $0.weekStart) }
         .task(id: scenePhase) {
             // Opens the reflection by itself the first time the app is used after the week ends.
             let today = Date.now.startOfDay.timeIntervalSince1970
             // Never on top of the focus timer: presenting a second cover would close the first.
-            guard scenePhase == .active, reflectionPromptDay != today, focusTask == nil,
+            guard scenePhase == .active, reflectionPromptDay != today, focusTask == nil, gymTimerTask == nil,
                   let pending = ReflectionRequest.pending(tasks: tasks, reflections: reflections) else { return }
             reflectionPromptDay = today
             reflection = pending
@@ -84,13 +98,33 @@ struct TodayView: View {
             Button("Přeskočit a vysvětlit", role: .destructive) { excuse = ExcuseRequest(task: task, kind: .skipped) }
         }
         .sheet(item: $detailTask) { TaskDetailView(task: $0) }
+        // A moment to be honest before anything counts as done.
+        .alert("Opravdu jsi to splnil podle plánu?",
+               isPresented: Binding(get: { confirmDone != nil }, set: { if !$0 { confirmDone = nil } }),
+               presenting: confirmDone) { task in
+            Button("Ano, splnil jsem") { complete(task) }
+            if !task.isMissed(.now) {
+                Button("Jen částečně") { partialTask = task }
+            }
+            Button("Zrušit", role: .cancel) {}
+        } message: { task in
+            Text("\(task.title) · \(task.plannedMinutes) min\n\nBuď k sobě upřímný. Podvedl bys jen sám sebe.")
+        }
         .fullScreenCover(item: $focusTask, onDismiss: {
             if let task = completeAfterFocus {
                 completeAfterFocus = nil
-                complete(task)
+                confirmDone = task
             }
         }) { task in
             FocusView(task: task) { completeAfterFocus = task }
+        }
+        .fullScreenCover(item: $gymTimerTask, onDismiss: {
+            if let task = completeAfterFocus {
+                completeAfterFocus = nil
+                confirmDone = task
+            }
+        }) { task in
+            GymTimerView(task: task) { completeAfterFocus = task }
         }
     }
 
@@ -109,7 +143,10 @@ struct TodayView: View {
     }
 
     /// Gym tasks ask what was trained and proof tasks ask for proof before they count as done.
-    private func complete(_ task: TaskItem) {
+    private func complete(_ task: TaskItem, share: Double = 1, note: String = "") {
+        // Set on every attempt, so a cancelled partial completion never leaks into a later full one.
+        task.completionShare = share
+        task.partialNote = note
         if task.category == .gym {
             workoutTask = task
         } else if task.requiresProof {
@@ -273,10 +310,15 @@ struct TodayView: View {
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(Theme.textPrimary)
                         Text("ÚKOLŮ SPLNĚNO").labelStyle()
+                        if day.partialCount > 0 {
+                            Text("z toho částečně: \(day.partialCount)")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Theme.orange)
+                        }
                         Spacer()
                     }
                     ThinBar(value: Double(day.doneCount) / Double(day.scored.count),
-                            color: day.doneCount == day.scored.count ? Theme.green : Theme.textPrimary)
+                            color: day.doneCount == day.scored.count && day.partialCount == 0 ? Theme.green : Theme.textPrimary)
                 }
             }
         }
@@ -506,13 +548,20 @@ struct TodayView: View {
                             detailTask = task
                         }
                     },
-                    onDone: { complete(task) },
+                    onDone: { confirmDone = task },
                     onFail: { giveUp(on: task, now: now) },
-                    onFocus: { focusTask = task }
+                    onFocus: {
+                        if task.category == .gym {
+                            gymTimerTask = task
+                        } else {
+                            focusTask = task
+                        }
+                    },
+                    onPartial: { partialTask = task }
                 )
                 .contextMenu {
-                    if task.isDone {
-                        Button("Vrátit splnění") { withAnimation { task.reopen() } }
+                    if task.canReopen(now: now) {
+                        Button("Změnit rozhodnutí") { withAnimation { task.reopen() } }
                     }
                 }
             }
@@ -535,6 +584,7 @@ private struct TodaySnapshot {
     let weekIsCommitted: Bool
 
     var doneCount: Int { scored.filter(\.isDone).count }
+    var partialCount: Int { scored.filter(\.isPartial).count }
 
     init(tasks: [TaskItem], plans: [WeeklyPlan], now: Date) {
         let weekStart = now.weekStart
