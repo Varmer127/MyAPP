@@ -1,0 +1,83 @@
+# Kept → App Store: co se musí změnit
+
+Založeno 10. 10. 2026. Aplikace se zatím dolaďuje pro osobní použití; tenhle seznam říká, co je potřeba udělat, až přijde čas na veřejné vydání. Nic z toho zatím není hotové.
+
+## Rozhodnuto (11. 10. 2026)
+
+- **Pořadí:** nejdřív doladit aplikaci pro osobní použití, převod pro App Store až potom.
+- **Model:** zdarma + předplatné. Ceny zatím neurčeny.
+- **Trh:** Česko a Slovensko + zbytek světa.
+- **Jazyky v první verzi:** čeština a angličtina; uživatel si jazyk zvolí při prvním spuštění.
+- **Věk:** cílová skupina 13+ (drsný tón obsahuje vulgarismy; souhlas uživatele hodnocení nesnižuje).
+- **Synchronizace přes iCloud:** ano, ale až v rámci příprav na App Store (vyžaduje placený účet).
+- **Rozsah první verze:** nerozhodnuto.
+- **Název:** nerozhodnuto. „Kept“ i „Vowed“ jsou v App Storu obsazené.
+
+## 1. Musí být, jinak to neprojde nebo nedává smysl
+
+- [ ] **Úvodní video.** `Kept/Intro.mp4` je klip Davida Gogginse (cizí autorské dílo, mimo git). Odstranit, nebo nahradit vlastním. Kód přehrávání (`IntroView`) může zůstat.
+- [ ] **Jazyky.** Všechny texty jsou česky napevno v kódu (odhadem 600–800 řetězců, ~45 souborů).
+  - [ ] přesunout texty do String Catalogu
+  - [ ] angličtina (a další jazyky)
+  - [ ] notifikace (`NotificationTemplates`, 143 šablon) napsat pro každý jazyk znovu, ne překládat doslova; drsný tón nechat zkontrolovat rodilým mluvčím
+  - [ ] skloňování počtů („1 den / 2 dny / 5 dní“) přes pluralizaci systému místo `String.days`
+  - [ ] `Locale.app` a `Calendar.app` jsou vynucené na češtinu a pondělí; přepnout na nastavení zařízení
+  - [ ] výchozí názvy kategorií, partií a cviků překládat, vlastní názvy uživatele nechat být
+- [ ] **Věci na míru jednomu člověku.**
+  - [ ] kategorie jsou pevný `enum` (včetně „Claude a aplikace“); potřeba vlastní kategorie uživatele
+  - [ ] výchozí týdenní cíle (Gym 4×, Nový skill 2×…) a minimum 7 aktivit nastavit v úvodním průvodci
+  - [ ] výchozí partie v gymu a cviky jako nabídka, ne danost
+  - [ ] úvodní průvodce (onboarding): co aplikace dělá, tón, cíle, povolení notifikací ve správnou chvíli
+- [ ] **Platby.** Nákupy přes StoreKit 2, obrazovka s nabídkou, obnovení nákupů, rozdělení funkcí na zdarma / placené. Model zatím nerozhodnut.
+- [ ] **Zásady ochrany soukromí.** Veřejná URL + vyplněný „App Privacy“ dotazník v App Store Connect. Kvůli HealthKitu povinné.
+- [ ] **Web.** Stránka se zásadami soukromí a kontaktem na podporu (obojí povinné odkazy v App Storu).
+- [ ] **Drsný tón.** Vulgární notifikace: nesmí být výchozí, jen jako vědomá volba; nastavit odpovídající věkové hodnocení.
+- [ ] **Název.** „Kept“ je v App Storu obsazený několika aplikacemi (viz níže). Vybrat rozlišující název a ověřit ochranné známky.
+
+## 2. Na straně vývojářského účtu
+
+- [ ] Apple Developer Program (99 USD / rok)
+- [ ] Smlouva o placených aplikacích: bankovní a daňové údaje v App Store Connect
+- [ ] Přihlásit se do App Store Small Business Program (provize 15 % místo 30 %)
+- [ ] Daně v ČR probrat s účetním
+- [ ] Bundle ID `cz.philipstryka.kept` a App Group `group.cz.philipstryka.kept` zaregistrovat pod placeným účtem
+
+## 3. Kvalita pro platící uživatele
+
+- [ ] **Záloha a synchronizace.** Data jsou jen v zařízení; zvážit iCloud (CloudKit). Pozor: SwiftData + CloudKit má omezení (žádné unikátní atributy, všechny vztahy volitelné).
+- [ ] **Verzování databáze.** Zavést `VersionedSchema` a migrační plán, aby aktualizace nikdy nerozbila data.
+- [ ] **Automatické testy** výpočtu skóre (`ScoreEngine`), odkladů, částečného splnění a migrací. Projekt teď nemá žádný testovací target.
+- [ ] **Zjednodušení první verze.** Rozhodnout, co bude v 1.0 a co až později.
+- [ ] **Přístupnost.** Dynamická velikost písma (teď pevné velikosti), VoiceOver popisky, kontrast.
+- [ ] **Různé velikosti displeje**, případně iPad (teď jen iPhone na výšku).
+- [ ] **Time Sensitive notifikace**, aby připomínky prošly režimem Nerušit.
+- [ ] **TestFlight** s několika lidmi před vydáním.
+- [ ] Odstranit ladicí výpis naplánovaných notifikací (`NotificationManager`, `logger.info`).
+
+## Nápady na později (nerozhodnuto, nic z toho není naprogramované)
+
+Všechny čtyři mění to, že aplikace dnes nic neposílá mimo telefon. Znamenají server, účty nebo sdílení dat se třetí stranou a rozšíření zásad soukromí.
+
+- **AI kouč.** Buď cloudový model (potřebuje vlastní server jako prostředníka, platí se za každé použití, podle pravidla 5.1.2(i) je nutný výslovný souhlas před odesláním dat), nebo model v zařízení (zdarma a soukromý, ale jen na novějších iPhonech).
+- **Ověření důkazu fotkou pomocí AI.** Jde ověřit, co na fotce je; nejde dokázat, že je dnešní a že úkol opravdu proběhl. Podmínkou je focení přímo v aplikaci, ne výběr z galerie.
+- **Duely s přáteli.** Vyžadují účty, server a seznam přátel.
+- **Body za dodržené závazky.** Návrh: za splněné závazky se sbírají body a za určitý počet jde jednou zrušit závazek bez postihu. Jen v zařízení, bez serveru. Zvážit sloučení s odklady (dnes 3 měsíčně zdarma).
+- **Úvodní průvodce s moduly.** Při prvním spuštění volba jazyka, tónu a modulů (Gym, Apple Health, focus timer, sázky, deníček…) a toho, které záložky jsou vidět. Vše musí jít později změnit v Nastavení a průvodce to musí říct.
+- **Mince za splnění úkolů.** Virtuální měna jde udělat jen v zařízení. Skutečné peníze nebo sázky o peníze jsou právní otázka (hazard, pravidla Applu).
+
+## 4. Co uvést v App Storu
+
+- [ ] Popis, klíčová slova a snímky obrazovky v každém jazyce
+- [ ] Účel čtení dat ze Zdraví a použití fotoaparátu (`NSHealthShareUsageDescription`, `NSCameraUsageDescription` jsou teď jen česky)
+- [ ] Upozornění u pauz v gymu a u drsného tónu ponechat; aplikace není zdravotní ani psychologická rada
+
+## Název „Kept“ – stav k 10. 10. 2026
+
+V App Storu už existují (zjištěno vyhledáváním, ne úplný průzkum):
+
+- „Kept“ – údržba domácnosti (Rueben McBurrows)
+- „Kept: Home Inventory“ – inventář domácnosti
+- „Kept – saving with your style“ – spoření (Bank of Ayudhya)
+- „The Kept App with Chris Powell“ – wellness / fitness
+
+Ochranné známky (USPTO, EUIPO) ověřeny nebyly.

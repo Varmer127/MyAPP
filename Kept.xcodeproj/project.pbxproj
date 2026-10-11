@@ -291,6 +291,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Kept;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Kept potřebuje fotoaparát, abys mohl vyfotit důkaz splnění úkolu.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Kept čte tvoji váhu a tréninky, aby je nemusel zapisovat ručně.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -322,6 +323,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Kept;
+				INFOPLIST_KEY_NSCameraUsageDescription = "Kept potřebuje fotoaparát, abys mohl vyfotit důkaz splnění úkolu.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Kept čte tvoji váhu a tréninky, aby je nemusel zapisovat ručně.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

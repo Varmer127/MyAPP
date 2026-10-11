@@ -1,5 +1,5 @@
 import SwiftUI
-import PhotosUI
+import UIKit
 
 /// Proof of completion being entered: a photo, a short note, or both.
 struct ProofDraft {
@@ -17,10 +17,13 @@ struct ProofDraft {
     }
 }
 
-/// Photo picker + note field, shared by every completion sheet that needs proof.
+/// Camera + note field, shared by every completion sheet that needs proof.
+/// The photo has to be taken on the spot: choosing an old one from the library is not offered.
 struct ProofInput: View {
     @Binding var draft: ProofDraft
-    @State private var pickerItem: PhotosPickerItem?
+    @State private var showsCamera = false
+
+    private var cameraAvailable: Bool { UIImagePickerController.isSourceTypeAvailable(.camera) }
 
     private static let maxDimension: CGFloat = 1600
     private static let jpegQuality = 0.7
@@ -37,13 +40,14 @@ struct ProofInput: View {
                     .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
                 Button("Odebrat fotku") {
                     draft.photo = nil
-                    pickerItem = nil
                 }
                 .font(.system(size: 14))
                 .foregroundStyle(Theme.textSecondary)
             } else {
-                PhotosPicker(selection: $pickerItem, matching: .images) {
-                    Label("Vybrat fotku", systemImage: "photo")
+                Button {
+                    showsCamera = true
+                } label: {
+                    Label("Vyfotit důkaz", systemImage: "camera")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(Theme.textPrimary)
                         .frame(maxWidth: .infinity)
@@ -52,35 +56,76 @@ struct ProofInput: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.border, lineWidth: 1))
                 }
+                .buttonStyle(.plain)
+                .disabled(!cameraAvailable)
+                .opacity(cameraAvailable ? 1 : 0.4)
+                Text(cameraAvailable
+                     ? "Fotka se pořizuje teď a tady. Z galerie vybrat nejde."
+                     : "Fotoaparát na tomto zařízení není dostupný.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.textTertiary)
             }
             TextField("Nebo krátká poznámka, např. „strany 120–165“", text: $draft.note, axis: .vertical)
                 .lineLimit(2...5)
                 .font(.system(size: 16))
                 .card()
             if !draft.isValid {
-                Text("Přidej fotku nebo poznámku.")
+                Text("Vyfoť důkaz nebo napiš poznámku.")
                     .font(.system(size: 12))
                     .foregroundStyle(Theme.orange)
             }
         }
-        .onChange(of: pickerItem) { _, item in
-            guard let item else { return }
-            Task {
-                guard let data = try? await item.loadTransferable(type: Data.self) else { return }
-                draft.photo = Self.compressed(data)
+        .fullScreenCover(isPresented: $showsCamera) {
+            CameraPicker { image in
+                draft.photo = Self.compressed(image)
             }
+            .ignoresSafeArea()
         }
     }
 
     /// Photos are stored on the device for good, so they are scaled down first.
-    private static func compressed(_ data: Data) -> Data {
-        guard let image = UIImage(data: data) else { return data }
+    private static func compressed(_ image: UIImage) -> Data? {
         let scale = min(1, maxDimension / max(image.size.width, image.size.height))
         let size = CGSize(width: image.size.width * scale, height: image.size.height * scale)
         let resized = UIGraphicsImageRenderer(size: size).image { _ in
             image.draw(in: CGRect(origin: .zero, size: size))
         }
-        return resized.jpegData(compressionQuality: jpegQuality) ?? data
+        return resized.jpegData(compressionQuality: jpegQuality)
+    }
+}
+
+/// The system camera, with no access to the photo library.
+private struct CameraPicker: UIViewControllerRepresentable {
+    @Environment(\.dismiss) private var dismiss
+    let onCapture: (UIImage) -> Void
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ controller: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    final class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+        private let parent: CameraPicker
+
+        init(_ parent: CameraPicker) { self.parent = parent }
+
+        func imagePickerController(_ picker: UIImagePickerController,
+                                   didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
+            if let image = info[.originalImage] as? UIImage {
+                parent.onCapture(image)
+            }
+            parent.dismiss()
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            parent.dismiss()
+        }
     }
 }
 
