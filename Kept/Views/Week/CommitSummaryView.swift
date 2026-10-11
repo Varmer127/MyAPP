@@ -131,6 +131,6 @@ struct CommitSummaryView: View {
             .padding(Theme.screenPadding)
         }
         .screenBackground()
-        .preferredColorScheme(.dark)
+        .appAppearance()
     }
 }

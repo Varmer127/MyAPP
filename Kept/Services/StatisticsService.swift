@@ -39,7 +39,7 @@ enum StatisticsService {
     /// Share of tasks done per category, for categories that have any task.
     static func categoryPerformance(_ tasks: [TaskItem]) -> [CategoryRate] {
         TaskCategory.allCases.compactMap { category in
-            let inCategory = tasks.filter { $0.category == category && !$0.isRecovery }
+            let inCategory = tasks.filter { $0.category == category && !$0.isRecovery && $0.countsInScores }
             guard !inCategory.isEmpty else { return nil }
             return CategoryRate(category: category,
                                 rate: Double(inCategory.filter(\.isDone).count) / Double(inCategory.count),
@@ -56,7 +56,7 @@ enum StatisticsService {
 
     /// Consecutive days on which every task was done. Days without tasks are skipped.
     static func perfectDayStreak(_ tasks: [TaskItem], now: Date = .now) -> Int {
-        let byDay = Dictionary(grouping: tasks.filter { !$0.isRecovery }) { $0.scheduledDate.startOfDay }
+        let byDay = Dictionary(grouping: tasks.filter { !$0.isRecovery && $0.countsInScores }) { $0.scheduledDate.startOfDay }
         guard let earliest = byDay.keys.min() else { return 0 }
         let today = now.startOfDay
         var streak = 0
@@ -120,7 +120,7 @@ enum StatisticsService {
     private static let minimumMonthTasks = 5
 
     static func records(tasks: [TaskItem], sessions: [FocusSession], now: Date = .now) -> [Record] {
-        let closed = tasks.filter { $0.isClosed(now) }
+        let closed = tasks.filter { $0.isClosed(now) && $0.countsInScores }
         let byDay = Dictionary(grouping: closed) { $0.scheduledDate.startOfDay }
         let byWeek = Dictionary(grouping: closed) { $0.scheduledDate.weekStart }
         let byMonth = Dictionary(grouping: closed) {

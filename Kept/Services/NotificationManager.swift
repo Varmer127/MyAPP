@@ -46,6 +46,7 @@ enum NotificationManager {
     private static let focusEndID = "focus.end"
     private static let restEndID = "gym.rest"
     private static let reflectionHour = 18
+    private static let savageHeadlineLevel = 3
 
     private struct Planned {
         let id: String
@@ -108,6 +109,16 @@ enum NotificationManager {
         try? await center.add(UNNotificationRequest(identifier: restEndID, content: content, trigger: trigger))
     }
 
+    /// Health recorded a gym workout that is not logged in the app yet.
+    static func notifyWorkoutDetected(minutes: Int) async {
+        let content = UNMutableNotificationContent()
+        content.title = "TRÉNINK ZAZNAMENÁN"
+        content.body = "Zdraví eviduje trénink (\(minutes) min). Otevři Kept a zapiš, co jsi jel."
+        content.sound = .default
+        content.userInfo = [NotificationRouter.routeKey: AppRoute.today.rawValue]
+        try? await center.add(UNNotificationRequest(identifier: "health.workout", content: content, trigger: nil))
+    }
+
     static func cancelRestEnd() {
         center.removePendingNotificationRequests(withIdentifiers: [restEndID])
     }
@@ -119,7 +130,9 @@ enum NotificationManager {
     /// Fires one sample of the chosen tone a few seconds from now.
     static func sendPreview(tone: NotificationTone) async {
         let content = UNMutableNotificationContent()
-        content.title = "CLAUDE WORK"
+        content.title = tone == .savage
+            ? NotificationTemplates.pick(NotificationTemplates.punchlines, seed: Int.random(in: 0..<1000))
+            : "CLAUDE WORK"
         content.body = NotificationTemplates.taskMessage(
             level: tone.maxLevel, title: "Claude Work", time: Date.now.timeText, why: "",
             failures: 0, seed: Int.random(in: 0..<1000))
@@ -236,7 +249,10 @@ enum NotificationManager {
             guard open > 0 else { return [] }
             return nudgeHours.enumerated().map { index, hour in
                 let body = pool.isEmpty ? "" : pool[min(index, pool.count - 1)]
-                return Planned(id: "nudge.\(offset).\(hour)", date: time(hour * 60, on: day), title: "KEPT",
+                let title = settings.tone == .savage
+                    ? NotificationTemplates.pick(NotificationTemplates.punchlines, seed: day.daySeed &+ hour)
+                    : "KEPT"
+                return Planned(id: "nudge.\(offset).\(hour)", date: time(hour * 60, on: day), title: title,
                                body: body.replacingOccurrences(of: "{n}", with: "\(open)"), route: .today)
             }
         }
@@ -264,8 +280,12 @@ enum NotificationManager {
                     let body = NotificationTemplates.taskMessage(
                         level: level, title: task.title, time: step.date.timeText, why: task.why,
                         failures: failureCount, seed: task.uid.hashValue &+ step.index)
+                    // In the savage tone the escalated steps lead with a punchline; the task is named in the body.
+                    let title = settings.tone == .savage && level >= savageHeadlineLevel
+                        ? NotificationTemplates.pick(NotificationTemplates.punchlines, seed: task.uid.hashValue &+ step.index &* 7)
+                        : task.title.uppercased()
                     return Planned(id: "task.\(task.uid.uuidString).\(step.index)", date: step.date,
-                                   title: task.title.uppercased(), body: body, route: .today)
+                                   title: title, body: body, route: .today)
                 }
             }
         }

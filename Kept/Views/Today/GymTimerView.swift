@@ -1,49 +1,31 @@
 import SwiftUI
 import SwiftData
 
-/// What the rest between sets is aiming for.
-enum RestStyle: String, CaseIterable, Identifiable {
-    case strength, muscle, endurance
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .strength: "Síla"
-        case .muscle: "Svaly"
-        case .endurance: "Vytrvalost"
-        }
-    }
-
-    /// Target rest in seconds: a sensible middle of the commonly recommended range.
-    var targetSeconds: TimeInterval {
-        switch self {
-        case .strength: 180
-        case .muscle: 90
-        case .endurance: 30
-        }
-    }
-}
-
 /// Workout stopwatch: total time counting up, and rest between sets measured against a target.
 /// Built on FocusSession, where a "pause" is one rest between sets.
 struct GymTimerView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("gymRestStyle") private var styleRaw = RestStyle.muscle.rawValue
+    @AppStorage(RestPreset.selectionKey) private var selectedName = ""
+    @Query private var settingsList: [UserSettings]
     let task: TaskItem
     /// Called when the user ends the workout meaning to complete the task.
     let onComplete: () -> Void
 
     private var session: FocusSession? { task.activeFocusSession }
-    private var style: RestStyle { RestStyle(rawValue: styleRaw) ?? .muscle }
+    private var presets: [RestPreset] { settingsList.first?.restPresets ?? RestPreset.defaults }
+    private var preset: RestPreset { presets.first { $0.name == selectedName } ?? presets[0] }
+    private var target: TimeInterval { TimeInterval(preset.seconds) }
+
+    /// A segmented control gets cramped beyond a few choices.
+    private static let maxSegments = 4
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { timeline in
             content(now: timeline.date)
         }
         .screenBackground()
-        .preferredColorScheme(.dark)
+        .appAppearance()
         .onAppear {
             task.startFocusIfNeeded(in: context)
             UIApplication.shared.isIdleTimerDisabled = true
@@ -56,7 +38,7 @@ struct GymTimerView: View {
     private func content(now: Date) -> some View {
         let total = (session?.active(at: now) ?? 0) + (session?.paused(at: now) ?? 0)
         let rest = session?.pausedSince.map { now.timeIntervalSince($0) }
-        let reached = (rest ?? 0) >= style.targetSeconds
+        let reached = (rest ?? 0) >= target
         let finishedRests = max((session?.pauseCount ?? 0) - (rest == nil ? 0 : 1), 0)
         let averageRest = finishedRests > 0 ? (session?.pauseSeconds ?? 0) / Double(finishedRests) : nil
         return VStack(spacing: 0) {
@@ -79,9 +61,9 @@ struct GymTimerView: View {
                             .minimumScaleFactor(0.5)
                             .lineLimit(1)
                         if let rest {
-                            ThinBar(value: rest / style.targetSeconds, color: reached ? Theme.green : Theme.orange)
+                            ThinBar(value: rest / target, color: reached ? Theme.green : Theme.orange)
                                 .frame(width: 220)
-                            Text("Cíl \(FocusView.clock(style.targetSeconds)) · celkem \(FocusView.clock(total))")
+                            Text("Cíl \(FocusView.clock(target)) · celkem \(FocusView.clock(total))")
                                 .font(.system(size: 13))
                                 .foregroundStyle(Theme.textSecondary)
                         } else {
@@ -98,11 +80,20 @@ struct GymTimerView: View {
                         MetricTile(value: FocusView.minutes(session?.paused(at: now) ?? 0), label: "V pauzách")
                     }
                     VStack(alignment: .leading, spacing: 8) {
-                        Picker("Typ tréninku", selection: $styleRaw) {
-                            ForEach(RestStyle.allCases) { Text($0.title).tag($0.rawValue) }
+                        let selection = Binding(get: { preset.name }, set: { selectedName = $0 })
+                        if presets.count <= Self.maxSegments {
+                            Picker("Pauza", selection: selection) {
+                                ForEach(presets) { Text($0.name).tag($0.name) }
+                            }
+                            .pickerStyle(.segmented)
+                        } else {
+                            Picker("Pauza", selection: selection) {
+                                ForEach(presets) { Text("\($0.name) · \(FocusView.clock(TimeInterval($0.seconds)))").tag($0.name) }
+                            }
+                            .pickerStyle(.menu)
+                            .tint(Theme.textPrimary)
                         }
-                        .pickerStyle(.segmented)
-                        Text("Orientačně: síla (těžké váhy, 1–5 opakování) 2–5 min, růst svalů 1–2 min, vytrvalost kolem 30 s. U dřepů a mrtvých tahů počítej s delší pauzou než u izolovaných cviků. Je to obecné vodítko, ne rada na míru – hlavní je zvládnout další sérii se stejnou technikou.")
+                        Text("Orientačně: síla (těžké váhy, 1–5 opakování) 2–5 min, růst svalů 1–2 min, vytrvalost kolem 30 s. U dřepů a mrtvých tahů počítej s delší pauzou než u izolovaných cviků. Je to obecné vodítko, ne rada na míru – hlavní je zvládnout další sérii se stejnou technikou. Vlastní délky pauz si nastavíš v Nastavení gymu.")
                             .font(.system(size: 11))
                             .foregroundStyle(Theme.textTertiary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -112,7 +103,7 @@ struct GymTimerView: View {
             }
             VStack(spacing: 10) {
                 Button(rest == nil ? "PAUZA MEZI SÉRIEMI" : "DALŠÍ SÉRIE", action: toggleRest)
-                    .buttonStyle(PrimaryButtonStyle(color: rest == nil ? .white : (reached ? Theme.green : Theme.orange)))
+                    .buttonStyle(PrimaryButtonStyle(color: rest == nil ? Theme.textPrimary : (reached ? Theme.green : Theme.orange)))
                 Button("DOKONČIT TRÉNINK") { end(completing: true) }
                     .buttonStyle(SecondaryButtonStyle())
                 Button("Ukončit bez splnění") { end(completing: false) }
@@ -133,7 +124,7 @@ struct GymTimerView: View {
             NotificationManager.cancelRestEnd()
         } else {
             session.pause()
-            let seconds = style.targetSeconds
+            let seconds = target
             Task { await NotificationManager.scheduleRestEnd(in: seconds) }
         }
     }

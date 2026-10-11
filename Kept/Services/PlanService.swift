@@ -16,6 +16,7 @@ struct TaskDraft {
     var requiresProof = false
     var usesFocus = false
     var isRecovery = false
+    var fromSuggestion = false
     var stake = ""
 
     init(date: Date) {
@@ -91,6 +92,7 @@ enum PlanService {
             task = TaskItem(title: draft.trimmedTitle, category: draft.category, priority: draft.priority,
                             weight: draft.weight, scheduledDate: day)
             task.isRecovery = draft.isRecovery
+            task.fromSuggestion = draft.fromSuggestion
             context.insert(task)
         }
         task.requiresProof = draft.requiresProof

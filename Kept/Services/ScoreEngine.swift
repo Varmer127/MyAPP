@@ -46,6 +46,7 @@ enum ScoreEngine {
     /// Weighted productivity (0...1): earned points / possible points, reduced when critical tasks are lost.
     /// Open tasks count as not yet earned, so pass only the tasks that should be judged.
     static func productivity(_ tasks: [TaskItem], now: Date = .now) -> Double? {
+        let tasks = tasks.filter(\.countsInScores)
         let regular = tasks.filter { !$0.isRecovery }
         let possible = regular.reduce(0.0) { $0 + Double($1.scoringWeight) }
         guard possible > 0 else { return nil }
@@ -65,7 +66,7 @@ enum ScoreEngine {
 
     /// Plain share of tasks done, ignoring weights. Only used to contrast "busy" with "productive".
     static func completionRate(_ tasks: [TaskItem]) -> Double? {
-        let regular = tasks.filter { !$0.isRecovery }
+        let regular = tasks.filter { !$0.isRecovery && $0.countsInScores }
         guard !regular.isEmpty else { return nil }
         return Double(regular.filter(\.isDone).count) / Double(regular.count)
     }
@@ -80,7 +81,7 @@ enum ScoreEngine {
     /// Kept commitments / all original commitments whose outcome is final.
     /// Removed and moved tasks stay in the denominator; tasks added after committing are not promises.
     static func promisesKept(_ tasks: [TaskItem], now: Date = .now) -> Double? {
-        let promises = tasks.filter { $0.isCommitted && $0.isClosed(now) }
+        let promises = tasks.filter { $0.isCommitted && $0.isClosed(now) && $0.countsInScores }
         guard !promises.isEmpty else { return nil }
         // A partially completed task keeps only its share of the promise.
         return promises.reduce(0.0) { $0 + $1.keptShare } / Double(promises.count)
@@ -154,7 +155,7 @@ enum ScoreEngine {
     /// minus capped penalties, plus capped bonuses. Missing components are left out and the rest re-weighted.
     static func accountability(tasks: [TaskItem], plans: [WeeklyPlan], now: Date = .now) -> Accountability? {
         let from = now.startOfDay.addingDays(-Config.accountabilityWindowDays)
-        let window = tasks.filter { $0.scheduledDate >= from && $0.isClosed(now) }
+        let window = tasks.filter { $0.scheduledDate >= from && $0.isClosed(now) && $0.countsInScores }
         guard !window.isEmpty else { return nil }
 
         let kept = promisesKept(window, now: now)

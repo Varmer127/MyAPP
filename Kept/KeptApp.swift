@@ -28,7 +28,7 @@ struct KeptApp: App {
                     .zIndex(1)
                 }
             }
-            .preferredColorScheme(.dark)
+            .appAppearance()
             .environment(\.locale, .app)
         }
         .modelContainer(for: [

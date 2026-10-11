@@ -18,7 +18,7 @@ struct WeeklyReviewView: View {
 
     private var now: Date { .now }
     private func closedTasks(in week: Date) -> [TaskItem] {
-        tasks.filter { $0.scheduledDate.weekStart == week && $0.isClosed(now) && !$0.isRecovery }
+        tasks.filter { $0.scheduledDate.weekStart == week && $0.isClosed(now) && !$0.isRecovery && $0.countsInScores }
     }
     private var closed: [TaskItem] { closedTasks(in: weekStart) }
     private var weekFailures: [FailureRecord] { failures.filter { $0.taskDate.weekStart == weekStart } }

@@ -192,6 +192,7 @@ private struct WeekTaskRow: View {
             if task.isPartial { return ("circle.lefthalf.filled", Theme.orange) }
             return ("checkmark.circle.fill", task.status == .completedLate ? Theme.orange : Theme.green)
         }
+        if task.status == .excused { return ("minus.circle.fill", Theme.textTertiary) }
         if task.status != .pending || task.isMissed(now) { return ("xmark.circle.fill", Theme.red) }
         if task.isOverdue(now) { return ("exclamationmark.circle.fill", Theme.red) }
         return ("circle", Theme.textTertiary)

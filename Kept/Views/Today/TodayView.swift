@@ -36,6 +36,7 @@ struct TodayView: View {
     @State private var confirmDone: TaskItem?
     @State private var excuse: ExcuseRequest?
     let openWeek: () -> Void
+    @Environment(\.modelContext) private var context
     @Environment(\.scenePhase) private var scenePhase
 
     private static let refreshInterval: TimeInterval = 60
@@ -94,7 +95,14 @@ struct TodayView: View {
         .sheet(item: $postponeTask) { PostponeView(task: $0, remaining: postponesLeft, limit: postponeLimit) }
         .confirmationDialog("Co s tím úkolem?", isPresented: Binding(get: { failChoice != nil }, set: { if !$0 { failChoice = nil } }),
                             titleVisibility: .visible, presenting: failChoice) { task in
-            Button("Odložit bez postihu (zbývá \(postponesLeft) z \(postponeLimit))") { postponeTask = task }
+            if postponesLeft > 0, !task.isRecovery {
+                Button("Odložit bez postihu (zbývá \(postponesLeft) z \(postponeLimit))") { postponeTask = task }
+            }
+            if PointsService.canRedeem(task, balance: PointsService.balance(tasks)) {
+                Button("Zrušit za \(PointsService.passCost) bodů bez postihu") {
+                    withAnimation { PointsService.redeem(task) }
+                }
+            }
             Button("Přeskočit a vysvětlit", role: .destructive) { excuse = ExcuseRequest(task: task, kind: .skipped) }
         }
         .sheet(item: $detailTask) { TaskDetailView(task: $0) }
@@ -135,7 +143,7 @@ struct TodayView: View {
     private func giveUp(on task: TaskItem, now: Date) {
         if task.isMissed(now) {
             excuse = ExcuseRequest(task: task, kind: .missed)
-        } else if postponesLeft > 0, !task.isRecovery {
+        } else if (postponesLeft > 0 && !task.isRecovery) || PointsService.canRedeem(task, balance: PointsService.balance(tasks), now: now) {
             failChoice = task
         } else {
             excuse = ExcuseRequest(task: task, kind: .skipped)
@@ -192,6 +200,7 @@ struct TodayView: View {
                 healthWorkoutCard(day)
                 hero(day)
                 metrics(day)
+                pointsCard
                 if showsRealityCheckCard(day, now: now) {
                     realityCheckCard
                 }
@@ -348,16 +357,22 @@ struct TodayView: View {
         return Set(parts[1].split(separator: ",").map(String.init))
     }
 
-    @ViewBuilder
-    private func suggestionsSection(now: Date) -> some View {
+    /// Today's suggestions without the ones declined for the day.
+    private func visibleSuggestions(now: Date) -> [Suggestion] {
         let declined = declinedToday(now)
         let settings = settingsList.first
-        let suggestions = SuggestionService.suggestions(
+        return SuggestionService.suggestions(
             tasks: tasks,
             workoutPresets: settings?.workoutPresets ?? UserSettings.defaultWorkoutPresets,
             now: now,
             target: { settings?.weeklyTarget(for: $0) ?? $0.defaultWeeklyTarget }
         ).filter { !declined.contains($0.category.rawValue) }
+    }
+
+    @ViewBuilder
+    private func suggestionsSection(now: Date) -> some View {
+        let declined = declinedToday(now)
+        let suggestions = visibleSuggestions(now: now)
         if !suggestions.isEmpty {
             VStack(spacing: 10) {
                 SectionLabel(text: "Návrhy")
@@ -375,6 +390,9 @@ struct TodayView: View {
                                     .font(.system(size: 13, weight: .semibold))
                                     .foregroundStyle(Theme.textPrimary)
                             }
+                            Text("+\(PointsService.perSuggestion) bodů za splnění")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundStyle(Theme.green)
                         }
                         HStack(spacing: 10) {
                             Button("PŘIDAT NA DNES") {
@@ -466,19 +484,63 @@ struct TodayView: View {
     /// Apple Health saw a workout today while a gym task is still open: one tap to log and close it.
     @ViewBuilder
     private func healthWorkoutCard(_ day: TodaySnapshot) -> some View {
-        if let minutes = healthGymMinutes,
-           let gym = (day.critical + day.open).first(where: { $0.category == .gym }) {
+        let gymToday = day.visible.filter { $0.category == .gym }
+        // Nothing to offer once a gym workout is logged today.
+        if let minutes = healthGymMinutes, !gymToday.contains(where: \.isDone) {
+            let planned = gymToday.first { $0.status == .pending }
             VStack(alignment: .leading, spacing: 12) {
                 Label("APPLE HEALTH", systemImage: "heart.fill").labelStyle(Theme.green)
-                Text("Dnes máš zaznamenaný trénink (\(minutes) min). Zapiš, co jsi jel, a „\(gym.title)“ je splněný.")
+                Text(planned.map { "Dnes máš zaznamenaný trénink (\(minutes) min). Zapiš, co jsi jel, a „\($0.title)“ je splněný." }
+                     ?? "Dnes máš zaznamenaný trénink (\(minutes) min), i když jsi ho neměl v plánu. Zapiš ho, ať se počítá.")
                     .font(.system(size: 15))
                     .foregroundStyle(Theme.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
-                Button("ZAPSAT TRÉNINK") { complete(gym) }
+                Button("ZAPSAT TRÉNINK") { complete(planned ?? addUnplannedGym(minutes: minutes)) }
                     .buttonStyle(PrimaryButtonStyle())
             }
             .card()
         }
+    }
+
+    /// A workout Health recorded without a planned task still gets tracked: it becomes today's gym task.
+    private func addUnplannedGym(minutes: Int) -> TaskItem {
+        var draft = TaskDraft(date: .now)
+        draft.title = TaskCategory.gym.title
+        draft.category = .gym
+        draft.plannedMinutes = max(15, minutes / 15 * 15)
+        // If the app was suggesting gym today anyway, the workout earns the suggestion bonus.
+        draft.fromSuggestion = visibleSuggestions(now: .now).contains { $0.category == .gym }
+        draft.weight = settingsList.first?.defaultWeight(category: .gym, priority: draft.priority)
+            ?? UserSettings.weight(points: draft.priority.basePoints, multiplier: TaskCategory.gym.defaultMultiplier)
+        return PlanService.save(draft, to: nil, in: context)
+    }
+
+    /// Points towards the next pass. One pass cancels a weekly commitment without penalty.
+    private var pointsCard: some View {
+        let balance = PointsService.balance(tasks)
+        let passes = balance / PointsService.passCost
+        let towardsNext = balance % PointsService.passCost
+        let isFull = balance >= PointsService.cap
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text("\(balance.formatted(.number.locale(.app)))")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                    .contentTransition(.numericText())
+                Text("/ \(PointsService.cap.formatted(.number.locale(.app))) BODŮ").labelStyle()
+                Spacer()
+                Text(passes == 0 ? "do propustky \(PointsService.passCost - towardsNext)"
+                     : (isFull ? "propustky: \(passes) · plná zásoba" : "propustky: \(passes)"))
+                    .font(.system(size: 12, weight: passes > 0 ? .semibold : .regular))
+                    .foregroundStyle(passes > 0 ? Theme.green : Theme.textSecondary)
+            }
+            ThinBar(value: Double(balance) / Double(PointsService.cap),
+                    color: passes > 0 ? Theme.green : Theme.textPrimary)
+            Text("Za \(PointsService.passCost.formatted(.number.locale(.app))) bodů se můžeš jednou vykoupit ze závazku bez postihu.")
+                .font(.system(size: 11))
+                .foregroundStyle(Theme.textTertiary)
+        }
+        .animation(.easeOut(duration: 0.4), value: balance)
     }
 
     private func reflectionCard(_ pending: ReflectionRequest) -> some View {
@@ -588,7 +650,7 @@ private struct TodaySnapshot {
 
     init(tasks: [TaskItem], plans: [WeeklyPlan], now: Date) {
         let weekStart = now.weekStart
-        scored = tasks.filter { $0.scheduledDate.isSameDay(as: now) }
+        scored = tasks.filter { $0.scheduledDate.isSameDay(as: now) && $0.countsInScores }
         visible = scored.filter { !$0.isRemoved }
         unresolved = tasks.filter { $0.isMissed(now) }.sorted { $0.scheduledDate > $1.scheduledDate }
 

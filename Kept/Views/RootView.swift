@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 enum AppTab: Hashable {
-    case today, week, stats, settings
+    case today, week, stats, gym, health, settings
 }
 
 struct RootView: View {
@@ -17,6 +17,8 @@ struct RootView: View {
     @State private var showsRealityCheck = false
     /// Called once the data store is set up and the first screen can be used.
     var onReady: () -> Void = {}
+
+    private var settings: UserSettings? { settingsList.first }
 
     /// Changes whenever something that scheduled notifications depend on changes.
     private var notificationSignature: Int {
@@ -47,14 +49,26 @@ struct RootView: View {
             WeekView(showsNextWeek: $weekShowsNext)
                 .tabItem { Label("Týden", systemImage: "calendar") }
                 .tag(AppTab.week)
-            StatsView()
-                .tabItem { Label("Statistiky", systemImage: "chart.bar") }
-                .tag(AppTab.stats)
+            if settings?.showsStatsTab != false {
+                StatsView()
+                    .tabItem { Label("Statistiky", systemImage: "chart.bar") }
+                    .tag(AppTab.stats)
+            }
+            if settings?.showsGymTab == true {
+                NavigationStack { GymProgressView() }
+                    .tabItem { Label("Gym", systemImage: TaskCategory.gym.symbol) }
+                    .tag(AppTab.gym)
+            }
+            if settings?.showsHealthTab == true {
+                HealthSummaryView()
+                    .tabItem { Label("Zdraví", systemImage: "heart") }
+                    .tag(AppTab.health)
+            }
             SettingsView()
                 .tabItem { Label("Nastavení", systemImage: "gearshape") }
                 .tag(AppTab.settings)
         }
-        .tint(.white)
+        .tint(Theme.textPrimary)
         .fullScreenCover(isPresented: $showsRealityCheck) { RealityCheckView() }
         .task {
             _ = UserSettings.current(in: context)
@@ -63,8 +77,16 @@ struct RootView: View {
             await NotificationManager.reschedule(context: context)
         }
         // `task(id:)` cancels the previous run, so a burst of edits reschedules once.
+        .task(id: settings?.healthEnabled) {
+            if settings?.healthEnabled == true {
+                HealthService.startWorkoutObserver()
+            }
+        }
         .task(id: notificationSignature) {
             FocusSession.closeAbandoned(in: tasks)
+            HealthService.noteGymLogged(tasks.contains {
+                $0.category == .gym && $0.isDone && $0.scheduledDate.isSameDay(as: .now)
+            })
             if !FocusActivityManager.reconcile(tasks) {
                 NotificationManager.cancelFocusEnd()
                 NotificationManager.cancelRestEnd()

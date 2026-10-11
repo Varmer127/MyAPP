@@ -49,13 +49,13 @@ struct ExerciseInput: View {
                     } label: {
                         Text(name)
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(isSelected ? .black : Theme.textPrimary)
+                            .foregroundStyle(isSelected ? Theme.onPrimary : Theme.textPrimary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 11)
                             .padding(.horizontal, 6)
-                            .background(isSelected ? Color.white : Theme.card)
+                            .background(isSelected ? Theme.textPrimary : Theme.card)
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                             .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.border, lineWidth: 1))
                     }
@@ -84,7 +84,7 @@ struct ExerciseInput: View {
                 row($draft)
             }
             Text(drafts.isEmpty
-                 ? "Nepovinné. Klepni na cvik a zapiš váhu, opakování a série. Předvolby upravíš v Nastavení."
+                 ? "Nepovinné. Klepni na cvik a zapiš váhu, opakování a série. Předvolby upravíš v sekci Gym."
                  : "Váhu nech prázdnou u cviků s vlastní vahou.")
                 .font(.system(size: 12))
                 .foregroundStyle(Theme.textTertiary)
@@ -121,7 +121,7 @@ struct ExerciseInput: View {
                     }
                     .pickerStyle(.menu)
                     .labelsHidden()
-                    .tint(.white)
+                    .tint(Theme.textPrimary)
                 }
                 column("SÉRIE") {
                     Picker("Série", selection: draft.sets) {
@@ -129,7 +129,7 @@ struct ExerciseInput: View {
                     }
                     .pickerStyle(.menu)
                     .labelsHidden()
-                    .tint(.white)
+                    .tint(Theme.textPrimary)
                 }
             }
             if let last = lastLog(draft.wrappedValue.name) {

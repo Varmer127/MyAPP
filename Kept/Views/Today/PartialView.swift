@@ -32,7 +32,7 @@ struct PartialView: View {
                             .animation(.easeOut(duration: 0.15), value: percent)
                         Text("NA KOLIK JSI TO SPLNIL").labelStyle()
                         Slider(value: $percent, in: Self.range, step: Self.step)
-                            .tint(.white)
+                            .tint(Theme.textPrimary)
                             .padding(.top, 8)
                     }
                     Text("Úkol se započítá jen z \(Int(percent)) %: do produktivity, dodržených slibů i spolehlivosti. Zbylých \(100 - Int(percent)) % je nedodržený slib.")
@@ -63,6 +63,6 @@ struct PartialView: View {
             .padding(Theme.screenPadding)
         }
         .screenBackground()
-        .preferredColorScheme(.dark)
+        .appAppearance()
     }
 }

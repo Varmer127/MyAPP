@@ -63,13 +63,13 @@ struct NoExcusesView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             Button(step == .prevention ? "BERU TO NA SEBE" : "POKRAČOVAT", action: advance)
-                .buttonStyle(PrimaryButtonStyle(color: step == .prevention ? Theme.red : .white,
-                                                textColor: step == .prevention ? .white : .black))
+                .buttonStyle(PrimaryButtonStyle(color: step == .prevention ? Theme.red : Theme.textPrimary,
+                                                textColor: step == .prevention ? Color(hex: 0xFFFFFF) : Theme.onPrimary))
                 .disabled(!canContinue)
                 .padding(Theme.screenPadding)
         }
         .screenBackground()
-        .preferredColorScheme(.dark)
+        .appAppearance()
     }
 
     private var topBar: some View {

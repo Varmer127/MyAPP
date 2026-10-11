@@ -23,6 +23,7 @@ struct TaskEditorView: View {
             draft.title = suggestion.suggestionTitle
             draft.category = suggestion
             draft.plannedMinutes = suggestion.suggestionMinutes
+            draft.fromSuggestion = true
         }
         if task == nil {
             draft.isRecovery = isRecovery
@@ -199,7 +200,7 @@ struct TaskEditorView: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
+        .appAppearance()
     }
 
     private var removalMessage: String {

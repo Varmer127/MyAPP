@@ -16,7 +16,7 @@ struct FocusView: View {
             content(now: timeline.date)
         }
         .screenBackground()
-        .preferredColorScheme(.dark)
+        .appAppearance()
         .onAppear {
             task.startFocusIfNeeded(in: context)
             UIApplication.shared.isIdleTimerDisabled = true

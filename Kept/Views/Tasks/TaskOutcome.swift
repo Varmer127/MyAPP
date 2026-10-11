@@ -11,6 +11,7 @@ extension TaskItem {
                 return ("Splněno částečně · \(Int((completionShare * 100).rounded())) %\(late ? " · pozdě" : "")", Theme.orange)
             }
             return late ? ("Splněno pozdě", Theme.orange) : ("Splněno včas", Theme.green)
+        case .excused: return ("Zrušeno za body · bez postihu", Theme.textSecondary)
         case .skipped: return ("Přeskočeno", Theme.red)
         case .failed: return ("Nesplněno", Theme.red)
         case .pending:

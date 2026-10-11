@@ -31,6 +31,28 @@ struct GymProgressView: View {
                 Text("Gym")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundStyle(Theme.textPrimary)
+                NavigationLink {
+                    GymSettingsView()
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 20))
+                            .foregroundStyle(Theme.textPrimary)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("NASTAVENÍ GYMU").labelStyle(Theme.textPrimary)
+                            Text("Partie, cviky, týdenní cíl a pauzy")
+                                .font(.system(size: 13))
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
+                    }
+                    .padding(16)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Theme.cardRaised)
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
+                    .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.textPrimary.opacity(0.25), lineWidth: 1))
+                }
                 summary
                 bodyParts
                 strength
@@ -163,7 +185,7 @@ struct GymProgressView: View {
                         ForEach(names, id: \.self) { Text($0).tag($0) }
                     }
                     .pickerStyle(.menu)
-                    .tint(.white)
+                    .tint(Theme.textPrimary)
                     if let first = entries.first, let last = entries.last {
                         let best = entries.map(\.weight).max() ?? last.weight
                         let bestMax = entries.map(\.estimatedMax).max() ?? last.estimatedMax
@@ -187,7 +209,7 @@ struct GymProgressView: View {
                                 .font(.system(size: 13))
                                 .foregroundStyle(Theme.textSecondary)
                         }
-                        Text("Odhad maxima počítá z váhy a opakování, takže jde porovnat 80 kg × 8 s 90 kg × 4. Objem = váha × opakování × série.")
+                        Text("Odhad maxima je výpočet z váhy a opakování (Epleyho vzorec: váha × (1 + opakování ÷ 30)), aby šlo porovnat 80 kg × 8 s 90 kg × 4. Je jen orientační, nad 10 opakování nepřesný, a není to doporučení, kolik naložit. Skutečné maximum nezkoušej bez jištění a rozcvičení. Objem = váha × opakování × série.")
                             .font(.system(size: 11))
                             .foregroundStyle(Theme.textTertiary)
                             .fixedSize(horizontal: false, vertical: true)

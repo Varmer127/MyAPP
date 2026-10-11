@@ -81,7 +81,7 @@ struct QuickPlanView: View {
             .padding(Theme.screenPadding)
         }
         .screenBackground()
-        .preferredColorScheme(.dark)
+        .appAppearance()
     }
 
     private static func durationText(_ minutes: Int) -> String {
@@ -105,13 +105,13 @@ struct QuickPlanView: View {
                 Text(text)
             }
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(isSelected ? .black : Theme.textPrimary)
+                .foregroundStyle(isSelected ? Theme.onPrimary : Theme.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .frame(maxWidth: .infinity, minHeight: symbol == nil ? nil : Self.categoryChipHeight)
                 .padding(.vertical, 11)
                 .padding(.horizontal, 6)
-                .background(isSelected ? Color.white : Theme.card)
+                .background(isSelected ? Theme.textPrimary : Theme.card)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.border, lineWidth: 1))
         }

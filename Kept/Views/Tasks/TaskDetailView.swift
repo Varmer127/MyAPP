@@ -106,7 +106,7 @@ struct TaskDetailView: View {
             .padding(Theme.screenPadding)
         }
         .screenBackground()
-        .preferredColorScheme(.dark)
+        .appAppearance()
         .confirmationDialog(
             task.isDone ? "Úkol se vrátí mezi otevřené a přestane se počítat jako splněný. Zapsaný trénink, důkaz a procenta se smažou."
                         : "Úkol se vrátí mezi otevřené. To, co jsi napsal v Bez výmluv, zůstane v historii.",

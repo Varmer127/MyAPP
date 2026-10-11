@@ -10,7 +10,8 @@ Založeno 10. 10. 2026. Aplikace se zatím dolaďuje pro osobní použití; tenh
 - **Jazyky v první verzi:** čeština a angličtina; uživatel si jazyk zvolí při prvním spuštění.
 - **Věk:** cílová skupina 13+ (drsný tón obsahuje vulgarismy; souhlas uživatele hodnocení nesnižuje).
 - **Synchronizace přes iCloud:** ano, ale až v rámci příprav na App Store (vyžaduje placený účet).
-- **Rozsah první verze:** nerozhodnuto.
+- **Rozsah první verze:** základ zdarma (vždy záložky Dnes, Týden, Nastavení), zbytek jako moduly a v předplatném. Přesné rozdělení zatím neurčeno.
+- **Kontrola důkazu fotkou pomocí AI:** ano, ale až později (potřebuje server, souhlas uživatele a rozšířené zásady soukromí).
 - **Název:** nerozhodnuto. „Kept“ i „Vowed“ jsou v App Storu obsazené.
 
 ## 1. Musí být, jinak to neprojde nebo nedává smysl
@@ -31,7 +32,7 @@ Založeno 10. 10. 2026. Aplikace se zatím dolaďuje pro osobní použití; tenh
 - [ ] **Platby.** Nákupy přes StoreKit 2, obrazovka s nabídkou, obnovení nákupů, rozdělení funkcí na zdarma / placené. Model zatím nerozhodnut.
 - [ ] **Zásady ochrany soukromí.** Veřejná URL + vyplněný „App Privacy“ dotazník v App Store Connect. Kvůli HealthKitu povinné.
 - [ ] **Web.** Stránka se zásadami soukromí a kontaktem na podporu (obojí povinné odkazy v App Storu).
-- [ ] **Drsný tón.** Vulgární notifikace: nesmí být výchozí, jen jako vědomá volba; nastavit odpovídající věkové hodnocení.
+- [ ] **Drsný tón.** Vulgární notifikace: nesmí být výchozí, jen jako vědomá volba; nastavit odpovídající věkové hodnocení. Titulky notifikací (`punchlines`) obsahují silné vulgarismy v angličtině („FUCK“) – v dotazníku věkového hodnocení uvést častý hrubý jazyk; zvážit variantu bez nich.
 - [ ] **Název.** „Kept“ je v App Storu obsazený několika aplikacemi (viz níže). Vybrat rozlišující název a ověřit ochranné známky.
 
 ## 2. Na straně vývojářského účtu
@@ -54,6 +55,11 @@ Založeno 10. 10. 2026. Aplikace se zatím dolaďuje pro osobní použití; tenh
 - [ ] **TestFlight** s několika lidmi před vydáním.
 - [ ] Odstranit ladicí výpis naplánovaných notifikací (`NotificationManager`, `logger.info`).
 
+## Už hotové základy, na které převod naváže
+
+- Volitelné záložky (Statistiky, Gym, Zdraví) s přepínači v Nastavení; úvodní průvodce je jen nastaví.
+- Body a propustky (`PointsService`): hodnoty jsou konstanty na jednom místě, připravené k ladění.
+
 ## Nápady na později (nerozhodnuto, nic z toho není naprogramované)
 
 Všechny čtyři mění to, že aplikace dnes nic neposílá mimo telefon. Znamenají server, účty nebo sdílení dat se třetí stranou a rozšíření zásad soukromí.
@@ -61,8 +67,7 @@ Všechny čtyři mění to, že aplikace dnes nic neposílá mimo telefon. Zname
 - **AI kouč.** Buď cloudový model (potřebuje vlastní server jako prostředníka, platí se za každé použití, podle pravidla 5.1.2(i) je nutný výslovný souhlas před odesláním dat), nebo model v zařízení (zdarma a soukromý, ale jen na novějších iPhonech).
 - **Ověření důkazu fotkou pomocí AI.** Jde ověřit, co na fotce je; nejde dokázat, že je dnešní a že úkol opravdu proběhl. Podmínkou je focení přímo v aplikaci, ne výběr z galerie.
 - **Duely s přáteli.** Vyžadují účty, server a seznam přátel.
-- **Body za dodržené závazky.** Návrh: za splněné závazky se sbírají body a za určitý počet jde jednou zrušit závazek bez postihu. Jen v zařízení, bez serveru. Zvážit sloučení s odklady (dnes 3 měsíčně zdarma).
-- **Úvodní průvodce s moduly.** Při prvním spuštění volba jazyka, tónu a modulů (Gym, Apple Health, focus timer, sázky, deníček…) a toho, které záložky jsou vidět. Vše musí jít později změnit v Nastavení a průvodce to musí říct.
+- **Úvodní průvodce s moduly.** Při prvním spuštění: jazyk, tón, které záložky chce mít v liště, propojení se Zdravím a zapnutí Gymu. U Zdraví i Gymu poznámka, že to jde udělat i později v Nastavení. U Gymu zmínit upozornění po tréninku zaznamenaném ve Zdraví (přichází po uložení tréninku, ne při jeho zahájení). Vše musí jít změnit v Nastavení.
 - **Mince za splnění úkolů.** Virtuální měna jde udělat jen v zařízení. Skutečné peníze nebo sázky o peníze jsou právní otázka (hazard, pravidla Applu).
 
 ## 4. Co uvést v App Storu

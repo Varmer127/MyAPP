@@ -74,7 +74,7 @@ struct RealityCheckView: View {
             .padding(Theme.screenPadding)
         }
         .screenBackground()
-        .preferredColorScheme(.dark)
+        .appAppearance()
         // Ending the day walks every open task through No Excuses, one after another.
         // Cancelling one of them stops the walk and leaves the rest open.
         .fullScreenCover(item: $excuse, onDismiss: continueEndingDay) {

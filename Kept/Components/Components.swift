@@ -90,8 +90,8 @@ struct ThinBar: View {
 }
 
 struct PrimaryButtonStyle: ButtonStyle {
-    var color: Color = .white
-    var textColor: Color = .black
+    var color: Color = Theme.textPrimary
+    var textColor: Color = Theme.onPrimary
     @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {

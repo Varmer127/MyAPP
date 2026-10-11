@@ -26,16 +26,38 @@ final class UserSettings {
     var workoutPresetsData: Data = Data()
     /// JSON-encoded `[String]` of gym exercise presets. Empty data means "never edited".
     var exercisePresetsData: Data = Data()
+    /// JSON-encoded `[RestPreset]`. Empty data means "never edited".
+    var restPresetsData: Data = Data()
     /// Fewest activities a weekly plan must contain. 0 turns the rule off.
     var minimumWeeklyTasks: Int = 7
     /// How many tasks a month may be postponed without penalty. Can only be lowered below the maximum.
     var postponeLimit: Int = 3
     var healthEnabled: Bool = false
 
+    // Optional tabs. Dnes, Týden and Nastavení are always shown.
+    var showsStatsTab: Bool = true
+    var showsGymTab: Bool = false
+    var showsHealthTab: Bool = false
+
     init() {}
 
     static let defaultWorkoutPresets = ["Ruce a ramena", "Záda a prsa", "Nohy"]
     static let defaultExercisePresets = ["Bench press", "Dřep", "Mrtvý tah", "Tlaky nad hlavu", "Shyby", "Přítahy v předklonu"]
+
+    var restPresets: [RestPreset] {
+        get {
+            guard !restPresetsData.isEmpty,
+                  let stored = try? JSONDecoder().decode([RestPreset].self, from: restPresetsData),
+                  !stored.isEmpty else { return RestPreset.defaults }
+            return stored
+        }
+        set { restPresetsData = (try? JSONEncoder().encode(newValue)) ?? Data() }
+    }
+
+    /// The preset chosen in the stopwatch, or the first one if that choice no longer exists.
+    func restPreset(named name: String) -> RestPreset {
+        restPresets.first { $0.name == name } ?? restPresets.first ?? RestPreset.defaults[1]
+    }
 
     var exercisePresets: [String] {
         get {
@@ -47,6 +69,10 @@ final class UserSettings {
     static let weeklyTargetRange = 0...7
     static let minimumWeeklyTasksRange = 0...40
     static let postponeLimitRange = 0...3
+    /// iOS shows five tabs before collapsing the rest under "More"; three are fixed.
+    static let maxOptionalTabs = 2
+
+    var optionalTabCount: Int { [showsStatsTab, showsGymTab, showsHealthTab].filter { $0 }.count }
     static let defaultMinimumWeeklyTasks = 7
 
     private var targetOverrides: [String: Int] {
@@ -120,4 +146,23 @@ final class UserSettings {
         context.insert(settings)
         return settings
     }
+}
+
+/// A named rest length between sets. People disagree on what is right, so the list is the user's to edit.
+struct RestPreset: Codable, Hashable, Identifiable {
+    var name: String
+    var seconds: Int
+
+    var id: String { name }
+
+    /// AppStorage key of the preset last chosen in the stopwatch.
+    static let selectionKey = "gymRestPreset"
+    static let secondsRange = 15...600
+    static let secondsStep = 15
+
+    static let defaults = [
+        RestPreset(name: "Síla", seconds: 180),
+        RestPreset(name: "Svaly", seconds: 90),
+        RestPreset(name: "Vytrvalost", seconds: 30),
+    ]
 }

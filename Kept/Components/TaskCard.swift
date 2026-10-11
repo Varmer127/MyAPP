@@ -88,6 +88,7 @@ struct TaskCard: View {
         var items: [(String, Color)] = []
         switch task.status {
         case .completedLate: items.append(("Pozdě", Theme.orange))
+        case .excused: items.append(("Zrušeno za body", Theme.textSecondary))
         case .skipped: items.append(("Přeskočeno", Theme.red))
         case .failed: items.append(("Nesplněno", Theme.red))
         case .pending:

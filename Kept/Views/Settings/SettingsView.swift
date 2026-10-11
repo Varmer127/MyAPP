@@ -7,9 +7,8 @@ struct SettingsView: View {
     @Environment(\.openURL) private var openURL
     @Query private var settingsList: [UserSettings]
     @State private var authorization: UNAuthorizationStatus = .notDetermined
-    @State private var newPreset = ""
-    @State private var newExercise = ""
     @AppStorage("introEnabled") private var introEnabled = true
+    @AppStorage(AppAppearance.storageKey) private var appearanceRaw = AppAppearance.dark.rawValue
 
     fileprivate static let multiplierRange = 0.2...1.0
     fileprivate static let multiplierStep = 0.05
@@ -19,15 +18,23 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("Vzhled") {
+                    Picker("Vzhled", selection: $appearanceRaw) {
+                        ForEach(AppAppearance.allCases) { Text($0.title).tag($0.rawValue) }
+                    }
+                    .pickerStyle(.segmented)
+                }
+                .listRowBackground(Theme.card)
                 if let settings = settingsList.first {
+                    tabsSection(settings)
+                    hiddenScreensSection(settings)
                     permissionSection
                     toneSection(settings)
                     remindersSection(settings)
                     dailySection(settings)
                     sundaySection(settings)
                     targetsSection(settings)
-                    presetsSection(settings)
-                    exercisesSection(settings)
+                    gymSection
                     healthSection(settings)
                     weightsSection(settings)
                 }
@@ -89,9 +96,13 @@ struct SettingsView: View {
                 ForEach(NotificationTone.allCases) { Text($0.title).tag($0.rawValue) }
             }
             .pickerStyle(.segmented)
-            Button("Poslat ukázku za 5 sekund") {
+            Button {
                 Task { await NotificationManager.sendPreview(tone: settings.tone) }
+            } label: {
+                Label("POSLAT UKÁZKU ZA 5 SEKUND", systemImage: "bell.badge")
             }
+            .buttonStyle(SecondaryButtonStyle())
+            .listRowInsets(EdgeInsets(top: 10, leading: 14, bottom: 12, trailing: 14))
         } header: {
             Text("Tón notifikací")
         } footer: {
@@ -159,7 +170,8 @@ struct SettingsView: View {
                     value: Bindable(settings).postponeLimit, in: UserSettings.postponeLimitRange)
             Stepper(settings.minimumWeeklyTasks == 0 ? "Minimum aktivit: vypnuto" : "Minimum aktivit: \(settings.minimumWeeklyTasks) týdně",
                     value: Bindable(settings).minimumWeeklyTasks, in: UserSettings.minimumWeeklyTasksRange)
-            ForEach(TaskCategory.allCases) { category in
+            // The gym target is set in the gym settings.
+            ForEach(TaskCategory.allCases.filter { $0 != .gym }) { category in
                 let target = settings.weeklyTarget(for: category)
                 Stepper(target == 0 ? "\(category.title): bez cíle" : "\(category.title): \(target)× týdně",
                         value: Binding(get: { target }, set: { settings.setWeeklyTarget($0, for: category) }),
@@ -173,70 +185,71 @@ struct SettingsView: View {
         .listRowBackground(Theme.card)
     }
 
-    private func exercisesSection(_ settings: UserSettings) -> some View {
+    private var gymSection: some View {
         Section {
-            ForEach(settings.exercisePresets, id: \.self) { preset in
-                HStack {
-                    Text(preset)
-                    Spacer()
-                    Button {
-                        settings.exercisePresets.removeAll { $0 == preset }
-                    } label: {
-                        Image(systemName: "minus.circle").foregroundStyle(Theme.red)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            HStack {
-                TextField("Nový cvik", text: $newExercise)
-                Button("Přidat") {
-                    let name = newExercise.trimmingCharacters(in: .whitespacesAndNewlines)
-                    if !name.isEmpty, !settings.exercisePresets.contains(name) {
-                        settings.exercisePresets.append(name)
-                    }
-                    newExercise = ""
-                }
-                .disabled(newExercise.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            NavigationLink {
+                GymSettingsView()
+            } label: {
+                Label("Nastavení gymu", systemImage: TaskCategory.gym.symbol)
             }
         } header: {
-            Text("Gym – cviky")
+            Text("Gym")
         } footer: {
-            Text("Nabízejí se při zápisu tréninku. Odebrání cviku ze seznamu nesmaže jeho historii ve statistikách.")
+            Text("Partie, cviky, týdenní cíl a pauzy. Najdeš je i přímo v sekci Gym.")
         }
         .listRowBackground(Theme.card)
     }
 
-    private func presetsSection(_ settings: UserSettings) -> some View {
-        Section {
-            ForEach(settings.workoutPresets, id: \.self) { preset in
-                HStack {
-                    Text(preset)
-                    Spacer()
-                    Button {
-                        settings.workoutPresets.removeAll { $0 == preset }
-                    } label: {
-                        Image(systemName: "minus.circle").foregroundStyle(Theme.red)
-                    }
-                    .buttonStyle(.plain)
+    /// Screens whose tab is switched off stay reachable from here.
+    @ViewBuilder
+    private func hiddenScreensSection(_ settings: UserSettings) -> some View {
+        let showsHealth = HealthService.isAvailable && !settings.showsHealthTab
+        if !settings.showsStatsTab || !settings.showsGymTab || showsHealth {
+            Section {
+                if !settings.showsStatsTab {
+                    NavigationLink { StatsView(isEmbedded: true) } label: { Label("Statistiky", systemImage: "chart.bar") }
                 }
+                if !settings.showsGymTab {
+                    NavigationLink { GymProgressView() } label: { Label("Gym", systemImage: TaskCategory.gym.symbol) }
+                }
+                if showsHealth {
+                    NavigationLink { HealthSummaryView(isEmbedded: true) } label: { Label("Zdraví", systemImage: "heart") }
+                }
+            } header: {
+                Text("Další obrazovky")
+            } footer: {
+                Text("Co nemáš ve spodní liště, otevřeš odtud.")
             }
-            HStack {
-                TextField("Nová předvolba", text: $newPreset)
-                Button("Přidat") {
-                    let name = newPreset.trimmingCharacters(in: .whitespacesAndNewlines)
-                    if !name.isEmpty, !settings.workoutPresets.contains(name) {
-                        settings.workoutPresets.append(name)
-                    }
-                    newPreset = ""
-                }
-                .disabled(newPreset.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            .listRowBackground(Theme.card)
+        }
+    }
+
+    private func tabsSection(_ settings: UserSettings) -> some View {
+        let isFull = settings.optionalTabCount >= UserSettings.maxOptionalTabs
+        return Section {
+            LabeledContent("Vždy zobrazené", value: "Dnes · Týden · Nastavení")
+            tabToggle("Statistiky", "chart.bar", Bindable(settings).showsStatsTab, isFull: isFull)
+            tabToggle("Gym", TaskCategory.gym.symbol, Bindable(settings).showsGymTab, isFull: isFull)
+            if HealthService.isAvailable {
+                tabToggle("Zdraví", "heart", Bindable(settings).showsHealthTab, isFull: isFull)
             }
         } header: {
-            Text("Gym – co jsem jel")
+            Text("Záložky")
         } footer: {
-            Text("Nabízí se při splnění úkolu v kategorii Gym. Břicho se zaškrtává zvlášť ke každému tréninku.")
+            Text(isFull
+                 ? "Navíc můžeš mít nejvýš \(UserSettings.maxOptionalTabs) záložky. Pro další nejdřív jednu vypni. Vypnuté obrazovky otevřeš níž v části Další obrazovky."
+                 : "Vyber si, co chceš mít ve spodní liště. Navíc můžeš mít nejvýš \(UserSettings.maxOptionalTabs) záložky a kdykoli to tady změníš. Vypnuté obrazovky zůstanou dostupné níž v části Další obrazovky.")
         }
         .listRowBackground(Theme.card)
+    }
+
+    /// A tab that is off cannot be switched on once the limit is reached.
+    private func tabToggle(_ title: String, _ symbol: String, _ isOn: Binding<Bool>, isFull: Bool) -> some View {
+        Toggle(isOn: isOn) {
+            Label(title, systemImage: symbol)
+        }
+        .tint(Theme.textSecondary)
+        .disabled(isFull && !isOn.wrappedValue)
     }
 
     @ViewBuilder
@@ -301,7 +314,7 @@ struct SettingsView: View {
                         .monospacedDigit()
                 }
                 Slider(value: value, in: SettingsView.multiplierRange, step: SettingsView.multiplierStep)
-                    .tint(.white)
+                    .tint(Theme.textPrimary)
             }
         }
     }

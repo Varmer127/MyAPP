@@ -1,19 +1,24 @@
 import SwiftUI
+import UIKit
 
 /// Black / white / grey by default. Green, orange and red only ever signal state.
+/// Every colour has a dark and a light variant and follows the appearance chosen in Settings.
 enum Theme {
-    static let background = Color(hex: 0x0A0A0A)
-    static let card = Color(hex: 0x141414)
-    static let cardRaised = Color(hex: 0x1E1E1E)
-    static let border = Color.white.opacity(0.08)
+    static let background = Color(dark: 0x0A0A0A, light: 0xF4F4F6)
+    static let card = Color(dark: 0x141414, light: 0xFFFFFF)
+    static let cardRaised = Color(dark: 0x1E1E1E, light: 0xE9E9ED)
+    static let border = Color(dark: 0xFFFFFF, light: 0x000000).opacity(0.08)
 
-    static let textPrimary = Color.white
-    static let textSecondary = Color(hex: 0x8E8E93)
-    static let textTertiary = Color(hex: 0x5C5C61)
+    static let textPrimary = Color(dark: 0xFFFFFF, light: 0x0A0A0A)
+    /// Text or icon placed on a `textPrimary` or accent-coloured fill.
+    static let onPrimary = Color(dark: 0x000000, light: 0xFFFFFF)
+    static let textSecondary = Color(dark: 0x8E8E93, light: 0x6A6A70)
+    static let textTertiary = Color(dark: 0x5C5C61, light: 0x9E9EA4)
 
-    static let green = Color(hex: 0x30D158)
-    static let orange = Color(hex: 0xFF9F0A)
-    static let red = Color(hex: 0xFF453A)
+    // Slightly deeper on a light background so they stay readable as text.
+    static let green = Color(dark: 0x30D158, light: 0x1E9E48)
+    static let orange = Color(dark: 0xFF9F0A, light: 0xD97800)
+    static let red = Color(dark: 0xFF453A, light: 0xD92D20)
 
     static let radius: CGFloat = 14
     static let screenPadding: CGFloat = 20
@@ -41,7 +46,51 @@ extension Color {
     }
 }
 
+extension Color {
+    /// A colour that switches with the interface style.
+    init(dark: UInt32, light: UInt32) {
+        self.init(UIColor { traits in
+            UIColor(Color(hex: traits.userInterfaceStyle == .dark ? dark : light))
+        })
+    }
+}
+
+enum AppAppearance: String, CaseIterable, Identifiable {
+    case dark, light, system
+
+    static let storageKey = "appearance"
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .dark: "Tmavý"
+        case .light: "Světlý"
+        case .system: "Podle systému"
+        }
+    }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .dark: .dark
+        case .light: .light
+        case .system: nil
+        }
+    }
+}
+
+/// Applies the appearance chosen in Settings. Sheets and covers need it too, as they do not inherit it.
+private struct AppAppearanceModifier: ViewModifier {
+    @AppStorage(AppAppearance.storageKey) private var raw = AppAppearance.dark.rawValue
+
+    func body(content: Content) -> some View {
+        content.preferredColorScheme((AppAppearance(rawValue: raw) ?? .dark).colorScheme)
+    }
+}
+
 extension View {
+    func appAppearance() -> some View { modifier(AppAppearanceModifier()) }
+
     func card(padding: CGFloat = 16) -> some View {
         self.padding(padding)
             .frame(maxWidth: .infinity, alignment: .leading)

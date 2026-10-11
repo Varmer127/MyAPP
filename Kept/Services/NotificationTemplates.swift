@@ -125,6 +125,34 @@ enum NotificationTemplates {
         "Tvoje slovo dnes nemá žádnou hodnotu. Změň to. {task}.",
         "Přestaň si lhát, že to uděláš potom. Potom neexistuje. {task}.",
         "Takhle se disciplinovaný člověk nechová. {task} čeká.",
+        "Zatímco ty hledáš motivaci, někdo jiný už maká. {task}.",
+        "Zvedni tu prdel. Nikdo za tebe ten život neodmaká. {task}.",
+        "Chceš lepší život, ale nejsi ochotný obětovat ani hodinu? Prober se. {task}.",
+        "Pohodlí tě nikam nedostane. {task}. Teď.",
+        "Výmluvy nikoho nezajímají. {task}.",
+    ]
+
+    /// Short, loud headlines used as the notification title in the savage tone.
+    /// The task-specific sentence follows in the body.
+    static let punchlines = [
+        "GET THE FUCK UP.",
+        "DO THE FUCKING WORK.",
+        "STAY HARD.",
+        "NO ONE IS COMING.",
+        "EARN YOUR COMFORT.",
+        "STOP BEING SOFT.",
+        "DISCIPLINE OVER FEELINGS.",
+        "PROVE IT. RIGHT NOW.",
+        "HUNT OR BE HUNTED.",
+        "NO EXCUSES.",
+        "YOU SAID YOU WOULD.",
+        "KEEP YOUR WORD.",
+        "DO IT TIRED.",
+        "COMFORT IS A TRAP.",
+        "NOBODY CARES. WORK HARDER.",
+        "ZVEDNI SE.",
+        "MAKEJ.",
+        "SLÍBIL JSI TO.",
     ]
 
     /// Strict copy that quotes the user's own "Why does this matter?".
@@ -303,7 +331,7 @@ enum NotificationTemplates {
     }
 
     static var totalCount: Int {
-        [prep, start, direct, strict, savage, whyStrict, whySavage, sundayOpening,
+        [prep, start, direct, strict, savage, punchlines, whyStrict, whySavage, sundayOpening,
          morningGood, morningAverage, morningBad, morningNeutral].reduce(0) { $0 + $1.count }
             + [sundayLater, dayNudge, realityCheck].reduce(0) { $0 + $1.values.reduce(0) { $0 + $1.count } }
     }

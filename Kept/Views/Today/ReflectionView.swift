@@ -19,7 +19,7 @@ struct ReflectionView: View {
     private static let countDelay: Duration = .milliseconds(60)
 
     private var week: [TaskItem] {
-        tasks.filter { $0.scheduledDate.weekStart == weekStart && !$0.isRemoved && !$0.isRecovery }
+        tasks.filter { $0.scheduledDate.weekStart == weekStart && !$0.isRemoved && !$0.isRecovery && $0.countsInScores }
     }
     private var done: [TaskItem] { week.filter(\.isDone) }
     private var existing: WeekReflection? { reflections.first { $0.weekStart == weekStart } }
@@ -87,7 +87,7 @@ struct ReflectionView: View {
             .padding(Theme.screenPadding)
         }
         .screenBackground()
-        .preferredColorScheme(.dark)
+        .appAppearance()
         .task { await reveal() }
         .onAppear {
             if let existing {
@@ -128,10 +128,10 @@ struct ReflectionView: View {
                     } label: {
                         Text("\(value)")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(satisfaction == value ? .black : Theme.textPrimary)
+                            .foregroundStyle(satisfaction == value ? Theme.onPrimary : Theme.textPrimary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(satisfaction == value ? Color.white : Theme.card)
+                            .background(satisfaction == value ? Theme.textPrimary : Theme.card)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.border, lineWidth: 1))
                     }

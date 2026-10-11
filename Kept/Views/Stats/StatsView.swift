@@ -30,7 +30,7 @@ struct StatsView: View {
     /// Today is judged as a whole; longer periods only on tasks whose outcome is final.
     private var scoped: [TaskItem] {
         let now = Date.now
-        let inRange = tasks.filter { range.contains($0.scheduledDate) }
+        let inRange = tasks.filter { range.contains($0.scheduledDate) && $0.countsInScores }
         return period == .today ? inRange : inRange.filter { $0.isClosed(now) }
     }
 
@@ -40,47 +40,56 @@ struct StatsView: View {
         return values.isEmpty ? nil : values.reduce(0, +) / Double(values.count)
     }
 
+    /// True when shown inside another screen's navigation (opened from Settings) instead of as a tab.
+    var isEmbedded = false
+
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text("Statistiky")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundStyle(Theme.textPrimary)
-                        Picker("Období", selection: $period) {
-                            ForEach(Period.allCases) { Text($0.rawValue).tag($0) }
-                        }
-                        .pickerStyle(.segmented)
-                    }
-                    scores
-                    NavigationLink {
-                        GymProgressView()
-                    } label: {
-                        HStack {
-                            Label("GYM – PROGRES", systemImage: TaskCategory.gym.symbol).labelStyle(Theme.textPrimary)
-                            Spacer()
-                            Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
-                        }
-                        .card()
-                    }
-                    counts
-                    CategorySection(tasks: scoped)
-                    StreaksSection(tasks: tasks)
-                    TrendSection(tasks: tasks)
-                    CalendarSection(tasks: tasks)
-                    EffortSection(tasks: tasks, sessions: sessions)
-                    longTerm
-                    RecordsSection(tasks: tasks, sessions: sessions)
-                    JournalLinkSection(count: reflections.count)
-                    ReviewHistorySection(tasks: tasks)
-                }
-                .padding(.horizontal, Theme.screenPadding)
-                .padding(.bottom, 32)
-            }
-            .screenBackground()
-            .toolbarBackground(Theme.background, for: .navigationBar)
+        if isEmbedded {
+            content
+        } else {
+            NavigationStack { content }
         }
+    }
+
+    private var content: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("Statistiky")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundStyle(Theme.textPrimary)
+                    Picker("Období", selection: $period) {
+                        ForEach(Period.allCases) { Text($0.rawValue).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                }
+                scores
+                NavigationLink {
+                    GymProgressView()
+                } label: {
+                    HStack {
+                        Label("GYM – PROGRES", systemImage: TaskCategory.gym.symbol).labelStyle(Theme.textPrimary)
+                        Spacer()
+                        Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
+                    }
+                    .card()
+                }
+                counts
+                CategorySection(tasks: scoped)
+                StreaksSection(tasks: tasks)
+                TrendSection(tasks: tasks)
+                CalendarSection(tasks: tasks)
+                EffortSection(tasks: tasks, sessions: sessions)
+                longTerm
+                RecordsSection(tasks: tasks, sessions: sessions)
+                JournalLinkSection(count: reflections.count)
+                ReviewHistorySection(tasks: tasks)
+            }
+            .padding(.horizontal, Theme.screenPadding)
+            .padding(.bottom, 32)
+        }
+        .screenBackground()
+        .toolbarBackground(Theme.background, for: .navigationBar)
     }
 
     private var scores: some View {

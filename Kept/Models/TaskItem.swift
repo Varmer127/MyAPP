@@ -53,6 +53,10 @@ final class TaskItem {
 
     /// How much of the task was really done (0...1). Below 1 the task counts as partially completed.
     var completionShare: Double = 1
+    /// When this commitment was cancelled with a points pass.
+    var redeemedAt: Date?
+    /// The task was added from one of the app's suggestions (earns bonus points when done).
+    var fromSuggestion: Bool = false
     var partialNote: String = ""
 
     /// Proof of completion, for tasks that require it.
@@ -140,6 +144,9 @@ final class TaskItem {
 
     var isDone: Bool { !isRemoved && (status == .completed || status == .completedLate) }
 
+    /// False for a commitment cancelled with a points pass: it is neither kept nor broken.
+    var countsInScores: Bool { status != .excused }
+
     /// Done, but only in part.
     var isPartial: Bool { isDone && completionShare < 1 }
     var isFullyDone: Bool { isDone && completionShare >= 1 }
@@ -188,6 +195,7 @@ final class TaskItem {
         proofNote = ""
         proofPhoto = nil
         stakeOutcome = 0
+        redeemedAt = nil
         for exercise in exercises {
             modelContext?.delete(exercise)
         }

@@ -37,7 +37,7 @@ struct DayDetailView: View {
                             .foregroundStyle(Theme.textSecondary)
                             .card()
                     } else {
-                        let scored = items.filter { !$0.isRecovery }
+                        let scored = items.filter { !$0.isRecovery && $0.countsInScores }
                         HStack(spacing: 10) {
                             MetricTile(value: ScoreEngine.productivity(items, now: now).percentText, label: "Produktivita")
                             MetricTile(value: "\(scored.filter(\.isDone).count) / \(scored.count)", label: "Splněno")
@@ -56,7 +56,7 @@ struct DayDetailView: View {
                 .padding(Theme.screenPadding)
         }
         .screenBackground()
-        .preferredColorScheme(.dark)
+        .appAppearance()
         .sheet(item: $detailTask) { TaskDetailView(task: $0) }
     }
 

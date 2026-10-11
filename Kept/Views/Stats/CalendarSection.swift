@@ -111,7 +111,7 @@ struct CalendarSection: View {
                     }
                     .overlay {
                         RoundedRectangle(cornerRadius: showsNumbers ? 7 : 2)
-                            .stroke(score.day == today ? Color.white : (isFuture ? Theme.border : .clear),
+                            .stroke(score.day == today ? Theme.textPrimary : (isFuture ? Theme.border : .clear),
                                     lineWidth: score.day == today ? 1.5 : 1)
                     }
                     .contentShape(Rectangle())

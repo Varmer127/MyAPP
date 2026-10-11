@@ -46,15 +46,15 @@ struct PostponeView: View {
             .padding(Theme.screenPadding)
         }
         .screenBackground()
-        .preferredColorScheme(.dark)
+        .appAppearance()
     }
 
     private func quickDay(_ title: String, offset: Int) -> some View {
         let target = Date.now.startOfDay.addingDays(offset)
         let isSelected = day.isSameDay(as: target)
         return Button(title.uppercased()) { day = target }
-            .buttonStyle(SecondaryButtonStyle(textColor: isSelected ? .black : Theme.textPrimary))
-            .background(isSelected ? Color.white : Color.clear)
+            .buttonStyle(SecondaryButtonStyle(textColor: isSelected ? Theme.onPrimary : Theme.textPrimary))
+            .background(isSelected ? Theme.textPrimary : Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

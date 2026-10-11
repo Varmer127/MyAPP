@@ -122,6 +122,8 @@ enum TaskPriority: String, CaseIterable, Identifiable, Codable {
 
 enum TaskStatus: String, Codable {
     case pending, completed, completedLate, skipped, failed
+    /// Cancelled with a points pass: closed, but left out of every score.
+    case excused
 }
 
 enum FailureReason: String, CaseIterable, Identifiable, Codable {

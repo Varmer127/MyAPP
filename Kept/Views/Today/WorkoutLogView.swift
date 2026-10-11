@@ -45,7 +45,7 @@ struct WorkoutLogView: View {
                         Text("Co jsi jel?")
                             .font(.system(size: 28, weight: .bold))
                             .foregroundStyle(Theme.textPrimary)
-                        Text("Partie i cviky v nabídce si nastavíš podle sebe v Nastavení → Gym.")
+                        Text("Partie i cviky v nabídce si nastavíš podle sebe v sekci Gym → Nastavení.")
                             .font(.system(size: 13))
                             .foregroundStyle(Theme.textSecondary)
                     }
@@ -59,7 +59,7 @@ struct WorkoutLogView: View {
                         TextField("Např. kardio a mobilita", text: $custom)
                             .font(.system(size: 16))
                             .card()
-                        Text("Uloží se jako nová předvolba. Předvolby spravuješ v Nastavení.")
+                        Text("Uloží se jako nová předvolba. Předvolby spravuješ v sekci Gym.")
                             .font(.system(size: 12))
                             .foregroundStyle(Theme.textTertiary)
                     }
@@ -98,7 +98,7 @@ struct WorkoutLogView: View {
             .padding(Theme.screenPadding)
         }
         .screenBackground()
-        .preferredColorScheme(.dark)
+        .appAppearance()
         .task {
             // With Apple Health connected, today's weight and workout fill themselves in.
             guard settings.healthEnabled else { return }
@@ -130,7 +130,7 @@ struct WorkoutLogView: View {
             .background(isSelected ? Theme.cardRaised : Theme.card)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12)
-                .stroke(isSelected ? Color.white.opacity(0.5) : Theme.border, lineWidth: 1))
+                .stroke(isSelected ? Theme.textPrimary.opacity(0.5) : Theme.border, lineWidth: 1))
         }
         .buttonStyle(.plain)
     }
