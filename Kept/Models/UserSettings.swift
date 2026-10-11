@@ -12,6 +12,8 @@ final class UserSettings {
     var sundayRemindersEnabled: Bool = true
     var morningBriefEnabled: Bool = true
     var realityCheckEnabled: Bool = true
+    /// Warnings before the day streak breaks and reminders after it did.
+    var streakRemindersEnabled: Bool = true
     /// Minutes after midnight.
     var morningBriefMinutes: Int = 7 * 60 + 30
     var realityCheckMinutes: Int = 21 * 60 + 30
@@ -105,7 +107,7 @@ final class UserSettings {
     var notificationSignature: Int {
         var hasher = Hasher()
         hasher.combine(toneRaw)
-        hasher.combine([taskRemindersEnabled, sundayRemindersEnabled, morningBriefEnabled, realityCheckEnabled])
+        hasher.combine([taskRemindersEnabled, sundayRemindersEnabled, morningBriefEnabled, realityCheckEnabled, streakRemindersEnabled])
         hasher.combine([morningBriefMinutes, realityCheckMinutes, sundayStartHour, sundayEndHour, overdueRepeatMinutes])
         return hasher.finalize()
     }

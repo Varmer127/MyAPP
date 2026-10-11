@@ -155,7 +155,8 @@ enum StatisticsService {
         }
 
         let days = byDay.keys.sorted()
-        let strong = longestRun(days) { (ScoreEngine.productivity(byDay[$0] ?? [], now: now) ?? 0) >= ScoreEngine.Config.streakThreshold }
+        let repaired = ScoreEngine.repairedDays(tasks)
+        let strong = longestRun(days.filter { !repaired.contains($0) }) { (ScoreEngine.productivity(byDay[$0] ?? [], now: now) ?? 0) >= ScoreEngine.Config.streakThreshold }
         if strong > 0 {
             records.append(Record(label: "Nejdelší série dní nad 80 %", value: String.days(strong), detail: "Dny bez úkolů sérii nepřeruší"))
         }

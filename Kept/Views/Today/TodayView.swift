@@ -17,6 +17,10 @@ struct TodayView: View {
     @AppStorage("briefDismissedDay") private var briefDismissedDay = 0.0
     /// "<day seed>:<category>,<category>" — suggestions the user declined today.
     @AppStorage("declinedSuggestions") private var declinedSuggestions = ""
+    /// Day (as a timestamp) of the streak break whose buy-back offer the user turned down.
+    @AppStorage("streakOfferDismissed") private var streakOfferDismissed = 0.0
+    /// Broken streak waiting for the "really spend the points?" confirmation.
+    @State private var confirmRepair: StreakService.Broken?
     @State private var showsRealityCheck = false
     @State private var editor: EditorRequest?
     @State private var workoutTask: TaskItem?
@@ -45,6 +49,7 @@ struct TodayView: View {
     private static let stakeQuestionDays = 7
     private static let slippingAfterMinutes = 18 * 60
     private static let slippingCriticalCount = 2
+    private static let streakUrgentSeconds: TimeInterval = 6 * 3600
 
     var body: some View {
         NavigationStack {
@@ -186,6 +191,7 @@ struct TodayView: View {
                 if slipping {
                     slippingBanner(day)
                 }
+                streakCard(now: now)
                 if showsBrief(day, now: now) {
                     MorningBriefCard(tasks: tasks, todayTasks: day.visible, promisesKeptThisWeek: day.promisesKept,
                                      streak: day.streak, now: now) {
@@ -283,6 +289,76 @@ struct TodayView: View {
             .foregroundStyle(streak > 0 ? Theme.orange : Theme.textTertiary)
             .animation(.easeOut(duration: 0.4), value: streak)
         }
+    }
+
+    /// For a few days after the streak breaks it can be bought back with points.
+    @ViewBuilder
+    private func streakCard(now: Date) -> some View {
+        if let broken = StreakService.broken(tasks, now: now), broken.canRepair(now: now),
+           streakOfferDismissed != broken.brokenOn.timeIntervalSince1970 {
+            let balance = PointsService.balance(tasks)
+            let cost = broken.cost
+            VStack(alignment: .leading, spacing: 12) {
+                Label("SÉRIE SKONČILA", systemImage: "flame.fill").labelStyle(Theme.orange)
+                Text("Měl jsi \(String.days(broken.length)) v řadě.")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(Theme.textPrimary)
+                // The day text already ends with a full stop ("so 10.").
+                Text("Přerušeno: \(broken.failedDays.map(\.shortDayText).joined(separator: ", ")) "
+                     + "Za \(cost.formatted(.number.locale(.app))) bodů ji vrátíš, jako by se nepřerušila.")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                streakCountdown(until: broken.repairEnds, now: now)
+                if balance < cost {
+                    Text("Máš \(balance.formatted(.number.locale(.app))) bodů, chybí ti \((cost - balance).formatted(.number.locale(.app))).")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Theme.orange)
+                }
+                HStack(spacing: 10) {
+                    Button("VRÁTIT ZA \(cost.formatted(.number.locale(.app))) BODŮ") { confirmRepair = broken }
+                        .buttonStyle(PrimaryButtonStyle(color: Theme.orange))
+                        .disabled(balance < cost)
+                    Button("ZAČÍT OD NULY") {
+                        withAnimation { streakOfferDismissed = broken.brokenOn.timeIntervalSince1970 }
+                    }
+                    .buttonStyle(SecondaryButtonStyle(textColor: Theme.textSecondary))
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.card)
+            .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
+            .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.orange.opacity(0.5), lineWidth: 1))
+            .alert("Vrátit sérii za \(cost.formatted(.number.locale(.app))) bodů?",
+                   isPresented: Binding(get: { confirmRepair != nil }, set: { if !$0 { confirmRepair = nil } }),
+                   presenting: confirmRepair) { broken in
+                Button("Vrátit sérii") {
+                    withAnimation { StreakService.repair(broken, tasks: tasks) }
+                }
+                Button("Zrušit", role: .cancel) {}
+            } message: { _ in
+                Text("Plamínek se vrátí. Nesplněné úkoly těch dnů i jejich vliv na spolehlivost zůstávají.")
+            }
+        }
+    }
+
+    /// Live countdown to the end of the buy-back offer; turns red in the last hours.
+    private func streakCountdown(until end: Date, now: Date) -> some View {
+        let color = end.timeIntervalSince(now) < Self.streakUrgentSeconds ? Theme.red : Theme.orange
+        return HStack(spacing: 6) {
+            Image(systemName: "timer")
+            Text("NABÍDKA KONČÍ ZA")
+                .tracking(0.6)
+            Text(timerInterval: min(now, end)...end, countsDown: true)
+                .monospacedDigit()
+        }
+        .font(.system(size: 12, weight: .bold))
+        .foregroundStyle(color)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(color.opacity(0.14))
+        .clipShape(Capsule())
     }
 
     private func hero(_ day: TodaySnapshot) -> some View {
@@ -536,7 +612,7 @@ struct TodayView: View {
             }
             ThinBar(value: Double(balance) / Double(PointsService.cap),
                     color: passes > 0 ? Theme.green : Theme.textPrimary)
-            Text("Za \(PointsService.passCost.formatted(.number.locale(.app))) bodů se můžeš jednou vykoupit ze závazku bez postihu.")
+            Text("Za \(PointsService.passCost.formatted(.number.locale(.app))) bodů se můžeš jednou vykoupit ze závazku bez postihu. Za \(PointsService.streakRepairCost) bodů za každý vynechaný den vrátíš ztracenou sérii.")
                 .font(.system(size: 11))
                 .foregroundStyle(Theme.textTertiary)
         }
@@ -665,6 +741,7 @@ private struct TodaySnapshot {
         promisesKept = ScoreEngine.promisesKept(tasks.filter { $0.scheduledDate.weekStart == weekStart }, now: now)
         productivity = ScoreEngine.productivity(scored, now: now)
         streak = ScoreEngine.dayStreak(tasks, now: now)
-        weekIsCommitted = plans.first { $0.weekStart == weekStart }?.isCommitted ?? false
+        // A plan that is handed in and waiting to be sealed is as good as committed here.
+        weekIsCommitted = plans.first { $0.weekStart == weekStart }.map { $0.isCommitted || $0.isSealing } ?? false
     }
 }

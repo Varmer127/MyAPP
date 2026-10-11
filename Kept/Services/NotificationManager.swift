@@ -47,6 +47,10 @@ enum NotificationManager {
     private static let restEndID = "gym.rest"
     private static let reflectionHour = 18
     private static let savageHeadlineLevel = 3
+    private static let streakAtRiskHour = 20
+    private static let sealWarningLead: TimeInterval = 10 * 60
+    /// Days after the break and the hour at which the streak is brought up again. The last one is the goodbye.
+    private static let streakFollowUps = [(day: 1, hour: 9), (day: 2, hour: 18), (day: 3, hour: 12), (day: 5, hour: 18), (day: 7, hour: 10)]
 
     private struct Planned {
         let id: String
@@ -161,6 +165,16 @@ enum NotificationManager {
                 title: "SEBEREFLEXE TÝDNE", body: "Týden končí. Projdi si ho a zapiš do deníčku, jak jsi se sebou spokojený.",
                 route: .today))
         }
+        for sealing in plans {
+            guard let sealDate = sealing.sealDate else { continue }
+            let week = sealing.weekStart.weekNumber
+            planned.append(Planned(id: "seal.warning.\(week)", date: sealDate.addingTimeInterval(-sealWarningLead),
+                                   title: "ZA 10 MINUT SE PLÁN ZAPEČETÍ",
+                                   body: "Týden \(week): poslední chvíle na úpravy bez postihu.", route: .planning))
+            planned.append(Planned(id: "seal.\(week)", date: sealDate, title: "PLÁN ZAPEČETĚN",
+                                   body: "Týden \(week) je závazný. Závazky: \(sealing.committableTasks.count). Od teď se každá změna počítá.",
+                                   route: .planning))
+        }
         if settings.morningBriefEnabled {
             planned += morningBriefs(settings: settings, tasks: tasks, now: now)
         }
@@ -171,7 +185,61 @@ enum NotificationManager {
             planned += taskReminders(settings: settings, tasks: tasks, failures: failures, now: now)
             planned += dayNudges(settings: settings, tasks: tasks, now: now)
         }
-        return Array(planned.filter { $0.date > now }.sorted { $0.date < $1.date }.prefix(maxPending))
+        // The streak series reaches a week ahead and is what still speaks up when the app stays closed,
+        // so it is never the part that gets cut by the pending limit.
+        let streak = settings.streakRemindersEnabled
+            ? streakReminders(settings: settings, tasks: tasks, now: now).filter { $0.date > now } : []
+        let rest = planned.filter { $0.date > now }.sorted { $0.date < $1.date }.prefix(maxPending - streak.count)
+        return (rest + streak).sorted { $0.date < $1.date }
+    }
+
+    /// A warning on the evening the streak is about to break, then a thinning series of reminders after it did.
+    /// Everything is planned as if nothing more got done; finishing the day reschedules and removes it.
+    private static func streakReminders(settings: UserSettings, tasks: [TaskItem], now: Date) -> [Planned] {
+        let current = ScoreEngine.dayStreak(tasks, now: now)
+        let broken = StreakService.broken(tasks, now: now)
+        let upcoming = StreakService.nextBreak(tasks, now: now)
+        // A living streak breaks on the next unfinished day; a dead one is counted from the day it broke.
+        let length = current > 0 ? current : (broken?.length ?? 0)
+        guard let anchor = current > 0 ? upcoming : (broken?.brokenOn ?? upcoming) else { return [] }
+
+        let tone = settings.tone
+        let days = String.days(length)
+        let seed = anchor.daySeed
+        var planned: [Planned] = []
+        if current > 0 {
+            let body = NotificationTemplates.pick(NotificationTemplates.streakAtRisk[tone] ?? [], seed: seed)
+            planned.append(Planned(id: "streak.risk", date: time(streakAtRiskHour * 60, on: anchor),
+                                   title: "SÉRIE V OHROŽENÍ", body: body.replacingOccurrences(of: "{days}", with: days),
+                                   route: .today))
+        }
+        let canRepair = length >= StreakService.minimumRepairableStreak
+        for (index, step) in streakFollowUps.enumerated() {
+            let title: String
+            var body: String
+            if index == 0 {
+                // "Your streak of N days ended" only makes sense when there was one.
+                guard length > 0 else { continue }
+                title = "SÉRIE SKONČILA"
+                body = NotificationTemplates.pick(NotificationTemplates.streakLost[tone] ?? [], seed: seed)
+                    .replacingOccurrences(of: "{days}", with: days)
+            } else if index == streakFollowUps.count - 1 {
+                title = "POSLEDNÍ PŘIPOMÍNKA"
+                body = NotificationTemplates.streakFinal[tone] ?? ""
+            } else {
+                let pool = NotificationTemplates.streakFollowUp[tone] ?? []
+                title = "PLAMÍNEK NEHOŘÍ"
+                body = (pool.isEmpty ? "" : pool[min(index - 1, pool.count - 1)])
+                    .replacingOccurrences(of: "{n}", with: "\(step.day)")
+            }
+            if canRepair, step.day <= StreakService.repairWindowDays {
+                body += " " + (step.day == StreakService.repairWindowDays
+                               ? NotificationTemplates.streakRepairLastDay : NotificationTemplates.streakRepairHint)
+            }
+            planned.append(Planned(id: "streak.\(step.day)", date: time(step.hour * 60, on: anchor.addingDays(step.day)),
+                                   title: title, body: body, route: .today))
+        }
+        return planned
     }
 
     private static func time(_ minutes: Int, on day: Date) -> Date {
@@ -186,7 +254,8 @@ enum NotificationManager {
     private static func sundayReminders(settings: UserSettings, plans: [WeeklyPlan], now: Date) -> [Planned] {
         let sunday = now.weekStart.addingDays(6)
         let nextWeek = now.weekStart.addingDays(7)
-        guard plans.first(where: { $0.weekStart == nextWeek })?.isCommitted != true,
+        let next = plans.first { $0.weekStart == nextWeek }
+        guard next?.isCommitted != true, next?.isSealing != true,
               settings.sundayStartHour <= settings.sundayEndHour else { return [] }
 
         return (settings.sundayStartHour...settings.sundayEndHour).enumerated().map { index, hour in

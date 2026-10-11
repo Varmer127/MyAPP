@@ -57,6 +57,9 @@ final class TaskItem {
     var redeemedAt: Date?
     /// The task was added from one of the app's suggestions (earns bonus points when done).
     var fromSuggestion: Bool = false
+    /// The day whose broken streak was bought back with points; that day no longer breaks the streak.
+    var streakRepairDay: Date?
+    var streakRepairedAt: Date?
     var partialNote: String = ""
 
     /// Proof of completion, for tasks that require it.

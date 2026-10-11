@@ -104,9 +104,16 @@ enum ScoreEngine {
 
     // MARK: Streak
 
-    /// Consecutive days with productivity ≥ 80%. Days without tasks neither extend nor break it.
+    /// Days whose broken streak was bought back with points.
+    static func repairedDays(_ tasks: [TaskItem]) -> Set<Date> {
+        Set(tasks.compactMap(\.streakRepairDay))
+    }
+
+    /// Consecutive days with productivity ≥ 80%. Days without tasks and days bought back with points
+    /// neither extend nor break it.
     static func dayStreak(_ tasks: [TaskItem], now: Date = .now) -> Int {
         let byDay = Dictionary(grouping: tasks) { $0.scheduledDate.startOfDay }
+        let repaired = repairedDays(tasks)
         let today = now.startOfDay
         guard let earliest = byDay.keys.min() else { return 0 }
 
@@ -116,7 +123,7 @@ enum ScoreEngine {
         }
         var day = today.addingDays(-1)
         while day >= earliest {
-            if let score = productivity(byDay[day] ?? [], now: now) {
+            if !repaired.contains(day), let score = productivity(byDay[day] ?? [], now: now) {
                 guard score >= Config.streakThreshold else { break }
                 streak += 1
             }

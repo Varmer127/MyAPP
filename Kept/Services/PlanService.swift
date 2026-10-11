@@ -58,6 +58,37 @@ enum PlanService {
         return plan
     }
 
+    /// How long a handed-in plan can still be changed before it is sealed. Nobody can shorten it.
+    static let sealDelay: TimeInterval = 60 * 60
+
+    /// Hands the plan in. It becomes a commitment by itself once `sealDelay` has passed.
+    static func submit(_ plan: WeeklyPlan, at now: Date = .now) {
+        plan.submittedAt = now
+    }
+
+    /// Takes a handed-in plan back before it is sealed.
+    static func withdraw(_ plan: WeeklyPlan) {
+        plan.submittedAt = nil
+    }
+
+    /// A week planned ahead (up to the end of its Monday) must contain the minimum number of activities.
+    static func missesMinimum(_ plan: WeeklyPlan, minimum: Int, now: Date = .now) -> Bool {
+        plan.committableTasks.count < minimum && now < plan.weekStart.addingDays(1)
+    }
+
+    /// Seals every plan whose hour is over, as of the moment it ran out. A plan that was emptied
+    /// or cut below the minimum in the meantime goes back to being a draft instead.
+    static func sealDue(_ plans: [WeeklyPlan], minimum: Int, now: Date = .now) {
+        for plan in plans {
+            guard let sealDate = plan.sealDate, sealDate <= now else { continue }
+            if plan.committableTasks.isEmpty || missesMinimum(plan, minimum: minimum, now: sealDate) {
+                withdraw(plan)
+            } else {
+                commit(plan, at: sealDate)
+            }
+        }
+    }
+
     /// Freezes the current plan as the original commitment.
     static func commit(_ plan: WeeklyPlan, at now: Date = .now) {
         let tasks = plan.committableTasks

@@ -1,6 +1,7 @@
 import Foundation
 
-/// Points earned by keeping commitments, spent on a pass that cancels one commitment without penalty.
+/// Points earned by keeping commitments, spent on a pass that cancels one commitment without penalty
+/// or on buying back a broken streak.
 /// The balance is derived from history every time, so undoing a completion also takes its points back.
 enum PointsService {
     /// A fully kept weekly commitment; partial or late completion earns its share.
@@ -10,6 +11,8 @@ enum PointsService {
     static let passCost = 1000
     /// At most this many passes can be saved up; points earned beyond that are lost.
     static let maxStoredPasses = 2
+    /// Buying back a broken streak, for every day that broke it.
+    static let streakRepairCost = 500
 
     /// Everyone starts with this much, so the first pass is within reach.
     static let startingBalance = 750
@@ -25,7 +28,7 @@ enum PointsService {
         return task.fromSuggestion ? perSuggestion : 0
     }
 
-    /// Current balance: earnings and spent passes replayed in time order, with the cap applied along the way.
+    /// Current balance: earnings, spent passes and streak repairs replayed in time order, with the cap applied along the way.
     static func balance(_ tasks: [TaskItem]) -> Int {
         var events: [(date: Date, change: Int)] = []
         for task in tasks {
@@ -35,6 +38,12 @@ enum PointsService {
             }
             if let redeemedAt = task.redeemedAt {
                 events.append((redeemedAt, -passCost))
+            }
+        }
+        // One charge per repaired day, however many tasks that day had.
+        for day in Dictionary(grouping: tasks.filter { $0.streakRepairDay != nil }, by: \.streakRepairDay).values {
+            if let repairedAt = day.compactMap(\.streakRepairedAt).min() {
+                events.append((repairedAt, -streakRepairCost))
             }
         }
         return events.sorted { $0.date < $1.date }.reduce(startingBalance) { balance, event in

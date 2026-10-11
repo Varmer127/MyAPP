@@ -12,9 +12,7 @@ struct CommitSummaryView: View {
 
     /// The minimum is a hard rule for a week planned ahead (up to the end of its Monday).
     /// A week that is already running can still be committed, with a warning.
-    private var minimumBlocksCommit: Bool {
-        missingActivities > 0 && Date.now < plan.weekStart.addingDays(1)
-    }
+    private var minimumBlocksCommit: Bool { PlanService.missesMinimum(plan, minimum: minimum) }
 
     /// Weekly targets the plan does not cover.
     private var shortfalls: [(category: TaskCategory, planned: Int, target: Int)] {
@@ -82,7 +80,7 @@ struct CommitSummaryView: View {
                                 .font(.system(size: 14))
                                 .foregroundStyle(Theme.textPrimary)
                             Text(minimumBlocksCommit
-                                 ? "Dokud je nedoplníš, zavázat se nejde."
+                                 ? "Dokud je nedoplníš, plánovač odeslat nejde."
                                  : "Týden už běží, takže se zavázat můžeš i tak.")
                                 .font(.system(size: 13))
                                 .foregroundStyle(Theme.textSecondary)
@@ -111,16 +109,24 @@ struct CommitSummaryView: View {
                             }
                         }
                     }
-                    Text("Od této chvíle se každé odstranění, přesun nebo snížení úkolu zaznamená. Odstraněný úkol se dál počítá jako porušený slib.")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Theme.textSecondary)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label("ZAPEČETÍ SE ZA 60 MINUT", systemImage: "calendar.badge.clock").labelStyle(Theme.textPrimary)
+                        Text("Plán odešleš do plánovače. Hodinu ho ještě můžeš měnit bez postihu, třeba když si vzpomeneš, co jsi zapomněl. Pak se zapečetí sám. Urychlit to nejde a schválit si ho sám taky ne.")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Theme.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text("Po zapečetění se každé odstranění, přesun nebo snížení úkolu zaznamená. Odstraněný úkol se dál počítá jako porušený slib.")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Theme.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
                 .padding(Theme.screenPadding)
                 .padding(.top, 16)
             }
             VStack(spacing: 10) {
-                Button("ZAVAZUJI SE") {
-                    PlanService.commit(plan)
+                Button("ODESLAT PLÁNOVAČ") {
+                    PlanService.submit(plan)
                     dismiss()
                 }
                 .buttonStyle(PrimaryButtonStyle())

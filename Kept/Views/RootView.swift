@@ -32,13 +32,26 @@ struct RootView: View {
             hasher.combine(task.deadline)
             hasher.combine(task.plannedMinutes)
             hasher.combine(task.isRemoved)
+            hasher.combine(task.completionShare)
+            hasher.combine(task.streakRepairDay)
         }
         for plan in plans {
             hasher.combine(plan.weekStart)
             hasher.combine(plan.committedAt)
+            hasher.combine(plan.submittedAt)
         }
         hasher.combine(settingsList.first?.notificationSignature)
         return hasher.finalize()
+    }
+
+    /// The next moment a handed-in plan is due to be sealed.
+    private var nextSealDate: Date? { plans.compactMap(\.sealDate).min() }
+
+    private func sealDuePlans() {
+        withAnimation(.spring(duration: 0.5)) {
+            PlanService.sealDue(plans, minimum: settings?.minimumWeeklyTasks ?? UserSettings.defaultMinimumWeeklyTasks)
+        }
+        SealActivityManager.reconcile(plans)
     }
 
     var body: some View {
@@ -92,10 +105,20 @@ struct RootView: View {
                 NotificationManager.cancelRestEnd()
             }
             WidgetBridge.update(tasks: tasks, plans: plans)
+            SealActivityManager.reconcile(plans)
             await NotificationManager.reschedule(context: context)
+        }
+        // Nothing runs while the app is closed, so a plan is sealed here: when its hour runs out
+        // with the app open, or the next time the app comes to the front.
+        .task(id: nextSealDate) {
+            sealDuePlans()
+            guard let nextSealDate else { return }
+            try? await Task.sleep(for: .seconds(max(nextSealDate.timeIntervalSinceNow, 0) + 0.5))
+            if !Task.isCancelled { sealDuePlans() }
         }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
+            sealDuePlans()
             FocusSession.closeAbandoned(in: tasks)
             Task { await NotificationManager.reschedule(context: context) }
         }

@@ -5,8 +5,10 @@ import SwiftData
 final class WeeklyPlan {
     /// Monday 00:00 of the week.
     var weekStart: Date = Date()
-    /// Set when the user presses I COMMIT. Nil while the plan is a draft.
+    /// Set when the plan is sealed. Nil while the plan is a draft or still waiting to be sealed.
     var committedAt: Date?
+    /// When the user handed the plan in. It is sealed by itself an hour later; until then it can be changed freely.
+    var submittedAt: Date?
     /// JSON-encoded `[TaskSnapshot]`: the complete plan exactly as it was committed.
     var snapshotData: Data?
 
@@ -20,6 +22,9 @@ final class WeeklyPlan {
     }
 
     var isCommitted: Bool { committedAt != nil }
+    /// Handed in and counting down to being sealed.
+    var isSealing: Bool { committedAt == nil && submittedAt != nil }
+    var sealDate: Date? { isSealing ? submittedAt?.addingTimeInterval(PlanService.sealDelay) : nil }
     var weekEnd: Date { weekStart.addingDays(7) }
     var lastDay: Date { weekStart.addingDays(6) }
 

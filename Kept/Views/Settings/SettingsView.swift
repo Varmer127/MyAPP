@@ -129,7 +129,7 @@ struct SettingsView: View {
     }
 
     private func dailySection(_ settings: UserSettings) -> some View {
-        Section("Denně") {
+        Section {
             Toggle("Ranní přehled", isOn: Bindable(settings).morningBriefEnabled)
                 .tint(Theme.textSecondary)
             if settings.morningBriefEnabled {
@@ -142,6 +142,12 @@ struct SettingsView: View {
                 DatePicker("Čas bilance", selection: timeBinding(Bindable(settings).realityCheckMinutes),
                            displayedComponents: .hourAndMinute)
             }
+            Toggle("Hlídání série", isOn: Bindable(settings).streakRemindersEnabled)
+                .tint(Theme.textSecondary)
+        } header: {
+            Text("Denně")
+        } footer: {
+            Text("Hlídání série tě večer upozorní, že plamínek o půlnoci zhasne. Když zhasne, připomíná se Kept sám ještě týden, čím dál řidčeji, i když aplikaci neotevřeš.")
         }
         .listRowBackground(Theme.card)
     }

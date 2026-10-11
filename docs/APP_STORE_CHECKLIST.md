@@ -35,6 +35,8 @@ Založeno 10. 10. 2026. Aplikace se zatím dolaďuje pro osobní použití; tenh
 - [ ] **Drsný tón.** Vulgární notifikace: nesmí být výchozí, jen jako vědomá volba; nastavit odpovídající věkové hodnocení. Titulky notifikací (`punchlines`) obsahují silné vulgarismy v angličtině („FUCK“) – v dotazníku věkového hodnocení uvést častý hrubý jazyk; zvážit variantu bez nich.
 - [ ] **Název.** „Kept“ je v App Storu obsazený několika aplikacemi (viz níže). Vybrat rozlišující název a ověřit ochranné známky.
 
+- **Odpočty a tlak na uživatele.** Odpočet u vykoupení série (48 h) je skutečná lhůta a platí se body získanými v aplikaci. Kdyby se body někdy daly koupit za peníze, je odpočet tlačící k nákupu rizikový (klamavé / agresivní obchodní praktiky, „dark patterns“) — před tím právně posoudit. Odpočet se nesmí nikdy sám obnovovat ani být smyšlený.
+
 ## 2. Na straně vývojářského účtu
 
 - [ ] Apple Developer Program (99 USD / rok)
@@ -69,6 +71,7 @@ Všechny čtyři mění to, že aplikace dnes nic neposílá mimo telefon. Zname
 - **Duely s přáteli.** Vyžadují účty, server a seznam přátel.
 - **Úvodní průvodce s moduly.** Při prvním spuštění: jazyk, tón, které záložky chce mít v liště, propojení se Zdravím a zapnutí Gymu. U Zdraví i Gymu poznámka, že to jde udělat i později v Nastavení. U Gymu zmínit upozornění po tréninku zaznamenaném ve Zdraví (přichází po uložení tréninku, ne při jeho zahájení). Vše musí jít změnit v Nastavení.
 - **Mince za splnění úkolů.** Virtuální měna jde udělat jen v zařízení. Skutečné peníze nebo sázky o peníze jsou právní otázka (hazard, pravidla Applu).
+- **Minimum aktivit týdně volí uživatel v onboardingu** (dnes výchozí 7, měnit jde v Nastavení → Týdenní cíle). Rozhodnuto 11. 10. 2026, udělat spolu s onboardingem.
 
 ## 4. Co uvést v App Storu
 

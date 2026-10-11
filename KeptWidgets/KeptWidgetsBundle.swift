@@ -6,5 +6,6 @@ struct KeptWidgetsBundle: WidgetBundle {
     var body: some Widget {
         TodayWidget()
         FocusLiveActivity()
+        SealLiveActivity()
     }
 }

@@ -2,13 +2,16 @@ import SwiftUI
 import SwiftData
 
 /// Everything that configures the gym part of the app: what gets offered when logging a workout,
-/// the weekly target and the default rest between sets.
+/// the weekly target and the rest lengths between sets.
 struct GymSettingsView: View {
     @Query private var settingsList: [UserSettings]
-    @State private var newRestName = ""
-    @State private var newRestSeconds = 120
     @State private var newPreset = ""
     @State private var newExercise = ""
+    @State private var newRestName = ""
+    @State private var newRestSeconds = 120
+    @State private var isAddingRest = false
+    @State private var isAddingPreset = false
+    @State private var isAddingExercise = false
 
     var body: some View {
         Form {
@@ -28,10 +31,12 @@ struct GymSettingsView: View {
                 .listRowBackground(Theme.card)
 
                 restSection(settings)
-                presetList(title: "Co jsem jel", placeholder: "Nová partie", text: $newPreset,
+                presetList(title: "Co jsem jel", addLabel: "Přidat partii", placeholder: "Název partie",
+                           text: $newPreset, isAdding: $isAddingPreset,
                            footer: "Nabízí se při zápisu tréninku. Břicho se zaškrtává zvlášť ke každému tréninku.",
                            items: Bindable(settings).workoutPresets)
-                presetList(title: "Cviky", placeholder: "Nový cvik", text: $newExercise,
+                presetList(title: "Cviky", addLabel: "Přidat cvik", placeholder: "Název cviku",
+                           text: $newExercise, isAdding: $isAddingExercise,
                            footer: "Odebrání cviku ze seznamu nesmaže jeho historii ve statistikách.",
                            items: Bindable(settings).exercisePresets)
             }
@@ -41,6 +46,25 @@ struct GymSettingsView: View {
         .navigationTitle("Nastavení gymu")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Theme.background, for: .navigationBar)
+    }
+
+    /// The last row of every list: a plus that unfolds the fields for a new entry.
+    private func addRow(_ label: String, isAdding: Binding<Bool>) -> some View {
+        Button {
+            withAnimation { isAdding.wrappedValue.toggle() }
+        } label: {
+            Label(isAdding.wrappedValue ? "Zrušit" : label, systemImage: isAdding.wrappedValue ? "xmark" : "plus")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Theme.textPrimary)
+        }
+    }
+
+    private func removeButton(enabled: Bool = true, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: "minus.circle").foregroundStyle(enabled ? Theme.red : Theme.textTertiary)
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
     }
 
     /// Rest lengths offered in the stopwatch. Any of them can be removed, but one always stays.
@@ -55,23 +79,25 @@ struct GymSettingsView: View {
                     Text(FocusView.clock(TimeInterval(preset.seconds)))
                         .foregroundStyle(Theme.textSecondary)
                         .monospacedDigit()
-                    Button {
+                    removeButton(enabled: presets.count > 1) {
                         settings.restPresets = presets.filter { $0 != preset }
-                    } label: {
-                        Image(systemName: "minus.circle").foregroundStyle(presets.count > 1 ? Theme.red : Theme.textTertiary)
                     }
-                    .buttonStyle(.plain)
-                    .disabled(presets.count <= 1)
                 }
             }
-            TextField("Název vlastní pauzy", text: $newRestName)
-            Stepper("Délka: \(FocusView.clock(TimeInterval(newRestSeconds)))", value: $newRestSeconds,
-                    in: RestPreset.secondsRange, step: RestPreset.secondsStep)
-            Button("Přidat pauzu") {
-                settings.restPresets = presets + [RestPreset(name: name, seconds: newRestSeconds)]
-                newRestName = ""
+            addRow("Přidat vlastní pauzu", isAdding: $isAddingRest)
+            if isAddingRest {
+                TextField("Název pauzy", text: $newRestName)
+                Stepper("Délka: \(FocusView.clock(TimeInterval(newRestSeconds)))", value: $newRestSeconds,
+                        in: RestPreset.secondsRange, step: RestPreset.secondsStep)
+                Button("ULOŽIT PAUZU") {
+                    settings.restPresets = presets + [RestPreset(name: name, seconds: newRestSeconds)]
+                    newRestName = ""
+                    withAnimation { isAddingRest = false }
+                }
+                .buttonStyle(PrimaryButtonStyle())
+                .disabled(name.isEmpty || presets.contains { $0.name == name })
+                .listRowInsets(EdgeInsets(top: 10, leading: 14, bottom: 12, trailing: 14))
             }
-            .disabled(name.isEmpty || presets.contains { $0.name == name })
         } header: {
             Text("Pauzy mezi sériemi")
         } footer: {
@@ -80,32 +106,29 @@ struct GymSettingsView: View {
         .listRowBackground(Theme.card)
     }
 
-    /// An editable list of names with a field to add another.
-    private func presetList(title: String, placeholder: String, text: Binding<String>, footer: String,
-                            items: Binding<[String]>) -> some View {
+    /// An editable list of names ending with a row that unfolds a field for a new one.
+    private func presetList(title: String, addLabel: String, placeholder: String, text: Binding<String>,
+                            isAdding: Binding<Bool>, footer: String, items: Binding<[String]>) -> some View {
         let name = text.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines)
         return Section {
             ForEach(items.wrappedValue, id: \.self) { item in
                 HStack {
                     Text(item)
                     Spacer()
-                    Button {
-                        items.wrappedValue.removeAll { $0 == item }
-                    } label: {
-                        Image(systemName: "minus.circle").foregroundStyle(Theme.red)
-                    }
-                    .buttonStyle(.plain)
+                    removeButton { items.wrappedValue.removeAll { $0 == item } }
                 }
             }
-            HStack {
+            addRow(addLabel, isAdding: isAdding)
+            if isAdding.wrappedValue {
                 TextField(placeholder, text: text)
-                Button("Přidat") {
-                    if !items.wrappedValue.contains(name) {
-                        items.wrappedValue.append(name)
-                    }
+                Button("ULOŽIT") {
+                    items.wrappedValue.append(name)
                     text.wrappedValue = ""
+                    withAnimation { isAdding.wrappedValue = false }
                 }
-                .disabled(name.isEmpty)
+                .buttonStyle(PrimaryButtonStyle())
+                .disabled(name.isEmpty || items.wrappedValue.contains(name))
+                .listRowInsets(EdgeInsets(top: 10, leading: 14, bottom: 12, trailing: 14))
             }
         } header: {
             Text(title)

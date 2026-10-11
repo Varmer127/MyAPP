@@ -30,7 +30,7 @@ enum NotificationTone: String, CaseIterable, Identifiable {
     }
 }
 
-/// All notification copy. Placeholders: {task}, {time}, {why}, {n}.
+/// All notification copy. Placeholders: {task}, {time}, {why}, {n}, {days}.
 /// Savage copy attacks laziness, procrastination and broken promises — never appearance, health or self-worth.
 enum NotificationTemplates {
     // MARK: Task escalation, by level
@@ -285,6 +285,69 @@ enum NotificationTemplates {
         ],
     ]
 
+    // MARK: Day streak
+
+    /// The evening of a day that is about to break the streak. {days} = its length, e.g. "5 dní".
+    static let streakAtRisk: [NotificationTone: [String]] = [
+        .normal: [
+            "Série {days} skončí o půlnoci. Dokonči dnešní závazky.",
+            "Dnes ještě můžeš udržet sérii {days}. Zbývá pár hodin.",
+        ],
+        .strict: [
+            "Série {days} je v ohrožení. O půlnoci o ni přijdeš.",
+            "{days} v řadě a dnes to zahodíš? Dokonči dnešní závazky.",
+        ],
+        .savage: [
+            "Série {days} dnes umře na tvoji lenost. Zvedni se a dodělej to.",
+            "{days} práce a dnes to zahodíš kvůli pohodlí? Dodělej dnešek.",
+        ],
+    ]
+
+    /// The morning after the streak broke.
+    static let streakLost: [NotificationTone: [String]] = [
+        .normal: [
+            "Série {days} skončila. Dnes můžeš začít novou.",
+            "Včera se série {days} přerušila. Vrať se k tomu dnes.",
+        ],
+        .strict: [
+            "Série {days} je pryč. Včera jsi nedodržel slovo. Dnes začni znovu.",
+            "{days} v řadě a včera konec. Nenech z jednoho výpadku udělat zvyk.",
+        ],
+        .savage: [
+            "Série {days} je v háji. Včera ses na to vykašlal. Dnes to koukej napravit.",
+            "{days} v řadě jsi zahodil za jediný den. Dnes ukaž, že to byla výjimka.",
+        ],
+    ]
+
+    /// Later reminders while the streak stays at zero, in order. {n} = days without a streak.
+    static let streakFollowUp: [NotificationTone: [String]] = [
+        .normal: [
+            "Dní bez série: {n}. Stačí jeden splněný den a plamínek zase hoří.",
+            "Dní bez série: {n}. Kept na tebe čeká.",
+            "Dní bez série: {n}. Naplánuj si jeden malý závazek a splň ho.",
+        ],
+        .strict: [
+            "Dní bez série: {n}. Jeden výpadek je chyba, dva jsou začátek zvyku.",
+            "Dní bez série: {n}. Přestaň to odkládat a otevři Kept.",
+            "Dní bez série: {n}. Takhle se vzdává potichu. Vrať se.",
+        ],
+        .savage: [
+            "Dní bez série: {n}. Plamínek nehoří a ty děláš, že to nevidíš.",
+            "Dní bez série: {n}. Schováváš se před vlastními sliby. Otevři to.",
+            "Dní bez série: {n}. Přesně takhle vypadá, když to člověk vzdá. Dokaž opak.",
+        ],
+    ]
+
+    /// The last one, a week after the break. After it the app stays quiet about the streak.
+    static let streakFinal: [NotificationTone: String] = [
+        .normal: "Týden bez série. Tohle je poslední připomínka. Až budeš chtít začít znovu, Kept tu je.",
+        .strict: "Týden bez série. Dál už ti to připomínat nebudu. Rozhodnutí je na tobě.",
+        .savage: "Týden bez série. Připomínky zjevně nefungují, tak končím. Vrať se, až to budeš myslet vážně.",
+    ]
+
+    static let streakRepairHint = "Ještě ji můžeš vykoupit zpět za body."
+    static let streakRepairLastDay = "Dnes naposledy ji můžeš vykoupit zpět za body."
+
     static func morningSentence(yesterday: Double?, seed: Int) -> String {
         guard let yesterday else { return pick(morningNeutral, seed: seed) }
         let percent = Int((yesterday * 100).rounded())
@@ -333,6 +396,8 @@ enum NotificationTemplates {
     static var totalCount: Int {
         [prep, start, direct, strict, savage, punchlines, whyStrict, whySavage, sundayOpening,
          morningGood, morningAverage, morningBad, morningNeutral].reduce(0) { $0 + $1.count }
-            + [sundayLater, dayNudge, realityCheck].reduce(0) { $0 + $1.values.reduce(0) { $0 + $1.count } }
+            + [sundayLater, dayNudge, realityCheck, streakAtRisk, streakLost, streakFollowUp]
+                .reduce(0) { $0 + $1.values.reduce(0) { $0 + $1.count } }
+            + streakFinal.count + 2
     }
 }
