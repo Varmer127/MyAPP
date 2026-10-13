@@ -8,6 +8,8 @@ struct SettingsView: View {
     @Query private var settingsList: [UserSettings]
     @State private var authorization: UNAuthorizationStatus = .notDetermined
     @AppStorage("introEnabled") private var introEnabled = true
+    /// The system permission question was just answered with "no".
+    @State private var calendarDenied = false
     @AppStorage(AppAppearance.storageKey) private var appearanceRaw = AppAppearance.dark.rawValue
 
     fileprivate static let multiplierRange = 0.2...1.0
@@ -36,6 +38,7 @@ struct SettingsView: View {
                     targetsSection(settings)
                     gymSection
                     healthSection(settings)
+                    calendarSection(settings)
                     weightsSection(settings)
                 }
                 Section {
@@ -165,7 +168,7 @@ struct SettingsView: View {
         } header: {
             Text("Plánování týdne")
         } footer: {
-            Text("Každou hodinu v neděli, dokud se nezavážeš k příštímu týdnu.")
+            Text("Každou hodinu v neděli, dokud neodešleš plánovač na příští týden.")
         }
         .listRowBackground(Theme.card)
     }
@@ -186,7 +189,7 @@ struct SettingsView: View {
         } header: {
             Text("Týdenní cíle")
         } footer: {
-            Text("Odklad přesune úkol na jiný den bez postihu; víc než 3 za měsíc nastavit nejde, jen míň. Plán s méně aktivitami, než je minimum, nejde na nový týden potvrdit. Když za cílem kategorie zaostáváš, aplikace ti úkol sama navrhne na obrazovce Dnes a při plánování týdne upozorní, že ho plán nepokrývá.")
+            Text("Odklad přesune úkol na jiný den bez postihu; víc než 3 za měsíc nastavit nejde, jen míň. Plán s méně aktivitami, než je minimum, nejde na nový týden odeslat. Když za cílem kategorie zaostáváš, aplikace ti úkol sama navrhne na obrazovce Dnes a při plánování týdne upozorní, že ho plán nepokrývá.")
         }
         .listRowBackground(Theme.card)
     }
@@ -278,6 +281,40 @@ struct SettingsView: View {
             }
             .listRowBackground(Theme.card)
         }
+    }
+
+    private func calendarSection(_ settings: UserSettings) -> some View {
+        Section {
+            Toggle("Kalendář iPhonu", isOn: Binding(
+                get: { settings.calendarEnabled && CalendarService.isAuthorized },
+                set: { enabled in
+                    guard enabled else {
+                        settings.calendarEnabled = false
+                        return
+                    }
+                    Task {
+                        // Stays off when the permission is refused.
+                        settings.calendarEnabled = await CalendarService.requestAccess()
+                        calendarDenied = !settings.calendarEnabled
+                    }
+                }))
+                .tint(Theme.textSecondary)
+            if calendarDenied || (settings.calendarEnabled && CalendarService.isDenied) {
+                Text("Kept nemá ke kalendáři přístup. Povol ho v Nastavení iPhonu → Aplikace → Kept → Kalendáře (úplný přístup).")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.orange)
+                Button("Otevřít Nastavení iPhonu") {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                }
+            }
+        } header: {
+            Text("Kalendář")
+        } footer: {
+            Text("Při plánování týdne uvidíš u každého dne, co už máš v kalendáři, a editor úkolu upozorní, když se úkol s něčím kryje. Kept kalendář jen čte, nic do něj nezapisuje a události si neukládá.")
+        }
+        .listRowBackground(Theme.card)
     }
 
     private func weightsSection(_ settings: UserSettings) -> some View {

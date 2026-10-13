@@ -171,9 +171,14 @@ enum NotificationManager {
             planned.append(Planned(id: "seal.warning.\(week)", date: sealDate.addingTimeInterval(-sealWarningLead),
                                    title: "ZA 10 MINUT SE PLÁN ZAPEČETÍ",
                                    body: "Týden \(week): poslední chvíle na úpravy bez postihu.", route: .planning))
-            planned.append(Planned(id: "seal.\(week)", date: sealDate, title: "PLÁN ZAPEČETĚN",
-                                   body: "Týden \(week) je závazný. Závazky: \(sealing.committableTasks.count). Od teď se každá změna počítá.",
-                                   route: .planning))
+            // What is announced has to be what will really happen at that moment.
+            let seals = PlanService.willSeal(sealing, minimum: settings.minimumWeeklyTasks)
+            planned.append(Planned(
+                id: "seal.\(week)", date: sealDate, title: seals ? "PLÁN ZAPEČETĚN" : "PLÁN SE NEZAPEČETIL",
+                body: seals
+                    ? "Týden \(week) je závazný. Závazky: \(sealing.pledgeableTasks(sealDate).count). Od teď se každá změna počítá."
+                    : "Týden \(week) nesplnil minimum aktivit, plánovač se ti vrátil jako návrh. Doplň ho a odešli znovu.",
+                route: .planning))
         }
         if settings.morningBriefEnabled {
             planned += morningBriefs(settings: settings, tasks: tasks, now: now)
@@ -188,15 +193,20 @@ enum NotificationManager {
         // The streak series reaches a week ahead and is what still speaks up when the app stays closed,
         // so it is never the part that gets cut by the pending limit.
         let streak = settings.streakRemindersEnabled
-            ? streakReminders(settings: settings, tasks: tasks, now: now).filter { $0.date > now } : []
+            ? streakReminders(settings: settings, tasks: tasks,
+                              purchases: (try? context.fetch(FetchDescriptor<PointsPurchase>())) ?? [], now: now)
+                .filter { $0.date > now } : []
         let rest = planned.filter { $0.date > now }.sorted { $0.date < $1.date }.prefix(maxPending - streak.count)
         return (rest + streak).sorted { $0.date < $1.date }
     }
 
     /// A warning on the evening the streak is about to break, then a thinning series of reminders after it did.
     /// Everything is planned as if nothing more got done; finishing the day reschedules and removes it.
-    private static func streakReminders(settings: UserSettings, tasks: [TaskItem], now: Date) -> [Planned] {
+    private static func streakReminders(settings: UserSettings, tasks: [TaskItem], purchases: [PointsPurchase],
+                                        now: Date) -> [Planned] {
         let current = ScoreEngine.dayStreak(tasks, now: now)
+        // A waiting insurance will catch the next bad day, so there is nothing to warn about yet.
+        if current > 0, PointsService.unused(.streakInsurance, in: purchases) > 0 { return [] }
         let broken = StreakService.broken(tasks, now: now)
         let upcoming = StreakService.nextBreak(tasks, now: now)
         // A living streak breaks on the next unfinished day; a dead one is counted from the day it broke.
@@ -213,7 +223,10 @@ enum NotificationManager {
                                    title: "SÉRIE V OHROŽENÍ", body: body.replacingOccurrences(of: "{days}", with: days),
                                    route: .today))
         }
-        let canRepair = length >= StreakService.minimumRepairableStreak
+        // Buying back is only mentioned while it is really on offer: not turned down and affordable.
+        let declined = UserDefaults.standard.double(forKey: StreakService.offerDismissedKey) == anchor.timeIntervalSince1970
+        let canRepair = length >= StreakService.minimumRepairableStreak && !declined
+            && PointsService.balance(tasks, purchases: purchases, now: now) >= PointsService.streakRepairCost
         for (index, step) in streakFollowUps.enumerated() {
             let title: String
             var body: String

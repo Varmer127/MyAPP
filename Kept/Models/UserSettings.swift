@@ -35,6 +35,8 @@ final class UserSettings {
     /// How many tasks a month may be postponed without penalty. Can only be lowered below the maximum.
     var postponeLimit: Int = 3
     var healthEnabled: Bool = false
+    /// Show the iPhone calendar's events next to the plan and warn about clashes.
+    var calendarEnabled: Bool = false
 
     // Optional tabs. Dnes, Týden and Nastavení are always shown.
     var showsStatsTab: Bool = true

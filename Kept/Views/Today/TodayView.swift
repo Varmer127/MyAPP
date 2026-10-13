@@ -8,6 +8,8 @@ struct TodayView: View {
     @Query private var failures: [FailureRecord]
     @Query private var postponements: [Postponement]
     @Query private var reflections: [WeekReflection]
+    @Query private var purchases: [PointsPurchase]
+    @State private var showsShop = false
     /// Day on which the weekly reflection last opened by itself, so it only interrupts once a day.
     @AppStorage("reflectionPromptDay") private var reflectionPromptDay = 0.0
     @State private var reflection: ReflectionRequest?
@@ -18,7 +20,7 @@ struct TodayView: View {
     /// "<day seed>:<category>,<category>" — suggestions the user declined today.
     @AppStorage("declinedSuggestions") private var declinedSuggestions = ""
     /// Day (as a timestamp) of the streak break whose buy-back offer the user turned down.
-    @AppStorage("streakOfferDismissed") private var streakOfferDismissed = 0.0
+    @AppStorage(StreakService.offerDismissedKey) private var streakOfferDismissed = 0.0
     /// Broken streak waiting for the "really spend the points?" confirmation.
     @State private var confirmRepair: StreakService.Broken?
     @State private var showsRealityCheck = false
@@ -103,7 +105,7 @@ struct TodayView: View {
             if postponesLeft > 0, !task.isRecovery {
                 Button("Odložit bez postihu (zbývá \(postponesLeft) z \(postponeLimit))") { postponeTask = task }
             }
-            if PointsService.canRedeem(task, balance: PointsService.balance(tasks)) {
+            if PointsService.canRedeem(task, balance: PointsService.balance(tasks, purchases: purchases)) {
                 Button("Zrušit za \(PointsService.passCost) bodů bez postihu") {
                     withAnimation { PointsService.redeem(task) }
                 }
@@ -111,6 +113,7 @@ struct TodayView: View {
             Button("Přeskočit a vysvětlit", role: .destructive) { excuse = ExcuseRequest(task: task, kind: .skipped) }
         }
         .sheet(item: $detailTask) { TaskDetailView(task: $0) }
+        .sheet(isPresented: $showsShop) { ShopView() }
         // A moment to be honest before anything counts as done.
         .alert("Opravdu jsi to splnil podle plánu?",
                isPresented: Binding(get: { confirmDone != nil }, set: { if !$0 { confirmDone = nil } }),
@@ -142,13 +145,15 @@ struct TodayView: View {
     }
 
     private var postponeLimit: Int { settingsList.first?.postponeLimit ?? UserSettings.postponeLimitRange.upperBound }
-    private var postponesLeft: Int { max(0, postponeLimit - PlanService.postponementsUsed(postponements)) }
+    private var postponesLeft: Int {
+        max(0, postponeLimit + PointsService.extraPostponements(purchases) - PlanService.postponementsUsed(postponements))
+    }
 
     /// Skipping first offers a penalty-free postponement while the month's allowance lasts.
     private func giveUp(on task: TaskItem, now: Date) {
         if task.isMissed(now) {
             excuse = ExcuseRequest(task: task, kind: .missed)
-        } else if (postponesLeft > 0 && !task.isRecovery) || PointsService.canRedeem(task, balance: PointsService.balance(tasks), now: now) {
+        } else if (postponesLeft > 0 && !task.isRecovery) || PointsService.canRedeem(task, balance: PointsService.balance(tasks, purchases: purchases), now: now) {
             failChoice = task
         } else {
             excuse = ExcuseRequest(task: task, kind: .skipped)
@@ -191,7 +196,8 @@ struct TodayView: View {
                 if slipping {
                     slippingBanner(day)
                 }
-                streakCard(now: now)
+                streakCard(day, now: now)
+                insuranceUsedCard(now: now)
                 if showsBrief(day, now: now) {
                     MorningBriefCard(tasks: tasks, todayTasks: day.visible, promisesKeptThisWeek: day.promisesKept,
                                      streak: day.streak, now: now) {
@@ -291,12 +297,27 @@ struct TodayView: View {
         }
     }
 
+    /// The broken streak that is currently offered for buying back, if any.
+    private func repairOffer(now: Date) -> StreakService.Broken? {
+        guard let broken = StreakService.broken(tasks, now: now), broken.canRepair(now: now),
+              streakOfferDismissed != broken.brokenOn.timeIntervalSince1970 else { return nil }
+        return broken
+    }
+
+    /// Yesterday under 60 %: today is a comeback until it is back above 80 %.
+    private func comeback(_ day: TodaySnapshot, now: Date) -> (yesterday: Double, today: Double, succeeded: Bool)? {
+        let yesterdayTasks = tasks.filter { $0.scheduledDate.isSameDay(as: now.startOfDay.addingDays(-1)) }
+        guard let yesterday = ScoreEngine.productivity(yesterdayTasks, now: now), yesterday < Self.comebackThreshold else { return nil }
+        let today = day.productivity ?? 0
+        return (yesterday, today, today >= ScoreEngine.Config.streakThreshold)
+    }
+
     /// For a few days after the streak breaks it can be bought back with points.
+    /// A bad yesterday is part of the same story, so the comeback is folded into this card instead of a second one.
     @ViewBuilder
-    private func streakCard(now: Date) -> some View {
-        if let broken = StreakService.broken(tasks, now: now), broken.canRepair(now: now),
-           streakOfferDismissed != broken.brokenOn.timeIntervalSince1970 {
-            let balance = PointsService.balance(tasks)
+    private func streakCard(_ day: TodaySnapshot, now: Date) -> some View {
+        if let broken = repairOffer(now: now) {
+            let balance = PointsService.balance(tasks, purchases: purchases)
             let cost = broken.cost
             VStack(alignment: .leading, spacing: 12) {
                 Label("SÉRIE SKONČILA", systemImage: "flame.fill").labelStyle(Theme.orange)
@@ -324,6 +345,30 @@ struct TodayView: View {
                     }
                     .buttonStyle(SecondaryButtonStyle(textColor: Theme.textSecondary))
                 }
+                if let comeback = comeback(day, now: now) {
+                    Divider().overlay(Theme.border)
+                    HStack(spacing: 10) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(comeback.succeeded ? "COMEBACK SE POVEDL" : "COMEBACK DAY")
+                                .labelStyle(comeback.succeeded ? Theme.green : Theme.orange)
+                            Text("Včera \(comeback.yesterday.percentText) · dnes \(comeback.today.percentText)")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(Theme.textPrimary)
+                        }
+                        Spacer()
+                        if !comeback.succeeded {
+                            Button("RECOVERY ÚKOL") { editor = EditorRequest(date: now, isRecovery: true) }
+                                .font(.system(size: 12, weight: .bold))
+                                .tracking(0.6)
+                                .foregroundStyle(Theme.textPrimary)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 9)
+                                .background(Theme.cardRaised)
+                                .clipShape(Capsule())
+                                .buttonStyle(.plain)
+                        }
+                    }
+                }
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -340,6 +385,27 @@ struct TodayView: View {
             } message: { _ in
                 Text("Plamínek se vrátí. Nesplněné úkoly těch dnů i jejich vliv na spolehlivost zůstávají.")
             }
+        }
+    }
+
+    /// The day after a streak insurance stepped in, so it does not get spent unnoticed.
+    @ViewBuilder
+    private func insuranceUsedCard(now: Date) -> some View {
+        let yesterday = now.startOfDay.addingDays(-1)
+        if purchases.contains(where: { $0.kind == .streakInsurance && $0.usedOn == yesterday }) {
+            HStack(spacing: 12) {
+                Image(systemName: ShopItem.streakInsurance.symbol)
+                    .font(.system(size: 22))
+                    .foregroundStyle(Theme.orange)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("POJISTKA SÉRIE POUŽITA").labelStyle(Theme.orange)
+                    Text("Včerejšek nevyšel, plamínek ale hoří dál. Zbývá pojistek: \(PointsService.unused(.streakInsurance, in: purchases)).")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .card()
         }
     }
 
@@ -369,7 +435,7 @@ struct TodayView: View {
                 .contentTransition(.numericText())
                 .animation(.easeOut(duration: 0.6), value: day.accountability?.score)
             Text("SPOLEHLIVOST").labelStyle()
-            Text(day.accountability?.subtitle ?? "Zatím žádná historie. Zavaž se k týdnu a dodrž slovo.")
+            Text(day.accountability?.subtitle ?? "Zatím žádná historie. Odešli plánovač na týden a dodrž slovo.")
                 .font(.system(size: 14))
                 .foregroundStyle(Theme.textSecondary)
                 .padding(.top, 4)
@@ -414,7 +480,7 @@ struct TodayView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("TENTO TÝDEN BEZ ZÁVAZKU").labelStyle(Theme.orange)
-                    Text("Dokud se nezavážeš, nic z toho, co uděláš, se nepočítá jako dodržený slib.")
+                    Text("Dokud neodešleš plánovač a nezapečetí se, nic z toho, co uděláš, se nepočítá jako dodržený slib.")
                         .font(.system(size: 14))
                         .foregroundStyle(Theme.textSecondary)
                         .multilineTextAlignment(.leading)
@@ -489,23 +555,21 @@ struct TodayView: View {
     }
 
     /// After a day under 60 %, today is framed as a comeback: orange until today is back above 80 %.
+    /// While the streak buy-back card is shown, the comeback lives inside that one.
     @ViewBuilder
     private func comebackCard(_ day: TodaySnapshot, now: Date) -> some View {
-        let yesterdayTasks = tasks.filter { $0.scheduledDate.isSameDay(as: now.startOfDay.addingDays(-1)) }
-        if let yesterday = ScoreEngine.productivity(yesterdayTasks, now: now), yesterday < Self.comebackThreshold {
-            let today = day.productivity ?? 0
-            let succeeded = today >= ScoreEngine.Config.streakThreshold
-            let color = succeeded ? Theme.green : Theme.orange
+        if repairOffer(now: now) == nil, let comeback = comeback(day, now: now) {
+            let color = comeback.succeeded ? Theme.green : Theme.orange
             VStack(alignment: .leading, spacing: 14) {
-                Text(succeeded ? "COMEBACK SE POVEDL" : "COMEBACK DAY").labelStyle(color)
+                Text(comeback.succeeded ? "COMEBACK SE POVEDL" : "COMEBACK DAY").labelStyle(color)
                 HStack(spacing: 28) {
-                    comebackFigure("Včera", yesterday.percentText, Theme.textSecondary)
-                    comebackFigure("Dnes", today.percentText, color)
+                    comebackFigure("Včera", comeback.yesterday.percentText, Theme.textSecondary)
+                    comebackFigure("Dnes", comeback.today.percentText, color)
                 }
-                Text(succeeded ? "Včerejšek jsi nezměnil. Dnešek ano." : "Včerejšek nezměníš. Dnešek ano.")
+                Text(comeback.succeeded ? "Včerejšek jsi nezměnil. Dnešek ano." : "Včerejšek nezměníš. Dnešek ano.")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
-                if !succeeded {
+                if !comeback.succeeded {
                     Button("VYTVOŘIT RECOVERY ÚKOL") {
                         editor = EditorRequest(date: now, isRecovery: true)
                     }
@@ -593,7 +657,7 @@ struct TodayView: View {
 
     /// Points towards the next pass. One pass cancels a weekly commitment without penalty.
     private var pointsCard: some View {
-        let balance = PointsService.balance(tasks)
+        let balance = PointsService.balance(tasks, purchases: purchases)
         let passes = balance / PointsService.passCost
         let towardsNext = balance % PointsService.passCost
         let isFull = balance >= PointsService.cap
@@ -605,14 +669,25 @@ struct TodayView: View {
                     .contentTransition(.numericText())
                 Text("/ \(PointsService.cap.formatted(.number.locale(.app))) BODŮ").labelStyle()
                 Spacer()
-                Text(passes == 0 ? "do propustky \(PointsService.passCost - towardsNext)"
-                     : (isFull ? "propustky: \(passes) · plná zásoba" : "propustky: \(passes)"))
-                    .font(.system(size: 12, weight: passes > 0 ? .semibold : .regular))
-                    .foregroundStyle(passes > 0 ? Theme.green : Theme.textSecondary)
+                Button {
+                    showsShop = true
+                } label: {
+                    Label("OBCHOD", systemImage: "bag.fill")
+                        .font(.system(size: 12, weight: .bold))
+                        .tracking(0.6)
+                        .foregroundStyle(Theme.onPrimary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 7)
+                        .background(Theme.textPrimary)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
             }
             ThinBar(value: Double(balance) / Double(PointsService.cap),
                     color: passes > 0 ? Theme.green : Theme.textPrimary)
-            Text("Za \(PointsService.passCost.formatted(.number.locale(.app))) bodů se můžeš jednou vykoupit ze závazku bez postihu. Za \(PointsService.streakRepairCost) bodů za každý vynechaný den vrátíš ztracenou sérii.")
+            Text(passes == 0 ? "Do propustky chybí \(PointsService.passCost - towardsNext). Co všechno se dá za body pořídit, najdeš v obchodě."
+                 : (isFull ? "Propustky: \(passes) · plná zásoba, další body propadají. Utrať je v obchodě."
+                    : "Propustky: \(passes). Co všechno se dá za body pořídit, najdeš v obchodě."))
                 .font(.system(size: 11))
                 .foregroundStyle(Theme.textTertiary)
         }

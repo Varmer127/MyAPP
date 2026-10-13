@@ -22,6 +22,8 @@ struct WidgetSnapshot: Codable {
     var streak: Int
     var promisesKept: Double?
     var nextTitle: String?
+    /// The next task's identifier, when the widget may complete it with one tap.
+    var nextCompletableID: String?
     var focus: Focus?
 
     static let appGroup = "group.cz.philipstryka.kept"

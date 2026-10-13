@@ -10,6 +10,19 @@ struct WeekView: View {
     @State private var planToCommit: WeeklyPlan?
     @State private var showsQuickPlan = false
     @State private var detailTask: TaskItem?
+    @State private var confirmsCopy = false
+    /// Events of the shown week from the iPhone calendar, when that is switched on.
+    @State private var calendarEvents: [CalendarService.Event] = []
+    @Environment(\.modelContext) private var context
+    @Environment(\.scenePhase) private var scenePhase
+
+    /// Last week's plan, offered as a starting point until the shown week is handed in.
+    private var planToCopy: WeeklyPlan? {
+        guard plan?.isCommitted != true, plan?.isSealing != true, Date.now < weekStart.addingDays(7),
+              let previous = plans.first(where: { $0.weekStart == weekStart.addingDays(-7) }),
+              !previous.committableTasks.isEmpty else { return nil }
+        return previous
+    }
 
     private var weekStart: Date { Date.now.weekStart.addingDays(showsNextWeek ? 7 : 0) }
     private var plan: WeeklyPlan? { plans.first { $0.weekStart == weekStart } }
@@ -31,7 +44,7 @@ struct WeekView: View {
 
     private var canCommit: Bool {
         guard let plan else { return false }
-        return !plan.isCommitted && !plan.isSealing && !plan.committableTasks.isEmpty && Date.now < plan.weekEnd
+        return !plan.isCommitted && !plan.isSealing && !plan.pledgeableTasks().isEmpty && Date.now < plan.weekEnd
     }
 
     var body: some View {
@@ -43,6 +56,14 @@ struct WeekView: View {
                     if Date.now < weekStart.addingDays(7) {
                         Button("RYCHLÉ PLÁNOVÁNÍ") { showsQuickPlan = true }
                             .buttonStyle(SecondaryButtonStyle())
+                        if planToCopy != nil {
+                            Button {
+                                confirmsCopy = true
+                            } label: {
+                                Label("ZKOPÍROVAT MINULÝ TÝDEN", systemImage: "doc.on.doc")
+                            }
+                            .buttonStyle(SecondaryButtonStyle())
+                        }
                     }
                     if !goals.isEmpty || weeklyTotal != nil {
                         WeeklyGoalsCard(goals: goals, total: weeklyTotal)
@@ -87,6 +108,20 @@ struct WeekView: View {
         .sheet(item: $planToCommit) { CommitSummaryView(plan: $0) }
         .sheet(item: $detailTask) { TaskDetailView(task: $0) }
         .sheet(isPresented: $showsQuickPlan) { QuickPlanView(weekStart: weekStart) }
+        .alert("Zkopírovat minulý týden?", isPresented: $confirmsCopy) {
+            Button("Zkopírovat") {
+                if let planToCopy {
+                    withAnimation { PlanService.copyWeek(planToCopy, in: context) }
+                }
+            }
+            Button("Zrušit", role: .cancel) {}
+        } message: {
+            Text("Úkoly z minulého týdne se naplánují na stejné dny tohoto týdne. Co už tu ten den máš pod stejným názvem, se nezdvojí. Je to jen návrh, který pak můžeš upravit a odeslat.")
+        }
+        .task(id: "\(weekStart)-\(settingsList.first?.calendarEnabled == true)-\(scenePhase == .active)") {
+            calendarEvents = settingsList.first?.calendarEnabled == true
+                ? CalendarService.events(from: weekStart, to: weekStart.addingDays(7)) : []
+        }
     }
 
     private var header: some View {
@@ -109,11 +144,27 @@ struct WeekView: View {
     private var statusCard: some View {
         if let plan, let committedAt = plan.committedAt {
             VStack(alignment: .leading, spacing: 14) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Label("ZAPEČETĚNO", systemImage: "checkmark.seal.fill").labelStyle(Theme.textPrimary)
-                    Text("Závazky: \(plan.committedTasks.count) · \(committedAt.stampText)")
-                        .font(.system(size: 14))
-                        .foregroundStyle(Theme.textSecondary)
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Label("ZAPEČETĚNO", systemImage: "checkmark.seal.fill").labelStyle(Theme.textPrimary)
+                        Text("Závazky: \(plan.committedTasks.count) · \(committedAt.stampText)")
+                            .font(.system(size: 14))
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                    Spacer()
+                    if let share = SealedWeekShare(plan: plan) {
+                        ShareLink(item: share, preview: SharePreview("Kept – týden \(share.weekNumber)",
+                                                                     image: Image(systemName: "checkmark.seal.fill"))) {
+                            Label("SDÍLET", systemImage: "square.and.arrow.up")
+                                .font(.system(size: 12, weight: .bold))
+                                .tracking(0.6)
+                                .foregroundStyle(Theme.textPrimary)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 7)
+                                .background(Theme.cardRaised)
+                                .clipShape(Capsule())
+                        }
+                    }
                 }
                 PerformanceBar(label: "Dodržené sliby", value: ScoreEngine.promisesKept(plan.tasks))
                 PerformanceBar(label: "Věrnost plánu", value: ScoreEngine.commitmentIntegrity(plan))
@@ -129,7 +180,7 @@ struct WeekView: View {
                 Text("BEZ ZÁVAZKU").labelStyle(Theme.orange)
                 Text(plan?.activeTasks.isEmpty == false
                      ? "Zatím je to jen návrh. Slibem se stane, až ho odešleš a zapečetí se."
-                     : "Naplánuj si týden a pak se k němu zavaž.")
+                     : "Naplánuj si týden a pak odešli plánovač.")
                     .font(.system(size: 14))
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -159,6 +210,18 @@ struct WeekView: View {
                             .frame(width: 32, height: 24)
                     }
                 }
+            }
+            let events = calendarEvents.filter { $0.start < day.endOfDay && $0.end > day.startOfDay }
+            if !events.isEmpty {
+                VStack(alignment: .leading, spacing: 3) {
+                    ForEach(events) { event in
+                        Label(event.summary, systemImage: "calendar")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Theme.textSecondary)
+                            .lineLimit(1)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             if tasks.isEmpty {
                 Text("Žádné závazky")
@@ -231,16 +294,25 @@ private struct SealingCard: View {
                 .frame(width: Self.ringSize, height: Self.ringSize)
             }
             VStack(spacing: 6) {
-                Text("Závazky v plánovači: \(plan.committableTasks.count)")
+                Text("Závazky v plánovači: \(plan.pledgeableTasks(sealDate).count)")
                     .font(.system(size: 17, weight: .bold))
                     .foregroundStyle(Theme.textPrimary)
+                if closedCount > 0 {
+                    Text("Už uzavřené úkoly: \(closedCount). Do závazku se nepočítají, jen do produktivity.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 Text("Zapečetí se sám v \(sealDate.timeText). Do té doby můžeš plán měnit bez postihu. Urychlit to nejde.")
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.textSecondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
-                if plan.committableTasks.isEmpty || PlanService.missesMinimum(plan, minimum: minimum, now: sealDate) {
-                    Text("Plánovač je pod minimem \(minimum) aktivit. Když ho nedoplníš, nezapečetí se a vrátí se ti jako návrh.")
+                if !PlanService.willSeal(plan, minimum: minimum) {
+                    Text(plan.pledgeableTasks(sealDate).isEmpty
+                         ? "Všechny úkoly tohoto týdne jsou už uzavřené (splněné, přeskočené nebo propadlé) a zpětně se k nim zavázat nedá. Přidej otevřený úkol, jinak se plánovač nezapečetí a vrátí se ti jako návrh."
+                         : "Plánovač je pod minimem \(minimum) aktivit. Když ho nedoplníš, nezapečetí se a vrátí se ti jako návrh.")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(Theme.red)
                         .multilineTextAlignment(.center)
@@ -274,6 +346,13 @@ private extension SealingCard {
     func tasks(on day: Date) -> [TaskItem] {
         plan.committableTasks.filter { $0.scheduledDate.isSameDay(as: day) }
             .sorted { $0.dueDate == $1.dueDate ? $0.priority.rank > $1.priority.rank : $0.dueDate < $1.dueDate }
+    }
+
+    /// Tasks of the week that are already done or lost, so sealing leaves them out.
+    var closedCount: Int { plan.committableTasks.count - plan.pledgeableTasks(sealDate).count }
+
+    func isPledgeable(_ task: TaskItem) -> Bool {
+        task.status == .pending && !task.dayHasPassed(sealDate)
     }
 
     func duration(_ minutes: Int) -> String {
@@ -321,7 +400,8 @@ private extension SealingCard {
                     ForEach(items.prefix(Self.maxIconsPerDay)) { task in
                         Image(systemName: task.category.symbol)
                             .font(.system(size: 13))
-                            .foregroundStyle(task.priority == .critical ? Theme.orange : Theme.textPrimary)
+                            .foregroundStyle(!isPledgeable(task) ? Theme.textTertiary
+                                             : (task.priority == .critical ? Theme.orange : Theme.textPrimary))
                             .frame(height: 16)
                     }
                     if items.count > Self.maxIconsPerDay {
@@ -359,11 +439,13 @@ private extension SealingCard {
                         .frame(width: 20)
                     Text(task.title)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.textPrimary)
+                        .foregroundStyle(isPledgeable(task) ? Theme.textPrimary : Theme.textTertiary)
                         .lineLimit(1)
                     Spacer()
-                    Text([task.deadline.map { "do \($0.timeText)" }, duration(task.plannedMinutes)]
-                        .compactMap { $0 }.joined(separator: " · "))
+                    Text(isPledgeable(task)
+                         ? [task.deadline.map { "do \($0.timeText)" }, duration(task.plannedMinutes)]
+                            .compactMap { $0 }.joined(separator: " · ")
+                         : (task.isDone ? "hotovo" : "uzavřeno"))
                         .font(.system(size: 12))
                         .foregroundStyle(Theme.textSecondary)
                 }
@@ -431,7 +513,7 @@ private struct PlanChangesView: View {
 
     private var removed: [TaskItem] { plan.tasks.filter(\.isRemoved) }
     private var movedCount: Int { plan.committedTasks.filter { $0.moveCount > 0 }.count }
-    private var addedCount: Int { plan.activeTasks.filter { !$0.isCommitted }.count }
+    private var addedCount: Int { plan.activeTasks.filter(\.isAddedAfterCommitment).count }
     private var edits: [CommitmentEdit] { plan.edits.sorted { $0.date > $1.date } }
 
     var body: some View {

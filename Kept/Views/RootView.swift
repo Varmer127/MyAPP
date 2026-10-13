@@ -12,6 +12,7 @@ struct RootView: View {
     @Query private var tasks: [TaskItem]
     @Query private var plans: [WeeklyPlan]
     @Query private var settingsList: [UserSettings]
+    @Query private var purchases: [PointsPurchase]
     @State private var tab: AppTab = .today
     @State private var weekShowsNext = false
     @State private var showsRealityCheck = false
@@ -39,6 +40,10 @@ struct RootView: View {
             hasher.combine(plan.weekStart)
             hasher.combine(plan.committedAt)
             hasher.combine(plan.submittedAt)
+        }
+        for purchase in purchases {
+            hasher.combine(purchase.date)
+            hasher.combine(purchase.usedOn)
         }
         hasher.combine(settingsList.first?.notificationSignature)
         return hasher.finalize()
@@ -97,6 +102,7 @@ struct RootView: View {
         }
         .task(id: notificationSignature) {
             FocusSession.closeAbandoned(in: tasks)
+            StreakService.applyInsurance(tasks: tasks, purchases: purchases)
             HealthService.noteGymLogged(tasks.contains {
                 $0.category == .gym && $0.isDone && $0.scheduledDate.isSameDay(as: .now)
             })
@@ -119,6 +125,7 @@ struct RootView: View {
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             sealDuePlans()
+            StreakService.applyInsurance(tasks: tasks, purchases: purchases)
             FocusSession.closeAbandoned(in: tasks)
             Task { await NotificationManager.reschedule(context: context) }
         }

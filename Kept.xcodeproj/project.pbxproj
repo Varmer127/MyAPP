@@ -291,6 +291,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Kept;
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kept čte události z kalendáře, aby tě při plánování upozornil, že se úkol kryje s něčím, co už máš domluvené. Nic nezapisuje ani neukládá.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kept potřebuje fotoaparát, abys mohl vyfotit důkaz splnění úkolu.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Kept čte tvoji váhu a tréninky, aby je nemusel zapisovat ručně.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
@@ -322,6 +323,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Kept;
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kept čte události z kalendáře, aby tě při plánování upozornil, že se úkol kryje s něčím, co už máš domluvené. Nic nezapisuje ani neukládá.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kept potřebuje fotoaparát, abys mohl vyfotit důkaz splnění úkolu.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Kept čte tvoji váhu a tréninky, aby je nemusel zapisovat ručně.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;

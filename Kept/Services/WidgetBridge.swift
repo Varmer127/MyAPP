@@ -20,6 +20,7 @@ enum WidgetBridge {
             streak: ScoreEngine.dayStreak(tasks, now: now),
             promisesKept: ScoreEngine.promisesKept(tasks.filter { $0.scheduledDate.weekStart == now.weekStart }, now: now),
             nextTitle: next?.title,
+            nextCompletableID: next.flatMap { AppStore.canCompleteFromWidget($0) ? $0.uid.uuidString : nil },
             focus: focusing.flatMap { task in task.activeFocusSession.map { focus($0, title: task.title, now: now) } }
         ).save()
         WidgetCenter.shared.reloadAllTimelines()

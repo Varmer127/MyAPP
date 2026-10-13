@@ -1,3 +1,4 @@
+import AppIntents
 import SwiftUI
 import WidgetKit
 
@@ -110,10 +111,24 @@ struct TodayWidgetView: View {
                             .foregroundStyle(.white)
                             .lineLimit(2)
                         Spacer(minLength: 0)
-                        label("DODRŽENÉ SLIBY")
-                        Text(snapshot?.promisesKept.map { "\(Int(($0 * 100).rounded())) %" } ?? "—")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundStyle(.white)
+                        if let id = snapshot?.nextCompletableID {
+                            Button(intent: CompleteTaskIntent(taskID: id)) {
+                                Label("HOTOVO", systemImage: "checkmark")
+                                    .font(.system(size: 13, weight: .bold))
+                                    .tracking(0.6)
+                                    .foregroundStyle(.black)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 8)
+                                    .background(Self.green)
+                                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                            }
+                            .buttonStyle(.plain)
+                        } else {
+                            label("DODRŽENÉ SLIBY")
+                            Text(snapshot?.promisesKept.map { "\(Int(($0 * 100).rounded())) %" } ?? "—")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundStyle(.white)
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }

@@ -76,12 +76,18 @@ enum PlanService {
         plan.committableTasks.count < minimum && now < plan.weekStart.addingDays(1)
     }
 
+    /// Whether a handed-in plan really gets sealed when its hour runs out.
+    static func willSeal(_ plan: WeeklyPlan, minimum: Int) -> Bool {
+        guard let sealDate = plan.sealDate else { return false }
+        return !plan.pledgeableTasks(sealDate).isEmpty && !missesMinimum(plan, minimum: minimum, now: sealDate)
+    }
+
     /// Seals every plan whose hour is over, as of the moment it ran out. A plan that was emptied
     /// or cut below the minimum in the meantime goes back to being a draft instead.
     static func sealDue(_ plans: [WeeklyPlan], minimum: Int, now: Date = .now) {
         for plan in plans {
             guard let sealDate = plan.sealDate, sealDate <= now else { continue }
-            if plan.committableTasks.isEmpty || missesMinimum(plan, minimum: minimum, now: sealDate) {
+            if !willSeal(plan, minimum: minimum) {
                 withdraw(plan)
             } else {
                 commit(plan, at: sealDate)
@@ -91,7 +97,7 @@ enum PlanService {
 
     /// Freezes the current plan as the original commitment.
     static func commit(_ plan: WeeklyPlan, at now: Date = .now) {
-        let tasks = plan.committableTasks
+        let tasks = plan.pledgeableTasks(now)
         for task in tasks {
             task.isCommitted = true
             task.originalDate = task.scheduledDate
@@ -141,6 +147,26 @@ enum PlanService {
             }
         }
         return task
+    }
+
+    /// Plans the same tasks a week later, on the same weekdays. Days that are already over are left out,
+    /// and so is anything the target day already holds under the same title.
+    /// Returns how many tasks were created.
+    @discardableResult
+    static func copyWeek(_ source: WeeklyPlan, in context: ModelContext, now: Date = .now) -> Int {
+        var copied = 0
+        let existing = plan(forWeekOf: source.weekStart.addingDays(7), in: context).activeTasks
+        for task in source.committableTasks {
+            var draft = TaskDraft(task: task)
+            draft.date = task.scheduledDate.addingDays(7)
+            guard draft.date.endOfDay > now,
+                  !existing.contains(where: { $0.title == task.title && $0.scheduledDate.isSameDay(as: draft.date) })
+            else { continue }
+            draft.deadlineTime = draft.date.settingTime(from: draft.deadlineTime)
+            save(draft, to: nil, in: context)
+            copied += 1
+        }
+        return copied
     }
 
     /// A committed task is only hidden and keeps counting as a broken promise; a draft task is really deleted.

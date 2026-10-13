@@ -24,7 +24,8 @@ struct CommitSummaryView: View {
         }
     }
 
-    private var tasks: [TaskItem] { plan.committableTasks }
+    /// Only what is still open becomes a commitment.
+    private var tasks: [TaskItem] { plan.pledgeableTasks() }
 
     private var categoryCounts: [(category: TaskCategory, count: Int)] {
         TaskCategory.allCases.compactMap { category in
@@ -73,6 +74,12 @@ struct CommitSummaryView: View {
                             .foregroundStyle(Theme.textSecondary)
                             .padding(.top, 4)
                     }
+                    if plan.committableTasks.count > tasks.count {
+                        Text("Už uzavřené úkoly tohoto týdne: \(plan.committableTasks.count - tasks.count). Do závazku se nepočítají, jen do produktivity.")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Theme.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                     if missingActivities > 0 {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("POD MINIMEM").labelStyle(minimumBlocksCommit ? Theme.red : Theme.orange)
@@ -81,7 +88,7 @@ struct CommitSummaryView: View {
                                 .foregroundStyle(Theme.textPrimary)
                             Text(minimumBlocksCommit
                                  ? "Dokud je nedoplníš, plánovač odeslat nejde."
-                                 : "Týden už běží, takže se zavázat můžeš i tak.")
+                                 : "Týden už běží, takže plánovač odeslat můžeš i tak.")
                                 .font(.system(size: 13))
                                 .foregroundStyle(Theme.textSecondary)
                         }

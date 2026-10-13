@@ -37,6 +37,9 @@ Založeno 10. 10. 2026. Aplikace se zatím dolaďuje pro osobní použití; tenh
 
 - **Odpočty a tlak na uživatele.** Odpočet u vykoupení série (48 h) je skutečná lhůta a platí se body získanými v aplikaci. Kdyby se body někdy daly koupit za peníze, je odpočet tlačící k nákupu rizikový (klamavé / agresivní obchodní praktiky, „dark patterns“) — před tím právně posoudit. Odpočet se nesmí nikdy sám obnovovat ani být smyšlený.
 
+- **Kalendář iPhonu (přidáno 11. 10. 2026).** Aplikace žádá o úplný přístup ke kalendáři (jen čtení, nic neukládá). Uvést v zásadách ochrany soukromí a v App Store „App Privacy“; text žádosti o povolení přeložit do angličtiny.
+- **Obchod za body (přidáno 11. 10. 2026).** Body se dají jen získat v aplikaci. Pokud by se někdy prodávaly za peníze, jde o nákupy v aplikaci se vším, co k tomu patří (viz odpočty výše).
+
 ## 2. Na straně vývojářského účtu
 
 - [ ] Apple Developer Program (99 USD / rok)

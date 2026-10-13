@@ -14,6 +14,7 @@ struct KeptApp: App {
 
     init() {
         UNUserNotificationCenter.current().delegate = NotificationRouter.shared
+        WidgetActions.complete = { await AppStore.completeFromWidget($0) }
     }
 
     var body: some Scene {
@@ -31,16 +32,6 @@ struct KeptApp: App {
             .appAppearance()
             .environment(\.locale, .app)
         }
-        .modelContainer(for: [
-            TaskItem.self,
-            WeeklyPlan.self,
-            CommitmentEdit.self,
-            FailureRecord.self,
-            FocusSession.self,
-            ExerciseLog.self,
-            Postponement.self,
-            WeekReflection.self,
-            UserSettings.self,
-        ])
+        .modelContainer(AppStore.container)
     }
 }

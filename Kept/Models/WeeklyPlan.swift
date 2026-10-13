@@ -32,6 +32,11 @@ final class WeeklyPlan {
     /// Recovery tasks are extra work on top of the plan, never part of the promise.
     var committableTasks: [TaskItem] { activeTasks.filter { !$0.isRecovery } }
     var committedTasks: [TaskItem] { tasks.filter(\.isCommitted) }
+    /// What sealing turns into commitments: only tasks that are still open. Whatever is already done
+    /// or missed stays outside the promise, so a finished week cannot be pledged in hindsight.
+    func pledgeableTasks(_ now: Date = .now) -> [TaskItem] {
+        committableTasks.filter { $0.status == .pending && !$0.dayHasPassed(now) }
+    }
 
     var originalSnapshot: [TaskSnapshot] {
         guard let snapshotData else { return [] }

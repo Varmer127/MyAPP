@@ -119,7 +119,10 @@ final class TaskItem {
         return original
     }
 
-    var isAddedAfterCommitment: Bool { !isCommitted && !isRecovery && plan?.isCommitted == true }
+    var isAddedAfterCommitment: Bool {
+        guard !isCommitted, !isRecovery, let committedAt = plan?.committedAt else { return false }
+        return createdAt > committedAt
+    }
 
     /// The focus session that was started and not yet ended, if any.
     /// Relationship arrays have no stable order, so "the" running session is always the most recently started one.

@@ -50,6 +50,34 @@ struct TaskEditorView: View {
 
     private var isCommitted: Bool { task?.isCommitted == true }
 
+    /// What the iPhone calendar already holds on the chosen day. With a deadline, the task is assumed
+    /// to run in the planned time right before it, and events overlapping that are flagged as clashes.
+    @ViewBuilder
+    private var calendarRows: some View {
+        if settingsList.first?.calendarEnabled == true {
+            let events = CalendarService.events(on: draft.date)
+            let end = draft.date.settingTime(from: draft.deadlineTime)
+            let clashes = draft.hasDeadline
+                ? CalendarService.conflicts(start: end.addingTimeInterval(TimeInterval(-draft.plannedMinutes * 60)), end: end, in: events)
+                : []
+            if !clashes.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Label("Kryje se s kalendářem", systemImage: "exclamationmark.triangle.fill")
+                        .font(.system(size: 13, weight: .semibold))
+                    ForEach(clashes) { Text($0.summary).font(.system(size: 13)) }
+                }
+                .foregroundStyle(Theme.orange)
+            } else if !events.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Label("Ten den máš v kalendáři", systemImage: "calendar")
+                        .font(.system(size: 13, weight: .semibold))
+                    ForEach(events) { Text($0.summary).font(.system(size: 13)) }
+                }
+                .foregroundStyle(Theme.textSecondary)
+            }
+        }
+    }
+
     private var automaticWeight: Int {
         if let settings = settingsList.first {
             return settings.defaultWeight(category: draft.category, priority: draft.priority)
@@ -103,6 +131,7 @@ struct TaskEditorView: View {
                         LabeledContent("Délka", value: durationText)
                     }
                     .foregroundStyle(Theme.textPrimary)
+                    calendarRows
                     if showsDurationPicker {
                         HStack(spacing: 0) {
                             Picker("Hodiny", selection: hoursBinding) {

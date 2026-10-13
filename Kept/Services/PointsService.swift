@@ -28,9 +28,14 @@ enum PointsService {
         return task.fromSuggestion ? perSuggestion : 0
     }
 
-    /// Current balance: earnings, spent passes and streak repairs replayed in time order, with the cap applied along the way.
-    static func balance(_ tasks: [TaskItem]) -> Int {
-        var events: [(date: Date, change: Int)] = []
+    /// Current balance: earnings, milestone bonuses, shop purchases, spent passes and streak repairs replayed in time order, with the cap applied along the way.
+    static func balance(_ tasks: [TaskItem], purchases: [PointsPurchase], now: Date = .now) -> Int {
+        var events: [(date: Date, change: Int)] = purchases.map { ($0.date, -$0.cost) }
+        for milestone in StreakService.milestones(tasks, now: now) {
+            if let reachedOn = milestone.reachedOn {
+                events.append((reachedOn, milestone.bonus))
+            }
+        }
         for task in tasks {
             let points = earned(by: task)
             if points > 0 {
@@ -49,6 +54,19 @@ enum PointsService {
         return events.sorted { $0.date < $1.date }.reduce(startingBalance) { balance, event in
             event.change > 0 ? min(cap, balance + event.change) : max(0, balance + event.change)
         }
+    }
+
+    static func unused(_ item: ShopItem, in purchases: [PointsPurchase]) -> Int {
+        purchases.filter { $0.kind == item && $0.usedOn == nil }.count
+    }
+
+    /// Extra postponements bought for the current month.
+    static func extraPostponements(_ purchases: [PointsPurchase], now: Date = .now) -> Int {
+        purchases.filter { $0.kind == .extraPostpone && Calendar.app.isDate($0.date, equalTo: now, toGranularity: .month) }.count
+    }
+
+    static func canBuy(_ item: ShopItem, balance: Int, purchases: [PointsPurchase]) -> Bool {
+        balance >= item.cost && item.maxStored.map { unused(item, in: purchases) < $0 } ?? true
     }
 
     /// Only a real weekly commitment that is still open can be cancelled with a pass.

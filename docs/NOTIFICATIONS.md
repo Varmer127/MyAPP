@@ -70,4 +70,5 @@ Zapíná se v Nastavení → Denně → Hlídání série. Plánuje se dopředu,
 - **Trénink ze Zdraví:** „Zdraví eviduje trénink (N min). Otevři Kept a zapiš, co jsi jel.“
 - **Plánovač týdne, 10 minut před zapečetěním:** „Týden N: poslední chvíle na úpravy bez postihu.“
 - **Plánovač týdne zapečetěn:** „Týden N je závazný. Závazky: X. Od teď se každá změna počítá.“
+- **Plánovač se nezapečetil (pod minimem aktivit):** „Týden N nesplnil minimum aktivit, plánovač se ti vrátil jako návrh. Doplň ho a odešli znovu.“
 - **Sebereflexe týdne:** „Týden končí. Projdi si ho a zapiš do deníčku, jak jsi se sebou spokojený.“
