@@ -16,6 +16,7 @@ Založeno 10. 10. 2026. Aplikace se zatím dolaďuje pro osobní použití; tenh
 
 ## 1. Musí být, jinak to neprojde nebo nedává smysl
 
+- [ ] **Developer tlačítko „Zrušit všechny plány do budoucna“** (Nastavení → Vývojář, přidáno 14. 10. 2026). Odstranit ještě před ostrým testováním: smazat `Kept/Views/Settings/DeveloperSection.swift` a jeho použití v `SettingsView.swift`. V Release buildu se nezkompiluje, i tak pryč.
 - [ ] **Úvodní video.** `Kept/Intro.mp4` je klip Davida Gogginse (cizí autorské dílo, mimo git). Odstranit, nebo nahradit vlastním. Kód přehrávání (`IntroView`) může zůstat.
 - [ ] **Jazyky.** Všechny texty jsou česky napevno v kódu (odhadem 600–800 řetězců, ~45 souborů).
   - [ ] přesunout texty do String Catalogu

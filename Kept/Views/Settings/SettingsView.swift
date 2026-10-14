@@ -49,6 +49,11 @@ struct SettingsView: View {
                 }
                 .listRowBackground(Theme.card)
 
+                // DEVELOPER VERSION ONLY — remove before real testing (see DeveloperSection.swift).
+                #if DEBUG
+                DeveloperSection()
+                #endif
+
                 Section("O aplikaci") {
                     LabeledContent("Verze", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—")
                     LabeledContent("Data", value: "Jen v tomto zařízení")
