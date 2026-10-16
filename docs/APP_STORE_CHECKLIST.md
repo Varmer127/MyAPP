@@ -21,6 +21,8 @@ Založeno 10. 10. 2026. Aplikace se zatím dolaďuje pro osobní použití; tenh
 - [ ] **Jazyky.** Všechny texty jsou česky napevno v kódu (odhadem 600–800 řetězců, ~45 souborů).
   - [ ] přesunout texty do String Catalogu
   - [ ] angličtina (a další jazyky)
+  - Rozsah zjištěný 16. 10. 2026: ~260 textů přímo v `Text("…")` (Xcode je vytáhne do String Catalogu sám), ~80 textů předávaných přes proměnné (kategorie, důvody selhání, otázky deníku) k ručnímu převodu, ruční české tvary (`String.days`), napevno nastavená čeština v `Locale.app`, ~190 notifikací ve třech tónech (drsný tón v angličtině spíš napsat znovu), věty skládané z kousků přepsat na celé věty.
+  - Od 16. 10. 2026 se nový kód píše tak, aby šel přeložit bez přepisování.
   - [ ] notifikace (`NotificationTemplates`, 143 šablon) napsat pro každý jazyk znovu, ne překládat doslova; drsný tón nechat zkontrolovat rodilým mluvčím
   - [ ] skloňování počtů („1 den / 2 dny / 5 dní“) přes pluralizaci systému místo `String.days`
   - [ ] `Locale.app` a `Calendar.app` jsou vynucené na češtinu a pondělí; přepnout na nastavení zařízení
