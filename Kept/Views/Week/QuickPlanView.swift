@@ -27,10 +27,9 @@ struct QuickPlanView: View {
 
     /// The day already holds a task with this title, so planning it again would only duplicate it.
     private func isTaken(_ day: Date) -> Bool {
-        let key = trimmedTitle.lowercased()
+        let key = trimmedTitle.activityKey
         return !key.isEmpty && tasks.contains {
-            !$0.isRemoved && $0.scheduledDate.isSameDay(as: day)
-                && $0.title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == key
+            !$0.isRemoved && $0.scheduledDate.isSameDay(as: day) && $0.title.activityKey == key
         }
     }
 

@@ -122,6 +122,11 @@ struct TaskEditorView: View {
 
                 Section("Kdy") {
                     DatePicker("Den", selection: $draft.date, in: dateRange, displayedComponents: .date)
+                    if isDuplicate {
+                        Label("„\(draft.trimmedTitle)“ už v tento den máš naplánované", systemImage: "exclamationmark.circle.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Theme.orange)
+                    }
                     Toggle("Použít deadline", isOn: $draft.hasDeadline)
                         .tint(Theme.textSecondary)
                     if draft.hasDeadline {
@@ -226,7 +231,7 @@ struct TaskEditorView: View {
                 Button("Přidat znovu", action: save)
                 Button("Zrušit", role: .cancel) {}
             } message: {
-                Text("Na \(draft.date.longDayText) je stejná aktivita už naplánovaná. Opravdu ji tam chceš ještě jednou?")
+                Text("\(draft.date.longDayText) ji už máš naplánovanou. Opravdu ji tam chceš ještě jednou? Třeba když jdeš do gymu dvakrát za den.")
             }
             .confirmationDialog(removalMessage, isPresented: $confirmsRemoval, titleVisibility: .visible) {
                 Button(isCommitted ? "Porušit slib" : "Smazat", role: .destructive, action: remove)
@@ -248,10 +253,9 @@ struct TaskEditorView: View {
 
     /// Another task with the same title already sits on the chosen day.
     private var isDuplicate: Bool {
-        let key = draft.trimmedTitle.lowercased()
+        let key = draft.trimmedTitle.activityKey
         return !key.isEmpty && allTasks.contains {
-            $0 !== task && !$0.isRemoved && $0.scheduledDate.isSameDay(as: draft.date)
-                && $0.title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == key
+            $0 !== task && !$0.isRemoved && $0.scheduledDate.isSameDay(as: draft.date) && $0.title.activityKey == key
         }
     }
 

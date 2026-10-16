@@ -215,3 +215,10 @@ final class TaskItem {
         return isDone || !dayHasPassed(now)
     }
 }
+
+extension String {
+    /// Compares activity names the way a person would: "Gym", "gym " and "Čtení" / "Cteni" are the same activity.
+    var activityKey: String {
+        trimmingCharacters(in: .whitespacesAndNewlines).folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .app)
+    }
+}

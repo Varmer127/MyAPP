@@ -160,7 +160,7 @@ enum PlanService {
             var draft = TaskDraft(task: task)
             draft.date = task.scheduledDate.addingDays(7)
             guard draft.date.endOfDay > now,
-                  !existing.contains(where: { $0.title == task.title && $0.scheduledDate.isSameDay(as: draft.date) })
+                  !existing.contains(where: { $0.title.activityKey == task.title.activityKey && $0.scheduledDate.isSameDay(as: draft.date) })
             else { continue }
             draft.deadlineTime = draft.date.settingTime(from: draft.deadlineTime)
             save(draft, to: nil, in: context)
