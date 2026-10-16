@@ -79,7 +79,11 @@ struct WorkoutLogView: View {
                                 .foregroundStyle(Theme.orange)
                         }
                     }
-                    ExerciseInput(drafts: $exercises, tasks: tasks, settings: settings)
+                    if task.exercises.isEmpty {
+                        ExerciseInput(drafts: $exercises, tasks: tasks, settings: settings)
+                    } else {
+                        loggedExercises
+                    }
                     if task.requiresProof {
                         ProofInput(draft: $proof)
                     }
@@ -99,6 +103,12 @@ struct WorkoutLogView: View {
         }
         .screenBackground()
         .appAppearance()
+        .onAppear {
+            // The live workout already chose what was trained.
+            if selection == nil, !task.workoutType.isEmpty {
+                if settings.workoutPresets.contains(task.workoutType) { selection = task.workoutType } else { custom = task.workoutType }
+            }
+        }
         .task {
             // With Apple Health connected, today's weight and workout fill themselves in.
             guard settings.healthEnabled else { return }
@@ -107,6 +117,24 @@ struct WorkoutLogView: View {
             }
             if task.requiresProof, proof.note.isEmpty, let minutes = await HealthService.gymMinutesToday() {
                 proof.note = "Apple Health: trénink \(minutes) min"
+            }
+        }
+    }
+
+    /// What the live workout recorded, set by set.
+    private var loggedExercises: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("ODCVIČENO").labelStyle()
+            ForEach(task.exercises.sorted { $0.date < $1.date }) { log in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(log.name).font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.textPrimary)
+                    Text(log.workingSets.map { $0.weight > 0 ? "\($0.weight.kilogramText) × \($0.reps)" : "\($0.reps) opak." }
+                        .joined(separator: " · "))
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .card(padding: 12)
             }
         }
     }

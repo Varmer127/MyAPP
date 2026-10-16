@@ -290,6 +290,7 @@
 				DEVELOPMENT_TEAM = 869PST2DT3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Kept-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Kept;
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kept čte události z kalendáře, aby tě při plánování upozornil, že se úkol kryje s něčím, co už máš domluvené. Nic nezapisuje ani neukládá.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kept potřebuje fotoaparát, abys mohl vyfotit důkaz splnění úkolu.";
@@ -299,7 +300,6 @@
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Kept převádí tvůj nadiktovaný zápis do deníku na text.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_FILE = "Kept-Info.plist";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -325,6 +325,7 @@
 				DEVELOPMENT_TEAM = 869PST2DT3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Kept-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Kept;
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kept čte události z kalendáře, aby tě při plánování upozornil, že se úkol kryje s něčím, co už máš domluvené. Nic nezapisuje ani neukládá.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kept potřebuje fotoaparát, abys mohl vyfotit důkaz splnění úkolu.";
@@ -334,7 +335,6 @@
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Kept převádí tvůj nadiktovaný zápis do deníku na text.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_FILE = "Kept-Info.plist";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

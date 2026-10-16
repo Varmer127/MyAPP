@@ -55,6 +55,8 @@ final class UserSettings {
     var enabledCategoriesData: Data = Data()
     /// JSON-encoded `[String]`: the user's own activities, planned under "Ostatní".
     var customActivitiesData: Data = Data()
+    /// JSON-encoded `[workout name: [exercise names]]`, the exercises a workout starts with.
+    var workoutTemplatesData: Data = Data()
     /// When the first-launch guide was finished. Nil shows it.
     var onboardedAt: Date?
 
@@ -76,6 +78,18 @@ final class UserSettings {
         var list = enabledCategories.filter { $0 != category }
         if enabled { list.append(category) }
         enabledCategories = list
+    }
+
+    /// The exercises a workout starts with: the user's own list, else a ready-made one for its name.
+    func template(for workout: String) -> [String] {
+        let own = (try? JSONDecoder().decode([String: [String]].self, from: workoutTemplatesData)) ?? [:]
+        return own[workout] ?? ExerciseCatalog.defaultTemplate(for: workout)
+    }
+
+    func setTemplate(_ exercises: [String], for workout: String) {
+        var own = (try? JSONDecoder().decode([String: [String]].self, from: workoutTemplatesData)) ?? [:]
+        own[workout] = exercises
+        workoutTemplatesData = (try? JSONEncoder().encode(own)) ?? Data()
     }
 
     var customActivities: [String] {
