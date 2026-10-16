@@ -7,7 +7,7 @@ struct SettingsView: View {
     @Environment(\.openURL) private var openURL
     @Query private var settingsList: [UserSettings]
     @State private var authorization: UNAuthorizationStatus = .notDetermined
-    @AppStorage("introEnabled") private var introEnabled = true
+    @AppStorage("introVideoEnabled") private var introEnabled = false
     /// The system permission question was just answered with "no".
     @State private var calendarDenied = false
     @AppStorage(AppAppearance.storageKey) private var appearanceRaw = AppAppearance.dark.rawValue

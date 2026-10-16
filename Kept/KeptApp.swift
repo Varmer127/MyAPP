@@ -7,7 +7,8 @@ struct KeptApp: App {
     /// The intro plays once per cold start; this starts true every time the process launches.
     @State private var showsIntro = true
     @State private var isReady = false
-    @AppStorage("introEnabled") private var introEnabled = true
+    /// Off by default (new key, so it is off on existing installs too). The video goes before release.
+    @AppStorage("introVideoEnabled") private var introEnabled = false
 
     /// Nil when the video file is not part of the build — the app then simply starts without it.
     private static let introURL = Bundle.main.url(forResource: "Intro", withExtension: "mp4")
