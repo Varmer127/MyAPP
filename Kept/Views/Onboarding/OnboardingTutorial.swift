@@ -213,6 +213,8 @@ private struct TaskDemo: View {
     }
 }
 
+/// The three ways to plan, drawn with the same pieces as the real Týden screen,
+/// Rychlé plánování sheet and task editor, so the guide looks like the app it introduces.
 private struct PlanningDemo: View {
     let activity: String
     let secondActivity: String
@@ -222,165 +224,334 @@ private struct PlanningDemo: View {
         var id: String { rawValue }
     }
 
+    private struct Item: Identifiable {
+        let id = UUID()
+        let day: Int
+        let title: String
+        let category: TaskCategory
+        let minutes: Int
+    }
+
     private static let dayNames = ["PO", "ÚT", "ST", "ČT", "PÁ", "SO", "NE"]
 
     @State private var mode: Mode = .quick
-    @State private var items: [(day: Int, title: String)] = []
-    @State private var quickTitle: String?
+    @State private var items: [Item] = []
+    @State private var quickCategory: TaskCategory = .gym
     @State private var quickDays: Set<Int> = [0, 2, 4]
-    @State private var singleDay = 1
+    @State private var confirmsCopy = false
+    @State private var editorDay: Int?
+    @State private var editorTitle = ""
+    @State private var duplicateNote: String?
 
-    private var activities: [String] { Array(Set([TaskCategory.gym.title, activity, secondActivity])).sorted() }
+    private var quickTitle: String { quickCategory == .gym ? TaskCategory.gym.title : quickCategory.suggestionTitle }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 6) {
-                ForEach(Mode.allCases) { item in
-                    let isOn = mode == item
-                    Button { withAnimation(.easeOut(duration: 0.2)) { mode = item } } label: {
-                        Text(item.rawValue)
-                            .font(.system(size: 13, weight: .bold))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                            .frame(maxWidth: .infinity, minHeight: 40)
-                            .foregroundStyle(isOn ? Theme.onPrimary : Theme.textPrimary)
-                            .background(isOn ? Theme.textPrimary : Theme.cardRaised)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                    }
-                    .buttonStyle(.plain)
-                }
+            Picker("Způsob", selection: $mode.animation(.easeOut(duration: 0.2))) {
+                ForEach(Mode.allCases) { Text($0.rawValue).tag($0) }
             }
+            .pickerStyle(.segmented)
             Text(explanation)
                 .font(.system(size: 13))
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
-            controls
+            switch mode {
+            case .quick: quickSheet
+            case .copy: copyPanel
+            case .single: singlePanel
+            }
             week
         }
     }
 
     private var explanation: String {
         switch mode {
-        case .quick: "Vyber aktivitu a dny, jedním klepnutím ji přidáš na všechny. Ideální na gym nebo čtení několikrát týdně."
-        case .copy: "Když se ti minulý týden osvědčil, vezmeš ho celý. Co už v plánu máš, se nezdvojí."
-        case .single: "Plusem u dne přidáš jeden úkol s vlastním časem, délkou a prioritou."
+        case .quick: "Na obrazovce Týden klepneš na Rychlé plánování. Vybereš aktivitu a dny a přidáš ji na všechny najednou."
+        case .copy: "Pod Rychlým plánováním je Zkopírovat minulý týden. Co už v plánu máš, se nezdvojí."
+        case .single: "Plusem u dne otevřeš editor úkolu: název, kategorie, čas, délka a priorita."
         }
     }
 
-    @ViewBuilder
-    private var controls: some View {
-        switch mode {
-        case .quick:
-            let title = quickTitle ?? activities[0]
-            FlowLayout(spacing: 6) {
-                ForEach(activities, id: \.self) { name in
-                    pill(name, isOn: name == title) { quickTitle = name }
-                }
-            }
-            dayPicker(isOn: { quickDays.contains($0) }) { day in
-                if quickDays.contains(day) { quickDays.remove(day) } else { quickDays.insert(day) }
-            }
-            demoButton(quickDays.isEmpty ? "VYBER DNY" : "PŘIDAT \(quickDays.count)×", fill: Theme.textPrimary, text: Theme.onPrimary) {
-                add(quickDays.sorted().map { ($0, title) })
-            }
-            .disabled(quickDays.isEmpty)
-        case .copy:
-            Text("Minulý týden: \(TaskCategory.gym.title) 3×, \(activity) 2×, \(secondActivity) 1×")
-                .font(.system(size: 14, weight: .semibold))
+    // MARK: Rychlé plánování, as the real sheet
+
+    private var quickSheet: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Rychlé plánování")
+                .font(.system(size: 20, weight: .bold))
                 .foregroundStyle(Theme.textPrimary)
-            demoButton("ZKOPÍROVAT MINULÝ TÝDEN", fill: Theme.textPrimary, text: Theme.onPrimary) {
-                add([(0, TaskCategory.gym.title), (2, TaskCategory.gym.title), (4, TaskCategory.gym.title),
-                     (1, activity), (3, activity), (5, secondActivity)])
-            }
-        case .single:
-            dayPicker(isOn: { $0 == singleDay }) { singleDay = $0 }
-            demoButton("+ PŘIDAT ÚKOL NA \(Self.dayNames[singleDay])", fill: Theme.textPrimary, text: Theme.onPrimary) {
-                add([(singleDay, secondActivity)])
-            }
-        }
-    }
-
-    private var week: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("TVŮJ TÝDEN · V PLÁNU \(items.count)").labelStyle()
-                Spacer()
-                if !items.isEmpty {
-                    Button("Vymazat") { withAnimation { items = [] } }
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Theme.textSecondary)
-                        .frame(minHeight: 32)
-                }
-            }
-            HStack(alignment: .top, spacing: 6) {
-                ForEach(0..<7, id: \.self) { day in
-                    let titles = items.filter { $0.day == day }.map(\.title)
-                    VStack(spacing: 4) {
-                        Text(Self.dayNames[day]).font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.textSecondary)
-                        VStack(spacing: 3) {
-                            ForEach(Array(titles.enumerated()), id: \.offset) { _, title in
-                                Capsule()
-                                    .fill(title == TaskCategory.gym.title ? Theme.orange : Theme.textPrimary)
-                                    .frame(height: 6)
-                                    .transition(.scale.combined(with: .opacity))
-                            }
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .top)
-                        .padding(5)
-                        .background(Theme.cardRaised)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                        Text(titles.isEmpty ? " " : "\(titles.count)×").font(.system(size: 10, weight: .semibold)).foregroundStyle(Theme.textSecondary)
+            Text("CO").labelStyle()
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 8)], spacing: 8) {
+                ForEach([TaskCategory.gym, .reading, .newSkill, .nature]) { category in
+                    chip(category.title, symbol: category.symbol, isSelected: quickCategory == category) {
+                        quickCategory = category
                     }
                 }
             }
-            if let duplicate {
-                Text(duplicate)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Theme.orange)
-                    .fixedSize(horizontal: false, vertical: true)
+            Text(quickTitle)
+                .font(.system(size: 15))
+                .foregroundStyle(Theme.textPrimary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .card(padding: 12)
+            Text("KTERÉ DNY").labelStyle()
+            HStack(alignment: .top, spacing: 5) {
+                ForEach(0..<7, id: \.self) { day in
+                    let taken = items.contains { $0.day == day && $0.title == quickTitle }
+                    VStack(spacing: 3) {
+                        chip(Self.dayNames[day], isSelected: quickDays.contains(day)) {
+                            if quickDays.contains(day) { quickDays.remove(day) } else { quickDays.insert(day) }
+                        }
+                        if taken {
+                            Text("už máš")
+                                .font(.system(size: 9, weight: .semibold))
+                                .foregroundStyle(Theme.orange)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        }
+                    }
+                }
+            }
+            Button(quickDays.isEmpty ? "VYBER DNY" : "PŘIDAT \(quickDays.count)×") {
+                add(quickDays.sorted().map { Item(day: $0, title: quickTitle, category: quickCategory, minutes: quickCategory.suggestionMinutes) })
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            .disabled(quickDays.isEmpty)
+        }
+        .padding(14)
+        .background(Theme.background)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    /// The same chip as in Rychlé plánování.
+    private func chip(_ text: String, symbol: String? = nil, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                if let symbol { Image(systemName: symbol).font(.system(size: 16)) }
+                Text(text)
+            }
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(isSelected ? Theme.onPrimary : Theme.textPrimary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .frame(maxWidth: .infinity, minHeight: symbol == nil ? 40 : 52)
+            .padding(.horizontal, 4)
+            .background(isSelected ? Theme.textPrimary : Theme.card)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Theme.border, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: Zkopírovat minulý týden, as the real button and question
+
+    private var copyPanel: some View {
+        VStack(spacing: 12) {
+            Button {
+                withAnimation(.easeOut(duration: 0.2)) { confirmsCopy = true }
+            } label: {
+                Label("ZKOPÍROVAT MINULÝ TÝDEN", systemImage: "doc.on.doc")
+            }
+            .buttonStyle(SecondaryButtonStyle())
+            if confirmsCopy {
+                VStack(spacing: 6) {
+                    Text("Zkopírovat minulý týden?")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                    Text("Úkoly z minulého týdne se naplánují na stejné dny tohoto týdne. Co už tu ten den máš pod stejným názvem, se nezdvojí.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                    HStack(spacing: 8) {
+                        alertButton("Zrušit") { confirmsCopy = false }
+                        alertButton("Zkopírovat", bold: true) {
+                            confirmsCopy = false
+                            add([
+                                Item(day: 0, title: TaskCategory.gym.title, category: .gym, minutes: 60),
+                                Item(day: 2, title: TaskCategory.gym.title, category: .gym, minutes: 60),
+                                Item(day: 4, title: TaskCategory.gym.title, category: .gym, minutes: 60),
+                                Item(day: 1, title: activity, category: .reading, minutes: 30),
+                                Item(day: 3, title: activity, category: .reading, minutes: 30),
+                                Item(day: 5, title: secondActivity, category: .nature, minutes: 60),
+                            ])
+                        }
+                    }
+                    .padding(.top, 6)
+                }
+                .padding(16)
+                .background(Theme.cardRaised)
+                .clipShape(RoundedRectangle(cornerRadius: 22))
+                .transition(.scale(scale: 0.92).combined(with: .opacity))
             }
         }
     }
 
-    /// The real app asks before adding the same activity to the same day twice; here it just says so.
-    @State private var duplicate: String?
-
-    private func add(_ new: [(Int, String)]) {
-        let clashes = new.filter { entry in items.contains { $0.day == entry.0 && $0.title == entry.1 } }
-        duplicate = clashes.isEmpty ? nil
-            : "„\(clashes[0].1)“ už na \(Self.dayNames[clashes[0].0]) máš. V aplikaci se tě Kept zeptá, jestli ho tam chceš podruhé."
-        withAnimation(.spring(duration: 0.35)) {
-            items += new.filter { entry in !items.contains { $0.day == entry.0 && $0.title == entry.1 } }.map { (day: $0.0, title: $0.1) }
-        }
-    }
-
-    private func pill(_ title: String, isOn: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+    private func alertButton(_ title: String, bold: Bool = false, action: @escaping () -> Void) -> some View {
+        Button { withAnimation(.easeOut(duration: 0.2), action) } label: {
             Text(title)
-                .font(.system(size: 13, weight: .semibold))
-                .padding(.horizontal, 12)
-                .frame(minHeight: 36)
-                .foregroundStyle(isOn ? Theme.onPrimary : Theme.textPrimary)
-                .background(isOn ? Theme.textPrimary : Theme.cardRaised)
+                .font(.system(size: 16, weight: bold ? .semibold : .regular))
+                .foregroundStyle(Theme.textPrimary)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .background(Theme.card)
                 .clipShape(Capsule())
         }
         .buttonStyle(.plain)
     }
 
-    private func dayPicker(isOn: @escaping (Int) -> Bool, toggle: @escaping (Int) -> Void) -> some View {
-        HStack(spacing: 5) {
-            ForEach(0..<7, id: \.self) { day in
-                let on = isOn(day)
-                Button { toggle(day) } label: {
-                    Text(Self.dayNames[day])
-                        .font(.system(size: 12, weight: .bold))
-                        .frame(maxWidth: .infinity, minHeight: 40)
-                        .foregroundStyle(on ? Theme.onPrimary : Theme.textPrimary)
-                        .background(on ? Theme.textPrimary : Theme.cardRaised)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+    // MARK: Jeden úkol, as the real day row and editor
+
+    private var singlePanel: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let day = editorDay {
+                VStack(spacing: 0) {
+                    HStack {
+                        Button("Zrušit") { withAnimation { editorDay = nil } }
+                            .foregroundStyle(Theme.textPrimary)
+                        Spacer()
+                        Text("Nový úkol").font(.system(size: 16, weight: .semibold)).foregroundStyle(Theme.textPrimary)
+                        Spacer()
+                        Button("Uložit") {
+                            let title = editorTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+                            add([Item(day: day, title: title.isEmpty ? secondActivity : title, category: .other, minutes: 60)])
+                            withAnimation { editorDay = nil }
+                        }
+                        .fontWeight(.semibold)
+                        .foregroundStyle(Theme.textPrimary)
+                    }
+                    .font(.system(size: 15))
+                    .padding(.bottom, 12)
+                    VStack(spacing: 0) {
+                        formRow { TextField("Název", text: $editorTitle).foregroundStyle(Theme.textPrimary) }
+                        Divider().overlay(Theme.border)
+                        formRow { LabeledContent("Den", value: "\(Self.dayNames[day].capitalized) tento týden") }
+                        Divider().overlay(Theme.border)
+                        formRow { LabeledContent("Délka", value: "1 h") }
+                        Divider().overlay(Theme.border)
+                        formRow { LabeledContent("Priorita", value: "Střední") }
+                    }
+                    .background(Theme.card)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .buttonStyle(.plain)
+                .padding(14)
+                .background(Theme.background)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            } else {
+                Text("Klepni na + u dne, ke kterému chceš úkol přidat.")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Theme.orange)
             }
+        }
+    }
+
+    private func formRow(@ViewBuilder content: () -> some View) -> some View {
+        content()
+            .font(.system(size: 15))
+            .foregroundStyle(Theme.textPrimary)
+            .padding(.horizontal, 14)
+            .frame(minHeight: 44)
+    }
+
+    // MARK: The week, as the real Týden screen
+
+    private var week: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("TÝDEN · V PLÁNU \(items.count)").labelStyle()
+                Spacer()
+                if !items.isEmpty {
+                    Button("Vymazat") { withAnimation { items = []; duplicateNote = nil } }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Theme.textSecondary)
+                        .frame(minHeight: 32)
+                }
+            }
+            if let duplicateNote {
+                Text(duplicateNote)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Theme.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if visibleDays.isEmpty {
+                Text("Týden je zatím prázdný. Přidej něco nahoře.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.textTertiary)
+            }
+            ForEach(visibleDays, id: \.self) { day in
+                let dayItems = items.filter { $0.day == day }
+                VStack(spacing: 6) {
+                    HStack {
+                        Text(Self.dayNames[day]).labelStyle()
+                        Spacer()
+                        Button {
+                            editorTitle = secondActivity
+                            withAnimation(.easeOut(duration: 0.25)) {
+                                mode = .single
+                                editorDay = day
+                            }
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(Theme.textSecondary)
+                                .frame(width: 44, height: 28)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Přidat úkol na \(Self.dayNames[day])")
+                    }
+                    if dayItems.isEmpty {
+                        Text("Žádné závazky")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Theme.textTertiary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    } else {
+                        VStack(spacing: 0) {
+                            ForEach(Array(dayItems.enumerated()), id: \.element.id) { index, item in
+                                if index > 0 { Divider().overlay(Theme.border) }
+                                row(item)
+                            }
+                        }
+                        .background(Theme.card)
+                        .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
+                        .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.border, lineWidth: 1))
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
+                }
+            }
+        }
+        .padding(.top, 4)
+    }
+
+    /// While adding a single task every day shows its plus button; otherwise only days with something planned,
+    /// so what was just added sits right under the button that added it.
+    private var visibleDays: [Int] {
+        mode == .single ? Array(0..<7) : (0..<7).filter { day in items.contains { $0.day == day } }
+    }
+
+    /// The same row as on the Týden screen.
+    private func row(_ item: Item) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "circle").foregroundStyle(Theme.textTertiary)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(item.title)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Theme.textPrimary)
+                HStack(spacing: 5) {
+                    Image(systemName: item.category.symbol)
+                    Text("\(item.category.title) · \(item.minutes) min")
+                }
+                .font(.system(size: 12))
+                .foregroundStyle(Theme.textSecondary)
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
+    }
+
+    private func add(_ new: [Item]) {
+        let clash = new.first { entry in items.contains { $0.day == entry.day && $0.title.activityKey == entry.title.activityKey } }
+        duplicateNote = clash.map { "„\($0.title)“ už na \(Self.dayNames[$0.day]) máš. V aplikaci se tě Kept zeptá, jestli ho tam chceš podruhé." }
+        withAnimation(.spring(duration: 0.35)) {
+            items += new.filter { entry in !items.contains { $0.day == entry.day && $0.title.activityKey == entry.title.activityKey } }
         }
     }
 }

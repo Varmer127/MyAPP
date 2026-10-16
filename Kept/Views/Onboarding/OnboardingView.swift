@@ -23,7 +23,7 @@ struct OnboardingView: View {
     var body: some View {
         VStack(spacing: 0) {
             topBar
-                .padding(.bottom, 4)
+                .padding(.bottom, 10)
                 .background(Theme.background)
                 .zIndex(1)
             ScrollView {
