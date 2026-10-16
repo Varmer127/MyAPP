@@ -43,6 +43,7 @@ struct OnboardingDraft {
     var activities: Set<TaskCategory> = [.gym, .reading, .newSkill, .nature]
     var customActivities: [String] = []
     var minimum = UserSettings.defaultMinimumWeeklyTasks
+    var gymMode: GymMode = .simple
     var split: Split = .pushPullLegs
     var ownWorkouts = ["Hrudník a triceps", "Záda a biceps", "Nohy"]
     var gymPerWeek = TaskCategory.gym.defaultWeeklyTarget
@@ -85,6 +86,7 @@ struct OnboardingDraft {
                 : split.workouts
             if !workouts.isEmpty { settings.workoutPresets = workouts }
             settings.setWeeklyTarget(gymPerWeek, for: .gym)
+            settings.gymMode = gymMode
             // The chosen rest goes to the top, which makes it the stopwatch's default.
             let presets = settings.restPresets
             if let chosen = presets.first(where: { $0.name == restName }) {

@@ -26,6 +26,7 @@ struct GymTimerView: View {
 
     private var session: FocusSession? { task.activeFocusSession }
     private var settings: UserSettings? { settingsList.first }
+    private var isSimple: Bool { settings?.gymMode == .simple }
     private var presets: [RestPreset] { settings?.restPresets ?? RestPreset.defaults }
     private var preset: RestPreset { presets.first { $0.name == selectedName } ?? presets[0] }
     private var target: TimeInterval { TimeInterval(preset.seconds) }
@@ -57,7 +58,7 @@ struct GymTimerView: View {
         .onAppear {
             task.startFocusIfNeeded(in: context)
             if task.workoutType.isEmpty, let first = settings?.workoutPresets.first {
-                pickWorkout(first, loadTemplate: logs.isEmpty)
+                pickWorkout(first, loadTemplate: logs.isEmpty && !isSimple)
             }
             UIApplication.shared.isIdleTimerDisabled = true
         }
@@ -71,7 +72,90 @@ struct GymTimerView: View {
     private func content(now: Date) -> some View {
         let total = (session?.active(at: now) ?? 0) + (session?.paused(at: now) ?? 0)
         let rest = session?.pausedSince.map { now.timeIntervalSince($0) }
+        return Group {
+            if isSimple {
+                simpleContent(now: now, total: total, rest: rest)
+            } else {
+                advancedContent(total: total, rest: rest)
+            }
+        }
+        .sensoryFeedback(trigger: (rest ?? 0) >= target) { _, isReached in isReached ? .success : nil }
+    }
+
+    /// Simple mode: one big clock, rest statistics and a single button that starts and ends a rest.
+    private func simpleContent(now: Date, total: TimeInterval, rest: TimeInterval?) -> some View {
+        let reached = (rest ?? 0) >= target
+        let finishedRests = max((session?.pauseCount ?? 0) - (rest == nil ? 0 : 1), 0)
+        let averageRest = finishedRests > 0 ? (session?.pauseSeconds ?? 0) / Double(finishedRests) : nil
         return VStack(spacing: 0) {
+            HStack {
+                Spacer()
+                Button("Skrýt") { dismiss() }
+                    .font(.system(size: 15))
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(minHeight: 44)
+            }
+            .padding(.horizontal, Theme.screenPadding)
+            .padding(.top, 8)
+            ScrollView {
+                VStack(spacing: 22) {
+                    VStack(spacing: 6) {
+                        Text(rest == nil ? "TRÉNINK" : (reached ? "JDI NA DALŠÍ SÉRII" : "PAUZA"))
+                            .labelStyle(rest == nil ? Theme.textSecondary : (reached ? Theme.green : Theme.orange))
+                        Text(FocusView.clock(rest ?? total))
+                            .font(.system(size: 76, weight: .heavy))
+                            .monospacedDigit()
+                            .foregroundStyle(Theme.textPrimary)
+                            .minimumScaleFactor(0.5)
+                            .lineLimit(1)
+                        if let rest {
+                            ThinBar(value: rest / target, color: reached ? Theme.green : Theme.orange)
+                                .frame(width: 220)
+                            Text("Cíl \(FocusView.clock(target)) · celkem \(FocusView.clock(total))")
+                                .font(.system(size: 13))
+                                .foregroundStyle(Theme.textSecondary)
+                        } else {
+                            Text((task.workoutType.isEmpty ? task.title : task.workoutType).uppercased())
+                                .font(.system(size: 17, weight: .semibold))
+                                .tracking(1)
+                                .foregroundStyle(Theme.textPrimary)
+                        }
+                    }
+                    .padding(.top, 16)
+                    HStack(spacing: 10) {
+                        MetricTile(value: "\(session?.pauseCount ?? 0)", label: "Pauzy")
+                        MetricTile(value: averageRest.map(FocusView.clock) ?? "—", label: "Průměrná pauza")
+                        MetricTile(value: FocusView.minutes(session?.paused(at: now) ?? 0), label: "V pauzách")
+                    }
+                    VStack(alignment: .leading, spacing: 8) {
+                        restPicker
+                        Text("Orientačně: síla (těžké váhy, 1–5 opakování) 2–5 min, růst svalů 1–2 min, vytrvalost kolem 30 s. U dřepů a mrtvých tahů počítej s delší pauzou než u izolovaných cviků. Je to obecné vodítko, ne rada na míru – hlavní je zvládnout další sérii se stejnou technikou. Vlastní délky pauz si nastavíš v Nastavení gymu.")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Theme.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .padding(.horizontal, Theme.screenPadding)
+            }
+            VStack(spacing: 10) {
+                Button(rest == nil ? "PAUZA MEZI SÉRIEMI" : "DALŠÍ SÉRIE") {
+                    if rest == nil { startRest() } else { endRest() }
+                }
+                .buttonStyle(PrimaryButtonStyle(color: rest == nil ? Theme.textPrimary : (reached ? Theme.green : Theme.orange)))
+                Button("DOKONČIT TRÉNINK") { end(completing: true) }
+                    .buttonStyle(SecondaryButtonStyle())
+                Button("Ukončit bez splnění") { end(completing: false) }
+                    .font(.system(size: 14))
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(minHeight: 36)
+            }
+            .padding(Theme.screenPadding)
+        }
+    }
+
+    /// Advanced mode: exercises set by set under a fixed header with the rest bar.
+    private func advancedContent(total: TimeInterval, rest: TimeInterval?) -> some View {
+        VStack(spacing: 0) {
             header(total: total, rest: rest)
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
@@ -95,7 +179,6 @@ struct GymTimerView: View {
                         .foregroundStyle(savedTemplate ? Theme.green : Theme.textSecondary)
                         .frame(maxWidth: .infinity, minHeight: 44)
                     }
-                    restPicker
                 }
                 .padding(.horizontal, Theme.screenPadding)
                 .padding(.bottom, 16)
@@ -112,7 +195,6 @@ struct GymTimerView: View {
             .padding(.horizontal, Theme.screenPadding)
             .padding(.vertical, 10)
         }
-        .sensoryFeedback(trigger: (rest ?? 0) >= target) { _, isReached in isReached ? .success : nil }
     }
 
     private func header(total: TimeInterval, rest: TimeInterval?) -> some View {
@@ -157,6 +239,8 @@ struct GymTimerView: View {
                 }
                 .frame(minHeight: 24)
                 ThinBar(value: rest.map { $0 / target } ?? 0, color: reached ? Theme.green : Theme.orange)
+                restPicker
+                    .padding(.top, 4)
             }
             .padding(12)
             .background(Theme.card)
@@ -174,7 +258,7 @@ struct GymTimerView: View {
                 HStack(spacing: 8) {
                     ForEach(settings?.workoutPresets ?? [], id: \.self) { name in
                         let isOn = task.workoutType == name
-                        Button { pickWorkout(name, loadTemplate: logs.allSatisfy { log in !log.setLogs.contains(where: \.isDone) }) } label: {
+                        Button { pickWorkout(name, loadTemplate: !isSimple && logs.allSatisfy { log in !log.setLogs.contains(where: \.isDone) }) } label: {
                             Text(name)
                                 .font(.system(size: 14, weight: .semibold))
                                 .padding(.horizontal, 14)
@@ -191,16 +275,25 @@ struct GymTimerView: View {
         }
     }
 
+    /// A segmented control gets cramped beyond a few choices.
+    private static let maxSegments = 4
+
+    /// Switching the rest length: segments for a few presets, a menu for more.
+    @ViewBuilder
     private var restPicker: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("PAUZA PO SÉRII").labelStyle()
-            Picker("Pauza", selection: Binding(get: { preset.name }, set: { selectedName = $0 })) {
+        let selection = Binding(get: { preset.name }, set: { selectedName = $0 })
+        if presets.count <= Self.maxSegments {
+            Picker("Pauza", selection: selection) {
+                ForEach(presets) { Text($0.name).tag($0.name) }
+            }
+            .pickerStyle(.segmented)
+        } else {
+            Picker("Pauza", selection: selection) {
                 ForEach(presets) { Text("\($0.name) · \(FocusView.clock(TimeInterval($0.seconds)))").tag($0.name) }
             }
             .pickerStyle(.menu)
             .tint(Theme.textPrimary)
         }
-        .padding(.top, 8)
     }
 
     private func recordBanner(_ banner: RecordBanner) -> some View {

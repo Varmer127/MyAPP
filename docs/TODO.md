@@ -20,3 +20,4 @@ Kód používá jen barvy z tématu, ale tyto obrazovky jsme ve světlém režim
 - Zatřesení ceny v obchodě
 - Deník: hlasový zápis (mikrofon + rozpoznávání češtiny), zámek Face ID, body za zápis
 - Klepnutí na upozornění (oprava pádu z 15. 10.)
+- Gym: přepnutí jednoduchý / pokročilý v Nastavení gymu, jednoduchý trénink (velké tlačítko pauzy), nová mapa svalů ve světlém i tmavém režimu

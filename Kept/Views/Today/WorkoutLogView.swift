@@ -79,10 +79,10 @@ struct WorkoutLogView: View {
                                 .foregroundStyle(Theme.orange)
                         }
                     }
-                    if task.exercises.isEmpty {
-                        ExerciseInput(drafts: $exercises, tasks: tasks, settings: settings)
-                    } else {
+                    if !task.exercises.isEmpty {
                         loggedExercises
+                    } else if settings.gymMode == .advanced {
+                        ExerciseInput(drafts: $exercises, tasks: tasks, settings: settings)
                     }
                     if task.requiresProof {
                         ProofInput(draft: $proof)

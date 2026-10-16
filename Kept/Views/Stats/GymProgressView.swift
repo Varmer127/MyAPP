@@ -54,9 +54,15 @@ struct GymProgressView: View {
                     .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.textPrimary.opacity(0.25), lineWidth: 1))
                 }
                 summary
-                GymInsights(logs: exerciseLogs, workouts: workouts)
+                if isAdvanced {
+                    GymInsights(logs: exerciseLogs, workouts: workouts)
+                }
                 bodyParts
-                strength
+                if isAdvanced {
+                    strength
+                } else {
+                    advancedTeaser
+                }
                 weight
                 NavigationLink {
                     BodyProgressView()
@@ -87,6 +93,30 @@ struct GymProgressView: View {
             if settingsList.first?.healthEnabled == true {
                 healthWeights = await HealthService.weights(since: Date.now.addingDays(-Self.healthHistoryDays))
             }
+        }
+    }
+
+    private var isAdvanced: Bool { (settingsList.first?.gymMode ?? .advanced) == .advanced }
+
+    /// In the simple mode, a pointer to what the advanced one adds.
+    private var advancedTeaser: some View {
+        NavigationLink {
+            GymSettingsView()
+        } label: {
+            HStack(spacing: 12) {
+                MuscleMapView(intensity: [.chest: 1, .lats: 0.8, .quads: 0.6, .shoulders: 0.45], showsLabels: false)
+                    .frame(width: 70, height: 80)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("POKROČILÝ REŽIM").labelStyle(Theme.textPrimary)
+                    Text("Cviky série po sérii, rekordy, síla v čase a mapa svalů. Zapneš v Nastavení gymu.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textSecondary)
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
+            }
+            .card()
         }
     }
 

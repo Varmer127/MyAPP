@@ -8,6 +8,10 @@ enum Theme {
     static let card = Color(dark: 0x141414, light: 0xFFFFFF)
     static let cardRaised = Color(dark: 0x1E1E1E, light: 0xE9E9ED)
     static let border = Color(dark: 0xFFFFFF, light: 0x000000).opacity(0.08)
+    /// The muscle map: untrained muscles, the skin showing between them, and the thin lines around each muscle.
+    static let figure = Color(dark: 0x2C2C31, light: 0xDCDCE2)
+    static let figureSkin = Color(dark: 0x1C1C1F, light: 0xEEEEF1)
+    static let figureLine = Color(dark: 0x3C3C43, light: 0xC6C6CE)
 
     static let textPrimary = Color(dark: 0xFFFFFF, light: 0x0A0A0A)
     /// Text or icon placed on a `textPrimary` or accent-coloured fill.

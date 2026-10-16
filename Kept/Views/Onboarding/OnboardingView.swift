@@ -424,6 +424,18 @@ struct OnboardingView: View {
             }
             if draft.doesGym {
                 VStack(alignment: .leading, spacing: 8) {
+                    Text("JAK CHCEŠ GYM ZAPISOVAT").labelStyle()
+                    HStack(spacing: 10) {
+                        ForEach(GymMode.allCases) { mode in
+                            option(mode.title, nil, isOn: draft.gymMode == mode) {
+                                withAnimation { draft.gymMode = mode }
+                            }
+                        }
+                    }
+                    GymModePreview(mode: draft.gymMode)
+                    note("Přepnout můžeš kdykoli v Nastavení gymu. Nic se tím nesmaže, data z pokročilého režimu jen zůstanou schovaná.")
+                }
+                VStack(alignment: .leading, spacing: 8) {
                     Text("JAKÝ SPLIT JEDEŠ").labelStyle()
                     ForEach(OnboardingDraft.Split.allCases) { split in
                         option(split.title, split.summary, isOn: draft.split == split) {
@@ -806,7 +818,7 @@ struct OnboardingView: View {
             ("Vzhled", (AppAppearance(rawValue: appearanceRaw) ?? .dark).title),
             ("Aktivity", draft.activityNames.joined(separator: ", ")),
             ("Minimum", draft.minimum == 0 ? "bez minima" : "\(draft.minimum) týdně"),
-            ("Gym", draft.doesGym ? "\(split), asi \(draft.gymPerWeek)× týdně" : "ne"),
+            ("Gym", draft.doesGym ? "\(draft.gymMode.title) · \(split), asi \(draft.gymPerWeek)× týdně" : "ne"),
             ("Zdraví", draft.health ? "propojeno" : "později"),
             ("Deník", draft.diary ? (draft.diaryLock ? "zapnutý, zamčený" : "zapnutý") : "vypnutý"),
             ("Zámek aplikace", draft.appLock ? "Face ID" : "bez zámku"),

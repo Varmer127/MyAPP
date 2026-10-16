@@ -17,6 +17,21 @@ struct GymSettingsView: View {
         Form {
             if let settings = settingsList.first {
                 Section {
+                    Picker("Režim", selection: Bindable(settings).gymMode) {
+                        ForEach(GymMode.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    GymModePreview(mode: settings.gymMode)
+                        .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                        .listRowBackground(Color.clear)
+                } header: {
+                    Text("Režim")
+                } footer: {
+                    Text("Přepnout můžeš kdykoli. Nic se tím nesmaže: cviky, série a rekordy z pokročilého režimu jen zůstanou schované a po přepnutí zpět je zase uvidíš.")
+                }
+                .listRowBackground(Theme.card)
+
+                Section {
                     let target = settings.weeklyTarget(for: .gym)
                     Stepper(target == 0 ? "Týdenní cíl: bez cíle" : "Týdenní cíl: asi \(target)× týdně",
                             value: Binding(get: { target }, set: { settings.setWeeklyTarget($0, for: .gym) }),
@@ -36,10 +51,12 @@ struct GymSettingsView: View {
                            text: $newPreset, isAdding: $isAddingPreset,
                            footer: "Nabízí se při zápisu tréninku. Břicho se zaškrtává zvlášť ke každému tréninku.",
                            items: Bindable(settings).workoutPresets)
-                presetList(title: "Cviky", addLabel: "Přidat cvik", placeholder: "Název cviku",
-                           text: $newExercise, isAdding: $isAddingExercise,
-                           footer: "Odebrání cviku ze seznamu nesmaže jeho historii ve statistikách.",
-                           items: Bindable(settings).exercisePresets)
+                if settings.gymMode == .advanced {
+                    presetList(title: "Cviky", addLabel: "Přidat cvik", placeholder: "Název cviku",
+                               text: $newExercise, isAdding: $isAddingExercise,
+                               footer: "Odebrání cviku ze seznamu nesmaže jeho historii ve statistikách.",
+                               items: Bindable(settings).exercisePresets)
+                }
             }
         }
         .scrollContentBackground(.hidden)

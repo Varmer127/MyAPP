@@ -59,6 +59,8 @@ final class UserSettings {
     var workoutTemplatesData: Data = Data()
     /// When the first-launch guide was finished. Nil shows it.
     var onboardedAt: Date?
+    /// How much the gym section records. Existing installs keep the full version they already use.
+    var gymModeRaw: String = GymMode.advanced.rawValue
 
     init() {}
 
@@ -154,6 +156,11 @@ final class UserSettings {
         set { workoutPresetsData = (try? JSONEncoder().encode(newValue)) ?? Data() }
     }
 
+    var gymMode: GymMode {
+        get { GymMode(rawValue: gymModeRaw) ?? .advanced }
+        set { gymModeRaw = newValue.rawValue }
+    }
+
     var tone: NotificationTone {
         get { NotificationTone(rawValue: toneRaw) ?? .strict }
         set { toneRaw = newValue.rawValue }
@@ -221,4 +228,33 @@ struct RestPreset: Codable, Hashable, Identifiable {
         RestPreset(name: "Svaly", seconds: 90),
         RestPreset(name: "Vytrvalost", seconds: 30),
     ]
+}
+
+/// Simple records a workout with a stopwatch and rests; advanced adds exercises, sets, records and the muscle map.
+/// Switching never deletes anything: advanced data only stays out of sight in the simple mode.
+enum GymMode: String, CaseIterable, Identifiable {
+    case simple, advanced
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .simple: "Jednoduchý"
+        case .advanced: "Pokročilý"
+        }
+    }
+
+    var summary: String {
+        switch self {
+        case .simple: "Stopky tréninku a pauzy. Zapíšeš, co jsi jel, a hotovo."
+        case .advanced: "Cviky, série, váhy a opakování, rekordy, šablony a mapa svalů."
+        }
+    }
+
+    var features: [String] {
+        switch self {
+        case .simple: ["Stopky celého tréninku", "Odpočet pauzy jedním klepnutím", "Co jsi jel a počet tréninků týdně"]
+        case .advanced: ["Cviky série po sérii, s čísly z minula", "Knihovna cviků s mapou svalů", "Rekordy, síla v čase a týdenní mapa svalů", "Šablony tréninků a rozcvičky"]
+        }
+    }
 }
