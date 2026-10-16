@@ -28,6 +28,12 @@ struct KeptApp: App {
                     }
                     .transition(.opacity)
                     .zIndex(1)
+                } else if showsIntro {
+                    LaunchAnimationView {
+                        withAnimation(.easeOut(duration: 0.35)) { showsIntro = false }
+                    }
+                    .transition(.opacity)
+                    .zIndex(1)
                 }
             }
             .appAppearance()
