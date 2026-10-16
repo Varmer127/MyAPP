@@ -95,7 +95,8 @@ struct ProofInput: View {
 }
 
 /// The system camera, with no access to the photo library.
-private struct CameraPicker: UIViewControllerRepresentable {
+/// Camera only, never the photo library: proofs and body photos must be taken now.
+struct CameraPicker: UIViewControllerRepresentable {
     @Environment(\.dismiss) private var dismiss
     let onCapture: (UIImage) -> Void
 

@@ -59,6 +59,8 @@ struct DeveloperSection: View {
         try? context.delete(model: FailureRecord.self)
         try? context.delete(model: FocusSession.self)
         try? context.delete(model: SetLog.self)
+        try? context.delete(model: BodyEntry.self)
+        PhotoVault.deleteAll()
         try? context.delete(model: ExerciseLog.self)
         try? context.delete(model: Postponement.self)
         try? context.delete(model: WeekReflection.self)

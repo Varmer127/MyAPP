@@ -54,9 +54,28 @@ struct GymProgressView: View {
                     .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.textPrimary.opacity(0.25), lineWidth: 1))
                 }
                 summary
+                GymInsights(logs: exerciseLogs, workouts: workouts)
                 bodyParts
                 strength
                 weight
+                NavigationLink {
+                    BodyProgressView()
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "figure.arms.open")
+                            .font(.system(size: 20))
+                            .foregroundStyle(Theme.textPrimary)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("MÍRY A FOTKY POSTAVY").labelStyle(Theme.textPrimary)
+                            Text("Soukromé, zamčené Face ID, jen v tomto telefonu")
+                                .font(.system(size: 13))
+                                .foregroundStyle(Theme.textSecondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
+                    }
+                    .card()
+                }
             }
             .padding(.horizontal, Theme.screenPadding)
             .padding(.bottom, 32)
