@@ -16,6 +16,8 @@ struct RootView: View {
     @State private var tab: AppTab = .today
     @State private var weekShowsNext = false
     @State private var showsRealityCheck = false
+    /// Existing installs from before the guide existed are not sent through it.
+    @AppStorage("onboardingMigrated") private var onboardingMigrated = false
     /// Called once the data store is set up and the first screen can be used.
     var onReady: () -> Void = {}
 
@@ -82,7 +84,7 @@ struct RootView: View {
                     .tabItem { Label("Zdraví", systemImage: "heart") }
                     .tag(AppTab.health)
             }
-            if settings?.showsDiaryTab == true {
+            if settings?.showsDiaryTab == true, settings?.diaryEnabled != false {
                 DiaryView()
                     .tabItem { Label("Deník", systemImage: "book.closed") }
                     .tag(AppTab.diary)
@@ -92,11 +94,25 @@ struct RootView: View {
                 .tag(AppTab.settings)
         }
         .tint(Theme.textPrimary)
+        .appLock(settings?.appLockEnabled == true)
         .fullScreenCover(isPresented: $showsRealityCheck) { RealityCheckView() }
+        .fullScreenCover(isPresented: Binding(
+            get: { onboardingMigrated && settings != nil && settings?.onboardedAt == nil },
+            set: { _ in })) {
+            OnboardingView(onFinish: finishOnboarding)
+                .interactiveDismissDisabled()
+        }
         .task {
-            _ = UserSettings.current(in: context)
+            let current = UserSettings.current(in: context)
+            if !onboardingMigrated {
+                if current.onboardedAt == nil, !tasks.isEmpty { current.onboardedAt = .now }
+                onboardingMigrated = true
+            }
             onReady()
-            await NotificationManager.requestAuthorization()
+            // A new user is asked for notifications inside the guide, at the moment it makes sense.
+            if current.onboardedAt != nil {
+                await NotificationManager.requestAuthorization()
+            }
             await NotificationManager.reschedule(context: context)
         }
         // `task(id:)` cancels the previous run, so a burst of edits reschedules once.
@@ -115,7 +131,7 @@ struct RootView: View {
                 NotificationManager.cancelFocusEnd()
                 NotificationManager.cancelRestEnd()
             }
-            WidgetBridge.update(tasks: tasks, plans: plans)
+            WidgetBridge.update(tasks: tasks, plans: plans, targets: settings?.weeklyTargets ?? [:])
             SealActivityManager.reconcile(plans)
             await NotificationManager.reschedule(context: context)
         }
@@ -139,6 +155,14 @@ struct RootView: View {
             open(route)
             router.route = nil
         }
+    }
+
+    /// After the guide the user lands on the week to plan: this one, or the next one from Friday on.
+    private func finishOnboarding() {
+        let weekday = Calendar.app.component(.weekday, from: .now)
+        weekShowsNext = weekday == 1 || weekday >= 6
+        tab = .week
+        Task { await NotificationManager.reschedule(context: context) }
     }
 
     private func open(_ route: AppRoute) {

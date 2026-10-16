@@ -31,7 +31,7 @@ Založeno 10. 10. 2026. Aplikace se zatím dolaďuje pro osobní použití; tenh
   - [ ] kategorie jsou pevný `enum` (včetně „Claude a aplikace“); potřeba vlastní kategorie uživatele
   - [ ] výchozí týdenní cíle (Gym 4×, Nový skill 2×…) a minimum 7 aktivit nastavit v úvodním průvodci
   - [ ] výchozí partie v gymu a cviky jako nabídka, ne danost
-  - [ ] úvodní průvodce (onboarding): co aplikace dělá, tón, cíle, povolení notifikací ve správnou chvíli
+  - [x] úvodní průvodce (onboarding): hotový 16. 10. 2026 (14 kroků, interaktivní průvodce, aktivity, gym, zámek, vzhled). Před vydáním doplnit volbu angličtiny.
     - [ ] **Sestavení vlastní sekce Gym** (přidáno 16. 10. 2026): uživatel si vybere, jaký split jede (např. push/pull/legs, horní/spodní, full body, vlastní), jaké partie a cviky chce nabízet, kolikrát týdně chodí a výchozí pauzy mezi sériemi. Z toho se předvyplní Nastavení gymu, týdenní cíl a návrhy „Na řadě: …“. Kdo gym nechce, sekci přeskočí a vůbec se mu nezobrazí.
     - [ ] volba minima aktivit týdně (viz níž)
 - [ ] **Platby.** Nákupy přes StoreKit 2, obrazovka s nabídkou, obnovení nákupů, rozdělení funkcí na zdarma / placené. Model zatím nerozhodnut.
@@ -80,6 +80,7 @@ Všechny čtyři mění to, že aplikace dnes nic neposílá mimo telefon. Zname
 - **Úvodní průvodce s moduly.** Při prvním spuštění: jazyk, tón, které záložky chce mít v liště, propojení se Zdravím a zapnutí Gymu. U Zdraví i Gymu poznámka, že to jde udělat i později v Nastavení. U Gymu zmínit upozornění po tréninku zaznamenaném ve Zdraví (přichází po uložení tréninku, ne při jeho zahájení). Vše musí jít změnit v Nastavení.
 - **Mince za splnění úkolů.** Virtuální měna jde udělat jen v zařízení. Skutečné peníze nebo sázky o peníze jsou právní otázka (hazard, pravidla Applu).
 - **Minimum aktivit týdně volí uživatel v onboardingu** (dnes výchozí 7, měnit jde v Nastavení → Týdenní cíle). Rozhodnuto 11. 10. 2026, udělat spolu s onboardingem.
+- **Anketa „Odkud ses o Kept dozvěděl?“ v onboardingu** (zapsáno 16. 10. 2026, zatím ne). Vyžaduje odesílání na server: Supabase projekt MyAPP, anonymní tabulka jen pro zápis, odeslání až s internetem, přeskočitelná; uvést v zásadách soukromí a App Privacy. Do té doby stačí zdroje a vlastní odkazy v App Store Connect.
 
 ## 4. Co uvést v App Storu
 

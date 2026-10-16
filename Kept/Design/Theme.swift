@@ -66,7 +66,7 @@ enum AppAppearance: String, CaseIterable, Identifiable {
         switch self {
         case .dark: "Tmavý"
         case .light: "Světlý"
-        case .system: "Podle systému"
+        case .system: "Automaticky"
         }
     }
 

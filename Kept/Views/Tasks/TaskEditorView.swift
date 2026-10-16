@@ -112,7 +112,26 @@ struct TaskEditorView: View {
                 Section("Úkol") {
                     TextField("Název", text: $draft.title)
                     Picker("Kategorie", selection: $draft.category) {
-                        ForEach(TaskCategory.allCases) { Label($0.title, systemImage: $0.symbol).tag($0) }
+                        ForEach(categoryOptions) { Label($0.title, systemImage: $0.symbol).tag($0) }
+                    }
+                    if task == nil, let custom = settingsList.first?.customActivities, !custom.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(custom, id: \.self) { name in
+                                    Button(name) {
+                                        draft.title = name
+                                        draft.category = .other
+                                    }
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(draft.title == name ? Theme.onPrimary : Theme.textPrimary)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(draft.title == name ? Theme.textPrimary : Theme.cardRaised)
+                                    .clipShape(Capsule())
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
                     }
                     Picker("Priorita", selection: $draft.priority) {
                         ForEach(TaskPriority.allCases) { Text($0.title).tag($0) }
@@ -249,6 +268,12 @@ struct TaskEditorView: View {
         isCommitted
             ? "K tomuhle ses zavázal. Odstranění se počítá jako porušený slib a zůstane v historii."
             : "Úkol ještě není součástí závazku, takže se prostě smaže."
+    }
+
+    /// The user's categories, plus the one this task already has.
+    private var categoryOptions: [TaskCategory] {
+        let enabled = settingsList.first?.enabledCategories ?? TaskCategory.allCases
+        return TaskCategory.allCases.filter { enabled.contains($0) || $0 == draft.category }
     }
 
     /// Another task with the same title already sits on the chosen day.

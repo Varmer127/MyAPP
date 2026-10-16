@@ -24,12 +24,16 @@ struct DeveloperSection: View {
             Button("Zrušit všechny plány do budoucna", role: .destructive) { confirms = true }
                 .foregroundStyle(Theme.red)
                 .disabled(futureTasks.isEmpty && !plans.contains { $0.weekStart > Date.now.weekStart || $0.isSealing })
+            Button("Spustit onboarding znovu") {
+                UserSettings.current(in: context).onboardedAt = nil
+            }
+            .foregroundStyle(Theme.textPrimary)
             Button("Smazat všechna data a začít znovu", role: .destructive) { confirmsReset = true }
                 .foregroundStyle(Theme.red)
         } header: {
             Text("Vývojář")
         } footer: {
-            Text("DEVELOPER VERZE: před testováním se obě tlačítka musí odstranit. První smaže otevřené úkoly od dneška dál a plánovače budoucích týdnů, bez postihu; historie zůstává. Druhé smaže úplně všechno: úkoly, historii, body, deník, nastavení i widget, jako by se aplikace právě nainstalovala.")
+            Text("DEVELOPER VERZE: před testováním se tahle tlačítka musí odstranit. „Spustit onboarding znovu“ ukáže průvodce prvního spuštění; data zůstanou, jen se volby z průvodce zapíšou do Nastavení. „Zrušit plány“ smaže otevřené úkoly od dneška dál a plánovače budoucích týdnů, bez postihu; historie zůstává. „Smazat všechna data“ smaže úplně všechno: úkoly, historii, body, deník, nastavení i widget, jako by se aplikace právě nainstalovala.")
                 .foregroundStyle(Theme.orange)
         }
         .listRowBackground(Theme.card)

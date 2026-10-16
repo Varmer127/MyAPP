@@ -9,7 +9,7 @@ enum TaskCategory: String, CaseIterable, Identifiable, Codable {
     var title: String {
         switch self {
         case .newSkill: "Nový skill"
-        case .building: "Claude a aplikace"
+        case .building: "Vlastní projekt"
         case .work: "Práce"
         case .education: "Škola"
         case .reading: "Čtení"
@@ -64,7 +64,7 @@ enum TaskCategory: String, CaseIterable, Identifiable, Codable {
         switch self {
         case .newSkill: "Naučit se něco nového"
         case .nature: "Procházka v přírodě"
-        case .building: "Práce na aplikaci"
+        case .building: "Práce na projektu"
         default: title
         }
     }

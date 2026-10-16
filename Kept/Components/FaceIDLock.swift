@@ -1,10 +1,12 @@
 import LocalAuthentication
 import SwiftUI
 
-/// Hides the diary behind Face ID (or the passcode) when the lock is switched on.
+/// Hides a screen (the diary, or the whole app) behind Face ID or the passcode when the lock is switched on.
 /// It locks again whenever the app goes to the background.
-struct DiaryLock: ViewModifier {
+struct FaceIDLock: ViewModifier {
     let isEnabled: Bool
+    let title: String
+    let reason: String
     @Environment(\.scenePhase) private var scenePhase
     @State private var isUnlocked = false
     @State private var failed = false
@@ -21,7 +23,7 @@ struct DiaryLock: ViewModifier {
                 Image(systemName: "lock.fill")
                     .font(.system(size: 40))
                     .foregroundStyle(Theme.textSecondary)
-                Text("Deník je zamčený")
+                Text(title)
                     .font(.system(size: 22, weight: .bold))
                     .foregroundStyle(Theme.textPrimary)
                 if failed {
@@ -42,7 +44,7 @@ struct DiaryLock: ViewModifier {
 
     private func unlock() {
         let context = LAContext()
-        context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: "Odemknout deník") { success, _ in
+        context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { success, _ in
             DispatchQueue.main.async {
                 isUnlocked = success
                 failed = !success
@@ -52,5 +54,11 @@ struct DiaryLock: ViewModifier {
 }
 
 extension View {
-    func diaryLock(_ isEnabled: Bool) -> some View { modifier(DiaryLock(isEnabled: isEnabled)) }
+    func diaryLock(_ isEnabled: Bool) -> some View {
+        modifier(FaceIDLock(isEnabled: isEnabled, title: "Deník je zamčený", reason: "Odemknout deník"))
+    }
+
+    func appLock(_ isEnabled: Bool) -> some View {
+        modifier(FaceIDLock(isEnabled: isEnabled, title: "Kept je zamčený", reason: "Odemknout Kept"))
+    }
 }

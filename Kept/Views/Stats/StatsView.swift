@@ -9,6 +9,7 @@ struct StatsView: View {
     @Query private var sessions: [FocusSession]
     @Query private var reflections: [WeekReflection]
     @Query private var diary: [DiaryEntry]
+    @Query private var settingsList: [UserSettings]
     @State private var period: Period = .week
 
     private static let monthDays = 30
@@ -95,7 +96,8 @@ struct StatsView: View {
 
     private var scores: some View {
         let now = Date.now
-        let accountability = ScoreEngine.accountability(tasks: tasks, plans: plans, now: now)
+        let targets = settingsList.first?.weeklyTargets ?? [:]
+        let accountability = ScoreEngine.accountability(tasks: tasks, plans: plans, targets: targets, now: now)
         return VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Text(accountability.map { "\($0.score)" } ?? "—")
@@ -111,6 +113,7 @@ struct StatsView: View {
             PerformanceBar(label: "Dodržené sliby", value: ScoreEngine.promisesKept(scoped, now: now))
             PerformanceBar(label: "Produktivita", value: ScoreEngine.productivity(scoped, now: now))
             PerformanceBar(label: "Věrnost plánu", value: integrity)
+            PerformanceBar(label: "Týdenní cíle", value: accountability?.weeklyGoals)
             if ScoreEngine.isBusyNotProductive(scoped, now: now) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Splněno úkolů: \(ScoreEngine.completionRate(scoped).percentText)")

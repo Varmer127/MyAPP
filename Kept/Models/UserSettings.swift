@@ -47,8 +47,41 @@ final class UserSettings {
     var diaryVoiceEnabled: Bool = false
     /// The diary opens only after Face ID / the passcode.
     var diaryLockEnabled: Bool = false
+    /// The diary exists at all. Off hides it everywhere.
+    var diaryEnabled: Bool = true
+    /// The whole app opens only after Face ID / the passcode.
+    var appLockEnabled: Bool = false
+    /// JSON-encoded `[TaskCategory.rawValue]` the user does. Empty data means "never chosen": everything is on.
+    var enabledCategoriesData: Data = Data()
+    /// JSON-encoded `[String]`: the user's own activities, planned under "Ostatní".
+    var customActivitiesData: Data = Data()
+    /// When the first-launch guide was finished. Nil shows it.
+    var onboardedAt: Date?
 
     init() {}
+
+    /// Categories the user picked as theirs. "Ostatní" is always available for one-off tasks.
+    var enabledCategories: [TaskCategory] {
+        get {
+            guard !enabledCategoriesData.isEmpty,
+                  let raw = try? JSONDecoder().decode([String].self, from: enabledCategoriesData) else { return TaskCategory.allCases }
+            return TaskCategory.allCases.filter { raw.contains($0.rawValue) || $0 == .other }
+        }
+        set { enabledCategoriesData = (try? JSONEncoder().encode(newValue.map(\.rawValue))) ?? Data() }
+    }
+
+    func isEnabled(_ category: TaskCategory) -> Bool { enabledCategories.contains(category) }
+
+    func setEnabled(_ enabled: Bool, _ category: TaskCategory) {
+        var list = enabledCategories.filter { $0 != category }
+        if enabled { list.append(category) }
+        enabledCategories = list
+    }
+
+    var customActivities: [String] {
+        get { (try? JSONDecoder().decode([String].self, from: customActivitiesData)) ?? [] }
+        set { customActivitiesData = (try? JSONEncoder().encode(newValue)) ?? Data() }
+    }
 
     static let defaultWorkoutPresets = ["Ruce a ramena", "Záda a prsa", "Nohy"]
     static let defaultExercisePresets = ["Bench press", "Dřep", "Mrtvý tah", "Tlaky nad hlavu", "Shyby", "Přítahy v předklonu"]
@@ -76,7 +109,7 @@ final class UserSettings {
     /// iOS shows five tabs before collapsing the rest under "More"; three are fixed.
     static let maxOptionalTabs = 2
 
-    var optionalTabCount: Int { [showsStatsTab, showsGymTab, showsHealthTab, showsDiaryTab].filter { $0 }.count }
+    var optionalTabCount: Int { [showsStatsTab, showsGymTab, showsHealthTab, showsDiaryTab && diaryEnabled].filter { $0 }.count }
     static let defaultMinimumWeeklyTasks = 7
 
     private var targetOverrides: [String: Int] {
@@ -84,8 +117,15 @@ final class UserSettings {
         set { weeklyTargetsData = (try? JSONEncoder().encode(newValue)) ?? Data() }
     }
 
+    /// Every category's rough weekly target, for scoring.
+    var weeklyTargets: [TaskCategory: Int] {
+        Dictionary(uniqueKeysWithValues: TaskCategory.allCases.map { ($0, weeklyTarget(for: $0)) })
+    }
+
+    /// How many times a week the user roughly wants to do this. A category they do not do has no target.
     func weeklyTarget(for category: TaskCategory) -> Int {
-        targetOverrides[category.rawValue] ?? category.defaultWeeklyTarget
+        guard isEnabled(category) else { return 0 }
+        return targetOverrides[category.rawValue] ?? category.defaultWeeklyTarget
     }
 
     func setWeeklyTarget(_ value: Int, for category: TaskCategory) {

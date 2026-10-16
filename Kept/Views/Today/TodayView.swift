@@ -204,7 +204,7 @@ struct TodayView: View {
     }
 
     private func content(now: Date) -> some View {
-        let day = TodaySnapshot(tasks: tasks, plans: plans, now: now)
+        let day = TodaySnapshot(tasks: tasks, plans: plans, targets: settingsList.first?.weeklyTargets ?? [:], now: now)
         let slipping = isSlipping(day, now: now)
         return ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
@@ -815,7 +815,7 @@ private struct TodaySnapshot {
     var doneCount: Int { scored.filter(\.isDone).count }
     var partialCount: Int { scored.filter(\.isPartial).count }
 
-    init(tasks: [TaskItem], plans: [WeeklyPlan], now: Date) {
+    init(tasks: [TaskItem], plans: [WeeklyPlan], targets: [TaskCategory: Int], now: Date) {
         let weekStart = now.weekStart
         scored = tasks.filter { $0.scheduledDate.isSameDay(as: now) && $0.countsInScores }
         visible = scored.filter { !$0.isRemoved }
@@ -828,7 +828,7 @@ private struct TodaySnapshot {
         open = pending.filter { $0.priority != .critical }
         closed = visible.filter { $0.status != .pending }
 
-        accountability = ScoreEngine.accountability(tasks: tasks, plans: plans, now: now)
+        accountability = ScoreEngine.accountability(tasks: tasks, plans: plans, targets: targets, now: now)
         promisesKept = ScoreEngine.promisesKept(tasks.filter { $0.scheduledDate.weekStart == weekStart }, now: now)
         productivity = ScoreEngine.productivity(scored, now: now)
         streak = ScoreEngine.dayStreak(tasks, now: now)

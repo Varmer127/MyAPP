@@ -30,7 +30,7 @@ enum AppStore {
         if !FocusActivityManager.reconcile(tasks) {
             NotificationManager.cancelFocusEnd()
         }
-        WidgetBridge.update(tasks: tasks, plans: plans)
+        WidgetBridge.update(tasks: tasks, plans: plans, targets: UserSettings.current(in: context).weeklyTargets)
         await NotificationManager.reschedule(context: context)
     }
 }

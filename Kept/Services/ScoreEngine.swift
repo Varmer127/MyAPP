@@ -14,10 +14,12 @@ enum ScoreEngine {
         static let streakThreshold = 0.8
         static let accountabilityWindowDays = 30
 
-        static let promisesKeptShare = 0.45
+        static let promisesKeptShare = 0.40
         static let productivityShare = 0.25
         static let integrityShare = 0.15
-        static let onTimeShare = 0.15
+        static let onTimeShare = 0.10
+        /// How well the rough weekly targets ("gym about 4× a week") were met.
+        static let weeklyGoalsShare = 0.10
 
         static let unexplainedPenalty = 1.0
         static let unexplainedPenaltyCap = 10.0
@@ -140,6 +142,7 @@ enum ScoreEngine {
         let productivity: Double?
         let integrity: Double?
         let onTime: Double?
+        let weeklyGoals: Double?
         let penalties: Double
         let bonus: Double
         let criticalLost: Int
@@ -157,10 +160,29 @@ enum ScoreEngine {
         }
     }
 
+    /// Share of the weekly targets reached, averaged over the finished weeks of the window in which anything
+    /// was planned. Doing more than the target does not make up for another category.
+    static func weeklyGoalsMet(_ tasks: [TaskItem], targets: [TaskCategory: Int], from: Date, now: Date = .now) -> Double? {
+        let goals = targets.filter { $0.value > 0 }
+        guard !goals.isEmpty else { return nil }
+        let byWeek = Dictionary(grouping: tasks.filter { !$0.isRemoved && $0.countsInScores }) { $0.scheduledDate.weekStart }
+        let weeks = byWeek.keys.filter { $0 >= from.weekStart && $0.addingDays(7) <= now.weekStart }
+        guard !weeks.isEmpty else { return nil }
+        let perWeek = weeks.map { week -> Double in
+            let done = byWeek[week]?.filter(\.isDone) ?? []
+            let shares = goals.map { category, target in
+                min(Double(done.filter { $0.category == category }.count) / Double(target), 1)
+            }
+            return shares.reduce(0, +) / Double(shares.count)
+        }
+        return perWeek.reduce(0, +) / Double(perWeek.count)
+    }
+
     /// Rolling 30-day score, 0–100:
-    /// 45% Promises Kept + 25% Productivity + 15% Commitment Integrity + 15% On-time rate,
+    /// 40% Promises Kept + 25% Productivity + 15% Commitment Integrity + 10% On-time rate + 10% weekly targets,
     /// minus capped penalties, plus capped bonuses. Missing components are left out and the rest re-weighted.
-    static func accountability(tasks: [TaskItem], plans: [WeeklyPlan], now: Date = .now) -> Accountability? {
+    static func accountability(tasks: [TaskItem], plans: [WeeklyPlan], targets: [TaskCategory: Int],
+                               now: Date = .now) -> Accountability? {
         let from = now.startOfDay.addingDays(-Config.accountabilityWindowDays)
         let window = tasks.filter { $0.scheduledDate >= from && $0.isClosed(now) && $0.countsInScores }
         guard !window.isEmpty else { return nil }
@@ -171,12 +193,14 @@ enum ScoreEngine {
         let integrity = integrities.isEmpty ? nil : integrities.reduce(0, +) / Double(integrities.count)
         let done = window.filter(\.isDone)
         let onTime = done.isEmpty ? nil : Double(done.filter { $0.status == .completed }.count) / Double(done.count)
+        let goalsMet = weeklyGoalsMet(tasks, targets: targets, from: from, now: now)
 
         let components: [(Double?, Double)] = [
             (kept, Config.promisesKeptShare),
             (productive, Config.productivityShare),
             (integrity, Config.integrityShare),
             (onTime, Config.onTimeShare),
+            (goalsMet, Config.weeklyGoalsShare),
         ]
         let present = components.compactMap { value, share in value.map { ($0, share) } }
         let totalShare = present.reduce(0.0) { $0 + $1.1 }
@@ -201,7 +225,7 @@ enum ScoreEngine {
 
         let score = Int(min(max(base - penalties + bonus, 0), 100).rounded())
         return Accountability(score: score, promisesKept: kept, productivity: productive, integrity: integrity,
-                              onTime: onTime, penalties: penalties, bonus: bonus,
+                              onTime: onTime, weeklyGoals: goalsMet, penalties: penalties, bonus: bonus,
                               criticalLost: criticalLost, unexplained: unexplained)
     }
 }

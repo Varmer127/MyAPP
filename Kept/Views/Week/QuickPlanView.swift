@@ -6,6 +6,7 @@ struct QuickPlanView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Query private var tasks: [TaskItem]
+    @Query private var settingsList: [UserSettings]
     let weekStart: Date
 
     @State private var category: TaskCategory = .gym
@@ -20,6 +21,7 @@ struct QuickPlanView: View {
 
     private var days: [Date] { (0..<Self.daysInWeek).map { weekStart.addingDays($0) } }
     private var trimmedTitle: String { title.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var isCustomTitle: Bool { category == .other && (settingsList.first?.customActivities ?? []).contains(trimmedTitle) }
     @State private var confirmsDuplicate = false
 
     private var takenSelected: [Date] { selectedDays.filter(isTaken).sorted() }
@@ -45,8 +47,15 @@ struct QuickPlanView: View {
                     }
                     group("Co") {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 8)], spacing: 8) {
-                            ForEach(TaskCategory.allCases) { option in
-                                chip(option.title, symbol: option.symbol, isSelected: category == option) { select(option) }
+                            ForEach(settingsList.first?.enabledCategories ?? TaskCategory.allCases) { option in
+                                chip(option.title, symbol: option.symbol, isSelected: category == option && !isCustomTitle) { select(option) }
+                            }
+                            // The user's own activities are planned under "Ostatní" with their own name.
+                            ForEach(settingsList.first?.customActivities ?? [], id: \.self) { name in
+                                chip(name, symbol: "star", isSelected: category == .other && trimmedTitle == name) {
+                                    category = .other
+                                    title = name
+                                }
                             }
                         }
                         TextField("Název", text: $title)

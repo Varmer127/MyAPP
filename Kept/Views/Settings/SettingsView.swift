@@ -35,11 +35,13 @@ struct SettingsView: View {
                     remindersSection(settings)
                     dailySection(settings)
                     sundaySection(settings)
+                    activitiesSection(settings)
                     targetsSection(settings)
                     gymSection
                     healthSection(settings)
                     calendarSection(settings)
                     diarySection(settings)
+                    privacySection(settings)
                     weightsSection(settings)
                 }
                 Section {
@@ -179,6 +181,25 @@ struct SettingsView: View {
         .listRowBackground(Theme.card)
     }
 
+    private func activitiesSection(_ settings: UserSettings) -> some View {
+        Section {
+            NavigationLink {
+                ActivitiesSettingsView()
+            } label: {
+                LabeledContent {
+                    Text("\(settings.enabledCategories.count - 1 + settings.customActivities.count)")
+                } label: {
+                    Label("Moje aktivity", systemImage: "square.grid.2x2")
+                }
+            }
+        } header: {
+            Text("Aktivity")
+        } footer: {
+            Text("Čemu se věnuješ. Jen tyhle aktivity Kept nabízí při plánování a navrhuje na obrazovce Dnes.")
+        }
+        .listRowBackground(Theme.card)
+    }
+
     private func targetsSection(_ settings: UserSettings) -> some View {
         Section {
             Stepper(settings.postponeLimit == 0 ? "Odklady: vypnuto" : "Odklady: \(settings.postponeLimit)× za měsíc",
@@ -186,16 +207,16 @@ struct SettingsView: View {
             Stepper(settings.minimumWeeklyTasks == 0 ? "Minimum aktivit: vypnuto" : "Minimum aktivit: \(settings.minimumWeeklyTasks) týdně",
                     value: Bindable(settings).minimumWeeklyTasks, in: UserSettings.minimumWeeklyTasksRange)
             // The gym target is set in the gym settings.
-            ForEach(TaskCategory.allCases.filter { $0 != .gym }) { category in
+            ForEach(settings.enabledCategories.filter { $0 != .gym && $0 != .other }) { category in
                 let target = settings.weeklyTarget(for: category)
-                Stepper(target == 0 ? "\(category.title): bez cíle" : "\(category.title): \(target)× týdně",
+                Stepper(target == 0 ? "\(category.title): bez cíle" : "\(category.title): asi \(target)× týdně",
                         value: Binding(get: { target }, set: { settings.setWeeklyTarget($0, for: category) }),
                         in: UserSettings.weeklyTargetRange)
             }
         } header: {
             Text("Týdenní cíle")
         } footer: {
-            Text("Odklad přesune úkol na jiný den bez postihu; víc než 3 za měsíc nastavit nejde, jen míň. Plán s méně aktivitami, než je minimum, nejde na nový týden odeslat. Když za cílem kategorie zaostáváš, aplikace ti úkol sama navrhne na obrazovce Dnes a při plánování týdne upozorní, že ho plán nepokrývá.")
+            Text("Odklad přesune úkol na jiný den bez postihu; víc než 3 za měsíc nastavit nejde, jen míň. Plán s méně aktivitami, než je minimum, nejde na nový týden odeslat. Týdenní cíle jsou orientační: když za nimi zaostáváš, Kept ti aktivitu navrhne, a jak je plníš, se z 10 % promítá do spolehlivosti.")
         }
         .listRowBackground(Theme.card)
     }
@@ -219,7 +240,8 @@ struct SettingsView: View {
     @ViewBuilder
     private func hiddenScreensSection(_ settings: UserSettings) -> some View {
         let showsHealth = HealthService.isAvailable && !settings.showsHealthTab
-        if !settings.showsStatsTab || !settings.showsGymTab || showsHealth || !settings.showsDiaryTab {
+        let showsDiary = settings.diaryEnabled && !settings.showsDiaryTab
+        if !settings.showsStatsTab || !settings.showsGymTab || showsHealth || showsDiary {
             Section {
                 if !settings.showsStatsTab {
                     NavigationLink { StatsView(isEmbedded: true) } label: { Label("Statistiky", systemImage: "chart.bar") }
@@ -230,7 +252,7 @@ struct SettingsView: View {
                 if showsHealth {
                     NavigationLink { HealthSummaryView(isEmbedded: true) } label: { Label("Zdraví", systemImage: "heart") }
                 }
-                if !settings.showsDiaryTab {
+                if showsDiary {
                     NavigationLink { DiaryView(isEmbedded: true) } label: { Label("Deník", systemImage: "book.closed") }
                 }
             } header: {
@@ -251,7 +273,9 @@ struct SettingsView: View {
             if HealthService.isAvailable {
                 tabToggle("Zdraví", "heart", Bindable(settings).showsHealthTab, isFull: isFull)
             }
-            tabToggle("Deník", "book.closed", Bindable(settings).showsDiaryTab, isFull: isFull)
+            if settings.diaryEnabled {
+                tabToggle("Deník", "book.closed", Bindable(settings).showsDiaryTab, isFull: isFull)
+            }
         } header: {
             Text("Záložky")
         } footer: {
@@ -327,12 +351,28 @@ struct SettingsView: View {
         .listRowBackground(Theme.card)
     }
 
+    private func privacySection(_ settings: UserSettings) -> some View {
+        Section {
+            Toggle("Zamknout Kept Face ID", isOn: Bindable(settings).appLockEnabled)
+                .tint(Theme.textSecondary)
+        } header: {
+            Text("Soukromí")
+        } footer: {
+            Text("Kept se pak otevře až po Face ID nebo kódu a zamkne se pokaždé, když ho opustíš.")
+        }
+        .listRowBackground(Theme.card)
+    }
+
     private func diarySection(_ settings: UserSettings) -> some View {
         Section {
-            Toggle("Hlasový zápis", isOn: Bindable(settings).diaryVoiceEnabled)
+            Toggle("Deník", isOn: Bindable(settings).diaryEnabled)
                 .tint(Theme.textSecondary)
-            Toggle("Zamknout deník Face ID", isOn: Bindable(settings).diaryLockEnabled)
-                .tint(Theme.textSecondary)
+            if settings.diaryEnabled {
+                Toggle("Hlasový zápis", isOn: Bindable(settings).diaryVoiceEnabled)
+                    .tint(Theme.textSecondary)
+                Toggle("Zamknout deník Face ID", isOn: Bindable(settings).diaryLockEnabled)
+                    .tint(Theme.textSecondary)
+            }
         } header: {
             Text("Deník")
         } footer: {

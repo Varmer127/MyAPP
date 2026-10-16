@@ -3,7 +3,7 @@ import WidgetKit
 
 /// Publishes today's numbers and the running focus timer to the widgets.
 enum WidgetBridge {
-    static func update(tasks: [TaskItem], plans: [WeeklyPlan], now: Date = .now) {
+    static func update(tasks: [TaskItem], plans: [WeeklyPlan], targets: [TaskCategory: Int], now: Date = .now) {
         let today = tasks.filter { $0.scheduledDate.isSameDay(as: now) && !$0.isRemoved }
         let next = today.filter { $0.status == .pending }
             .sorted { $0.dueDate == $1.dueDate ? $0.priority.rank > $1.priority.rank : $0.dueDate < $1.dueDate }
@@ -14,7 +14,7 @@ enum WidgetBridge {
         }
         WidgetSnapshot(
             day: now.startOfDay,
-            score: ScoreEngine.accountability(tasks: tasks, plans: plans, now: now)?.score,
+            score: ScoreEngine.accountability(tasks: tasks, plans: plans, targets: targets, now: now)?.score,
             done: today.filter(\.isDone).count,
             total: today.count,
             streak: ScoreEngine.dayStreak(tasks, now: now),

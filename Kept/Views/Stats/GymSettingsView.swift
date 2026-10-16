@@ -18,15 +18,16 @@ struct GymSettingsView: View {
             if let settings = settingsList.first {
                 Section {
                     let target = settings.weeklyTarget(for: .gym)
-                    Stepper(target == 0 ? "Týdenní cíl: bez cíle" : "Týdenní cíl: \(target)× týdně",
+                    Stepper(target == 0 ? "Týdenní cíl: bez cíle" : "Týdenní cíl: asi \(target)× týdně",
                             value: Binding(get: { target }, set: { settings.setWeeklyTarget($0, for: .gym) }),
                             in: UserSettings.weeklyTargetRange)
                 } header: {
                     Text("Trénink")
                 } footer: {
-                    Text(settings.healthEnabled
-                         ? "Když Apple Health zaznamená silový trénink, pošle ti Kept upozornění, ze kterého ho rovnou zapíšeš."
-                         : "Po propojení s Apple Health (Nastavení → Zdraví) ti Kept pošle upozornění, když Health zaznamená silový trénink.")
+                    Text("Orientační: jeden týden 3×, druhý 6× je v pořádku, žádný postih. Jak cíl plníš, se z 10 % promítá do spolehlivosti a podle něj ti Kept gym navrhuje. "
+                         + (settings.healthEnabled
+                            ? "Když Apple Health zaznamená silový trénink, pošle ti Kept upozornění, ze kterého ho rovnou zapíšeš."
+                            : "Po propojení s Apple Health (Nastavení → Zdraví) ti Kept pošle upozornění, když Health zaznamená silový trénink."))
                 }
                 .listRowBackground(Theme.card)
 
