@@ -651,11 +651,10 @@ struct OnboardingView: View {
                 }
             }
             HStack(alignment: .top, spacing: 12) {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 17, weight: .heavy))
-                    .foregroundStyle(Color(hex: 0xFFFFFF))
+                // The real app icon, as it appears on a notification.
+                Image("KeptLogo")
+                    .resizable()
                     .frame(width: 38, height: 38)
-                    .background(Color(hex: 0x0A0A0A))
                     .clipShape(RoundedRectangle(cornerRadius: 9))
                 VStack(alignment: .leading, spacing: 2) {
                     HStack {

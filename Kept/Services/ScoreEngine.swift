@@ -136,6 +136,9 @@ enum ScoreEngine {
 
     // MARK: Accountability
 
+    /// Shown before the first task is closed: a new user starts with a clean record.
+    static let startingScore = 100
+
     struct Accountability {
         let score: Int
         let promisesKept: Double?

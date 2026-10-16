@@ -14,7 +14,7 @@ enum WidgetBridge {
         }
         WidgetSnapshot(
             day: now.startOfDay,
-            score: ScoreEngine.accountability(tasks: tasks, plans: plans, targets: targets, now: now)?.score,
+            score: ScoreEngine.accountability(tasks: tasks, plans: plans, targets: targets, now: now)?.score ?? ScoreEngine.startingScore,
             done: today.filter(\.isDone).count,
             total: today.count,
             streak: ScoreEngine.dayStreak(tasks, now: now),

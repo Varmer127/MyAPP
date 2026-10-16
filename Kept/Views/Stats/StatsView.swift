@@ -100,7 +100,7 @@ struct StatsView: View {
         let accountability = ScoreEngine.accountability(tasks: tasks, plans: plans, targets: targets, now: now)
         return VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Text(accountability.map { "\($0.score)" } ?? "—")
+                Text("\(accountability?.score ?? ScoreEngine.startingScore)")
                     .font(.system(size: 48, weight: .heavy))
                     .foregroundStyle(Theme.textPrimary)
                 VStack(alignment: .leading, spacing: 2) {

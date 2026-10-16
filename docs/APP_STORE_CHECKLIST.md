@@ -45,6 +45,8 @@ Založeno 10. 10. 2026. Aplikace se zatím dolaďuje pro osobní použití; tenh
 - **Kalendář iPhonu (přidáno 11. 10. 2026).** Aplikace žádá o úplný přístup ke kalendáři (jen čtení, nic neukládá). Uvést v zásadách ochrany soukromí a v App Store „App Privacy“; text žádosti o povolení přeložit do angličtiny.
 - **Obchod za body (přidáno 11. 10. 2026).** Body se dají jen získat v aplikaci. Pokud by se někdy prodávaly za peníze, jde o nákupy v aplikaci se vším, co k tomu patří (viz odpočty výše).
 
+- **Ikona aplikace (zjištěno 16. 10. 2026).** Ikonu nakreslil Claude kódem (Swift, AppKit) 5. 10. 2026 z nuly: černý čtverec, bílá „fajfka“ a zelená čárka. Nevychází z žádné předlohy ani fotky. Fajfka je ale obecný symbol a podobné ikony mají i jiné aplikace (seznamy úkolů), takže ji jako ochrannou známku nezaregistruješ a nemusí být dost odlišná. Před vydáním: zvážit vlastní výraznější logo (navázat na finální název), zkontrolovat podobnost s ikonami v App Storu v kategorii Produktivita.
+
 ## 2. Na straně vývojářského účtu
 
 - [ ] Apple Developer Program (99 USD / rok)

@@ -59,6 +59,23 @@ struct DiaryView: View {
                     lookBackCard(lookBack.label, lookBack.entry)
                 }
                 letterCard(now: now)
+                NavigationLink { DiaryArchiveView() } label: {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("VŠECHNY ZÁPISY").labelStyle(Theme.textPrimary)
+                            Text("Dny, selhání, týdny i dopisy. Podle měsíců, s hledáním.")
+                                .font(.system(size: 13))
+                                .foregroundStyle(Theme.textSecondary)
+                                .multilineTextAlignment(.leading)
+                        }
+                        Spacer()
+                        Text("\(entries.filter(\.hasWriting).count)")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(Theme.textSecondary)
+                        Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
+                    }
+                    .card()
+                }
                 NavigationLink { JournalView() } label: {
                     HStack {
                         VStack(alignment: .leading, spacing: 3) {
@@ -378,59 +395,15 @@ struct DiaryView: View {
             .sorted { $0.date > $1.date }
         if !items.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: "Posledních \(Self.historyDays) dní")
+                SectionLabel(text: "Posledních \(Self.historyDays) dní · starší ve Všech zápisech")
                 ForEach(items) { item in
                     switch item {
-                    case .entry(let entry): pastEntry(entry)
-                    case .failure(let record): failureCard(record)
+                    case .entry(let entry): DiaryEntryCard(entry: entry)
+                    case .failure(let record): FailureNoteCard(record: record)
                     }
                 }
             }
         }
-    }
-
-    private func pastEntry(_ entry: DiaryEntry) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(entry.day.longDayText.uppercased()).labelStyle()
-                Spacer()
-                if entry.mood > 0 { badge("N \(entry.mood)", Self.levelColor(entry.mood)) }
-                if entry.energy > 0 { badge("E \(entry.energy)", Self.levelColor(entry.energy)) }
-            }
-            ForEach(lines(of: entry), id: \.label) { line in
-                quote(line.label, line.text)
-            }
-        }
-        .card()
-    }
-
-    private func badge(_ text: String, _ color: Color) -> some View {
-        Text(text)
-            .font(.system(size: 11, weight: .bold))
-            .foregroundStyle(color)
-            .padding(.horizontal, 7)
-            .padding(.vertical, 3)
-            .background(color.opacity(0.14))
-            .clipShape(RoundedRectangle(cornerRadius: 5))
-    }
-
-    /// What was written in "Nesplnil jsem", so the excuses sit next to the rest of the reflection.
-    private func failureCard(_ record: FailureRecord) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("\(record.kind == .missed ? "NESPLNĚNO" : "PŘESKOČENO") · \(record.taskDate.dayMonthText)")
-                    .labelStyle(Theme.red)
-                Spacer()
-            }
-            Text(record.taskTitle)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Theme.textPrimary)
-            quote(record.reason.title, record.critique)
-            if !record.prevention.isEmpty {
-                quote("Příště", record.prevention)
-            }
-        }
-        .card()
     }
 }
 

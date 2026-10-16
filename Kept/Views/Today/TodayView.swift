@@ -445,13 +445,19 @@ struct TodayView: View {
 
     private func hero(_ day: TodaySnapshot) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(day.accountability.map { "\($0.score)" } ?? "—")
+            // A new user starts with a clean record, not with dashes.
+            Text("\(day.accountability?.score ?? ScoreEngine.startingScore)")
                 .font(.system(size: 72, weight: .heavy))
-                .foregroundStyle(heroColor(day.accountability?.score))
+                .foregroundStyle(day.accountability == nil ? Theme.green : heroColor(day.accountability?.score))
                 .contentTransition(.numericText())
                 .animation(.easeOut(duration: 0.6), value: day.accountability?.score)
-            Text("SPOLEHLIVOST").labelStyle()
-            Text(day.accountability?.subtitle ?? "Zatím žádná historie. Odešli plánovač na týden a dodrž slovo.")
+            HStack(spacing: 8) {
+                Text("SPOLEHLIVOST").labelStyle()
+                if day.accountability == nil {
+                    Badge(text: "Čistý štít", color: Theme.green)
+                }
+            }
+            Text(day.accountability?.subtitle ?? "Startuješ na plných 100. Zatím jsi nic neporušil. Odešli plánovač na týden a udrž to tak.")
                 .font(.system(size: 14))
                 .foregroundStyle(Theme.textSecondary)
                 .padding(.top, 4)
@@ -466,8 +472,8 @@ struct TodayView: View {
     private func metrics(_ day: TodaySnapshot) -> some View {
         VStack(spacing: 14) {
             HStack(spacing: 10) {
-                MetricTile(value: day.promisesKept.percentText, label: "Dodržené sliby")
-                MetricTile(value: day.productivity.percentText, label: "Produktivita")
+                MetricTile(value: day.freshValue(day.promisesKept), label: "Dodržené sliby")
+                MetricTile(value: day.freshValue(day.productivity), label: "Produktivita")
                 MetricTile(value: "\(day.streak)", label: "Série dní")
             }
             if !day.scored.isEmpty {
@@ -813,6 +819,11 @@ private struct TodaySnapshot {
     let weekIsCommitted: Bool
 
     var doneCount: Int { scored.filter(\.isDone).count }
+
+    /// Before anything was ever closed there is nothing to measure yet, so the record shows as clean (100 %).
+    func freshValue(_ value: Double?) -> String {
+        value == nil && accountability == nil ? 1.0.percentText : value.percentText
+    }
     var partialCount: Int { scored.filter(\.isPartial).count }
 
     init(tasks: [TaskItem], plans: [WeeklyPlan], targets: [TaskCategory: Int], now: Date) {
