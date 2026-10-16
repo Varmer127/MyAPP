@@ -83,6 +83,7 @@ Všechny čtyři mění to, že aplikace dnes nic neposílá mimo telefon. Zname
 - **Mince za splnění úkolů.** Virtuální měna jde udělat jen v zařízení. Skutečné peníze nebo sázky o peníze jsou právní otázka (hazard, pravidla Applu).
 - **Minimum aktivit týdně volí uživatel v onboardingu** (dnes výchozí 7, měnit jde v Nastavení → Týdenní cíle). Rozhodnuto 11. 10. 2026, udělat spolu s onboardingem.
 - **Anketa „Odkud ses o Kept dozvěděl?“ v onboardingu** (zapsáno 16. 10. 2026, zatím ne). Vyžaduje odesílání na server: Supabase projekt MyAPP, anonymní tabulka jen pro zápis, odeslání až s internetem, přeskočitelná; uvést v zásadách soukromí a App Privacy. Do té doby stačí zdroje a vlastní odkazy v App Store Connect.
+- **Marketing kolem Nového roku (zapsáno 16. 10. 2026).** Novoroční předsevzetí jsou přesně to, co Kept řeší: slib sám sobě a jeho dodržení. Leden je nejsilnější měsíc pro aplikace na návyky a produktivitu, lidé je v té době sami hledají. Nápady: vydat (nebo aspoň spustit předběžnou registraci) do prosince; kampaň typu „Předsevzetí, které tentokrát dodržíš“; „předsevzetí“ jako slib zapečetěný v plánovači; sdílitelná karta „Moje předsevzetí na rok“ (navázat na sdílení zapečetěného týdne); novoroční sleva na předplatné; v App Store Connect připravit událost v aplikaci (In-App Event) a obrázky do App Storu s tímto motivem. Pozor: druhý lednový týden mnoho lidí předsevzetí vzdává, což je dobrý moment na připomínku a „comeback“ sdělení.
 
 ## 4. Co uvést v App Storu
 
