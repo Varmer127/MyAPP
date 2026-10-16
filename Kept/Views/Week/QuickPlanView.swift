@@ -5,6 +5,7 @@ import SwiftData
 struct QuickPlanView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Query private var tasks: [TaskItem]
     let weekStart: Date
 
     @State private var category: TaskCategory = .gym
@@ -19,7 +20,19 @@ struct QuickPlanView: View {
 
     private var days: [Date] { (0..<Self.daysInWeek).map { weekStart.addingDays($0) } }
     private var trimmedTitle: String { title.trimmingCharacters(in: .whitespacesAndNewlines) }
+    @State private var confirmsDuplicate = false
+
+    private var takenSelected: [Date] { selectedDays.filter(isTaken).sorted() }
     private var canSave: Bool { !trimmedTitle.isEmpty && !selectedDays.isEmpty }
+
+    /// The day already holds a task with this title, so planning it again would only duplicate it.
+    private func isTaken(_ day: Date) -> Bool {
+        let key = trimmedTitle.lowercased()
+        return !key.isEmpty && tasks.contains {
+            !$0.isRemoved && $0.scheduledDate.isSameDay(as: day)
+                && $0.title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == key
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -42,15 +55,30 @@ struct QuickPlanView: View {
                             .card()
                     }
                     group("Které dny") {
-                        HStack(spacing: 6) {
+                        HStack(alignment: .top, spacing: 6) {
                             ForEach(days, id: \.self) { day in
                                 let isPast = day.endOfDay <= Date.now
-                                chip(day.weekdayShortText.uppercased(), isSelected: selectedDays.contains(day)) {
-                                    selectedDays.formSymmetricDifference([day])
+                                let taken = isTaken(day)
+                                VStack(spacing: 4) {
+                                    chip(day.weekdayShortText.uppercased(), isSelected: selectedDays.contains(day)) {
+                                        selectedDays.formSymmetricDifference([day])
+                                    }
+                                    .disabled(isPast)
+                                    .opacity(isPast ? 0.3 : 1)
+                                    if taken {
+                                        Text("už máš")
+                                            .font(.system(size: 10, weight: .semibold))
+                                            .foregroundStyle(Theme.orange)
+                                            .lineLimit(1)
+                                            .minimumScaleFactor(0.7)
+                                    }
                                 }
-                                .disabled(isPast)
-                                .opacity(isPast ? 0.3 : 1)
                             }
+                        }
+                        if days.contains(where: isTaken) {
+                            Text("„\(trimmedTitle)“ už v označené dny máš. Přidat ho tam můžeš i podruhé, zeptám se tě.")
+                                .font(.system(size: 12))
+                                .foregroundStyle(Theme.textSecondary)
                         }
                     }
                     group("Priorita") {
@@ -72,7 +100,9 @@ struct QuickPlanView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             VStack(spacing: 10) {
-                Button(selectedDays.isEmpty ? "VYBER DNY" : "PŘIDAT \(selectedDays.count)×", action: save)
+                Button(selectedDays.isEmpty ? "VYBER DNY" : "PŘIDAT \(selectedDays.count)×") {
+                    if takenSelected.isEmpty { save() } else { confirmsDuplicate = true }
+                }
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(!canSave)
                 Button("HOTOVO") { dismiss() }
@@ -82,6 +112,12 @@ struct QuickPlanView: View {
         }
         .screenBackground()
         .appAppearance()
+        .alert("„\(trimmedTitle)“ už v ten den máš", isPresented: $confirmsDuplicate) {
+            Button("Přidat znovu") { save() }
+            Button("Zrušit", role: .cancel) {}
+        } message: {
+            Text("Naplánované už je: \(takenSelected.map(\.shortDayText).joined(separator: ", ")) Opravdu ho tam chceš podruhé? Třeba když jdeš do gymu dvakrát za den.")
+        }
     }
 
     private static func durationText(_ minutes: Int) -> String {

@@ -9,7 +9,10 @@ struct TodayView: View {
     @Query private var postponements: [Postponement]
     @Query private var reflections: [WeekReflection]
     @Query private var purchases: [PointsPurchase]
+    @Query private var diary: [DiaryEntry]
     @State private var showsShop = false
+    /// Points just earned, shown for a moment above the tab bar.
+    @State private var pointsGain: PointsGain?
     /// Day on which the weekly reflection last opened by itself, so it only interrupts once a day.
     @AppStorage("reflectionPromptDay") private var reflectionPromptDay = 0.0
     @State private var reflection: ReflectionRequest?
@@ -105,7 +108,7 @@ struct TodayView: View {
             if postponesLeft > 0, !task.isRecovery {
                 Button("Odložit bez postihu (zbývá \(postponesLeft) z \(postponeLimit))") { postponeTask = task }
             }
-            if PointsService.canRedeem(task, balance: PointsService.balance(tasks, purchases: purchases)) {
+            if PointsService.canRedeem(task, balance: PointsService.balance(tasks, purchases: purchases, diary: diary)) {
                 Button("Zrušit za \(PointsService.passCost) bodů bez postihu") {
                     withAnimation { PointsService.redeem(task) }
                 }
@@ -114,6 +117,19 @@ struct TodayView: View {
         }
         .sheet(item: $detailTask) { TaskDetailView(task: $0) }
         .sheet(isPresented: $showsShop) { ShopView() }
+        // Every rise of the balance gets a short celebration: completing, partial completion, a milestone bonus.
+        .onChange(of: PointsService.balance(tasks, purchases: purchases, diary: diary)) { old, new in
+            if new > old { pointsGain = PointsGain(amount: new - old) }
+        }
+        .overlay(alignment: .bottom) {
+            if let pointsGain {
+                PointsGainToast(amount: pointsGain.amount) { self.pointsGain = nil }
+                    .id(pointsGain.id)
+                    .padding(.bottom, 24)
+                    .allowsHitTesting(false)
+            }
+        }
+        .sensoryFeedback(.success, trigger: pointsGain?.id) { _, new in new != nil }
         // A moment to be honest before anything counts as done.
         .alert("Opravdu jsi to splnil podle plánu?",
                isPresented: Binding(get: { confirmDone != nil }, set: { if !$0 { confirmDone = nil } }),
@@ -153,7 +169,7 @@ struct TodayView: View {
     private func giveUp(on task: TaskItem, now: Date) {
         if task.isMissed(now) {
             excuse = ExcuseRequest(task: task, kind: .missed)
-        } else if (postponesLeft > 0 && !task.isRecovery) || PointsService.canRedeem(task, balance: PointsService.balance(tasks, purchases: purchases), now: now) {
+        } else if (postponesLeft > 0 && !task.isRecovery) || PointsService.canRedeem(task, balance: PointsService.balance(tasks, purchases: purchases, diary: diary), now: now) {
             failChoice = task
         } else {
             excuse = ExcuseRequest(task: task, kind: .skipped)
@@ -317,7 +333,7 @@ struct TodayView: View {
     @ViewBuilder
     private func streakCard(_ day: TodaySnapshot, now: Date) -> some View {
         if let broken = repairOffer(now: now) {
-            let balance = PointsService.balance(tasks, purchases: purchases)
+            let balance = PointsService.balance(tasks, purchases: purchases, diary: diary)
             let cost = broken.cost
             VStack(alignment: .leading, spacing: 12) {
                 Label("SÉRIE SKONČILA", systemImage: "flame.fill").labelStyle(Theme.orange)
@@ -657,7 +673,7 @@ struct TodayView: View {
 
     /// Points towards the next pass. One pass cancels a weekly commitment without penalty.
     private var pointsCard: some View {
-        let balance = PointsService.balance(tasks, purchases: purchases)
+        let balance = PointsService.balance(tasks, purchases: purchases, diary: diary)
         let passes = balance / PointsService.passCost
         let towardsNext = balance % PointsService.passCost
         let isFull = balance >= PointsService.cap

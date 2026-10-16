@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 enum AppTab: Hashable {
-    case today, week, stats, gym, health, settings
+    case today, week, stats, gym, health, diary, settings
 }
 
 struct RootView: View {
@@ -81,6 +81,11 @@ struct RootView: View {
                 HealthSummaryView()
                     .tabItem { Label("Zdraví", systemImage: "heart") }
                     .tag(AppTab.health)
+            }
+            if settings?.showsDiaryTab == true {
+                DiaryView()
+                    .tabItem { Label("Deník", systemImage: "book.closed") }
+                    .tag(AppTab.diary)
             }
             SettingsView()
                 .tabItem { Label("Nastavení", systemImage: "gearshape") }

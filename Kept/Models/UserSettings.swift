@@ -42,6 +42,11 @@ final class UserSettings {
     var showsStatsTab: Bool = true
     var showsGymTab: Bool = false
     var showsHealthTab: Bool = false
+    var showsDiaryTab: Bool = false
+    /// Microphone button next to the diary's text fields.
+    var diaryVoiceEnabled: Bool = false
+    /// The diary opens only after Face ID / the passcode.
+    var diaryLockEnabled: Bool = false
 
     init() {}
 
@@ -58,11 +63,6 @@ final class UserSettings {
         set { restPresetsData = (try? JSONEncoder().encode(newValue)) ?? Data() }
     }
 
-    /// The preset chosen in the stopwatch, or the first one if that choice no longer exists.
-    func restPreset(named name: String) -> RestPreset {
-        restPresets.first { $0.name == name } ?? restPresets.first ?? RestPreset.defaults[1]
-    }
-
     var exercisePresets: [String] {
         get {
             guard !exercisePresetsData.isEmpty else { return UserSettings.defaultExercisePresets }
@@ -76,7 +76,7 @@ final class UserSettings {
     /// iOS shows five tabs before collapsing the rest under "More"; three are fixed.
     static let maxOptionalTabs = 2
 
-    var optionalTabCount: Int { [showsStatsTab, showsGymTab, showsHealthTab].filter { $0 }.count }
+    var optionalTabCount: Int { [showsStatsTab, showsGymTab, showsHealthTab, showsDiaryTab].filter { $0 }.count }
     static let defaultMinimumWeeklyTasks = 7
 
     private var targetOverrides: [String: Int] {
@@ -159,8 +159,6 @@ struct RestPreset: Codable, Hashable, Identifiable {
 
     var id: String { name }
 
-    /// AppStorage key of the preset last chosen in the stopwatch.
-    static let selectionKey = "gymRestPreset"
     static let secondsRange = 15...600
     static let secondsStep = 15
 

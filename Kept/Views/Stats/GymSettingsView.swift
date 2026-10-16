@@ -75,6 +75,12 @@ struct GymSettingsView: View {
             ForEach(presets) { preset in
                 HStack {
                     Text(preset.name)
+                    if preset == presets.first {
+                        Text("VÝCHOZÍ")
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(0.8)
+                            .foregroundStyle(Theme.green)
+                    }
                     Spacer()
                     Text(FocusView.clock(TimeInterval(preset.seconds)))
                         .foregroundStyle(Theme.textSecondary)
@@ -83,6 +89,11 @@ struct GymSettingsView: View {
                         settings.restPresets = presets.filter { $0 != preset }
                     }
                 }
+            }
+            .onMove { from, to in
+                var reordered = presets
+                reordered.move(fromOffsets: from, toOffset: to)
+                settings.restPresets = reordered
             }
             addRow("Přidat vlastní pauzu", isAdding: $isAddingRest)
             if isAddingRest {
@@ -101,7 +112,7 @@ struct GymSettingsView: View {
         } header: {
             Text("Pauzy mezi sériemi")
         } footer: {
-            Text("Na délce pauz se lidé neshodnou, proto si je nastav podle sebe. Ve stopkách pak vybíráš z tohoto seznamu.")
+            Text("Na délce pauz se lidé neshodnou, proto si je nastav podle sebe. Podrž pauzu a přetáhni ji: ta nahoře se ve stopkách nastaví jako výchozí, ostatní přepneš během tréninku.")
         }
         .listRowBackground(Theme.card)
     }

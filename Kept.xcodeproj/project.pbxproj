@@ -293,6 +293,9 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Kept;
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kept čte události z kalendáře, aby tě při plánování upozornil, že se úkol kryje s něčím, co už máš domluvené. Nic nezapisuje ani neukládá.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kept potřebuje fotoaparát, abys mohl vyfotit důkaz splnění úkolu.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Kept zamyká tvůj deník pomocí Face ID.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Kept potřebuje mikrofon, když si zápis do deníku nadiktuješ.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Kept převádí tvůj nadiktovaný zápis do deníku na text.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Kept čte tvoji váhu a tréninky, aby je nemusel zapisovat ručně.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -325,6 +328,9 @@
 				INFOPLIST_KEY_CFBundleDisplayName = Kept;
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kept čte události z kalendáře, aby tě při plánování upozornil, že se úkol kryje s něčím, co už máš domluvené. Nic nezapisuje ani neukládá.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kept potřebuje fotoaparát, abys mohl vyfotit důkaz splnění úkolu.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Kept zamyká tvůj deník pomocí Face ID.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Kept potřebuje mikrofon, když si zápis do deníku nadiktuješ.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Kept převádí tvůj nadiktovaný zápis do deníku na text.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Kept čte tvoji váhu a tréninky, aby je nemusel zapisovat ručně.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

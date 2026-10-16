@@ -6,7 +6,8 @@ import SwiftData
 struct GymTimerView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-    @AppStorage(RestPreset.selectionKey) private var selectedName = ""
+    /// Empty = the preset at the top of the list in the gym settings. A choice lasts only for this workout.
+    @State private var selectedName = ""
     @Query private var settingsList: [UserSettings]
     let task: TaskItem
     /// Called when the user ends the workout meaning to complete the task.

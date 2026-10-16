@@ -9,7 +9,7 @@ enum AppStore {
         do {
             return try ModelContainer(for: TaskItem.self, WeeklyPlan.self, CommitmentEdit.self, FailureRecord.self,
                                       FocusSession.self, ExerciseLog.self, Postponement.self, WeekReflection.self,
-                                      PointsPurchase.self, UserSettings.self)
+                                      PointsPurchase.self, DiaryEntry.self, FutureLetter.self, UserSettings.self)
         } catch {
             fatalError("Could not open the data store: \(error)")
         }

@@ -249,7 +249,7 @@ struct JournalLinkSection: View {
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("DENÍČEK").labelStyle(Theme.textPrimary)
+                    Text("SEBEREFLEXE TÝDNE").labelStyle(Theme.textPrimary)
                     Text(count == 0 ? "První zápis vznikne v neděli večer" : "Zápisy: \(count)")
                         .font(.system(size: 13))
                         .foregroundStyle(Theme.textSecondary)

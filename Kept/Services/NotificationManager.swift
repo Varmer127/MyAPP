@@ -14,16 +14,22 @@ final class NotificationRouter: NSObject, ObservableObject, UNUserNotificationCe
 
     @Published var route: AppRoute?
 
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
-        [.banner, .list, .sound]
+    // The completion-handler forms on purpose: with the `async` forms the system's completion runs on a
+    // background thread when the method returns, and UIKit aborts the app on every tapped notification.
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .list, .sound])
     }
 
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                didReceive response: UNNotificationResponse) async {
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
         let raw = response.notification.request.content.userInfo[Self.routeKey] as? String
         let route = raw.flatMap(AppRoute.init(rawValue:)) ?? .today
-        await MainActor.run { self.route = route }
+        DispatchQueue.main.async {
+            self.route = route
+            completionHandler()
+        }
     }
 }
 
@@ -194,7 +200,8 @@ enum NotificationManager {
         // so it is never the part that gets cut by the pending limit.
         let streak = settings.streakRemindersEnabled
             ? streakReminders(settings: settings, tasks: tasks,
-                              purchases: (try? context.fetch(FetchDescriptor<PointsPurchase>())) ?? [], now: now)
+                              purchases: (try? context.fetch(FetchDescriptor<PointsPurchase>())) ?? [],
+                              diary: (try? context.fetch(FetchDescriptor<DiaryEntry>())) ?? [], now: now)
                 .filter { $0.date > now } : []
         let rest = planned.filter { $0.date > now }.sorted { $0.date < $1.date }.prefix(maxPending - streak.count)
         return (rest + streak).sorted { $0.date < $1.date }
@@ -203,7 +210,7 @@ enum NotificationManager {
     /// A warning on the evening the streak is about to break, then a thinning series of reminders after it did.
     /// Everything is planned as if nothing more got done; finishing the day reschedules and removes it.
     private static func streakReminders(settings: UserSettings, tasks: [TaskItem], purchases: [PointsPurchase],
-                                        now: Date) -> [Planned] {
+                                        diary: [DiaryEntry], now: Date) -> [Planned] {
         let current = ScoreEngine.dayStreak(tasks, now: now)
         // A waiting insurance will catch the next bad day, so there is nothing to warn about yet.
         if current > 0, PointsService.unused(.streakInsurance, in: purchases) > 0 { return [] }
@@ -226,7 +233,7 @@ enum NotificationManager {
         // Buying back is only mentioned while it is really on offer: not turned down and affordable.
         let declined = UserDefaults.standard.double(forKey: StreakService.offerDismissedKey) == anchor.timeIntervalSince1970
         let canRepair = length >= StreakService.minimumRepairableStreak && !declined
-            && PointsService.balance(tasks, purchases: purchases, now: now) >= PointsService.streakRepairCost
+            && PointsService.balance(tasks, purchases: purchases, diary: diary, now: now) >= PointsService.streakRepairCost
         for (index, step) in streakFollowUps.enumerated() {
             let title: String
             var body: String

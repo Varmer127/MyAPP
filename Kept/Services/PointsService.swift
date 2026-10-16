@@ -28,9 +28,10 @@ enum PointsService {
         return task.fromSuggestion ? perSuggestion : 0
     }
 
-    /// Current balance: earnings, milestone bonuses, shop purchases, spent passes and streak repairs replayed in time order, with the cap applied along the way.
-    static func balance(_ tasks: [TaskItem], purchases: [PointsPurchase], now: Date = .now) -> Int {
+    /// Current balance: earnings, milestone bonuses, diary entries, shop purchases, spent passes and streak repairs replayed in time order, with the cap applied along the way.
+    static func balance(_ tasks: [TaskItem], purchases: [PointsPurchase], diary: [DiaryEntry], now: Date = .now) -> Int {
         var events: [(date: Date, change: Int)] = purchases.map { ($0.date, -$0.cost) }
+        events += DiaryService.pointEvents(diary)
         for milestone in StreakService.milestones(tasks, now: now) {
             if let reachedOn = milestone.reachedOn {
                 events.append((reachedOn, milestone.bonus))

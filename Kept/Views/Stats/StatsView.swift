@@ -8,6 +8,7 @@ struct StatsView: View {
     @Query private var failures: [FailureRecord]
     @Query private var sessions: [FocusSession]
     @Query private var reflections: [WeekReflection]
+    @Query private var diary: [DiaryEntry]
     @State private var period: Period = .week
 
     private static let monthDays = 30
@@ -78,7 +79,7 @@ struct StatsView: View {
                 CategorySection(tasks: scoped)
                 StreaksSection(tasks: tasks)
                 TrendSection(tasks: tasks)
-                CalendarSection(tasks: tasks)
+                CalendarSection(tasks: tasks, diaryDays: Set(diary.filter(\.hasWriting).map { $0.day.startOfDay }))
                 EffortSection(tasks: tasks, sessions: sessions)
                 longTerm
                 RecordsSection(tasks: tasks, sessions: sessions)

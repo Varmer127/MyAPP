@@ -11,6 +11,7 @@ struct DayRequest: Identifiable {
 struct DayDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Query private var tasks: [TaskItem]
+    @Query private var diary: [DiaryEntry]
     let day: Date
     @State private var detailTask: TaskItem?
 
@@ -30,6 +31,9 @@ struct DayDetailView: View {
                         Text(day.longDayText)
                             .font(.system(size: 28, weight: .bold))
                             .foregroundStyle(Theme.textPrimary)
+                    }
+                    if let entry = DiaryService.entry(on: day, in: diary), entry.hasWriting || entry.mood > 0 {
+                        diaryCard(entry)
                     }
                     if items.isEmpty {
                         Text("Na tento den nebylo nic v plánu.")
@@ -90,6 +94,32 @@ struct DayDetailView: View {
         .card()
         .contentShape(Rectangle())
         .onTapGesture { detailTask = task }
+    }
+
+    private func diaryCard(_ entry: DiaryEntry) -> some View {
+        let lines = [(entry.question, entry.answer), ("Povedlo se", entry.wentWell), ("Nepovedlo se", entry.wentBadly),
+                     ("Zítra jinak", entry.doDifferently), ("Vděčnost", entry.gratitude)].filter { !$0.1.isEmpty }
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Label("DENÍK", systemImage: "book.closed").labelStyle(Theme.textPrimary)
+                Spacer()
+                if entry.mood > 0 { Text("nálada \(entry.mood)/5").font(.system(size: 12)).foregroundStyle(Theme.textSecondary) }
+                if entry.energy > 0 { Text("energie \(entry.energy)/5").font(.system(size: 12)).foregroundStyle(Theme.textSecondary) }
+            }
+            ForEach(lines, id: \.0) { label, text in
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(label.uppercased())
+                        .font(.system(size: 10, weight: .semibold))
+                        .tracking(0.6)
+                        .foregroundStyle(Theme.textTertiary)
+                    Text(text)
+                        .font(.system(size: 14))
+                        .foregroundStyle(Theme.textPrimary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .card()
     }
 
     private func meta(_ task: TaskItem) -> String {

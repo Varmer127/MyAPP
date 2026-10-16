@@ -5,6 +5,8 @@ struct TaskEditorView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     @Query private var settingsList: [UserSettings]
+    @Query private var allTasks: [TaskItem]
+    @State private var confirmsDuplicate = false
 
     private let task: TaskItem?
     @State private var draft: TaskDraft
@@ -216,9 +218,15 @@ struct TaskEditorView: View {
                     Button("Zrušit") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Uložit", action: save)
+                    Button("Uložit") { isDuplicate ? (confirmsDuplicate = true) : save() }
                         .disabled(draft.trimmedTitle.isEmpty)
                 }
+            }
+            .alert("„\(draft.trimmedTitle)“ už v ten den máš", isPresented: $confirmsDuplicate) {
+                Button("Přidat znovu", action: save)
+                Button("Zrušit", role: .cancel) {}
+            } message: {
+                Text("Na \(draft.date.longDayText) je stejná aktivita už naplánovaná. Opravdu ji tam chceš ještě jednou?")
             }
             .confirmationDialog(removalMessage, isPresented: $confirmsRemoval, titleVisibility: .visible) {
                 Button(isCommitted ? "Porušit slib" : "Smazat", role: .destructive, action: remove)
@@ -236,6 +244,15 @@ struct TaskEditorView: View {
         isCommitted
             ? "K tomuhle ses zavázal. Odstranění se počítá jako porušený slib a zůstane v historii."
             : "Úkol ještě není součástí závazku, takže se prostě smaže."
+    }
+
+    /// Another task with the same title already sits on the chosen day.
+    private var isDuplicate: Bool {
+        let key = draft.trimmedTitle.lowercased()
+        return !key.isEmpty && allTasks.contains {
+            $0 !== task && !$0.isRemoved && $0.scheduledDate.isSameDay(as: draft.date)
+                && $0.title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == key
+        }
     }
 
     private func save() {

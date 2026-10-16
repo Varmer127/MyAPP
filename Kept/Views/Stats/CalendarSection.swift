@@ -3,6 +3,8 @@ import SwiftUI
 /// Days coloured by productivity: the current month by default, or the whole calendar year as twelve small months.
 struct CalendarSection: View {
     let tasks: [TaskItem]
+    /// Days with a diary entry get a small dot.
+    var diaryDays: Set<Date> = []
 
     private enum Mode: String, CaseIterable, Identifiable {
         case month = "Měsíc", year = "Rok"
@@ -51,6 +53,12 @@ struct CalendarSection: View {
                     legend(Theme.red.opacity(0.7), "pod 50 %")
                     legend(Theme.orange.opacity(0.75), "50–80 %")
                     legend(Theme.green, "nad 80 %")
+                    if !diaryDays.isEmpty {
+                        HStack(spacing: 4) {
+                            Circle().fill(Theme.textPrimary).frame(width: 4, height: 4)
+                            Text("deník").font(.system(size: 11)).foregroundStyle(Theme.textSecondary)
+                        }
+                    }
                 }
             }
             .card()
@@ -107,6 +115,11 @@ struct CalendarSection: View {
                             Text("\(Calendar.app.component(.day, from: score.day))")
                                 .font(.system(size: 13, weight: score.day == today ? .heavy : .medium))
                                 .foregroundStyle(isFuture ? Theme.textTertiary : Theme.textPrimary)
+                                .overlay(alignment: .bottom) {
+                                    if diaryDays.contains(score.day) {
+                                        Circle().fill(Theme.textPrimary).frame(width: 4, height: 4).offset(y: 7)
+                                    }
+                                }
                         }
                     }
                     .overlay {

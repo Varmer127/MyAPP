@@ -230,7 +230,7 @@ struct TaskCard: View {
                     Button("ČÁSTEČNĚ", action: onPartial)
                         .buttonStyle(SecondaryButtonStyle(textColor: Theme.orange))
                 }
-                Button(isMissed ? "BEZ VÝMLUV" : "PŘESKOČIT", action: onFail)
+                Button(isMissed ? "NESPLNIL JSEM" : "PŘESKOČIT", action: onFail)
                     .buttonStyle(SecondaryButtonStyle(textColor: Theme.red))
             }
         }

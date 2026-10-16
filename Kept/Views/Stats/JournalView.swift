@@ -9,7 +9,7 @@ struct JournalView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                Text("Deníček")
+                Text("Sebereflexe týdne")
                     .font(.system(size: 24, weight: .bold))
                     .foregroundStyle(Theme.textPrimary)
                 if reflections.isEmpty {

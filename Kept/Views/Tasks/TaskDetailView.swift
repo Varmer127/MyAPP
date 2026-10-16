@@ -79,7 +79,7 @@ struct TaskDetailView: View {
                         }
                     }
                     ForEach(task.failures.sorted { $0.date < $1.date }) { record in
-                        block("Bez výmluv · \(record.reason.title)") {
+                        block("Vysvětlení · \(record.reason.title)") {
                             quote("„\(record.critique)“")
                             if !record.prevention.isEmpty {
                                 Text("Příště: \(record.prevention)")
@@ -109,7 +109,7 @@ struct TaskDetailView: View {
         .appAppearance()
         .confirmationDialog(
             task.isDone ? "Úkol se vrátí mezi otevřené a přestane se počítat jako splněný. Zapsaný trénink, důkaz a procenta se smažou."
-                        : "Úkol se vrátí mezi otevřené. To, co jsi napsal v Bez výmluv, zůstane v historii.",
+                        : "Úkol se vrátí mezi otevřené. Tvoje vysvětlení zůstane v historii.",
             isPresented: $confirmsReopen, titleVisibility: .visible) {
             Button(task.isDone ? "Nesplnil jsem to – vrátit" : "Vrátit mezi otevřené", role: .destructive) {
                 task.reopen()

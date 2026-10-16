@@ -39,6 +39,7 @@ struct SettingsView: View {
                     gymSection
                     healthSection(settings)
                     calendarSection(settings)
+                    diarySection(settings)
                     weightsSection(settings)
                 }
                 Section {
@@ -218,7 +219,7 @@ struct SettingsView: View {
     @ViewBuilder
     private func hiddenScreensSection(_ settings: UserSettings) -> some View {
         let showsHealth = HealthService.isAvailable && !settings.showsHealthTab
-        if !settings.showsStatsTab || !settings.showsGymTab || showsHealth {
+        if !settings.showsStatsTab || !settings.showsGymTab || showsHealth || !settings.showsDiaryTab {
             Section {
                 if !settings.showsStatsTab {
                     NavigationLink { StatsView(isEmbedded: true) } label: { Label("Statistiky", systemImage: "chart.bar") }
@@ -228,6 +229,9 @@ struct SettingsView: View {
                 }
                 if showsHealth {
                     NavigationLink { HealthSummaryView(isEmbedded: true) } label: { Label("Zdraví", systemImage: "heart") }
+                }
+                if !settings.showsDiaryTab {
+                    NavigationLink { DiaryView(isEmbedded: true) } label: { Label("Deník", systemImage: "book.closed") }
                 }
             } header: {
                 Text("Další obrazovky")
@@ -247,6 +251,7 @@ struct SettingsView: View {
             if HealthService.isAvailable {
                 tabToggle("Zdraví", "heart", Bindable(settings).showsHealthTab, isFull: isFull)
             }
+            tabToggle("Deník", "book.closed", Bindable(settings).showsDiaryTab, isFull: isFull)
         } header: {
             Text("Záložky")
         } footer: {
@@ -318,6 +323,20 @@ struct SettingsView: View {
             Text("Kalendář")
         } footer: {
             Text("Při plánování týdne uvidíš u každého dne, co už máš v kalendáři, a editor úkolu upozorní, když se úkol s něčím kryje. Kept kalendář jen čte, nic do něj nezapisuje a události si neukládá.")
+        }
+        .listRowBackground(Theme.card)
+    }
+
+    private func diarySection(_ settings: UserSettings) -> some View {
+        Section {
+            Toggle("Hlasový zápis", isOn: Bindable(settings).diaryVoiceEnabled)
+                .tint(Theme.textSecondary)
+            Toggle("Zamknout deník Face ID", isOn: Bindable(settings).diaryLockEnabled)
+                .tint(Theme.textSecondary)
+        } header: {
+            Text("Deník")
+        } footer: {
+            Text("Hlasový zápis přidá k polím deníku mikrofon; iPhone se poprvé zeptá na přístup k mikrofonu a rozpoznávání řeči. Zámek schová deník za Face ID nebo kód a zamkne ho pokaždé, když aplikaci opustíš. Za každý den se zápisem dostaneš \(DiaryService.pointsPerEntry) bodů.")
         }
         .listRowBackground(Theme.card)
     }

@@ -7,13 +7,14 @@ struct ShopView: View {
     @Environment(\.dismiss) private var dismiss
     @Query private var tasks: [TaskItem]
     @Query private var purchases: [PointsPurchase]
+    @Query private var diary: [DiaryEntry]
     @State private var confirmItem: ShopItem?
     @State private var confirmRepair: StreakService.Broken?
     @State private var showsPassInfo = false
     /// How many times each row's price was tapped without enough points; drives the shake.
     @State private var refusals: [String: Int] = [:]
 
-    private var balance: Int { PointsService.balance(tasks, purchases: purchases) }
+    private var balance: Int { PointsService.balance(tasks, purchases: purchases, diary: diary) }
 
     var body: some View {
         NavigationStack {
@@ -82,7 +83,7 @@ struct ShopView: View {
                 Text("BODŮ").labelStyle()
             }
             ThinBar(value: Double(balance) / Double(PointsService.cap))
-            Text("Strop je \(PointsService.cap.formatted(.number.locale(.app))). \(PointsService.perCommitment) za splněný týdenní závazek, \(PointsService.perSuggestion) za splněný návrh aplikace, bonusy za milníky série.")
+            Text("Strop je \(PointsService.cap.formatted(.number.locale(.app))). \(PointsService.perCommitment) za splněný týdenní závazek, \(PointsService.perSuggestion) za splněný návrh aplikace, \(DiaryService.pointsPerEntry) za den v deníku, bonusy za milníky série.")
                 .font(.system(size: 12))
                 .foregroundStyle(Theme.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)
