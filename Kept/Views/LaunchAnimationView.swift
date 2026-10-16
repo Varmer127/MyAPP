@@ -71,7 +71,8 @@ struct LaunchAnimationView: View {
         withAnimation(.easeOut(duration: 0.35)) { line = true }
         try? await Task.sleep(for: .milliseconds(250))
         withAnimation(.easeOut(duration: 0.6)) { word = true }
-        try? await Task.sleep(for: .milliseconds(950))
+        // Let the finished logo sit for a moment before the app takes over.
+        try? await Task.sleep(for: .milliseconds(1350))
         finish()
     }
 
