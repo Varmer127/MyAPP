@@ -82,6 +82,18 @@ enum PlanService {
         return !plan.pledgeableTasks(sealDate).isEmpty && !missesMinimum(plan, minimum: minimum, now: sealDate)
     }
 
+    /// Whether the plan may be sealed right now, without waiting for its hour.
+    static func canSealNow(_ plan: WeeklyPlan, minimum: Int, now: Date = .now) -> Bool {
+        plan.isSealing && !plan.pledgeableTasks(now).isEmpty && !missesMinimum(plan, minimum: minimum, now: now)
+    }
+
+    /// Seals a handed-in plan at once, on the user's explicit request.
+    static func sealNow(_ plan: WeeklyPlan, minimum: Int, now: Date = .now) {
+        guard canSealNow(plan, minimum: minimum, now: now) else { return }
+        commit(plan, at: now)
+        try? plan.modelContext?.save()
+    }
+
     /// Seals every plan whose hour is over, as of the moment it ran out. A plan that was emptied
     /// or cut below the minimum in the meantime goes back to being a draft instead.
     static func sealDue(_ plans: [WeeklyPlan], minimum: Int, now: Date = .now) {

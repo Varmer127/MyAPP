@@ -118,7 +118,7 @@ struct CommitSummaryView: View {
                     }
                     VStack(alignment: .leading, spacing: 8) {
                         Label("ZAPEČETÍ SE ZA 60 MINUT", systemImage: "calendar.badge.clock").labelStyle(Theme.textPrimary)
-                        Text("Plán odešleš do plánovače. Hodinu ho ještě můžeš měnit bez postihu, třeba když si vzpomeneš, co jsi zapomněl. Pak se zapečetí sám. Urychlit to nejde a schválit si ho sám taky ne.")
+                        Text("Plán odešleš do plánovače. Hodinu ho ještě můžeš měnit bez postihu, třeba když si vzpomeneš, co jsi zapomněl. Pak se zapečetí sám. Když máš jasno dřív, můžeš ho zapečetit i hned.")
                             .font(.system(size: 13))
                             .foregroundStyle(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)

@@ -258,6 +258,7 @@ private struct SealingCard: View {
     let sealDate: Date
     let minimum: Int
     @State private var confirmsWithdraw = false
+    @State private var reviewsSealNow = false
     /// Day of the overview whose tasks are listed underneath. Monday until the user picks another one.
     @State private var selectedDay: Date?
 
@@ -304,7 +305,7 @@ private struct SealingCard: View {
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Text("Zapečetí se sám v \(sealDate.timeText). Do té doby můžeš plán měnit bez postihu. Urychlit to nejde.")
+                Text("Zapečetí se sám v \(sealDate.timeText). Do té doby můžeš plán měnit bez postihu, nebo ho zapečetit hned.")
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.textSecondary)
                     .multilineTextAlignment(.center)
@@ -320,12 +321,21 @@ private struct SealingCard: View {
                 }
             }
             overview
-            Button {
-                confirmsWithdraw = true
-            } label: {
-                Label("STÁHNOUT PLÁNOVAČ", systemImage: "arrow.uturn.backward")
+            VStack(spacing: 10) {
+                Button {
+                    reviewsSealNow = true
+                } label: {
+                    Label("ZAPEČETIT HNED", systemImage: "checkmark.seal.fill")
+                }
+                .buttonStyle(PrimaryButtonStyle())
+                .disabled(!PlanService.canSealNow(plan, minimum: minimum))
+                Button {
+                    confirmsWithdraw = true
+                } label: {
+                    Label("STÁHNOUT PLÁNOVAČ", systemImage: "arrow.uturn.backward")
+                }
+                .buttonStyle(PrimaryButtonStyle(color: Theme.orange))
             }
-            .buttonStyle(PrimaryButtonStyle(color: Theme.orange))
         }
         .padding(18)
         .frame(maxWidth: .infinity)
@@ -333,6 +343,11 @@ private struct SealingCard: View {
         .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
         .overlay(RoundedRectangle(cornerRadius: Theme.radius)
             .stroke(Theme.orange.opacity(0.6), style: StrokeStyle(lineWidth: 1.5, dash: [7, 5])))
+        .sheet(isPresented: $reviewsSealNow) {
+            SealNowSheet(plan: plan, minimum: minimum)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
         .alert("Stáhnout plánovač?", isPresented: $confirmsWithdraw) {
             Button("Stáhnout", role: .destructive) { withAnimation { PlanService.withdraw(plan) } }
             Button("Zrušit", role: .cancel) {}
@@ -340,6 +355,94 @@ private struct SealingCard: View {
             Text("Plán bude zase jen návrh. Až ho odešleš znovu, hodina poběží od začátku.")
         }
     }
+}
+
+/// "Seal now": a last look at what is about to become a promise, then a second confirmation.
+private struct SealNowSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let plan: WeeklyPlan
+    let minimum: Int
+    @State private var confirms = false
+
+    private var tasks: [TaskItem] {
+        plan.pledgeableTasks().sorted {
+            $0.scheduledDate == $1.scheduledDate ? $0.dueDate < $1.dueDate : $0.scheduledDate < $1.scheduledDate
+        }
+    }
+
+    private var days: [Date] { Array(Set(tasks.map { $0.scheduledDate.startOfDay })).sorted() }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 6) {
+                Label("ZAPEČETIT HNED", systemImage: "checkmark.seal.fill").labelStyle(Theme.textPrimary)
+                Text("Tohle se stane slibem")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(Theme.textPrimary)
+                Text("Závazky: \(tasks.count) · \(minutes / 60) h \(minutes % 60) min · kritické: \(tasks.filter { $0.priority == .critical }.count)")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            .padding(Theme.screenPadding)
+            .padding(.top, 8)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 14) {
+                    ForEach(days, id: \.self) { day in
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(day.shortDayText.uppercased()).labelStyle()
+                            VStack(spacing: 0) {
+                                ForEach(Array(tasks.filter { $0.scheduledDate.isSameDay(as: day) }.enumerated()), id: \.element.id) { index, task in
+                                    if index > 0 { Divider().overlay(Theme.border) }
+                                    HStack(spacing: 10) {
+                                        Image(systemName: task.category.symbol)
+                                            .foregroundStyle(task.priority == .critical ? Theme.orange : Theme.textSecondary)
+                                            .frame(width: 22)
+                                        Text(task.title)
+                                            .font(.system(size: 15, weight: .semibold))
+                                            .foregroundStyle(Theme.textPrimary)
+                                            .lineLimit(1)
+                                        Spacer()
+                                        Text([task.deadline.map { "do \($0.timeText)" }, "\(task.plannedMinutes) min"].compactMap { $0 }.joined(separator: " · "))
+                                            .font(.system(size: 12))
+                                            .foregroundStyle(Theme.textSecondary)
+                                    }
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 10)
+                                }
+                            }
+                            .card(padding: 0)
+                        }
+                    }
+                }
+                .padding(.horizontal, Theme.screenPadding)
+            }
+            VStack(spacing: 10) {
+                Text("Po zapečetění se každé odstranění, přesun nebo snížení úkolu zaznamená a odstraněný úkol se počítá jako porušený slib. Zbytek hodiny na úpravy bez postihu tím propadne.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button("ZAPEČETIT TEĎ") { confirms = true }
+                    .buttonStyle(PrimaryButtonStyle())
+                Button("JEŠTĚ NE") { dismiss() }
+                    .buttonStyle(SecondaryButtonStyle())
+            }
+            .padding(Theme.screenPadding)
+        }
+        .screenBackground()
+        .appAppearance()
+        .alert("Opravdu zapečetit teď?", isPresented: $confirms) {
+            Button("Zapečetit") {
+                withAnimation(.spring(duration: 0.5)) { PlanService.sealNow(plan, minimum: minimum) }
+                dismiss()
+            }
+            Button("Zrušit", role: .cancel) {}
+        } message: {
+            Text("Od této chvíle už plán nejde měnit bez postihu. Vrátit to nejde.")
+        }
+        .sensoryFeedback(.success, trigger: plan.isCommitted) { _, sealed in sealed }
+    }
+
+    private var minutes: Int { tasks.reduce(0) { $0 + $1.plannedMinutes } }
 }
 
 private extension SealingCard {
