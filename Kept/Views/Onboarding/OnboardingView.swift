@@ -124,7 +124,7 @@ struct OnboardingView: View {
         switch step {
         case .welcome: ("VÍTEJ V KEPT", "Dodrž, co si slíbíš.", "Nejdřív jazyk a vzhled. Pak tě Kept provede nastavením, zabere to pár minut.")
         case .howItWorks: ("JAK TO FUNGUJE", "Plán. Pečeť. Slovo.", "Kept není seznam úkolů. Je to smlouva se sebou samým.")
-        case .tutorial: ("PRŮVODCE", "Vyzkoušej si Kept.", "Pět krátkých ukázek. Všechno si můžeš naklikat, nic se neuloží.")
+        case .tutorial: ("PRŮVODCE", "Vyzkoušej si Kept.", "Šest krátkých ukázek. Všechno si můžeš naklikat, nic se neuloží.")
         case .activities: ("TVOJE AKTIVITY", "Čemu se chceš věnovat?", "Vyber z nabídky nebo přidej vlastní. Kept je bude navrhovat a hlídat.")
         case .minimum: ("TÝDENNÍ MINIMUM", "Kolik aktivit týdně?", "Plán s menším počtem aktivit nepůjde odeslat. Začni realisticky, zvednout to můžeš kdykoli.")
         case .gym: ("GYM", "Tvoje sekce Gym.", "Tréninky, cviky, váhy a stopky na pauzy, sestavené podle tebe.")

@@ -70,7 +70,7 @@ struct OnboardingDraft {
     }
 
     var secondExampleActivity: String {
-        activityNames.first { $0 != exampleActivity } ?? TaskCategory.nature.suggestionTitle
+        activityNames.first { $0 != exampleActivity && $0 != TaskCategory.gym.title } ?? TaskCategory.nature.suggestionTitle
     }
 
     /// Writes the choices into the settings and marks the guide as done.

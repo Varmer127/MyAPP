@@ -9,12 +9,13 @@ struct OnboardingTutorial: View {
     let onDone: () -> Void
 
     private enum Demo: Int, CaseIterable, Identifiable {
-        case task, planner, streak, missed, score
+        case task, planning, planner, streak, missed, score
         var id: Int { rawValue }
 
         var title: String {
             switch self {
             case .task: "Úkol"
+            case .planning: "Plánování"
             case .planner: "Plánovač"
             case .streak: "Série"
             case .missed: "Nesplnil jsem"
@@ -25,6 +26,7 @@ struct OnboardingTutorial: View {
         var text: String {
             switch self {
             case .task: "Každý den máš na obrazovce Dnes svoje úkoly. Hotovo, částečně, nebo přeskočit. Za splněný závazek dostaneš 100 bodů, za částečný jen jeho díl."
+            case .planning: "Týden si skládáš na obrazovce Týden. Rychlé plánování dá jednu aktivitu na víc dní najednou, zkopírování vezme minulý týden a jeden úkol přidáš plusem u dne. Vyzkoušej všechny tři."
             case .planner: "Týden naplánuješ a odešleš plánovač. Hodinu ho můžeš měnit bez postihu, pak se sám zapečetí. Od té chvíle je každý úkol slib a každá změna se zaznamená."
             case .streak: "Den, kdy splníš aspoň 80 % úkolů, rozdmýchá plamínek. Jeden špatný den ho zhasne. Kept tě večer varuje a po přerušení ještě týden připomíná."
             case .missed: "Nesplněný úkol nezmizí. Buď ho dodáš pozdě, nebo napíšeš proč a co uděláš příště. Kept si to pamatuje a připomene, až se to bude opakovat."
@@ -64,6 +66,7 @@ struct OnboardingTutorial: View {
                 Text("VYZKOUŠEJ SI TO").font(.system(size: 10, weight: .heavy)).tracking(1.4).foregroundStyle(Theme.orange)
                 switch demo {
                 case .task: TaskDemo(activity: activity)
+                case .planning: PlanningDemo(activity: activity, secondActivity: secondActivity)
                 case .planner: PlannerDemo()
                 case .streak: StreakDemo()
                 case .missed: MissedDemo(activity: secondActivity)
@@ -206,6 +209,178 @@ private struct TaskDemo: View {
                 .font(.system(size: 15, weight: .bold))
                 .foregroundStyle(Theme.textPrimary)
                 .frame(minHeight: 44)
+        }
+    }
+}
+
+private struct PlanningDemo: View {
+    let activity: String
+    let secondActivity: String
+
+    private enum Mode: String, CaseIterable, Identifiable {
+        case quick = "Rychle", copy = "Kopie týdne", single = "Jeden úkol"
+        var id: String { rawValue }
+    }
+
+    private static let dayNames = ["PO", "ÚT", "ST", "ČT", "PÁ", "SO", "NE"]
+
+    @State private var mode: Mode = .quick
+    @State private var items: [(day: Int, title: String)] = []
+    @State private var quickTitle: String?
+    @State private var quickDays: Set<Int> = [0, 2, 4]
+    @State private var singleDay = 1
+
+    private var activities: [String] { Array(Set([TaskCategory.gym.title, activity, secondActivity])).sorted() }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 6) {
+                ForEach(Mode.allCases) { item in
+                    let isOn = mode == item
+                    Button { withAnimation(.easeOut(duration: 0.2)) { mode = item } } label: {
+                        Text(item.rawValue)
+                            .font(.system(size: 13, weight: .bold))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                            .frame(maxWidth: .infinity, minHeight: 40)
+                            .foregroundStyle(isOn ? Theme.onPrimary : Theme.textPrimary)
+                            .background(isOn ? Theme.textPrimary : Theme.cardRaised)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            Text(explanation)
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+            controls
+            week
+        }
+    }
+
+    private var explanation: String {
+        switch mode {
+        case .quick: "Vyber aktivitu a dny, jedním klepnutím ji přidáš na všechny. Ideální na gym nebo čtení několikrát týdně."
+        case .copy: "Když se ti minulý týden osvědčil, vezmeš ho celý. Co už v plánu máš, se nezdvojí."
+        case .single: "Plusem u dne přidáš jeden úkol s vlastním časem, délkou a prioritou."
+        }
+    }
+
+    @ViewBuilder
+    private var controls: some View {
+        switch mode {
+        case .quick:
+            let title = quickTitle ?? activities[0]
+            FlowLayout(spacing: 6) {
+                ForEach(activities, id: \.self) { name in
+                    pill(name, isOn: name == title) { quickTitle = name }
+                }
+            }
+            dayPicker(isOn: { quickDays.contains($0) }) { day in
+                if quickDays.contains(day) { quickDays.remove(day) } else { quickDays.insert(day) }
+            }
+            demoButton(quickDays.isEmpty ? "VYBER DNY" : "PŘIDAT \(quickDays.count)×", fill: Theme.textPrimary, text: Theme.onPrimary) {
+                add(quickDays.sorted().map { ($0, title) })
+            }
+            .disabled(quickDays.isEmpty)
+        case .copy:
+            Text("Minulý týden: \(TaskCategory.gym.title) 3×, \(activity) 2×, \(secondActivity) 1×")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Theme.textPrimary)
+            demoButton("ZKOPÍROVAT MINULÝ TÝDEN", fill: Theme.textPrimary, text: Theme.onPrimary) {
+                add([(0, TaskCategory.gym.title), (2, TaskCategory.gym.title), (4, TaskCategory.gym.title),
+                     (1, activity), (3, activity), (5, secondActivity)])
+            }
+        case .single:
+            dayPicker(isOn: { $0 == singleDay }) { singleDay = $0 }
+            demoButton("+ PŘIDAT ÚKOL NA \(Self.dayNames[singleDay])", fill: Theme.textPrimary, text: Theme.onPrimary) {
+                add([(singleDay, secondActivity)])
+            }
+        }
+    }
+
+    private var week: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("TVŮJ TÝDEN · V PLÁNU \(items.count)").labelStyle()
+                Spacer()
+                if !items.isEmpty {
+                    Button("Vymazat") { withAnimation { items = [] } }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Theme.textSecondary)
+                        .frame(minHeight: 32)
+                }
+            }
+            HStack(alignment: .top, spacing: 6) {
+                ForEach(0..<7, id: \.self) { day in
+                    let titles = items.filter { $0.day == day }.map(\.title)
+                    VStack(spacing: 4) {
+                        Text(Self.dayNames[day]).font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.textSecondary)
+                        VStack(spacing: 3) {
+                            ForEach(Array(titles.enumerated()), id: \.offset) { _, title in
+                                Capsule()
+                                    .fill(title == TaskCategory.gym.title ? Theme.orange : Theme.textPrimary)
+                                    .frame(height: 6)
+                                    .transition(.scale.combined(with: .opacity))
+                            }
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .top)
+                        .padding(5)
+                        .background(Theme.cardRaised)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        Text(titles.isEmpty ? " " : "\(titles.count)×").font(.system(size: 10, weight: .semibold)).foregroundStyle(Theme.textSecondary)
+                    }
+                }
+            }
+            if let duplicate {
+                Text(duplicate)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Theme.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    /// The real app asks before adding the same activity to the same day twice; here it just says so.
+    @State private var duplicate: String?
+
+    private func add(_ new: [(Int, String)]) {
+        let clashes = new.filter { entry in items.contains { $0.day == entry.0 && $0.title == entry.1 } }
+        duplicate = clashes.isEmpty ? nil
+            : "„\(clashes[0].1)“ už na \(Self.dayNames[clashes[0].0]) máš. V aplikaci se tě Kept zeptá, jestli ho tam chceš podruhé."
+        withAnimation(.spring(duration: 0.35)) {
+            items += new.filter { entry in !items.contains { $0.day == entry.0 && $0.title == entry.1 } }.map { (day: $0.0, title: $0.1) }
+        }
+    }
+
+    private func pill(_ title: String, isOn: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .padding(.horizontal, 12)
+                .frame(minHeight: 36)
+                .foregroundStyle(isOn ? Theme.onPrimary : Theme.textPrimary)
+                .background(isOn ? Theme.textPrimary : Theme.cardRaised)
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func dayPicker(isOn: @escaping (Int) -> Bool, toggle: @escaping (Int) -> Void) -> some View {
+        HStack(spacing: 5) {
+            ForEach(0..<7, id: \.self) { day in
+                let on = isOn(day)
+                Button { toggle(day) } label: {
+                    Text(Self.dayNames[day])
+                        .font(.system(size: 12, weight: .bold))
+                        .frame(maxWidth: .infinity, minHeight: 40)
+                        .foregroundStyle(on ? Theme.onPrimary : Theme.textPrimary)
+                        .background(on ? Theme.textPrimary : Theme.cardRaised)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 }
