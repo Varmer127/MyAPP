@@ -7,6 +7,7 @@ struct WeeklyReviewView: View {
     @Query private var tasks: [TaskItem]
     @Query private var plans: [WeeklyPlan]
     @Query private var failures: [FailureRecord]
+    @Query private var settingsList: [UserSettings]
     let weekStart: Date
     /// Drives the bars growing in when the report opens.
     @State private var chartProgress = 0.0
@@ -36,7 +37,10 @@ struct WeeklyReviewView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                 header
-                if !closed.isEmpty {
+                if closed.isEmpty {
+                    weekAhead
+                    goalsCountdown
+                } else {
                     counts
                     dayChart
                     highlights
@@ -55,6 +59,140 @@ struct WeeklyReviewView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Theme.background, for: .navigationBar)
         .fullScreenCover(item: $reflection) { ReflectionView(weekStart: $0.weekStart) }
+    }
+
+    // MARK: Before anything is closed
+
+    private var weekTasks: [TaskItem] {
+        tasks.filter { !$0.isRemoved && $0.scheduledDate >= weekStart && $0.scheduledDate < weekStart.addingDays(7) }
+    }
+
+    /// The week ahead day by day: what is planned where, so gaps and crowded days show at a glance.
+    private var weekAhead: some View {
+        let days = (0..<Self.daysInWeek).map { weekStart.addingDays($0) }
+        let byDay = Dictionary(grouping: weekTasks) { $0.scheduledDate.startOfDay }
+        let busiest = max(days.map { byDay[$0]?.count ?? 0 }.max() ?? 0, 1)
+        return VStack(alignment: .leading, spacing: 10) {
+            Text("TVŮJ TÝDEN").labelStyle()
+            HStack(alignment: .bottom, spacing: 6) {
+                ForEach(days, id: \.self) { day in
+                    let items = byDay[day.startOfDay] ?? []
+                    let isToday = day.isSameDay(as: now)
+                    let isPast = day.endOfDay <= now
+                    VStack(spacing: 6) {
+                        VStack(spacing: 4) {
+                            ForEach(items.prefix(4)) { task in
+                                Image(systemName: task.icon)
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(task.isDone ? Theme.green : Theme.textPrimary)
+                                    .frame(width: 30, height: 30)
+                                    .background(Theme.cardRaised)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                            if items.count > 4 {
+                                Text("+\(items.count - 4)")
+                                    .font(.system(size: 11, weight: .bold))
+                                    .foregroundStyle(Theme.textSecondary)
+                            }
+                            if items.isEmpty {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .strokeBorder(Theme.textTertiary.opacity(0.4), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                                    .frame(width: 30, height: 30)
+                            }
+                        }
+                        .frame(maxHeight: .infinity, alignment: .bottom)
+                        Text(day.weekdayShortText.uppercased())
+                            .font(.system(size: 11, weight: isToday ? .heavy : .semibold))
+                            .foregroundStyle(isToday ? Theme.textPrimary : Theme.textSecondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .opacity(isPast && items.isEmpty ? 0.5 : 1)
+                }
+            }
+            .frame(height: CGFloat(min(busiest, 4)) * 34 + 30)
+            Text(weekAheadNote(byDay: byDay, days: days))
+                .font(.system(size: 13))
+                .foregroundStyle(Theme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .card()
+    }
+
+    /// One observation about the plan: empty days ahead, or the busiest day.
+    private func weekAheadNote(byDay: [Date: [TaskItem]], days: [Date]) -> String {
+        if weekTasks.isEmpty {
+            return "Zatím je týden prázdný. Naplánuj si ho na obrazovce Týden a tady uvidíš, jak se plní."
+        }
+        let emptyAhead = days.filter { $0.endOfDay > now && (byDay[$0.startOfDay] ?? []).isEmpty }
+        if !emptyAhead.isEmpty {
+            let names = emptyAhead.map(\.weekdayShortText).joined(separator: ", ")
+            return "Volné dny: \(names). Klidně je nech na odpočinek, nebo tam něco doplň."
+        }
+        if let busiest = days.max(by: { (byDay[$0.startOfDay]?.count ?? 0) < (byDay[$1.startOfDay]?.count ?? 0) }) {
+            return "Nejnabitější den je \(busiest.weekdayText). Každý den něco, tak to má být."
+        }
+        return ""
+    }
+
+    /// Each weekly target as a ring that closes during the week, with the days left.
+    @ViewBuilder
+    private var goalsCountdown: some View {
+        let settings = settingsList.first
+        let goals = SuggestionService.goals(tasks: tasks, weekStart: weekStart, now: now) {
+            settings?.weeklyTarget(for: $0) ?? $0.defaultWeeklyTarget
+        }
+        let minimum = settings?.minimumWeeklyTasks ?? UserSettings.defaultMinimumWeeklyTasks
+        let doneCount = weekTasks.filter(\.isDone).count
+        let daysLeft = max(0, Calendar.app.dateComponents([.day], from: now.startOfDay, to: weekStart.addingDays(7)).day ?? 0)
+        if !goals.isEmpty || minimum > 0 {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("CÍLE TÝDNE").labelStyle()
+                    Spacer()
+                    Text(daysLeft == 1 ? "zbývá 1 den" : (2...4).contains(daysLeft) ? "zbývají \(daysLeft) dny" : "zbývá \(daysLeft) dní")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 10)], spacing: 14) {
+                    if minimum > 0 {
+                        ring(title: "Aktivity", symbol: "target", done: doneCount, target: minimum)
+                    }
+                    ForEach(goals) { goal in
+                        ring(title: goal.category.title, symbol: goal.category.icon, done: goal.done, target: goal.target)
+                    }
+                }
+            }
+            .card()
+        }
+    }
+
+    private func ring(title: String, symbol: String, done: Int, target: Int) -> some View {
+        let value = target > 0 ? min(Double(done) / Double(target), 1) : 0
+        let met = done >= target
+        return VStack(spacing: 6) {
+            ZStack {
+                Circle().stroke(Theme.cardRaised, lineWidth: 6)
+                Circle()
+                    .trim(from: 0, to: value)
+                    .stroke(met ? Theme.green : Theme.textPrimary, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                Image(systemName: met ? "checkmark" : symbol)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(met ? Theme.green : Theme.textPrimary)
+            }
+            .frame(width: 56, height: 56)
+            Text("\(done) / \(target)")
+                .font(.system(size: 14, weight: .bold))
+                .monospacedDigit()
+                .foregroundStyle(Theme.textPrimary)
+            Text(title)
+                .font(.system(size: 12))
+                .foregroundStyle(Theme.textSecondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
     }
 
     private var header: some View {
@@ -175,7 +313,7 @@ struct WeeklyReviewView: View {
                 }
             }
             if categories.count >= 2, let best = categories.max(by: { $0.rate < $1.rate }),
-               let worst = categories.min(by: { $0.rate < $1.rate }) {
+               let worst = categories.min(by: { $0.rate < $1.rate }), best.category != worst.category {
                 HStack(spacing: 10) {
                     highlight("Nejlepší kategorie", best.category.title, best.rate.percentText)
                     highlight("Nejhorší kategorie", worst.category.title, worst.rate.percentText)
