@@ -64,10 +64,14 @@ extension ExerciseLog {
         return logged.isEmpty ? Array(repeating: (weight: weight, reps: reps), count: max(sets, 1)) : logged
     }
 
-    /// Best estimated one-rep maximum of the working sets.
+    /// Best estimated one-rep maximum of the working sets. A typo like 8282 kg never becomes a record.
     var bestEstimatedMax: Double {
-        workingSets.map { ExerciseLog.estimatedMax(weight: $0.weight, reps: $0.reps) }.max() ?? 0
+        workingSets.filter { $0.weight <= ExerciseLog.plausibleWeight.upperBound && $0.reps <= ExerciseLog.plausibleReps.upperBound }
+            .map { ExerciseLog.estimatedMax(weight: $0.weight, reps: $0.reps) }.max() ?? 0
     }
+
+    static let plausibleWeight = 0.0...500.0
+    static let plausibleReps = 0...100
 
     /// Weight × reps summed over the working sets.
     var volume: Double { workingSets.reduce(0) { $0 + $1.weight * Double($1.reps) } }

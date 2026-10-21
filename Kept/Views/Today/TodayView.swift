@@ -13,6 +13,9 @@ struct TodayView: View {
     @State private var showsShop = false
     /// Points just earned, shown for a moment above the tab bar.
     @State private var pointsGain: PointsGain?
+    @State private var showsDayKept = false
+    /// The day already celebrated, so undoing and redoing a task does not repeat it.
+    @AppStorage("dayKeptCelebratedDay") private var dayKeptCelebratedDay = 0.0
     /// Day on which the weekly reflection last opened by itself, so it only interrupts once a day.
     @AppStorage("reflectionPromptDay") private var reflectionPromptDay = 0.0
     @State private var reflection: ReflectionRequest?
@@ -123,13 +126,32 @@ struct TodayView: View {
         }
         .overlay(alignment: .bottom) {
             if let pointsGain {
-                PointsGainToast(amount: pointsGain.amount) { self.pointsGain = nil }
+                PointsGainToast(amount: pointsGain.amount, text: pointsGain.text) { self.pointsGain = nil }
                     .id(pointsGain.id)
                     .padding(.bottom, 24)
                     .allowsHitTesting(false)
             }
         }
         .sensoryFeedback(.success, trigger: pointsGain?.id) { _, new in new != nil }
+        // The last open task of the day closes the day: a short, full-screen moment.
+        .onChange(of: todayKept) { _, kept in
+            let today = Date.now.startOfDay.timeIntervalSince1970
+            guard kept, dayKeptCelebratedDay != today else { return }
+            dayKeptCelebratedDay = today
+            Task {
+                try? await Task.sleep(for: .seconds(1.2))
+                withAnimation(.easeOut(duration: 0.25)) { showsDayKept = true }
+            }
+        }
+        .overlay {
+            if showsDayKept {
+                DayKeptCelebration(done: todayTasks.filter(\.isDone).count, streak: ScoreEngine.dayStreak(tasks)) {
+                    withAnimation(.easeIn(duration: 0.25)) { showsDayKept = false }
+                }
+                .transition(.opacity)
+                .zIndex(2)
+            }
+        }
         // A moment to be honest before anything counts as done.
         .alert("Opravdu jsi to splnil podle plánu?",
                isPresented: Binding(get: { confirmDone != nil }, set: { if !$0 { confirmDone = nil } }),
@@ -187,7 +209,21 @@ struct TodayView: View {
             proofTask = task
         } else {
             withAnimation { task.markDone() }
+            // Outside a sent plan a task earns no points, but keeping your word still deserves a moment.
+            if PointsService.earned(by: task) == 0 {
+                pointsGain = PointsGain(amount: 0, text: share < 1 ? "ČÁSTEČNĚ SPLNĚNO" : "SPLNĚNO")
+            }
         }
+    }
+
+    private var todayTasks: [TaskItem] {
+        tasks.filter { $0.scheduledDate.isSameDay(as: .now) && $0.countsInScores && !$0.isRemoved }
+    }
+
+    /// Everything planned for today is done, and there was something.
+    private var todayKept: Bool {
+        let today = todayTasks
+        return !today.isEmpty && today.allSatisfy(\.isDone)
     }
 
     private func showsBrief(_ day: TodaySnapshot, now: Date) -> Bool {
@@ -236,7 +272,7 @@ struct TodayView: View {
                     uncommittedCard
                 }
                 if !day.unresolved.isEmpty {
-                    section("Nevyřešené — \(day.unresolved.count)", color: Theme.red, tasks: day.unresolved, now: now)
+                    section("Uzavři, co zůstalo otevřené · \(day.unresolved.count)", color: Theme.orange, tasks: day.unresolved, now: now)
                 }
                 if !day.critical.isEmpty {
                     section("Kritické", tasks: day.critical, now: now)
@@ -452,7 +488,7 @@ struct TodayView: View {
                 .contentTransition(.numericText())
                 .animation(.easeOut(duration: 0.6), value: day.accountability?.score)
             HStack(spacing: 8) {
-                Text("SPOLEHLIVOST").labelStyle()
+                Text("SPOLEHLIVOST · 30 DNÍ").labelStyle()
                 if day.accountability == nil {
                     Badge(text: "Čistý štít", color: Theme.green)
                 }

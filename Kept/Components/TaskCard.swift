@@ -218,20 +218,35 @@ struct TaskCard: View {
                 }
             }
             HStack(spacing: 8) {
-                // Colour follows the outcome each button leads to: green done, orange partial or late, red giving up.
-                if offersFocus {
-                    Button("HOTOVO", action: onDone)
-                        .buttonStyle(SecondaryButtonStyle(textColor: Theme.green))
+                // One clear main action. Partial and skipping cost one more tap, so giving up never looks
+                // as easy as keeping your word. A missed task keeps both answers in sight: it has to be closed.
+                if isMissed {
+                    Button("SPLNIL JSEM POZDĚJI", action: onDone)
+                        .buttonStyle(PrimaryButtonStyle(color: Theme.orange))
+                    Button("NESPLNIL JSEM", action: onFail)
+                        .buttonStyle(SecondaryButtonStyle(textColor: Theme.red))
                 } else {
-                    Button(isMissed ? "SPLNĚNO POZDĚ" : "HOTOVO", action: onDone)
-                        .buttonStyle(PrimaryButtonStyle(color: isMissed ? Theme.orange : Theme.green))
+                    if offersFocus {
+                        Button("SPLNIL JSEM", action: onDone)
+                            .buttonStyle(SecondaryButtonStyle(textColor: Theme.green))
+                    } else {
+                        Button("SPLNIL JSEM", action: onDone)
+                            .buttonStyle(PrimaryButtonStyle(color: Theme.green))
+                    }
+                    Menu {
+                        Button("Splnil jsem jen část", systemImage: "circle.lefthalf.filled", action: onPartial)
+                        Button("Dnes to nezvládnu", systemImage: "xmark", role: .destructive, action: onFail)
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundStyle(Theme.textPrimary)
+                            .frame(width: 54, height: 50)
+                            .background(Theme.cardRaised)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.border, lineWidth: 1))
+                    }
+                    .accessibilityLabel("Další možnosti: částečně nebo přeskočit")
                 }
-                if !isMissed {
-                    Button("ČÁSTEČNĚ", action: onPartial)
-                        .buttonStyle(SecondaryButtonStyle(textColor: Theme.orange))
-                }
-                Button(isMissed ? "NESPLNIL JSEM" : "PŘESKOČIT", action: onFail)
-                    .buttonStyle(SecondaryButtonStyle(textColor: Theme.red))
             }
         }
     }

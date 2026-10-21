@@ -435,7 +435,8 @@ struct GymTimerView: View {
         set.isDone.toggle()
         try? context.save()
         guard set.isDone else { return }
-        if !set.isWarmup, set.weight > 0 {
+        if !set.isWarmup, set.weight > 0, ExerciseLog.plausibleWeight.contains(set.weight),
+           ExerciseLog.plausibleReps.contains(set.reps) {
             let best = GymService.bestMax(log.name, in: history)
             let done = log.orderedSets.filter { $0.isDone && !$0.isWarmup && $0 !== set }
             let bestToday = done.map { ExerciseLog.estimatedMax(weight: $0.weight, reps: $0.reps) }.max() ?? 0
@@ -614,9 +615,33 @@ private struct SetRow: View {
     let onDelete: () -> Void
     static let deleteWidth: CGFloat = 26
 
+    /// Above what anyone lifts or repeats in a set: almost surely a typo, like "8282" for "82,5".
+    static let implausibleWeight = ExerciseLog.plausibleWeight.upperBound
+    static let implausibleReps = ExerciseLog.plausibleReps.upperBound
+
+    private var warning: String? {
+        if set.weight > Self.implausibleWeight {
+            return "\(set.weight.kilogramText) je nejspíš překlep. Zkontroluj váhu, jinak ti pokazí rekordy."
+        }
+        if set.reps > Self.implausibleReps {
+            return "\(set.reps) opakování je nejspíš překlep. Zkontroluj počet."
+        }
+        return nil
+    }
+
     var body: some View {
-        row
-            .swipeToDelete(set.isWarmup ? "Smazat rozcvičku" : "Smazat sérii", cornerRadius: 8, onDelete: onDelete)
+        VStack(alignment: .leading, spacing: 4) {
+            row
+                .swipeToDelete(set.isWarmup ? "Smazat rozcvičku" : "Smazat sérii", cornerRadius: 8, onDelete: onDelete)
+            if let warning {
+                Label(warning, systemImage: "exclamationmark.triangle.fill")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(Theme.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .transition(.opacity)
+            }
+        }
+        .animation(.easeOut(duration: 0.2), value: warning)
         .opacity(set.isWarmup && !set.isDone ? 0.75 : 1)
         .animation(.easeOut(duration: 0.15), value: set.isDone)
         // Every number goes to disk as it is typed, so a crash or a killed app loses nothing.
@@ -656,6 +681,7 @@ private struct SetRow: View {
                 .frame(width: 66, height: 36)
                 .background(Theme.cardRaised)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.orange, lineWidth: set.weight > Self.implausibleWeight ? 1.5 : 0))
                 .accessibilityLabel("Váha v kilogramech")
             TextField("0", value: $set.reps, format: .number)
                 .keyboardType(.numberPad)
@@ -664,6 +690,7 @@ private struct SetRow: View {
                 .frame(width: 50, height: 36)
                 .background(Theme.cardRaised)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.orange, lineWidth: set.reps > Self.implausibleReps ? 1.5 : 0))
                 .accessibilityLabel("Počet opakování")
             Button(action: onTick) {
                 Image(systemName: "checkmark")

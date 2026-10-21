@@ -63,9 +63,16 @@ struct PerformanceBar: View {
             HStack {
                 Text(label.uppercased()).labelStyle()
                 Spacer()
-                Text(value.percentText)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Theme.textPrimary)
+                // No data yet is not a failure, so it reads as a promise of what comes.
+                if value == nil {
+                    Text("po prvním týdnu")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.textTertiary)
+                } else {
+                    Text(value.percentText)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                }
             }
             ThinBar(value: value ?? 0, color: Theme.performanceColor(value))
         }

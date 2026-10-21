@@ -105,7 +105,7 @@ struct StatsView: View {
                     .foregroundStyle(Theme.textPrimary)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("SPOLEHLIVOST").labelStyle()
-                    Text("Posledních \(ScoreEngine.Config.accountabilityWindowDays) dní")
+                    Text("Vždy za posledních \(ScoreEngine.Config.accountabilityWindowDays) dní")
                         .font(.system(size: 12))
                         .foregroundStyle(Theme.textTertiary)
                 }

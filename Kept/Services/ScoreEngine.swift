@@ -152,13 +152,18 @@ enum ScoreEngine {
         let unexplained: Int
 
         var subtitle: String {
-            if unexplained > 0 { return "Máš selhání, která jsi ještě ani nevysvětlil." }
-            if criticalLost > 0, score >= 60 { return "Většinou spolehlivý, ale kritickou práci necháváš padat." }
+            // A coach, not a judge: what is true, then the one step that helps.
+            if unexplained > 0 {
+                return unexplained == 1
+                    ? "Jeden slib zůstal otevřený. Uzavři ho a skóre se zvedne."
+                    : "\(unexplained) sliby zůstaly otevřené. Uzavři je a skóre se zvedne."
+            }
+            if criticalLost > 0, score >= 60 { return "Většinu slibů držíš. Teď ohlídej ty nejdůležitější." }
             switch score {
-            case 85...: return "Držíš slovo."
-            case 70..<85: return "Většinou spolehlivý. Růst je v tom, co ti uniká."
-            case 50..<70: return "Porušuješ příliš mnoho vlastních slibů."
-            default: return "Tvoje slovo teď moc neznamená. Změň to ještě dnes."
+            case 85...: return "Držíš slovo. Takhle dál."
+            case 70..<85: return "Většinou držíš slovo. Kousek chybí do špičky."
+            case 50..<70: return "Část slibů ti utíká. Jeden splněný úkol dnes je začátek obratu."
+            default: return "Teď se ti nedaří. Splň dnes jeden slib a začni obrat."
             }
         }
     }

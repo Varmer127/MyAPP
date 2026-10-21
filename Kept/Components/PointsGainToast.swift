@@ -3,11 +3,14 @@ import SwiftUI
 struct PointsGain: Identifiable, Equatable {
     let id = UUID()
     let amount: Int
+    /// Shown instead of points when the task earned none (a week not sent yet).
+    var text: String? = nil
 }
 
 /// "+100 bodů" that pops up, drifts upwards and fades out on its own. Never needs to be dismissed.
 struct PointsGainToast: View {
     let amount: Int
+    var text: String? = nil
     let onFinish: () -> Void
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var shown = false
@@ -16,7 +19,7 @@ struct PointsGainToast: View {
     private static let visibleFor: Duration = .milliseconds(1100)
 
     var body: some View {
-        Label("+\(amount.formatted(.number.locale(.app))) BODŮ", systemImage: "sparkles")
+        Label(text ?? "+\(amount.formatted(.number.locale(.app))) BODŮ", systemImage: text == nil ? "sparkles" : "checkmark")
             .font(.system(size: 15, weight: .heavy))
             .tracking(0.8)
             .foregroundStyle(Theme.onPrimary)

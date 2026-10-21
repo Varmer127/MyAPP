@@ -24,7 +24,8 @@ enum GymService {
     /// "Minule 80 kg × 8 → zkus 82,5 kg × 8". Nil without history or for bodyweight work.
     static func suggestion(for name: String, in tasks: [TaskItem]) -> String? {
         guard let last = last(name, in: tasks),
-              let top = last.workingSets.max(by: { $0.weight < $1.weight }), top.weight > 0 else { return nil }
+              let top = last.workingSets.filter({ ExerciseLog.plausibleWeight.contains($0.weight) }).max(by: { $0.weight < $1.weight }),
+              top.weight > 0 else { return nil }
         if top.reps >= repsBeforeAddingWeight {
             return "Minule \(top.weight.kilogramText) × \(top.reps) → zkus \((top.weight + weightStep).kilogramText) × \(top.reps)"
         }
