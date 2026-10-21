@@ -33,6 +33,11 @@ struct TodayProvider: TimelineProvider {
         if let focus = snapshot?.focus, !focus.isPaused, focus.endDate > now, focus.endDate < midnight {
             dates.insert(focus.endDate, at: 1)
         }
+        // The gym widgets switch from "rest" to "next set" when the rest runs out.
+        if let restEnd = snapshot?.gym?.restEnd, restEnd > now, restEnd < midnight {
+            dates.append(restEnd)
+        }
+        dates.sort()
         completion(Timeline(entries: dates.map { TodayEntry(date: $0, snapshot: snapshot) }, policy: .after(midnight)))
     }
 }
@@ -41,7 +46,7 @@ struct TodayWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: "KeptToday", provider: TodayProvider()) { entry in
             TodayWidgetView(entry: entry)
-                .containerBackground(Color(red: 0.04, green: 0.04, blue: 0.04), for: .widget)
+                .containerBackground(WidgetStyle.background, for: .widget)
         }
         .configurationDisplayName("Kept – dnes")
         .description("Spolehlivost, dnešní úkoly, série a běžící focus.")
@@ -53,9 +58,9 @@ struct TodayWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: TodayEntry
 
-    private static let orange = Color(red: 1.0, green: 0.62, blue: 0.04)
-    private static let green = Color(red: 0.19, green: 0.82, blue: 0.35)
-    private static let grey = Color(white: 0.56)
+    private static let orange = WidgetStyle.orange
+    private static let green = WidgetStyle.green
+    private static let grey = WidgetStyle.secondary
 
     private var snapshot: WidgetSnapshot? { entry.today }
     private var focus: WidgetSnapshot.Focus? { snapshot?.focus }
@@ -108,7 +113,7 @@ struct TodayWidgetView: View {
                         label("DALŠÍ ÚKOL")
                         Text(snapshot?.nextTitle ?? (total == 0 ? "Dnes nic v plánu" : "Všechno hotovo"))
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(WidgetStyle.text)
                             .lineLimit(2)
                         Spacer(minLength: 0)
                         if let id = snapshot?.nextCompletableID {
@@ -127,7 +132,7 @@ struct TodayWidgetView: View {
                             label("DODRŽENÉ SLIBY")
                             Text(snapshot?.promisesKept.map { "\(Int(($0 * 100).rounded())) %" } ?? "—")
                                 .font(.system(size: 20, weight: .bold))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(WidgetStyle.text)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -175,12 +180,12 @@ struct TodayWidgetView: View {
                 .foregroundStyle(highlighted ? Self.orange : Self.grey)
             Text(focus.title)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(WidgetStyle.text)
                 .lineLimit(2)
             Spacer(minLength: 0)
             timerText(focus)
                 .font(.system(size: timerSize, weight: .heavy))
-                .foregroundStyle(.white)
+                .foregroundStyle(WidgetStyle.text)
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
         }
@@ -207,17 +212,17 @@ struct TodayWidgetView: View {
             }
             Text(entry.snapshot?.score.map { "\($0)" } ?? "—")
                 .font(.system(size: 44, weight: .heavy))
-                .foregroundStyle(.white)
+                .foregroundStyle(WidgetStyle.text)
                 .minimumScaleFactor(0.6)
                 .lineLimit(1)
             Spacer(minLength: 0)
             Text("\(done) / \(total) splněno")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(.white)
+                .foregroundStyle(WidgetStyle.text)
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Color(white: 0.2))
-                    Capsule().fill(total > 0 && done == total ? Self.green : .white)
+                    Capsule().fill(WidgetStyle.track)
+                    Capsule().fill(total > 0 && done == total ? Self.green : WidgetStyle.text)
                         .frame(width: proxy.size.width * progress)
                 }
             }

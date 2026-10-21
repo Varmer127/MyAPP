@@ -15,6 +15,22 @@ struct WidgetSnapshot: Codable {
         var hasDeadline: Bool?
     }
 
+    /// The gym workout that is running, if any.
+    struct Gym: Codable {
+        var startDate: Date
+        var restStart: Date?
+        var restEnd: Date?
+        var restSeconds: Int
+        var workout: String
+    }
+
+    /// One day of the current week, Monday first.
+    struct Day: Codable {
+        var date: Date
+        var done: Int
+        var total: Int
+    }
+
     var day: Date
     var score: Int?
     var done: Int
@@ -25,6 +41,13 @@ struct WidgetSnapshot: Codable {
     /// The next task's identifier, when the widget may complete it with one tap.
     var nextCompletableID: String?
     var focus: Focus?
+    var gym: Gym?
+    /// Icon of the next task (SF Symbol name).
+    var nextIcon: String?
+    var week: [Day]?
+    var gymThisWeek: Int?
+    var gymTarget: Int?
+    var lastGym: Date?
 
     static let appGroup = "group.cz.philipstryka.kept"
     private static let key = "widgetSnapshot"

@@ -122,6 +122,7 @@ struct RootView: View {
             }
         }
         .task(id: notificationSignature) {
+            ActivityIcons.shared.register(custom: settings?.customActivities ?? [])
             FocusSession.closeAbandoned(in: tasks)
             StreakService.applyInsurance(tasks: tasks, purchases: purchases)
             HealthService.noteGymLogged(tasks.contains {
@@ -132,6 +133,7 @@ struct RootView: View {
                 NotificationManager.cancelRestEnd()
             }
             WidgetBridge.update(tasks: tasks, plans: plans, targets: settings?.weeklyTargets ?? [:])
+            GymActivityManager.reconcile(tasks)
             SealActivityManager.reconcile(plans)
             await NotificationManager.reschedule(context: context)
         }

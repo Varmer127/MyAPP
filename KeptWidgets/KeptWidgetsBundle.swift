@@ -5,7 +5,13 @@ import WidgetKit
 struct KeptWidgetsBundle: WidgetBundle {
     var body: some Widget {
         TodayWidget()
+        NextTaskWidget()
+        WeekWidget()
+        StreakWidget()
+        ScoreWidget()
+        GymWidget()
         FocusLiveActivity()
+        GymLiveActivity()
         SealLiveActivity()
     }
 }

@@ -12,16 +12,19 @@ struct ActivitiesSettingsView: View {
             if let settings = settingsList.first {
                 Section {
                     ForEach(TaskCategory.allCases.filter { $0 != .other }) { category in
-                        Toggle(isOn: Binding(get: { settings.isEnabled(category) },
-                                             set: { settings.setEnabled($0, category) })) {
-                            Label(category.title, systemImage: category.symbol)
+                        HStack(spacing: 12) {
+                            ActivityIconButton(activity: category.title, symbol: category.icon) {
+                                ActivityIcons.shared.set($0, for: category)
+                            }
+                            Toggle(category.title, isOn: Binding(get: { settings.isEnabled(category) },
+                                                                 set: { settings.setEnabled($0, category) }))
+                                .tint(Theme.textSecondary)
                         }
-                        .tint(Theme.textSecondary)
                     }
                 } header: {
                     Text("Z nabídky")
                 } footer: {
-                    Text("Vypnutá aktivita se nenabízí při plánování ani v návrzích a nemá týdenní cíl. Úkoly, které už v ní máš, zůstanou.")
+                    Text("Klepnutím na ikonu ji změníš. Vypnutá aktivita se nenabízí při plánování ani v návrzích a nemá týdenní cíl. Úkoly, které už v ní máš, zůstanou.")
                 }
                 .listRowBackground(Theme.card)
 
@@ -40,16 +43,24 @@ struct ActivitiesSettingsView: View {
         let custom = settings.customActivities
         return Section {
             ForEach(custom, id: \.self) { item in
-                HStack {
-                    Label(item, systemImage: "star")
+                HStack(spacing: 12) {
+                    ActivityIconButton(activity: item, symbol: ActivityIcons.shared.symbol(forCustom: item)) {
+                        ActivityIcons.shared.set($0, forCustom: item)
+                    }
+                    Text(item)
                     Spacer()
                     Button {
                         settings.customActivities = custom.filter { $0 != item }
+                        ActivityIcons.shared.removeCustom(item)
                     } label: {
                         Image(systemName: "minus.circle").foregroundStyle(Theme.red)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Odebrat \(item)")
+                }
+                .listSwipeToDelete("Odebrat") {
+                    settings.customActivities = custom.filter { $0 != item }
+                    ActivityIcons.shared.removeCustom(item)
                 }
             }
             Button {
@@ -63,6 +74,7 @@ struct ActivitiesSettingsView: View {
                 TextField("Např. Kytara", text: $newActivity)
                 Button("ULOŽIT") {
                     settings.customActivities = custom + [name]
+                    ActivityIcons.shared.register(custom: [name])
                     newActivity = ""
                     withAnimation { isAdding = false }
                 }

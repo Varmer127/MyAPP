@@ -1,8 +1,8 @@
 import SwiftUI
 import SwiftData
 
-/// The live workout: exercises set by set, last time's numbers alongside, a rest timer that starts
-/// when a set is ticked off, and a record banner when a set beats the best so far.
+/// The live workout: exercises set by set, last time's numbers alongside, a rest timer with its own
+/// start button, and a record banner when a set beats the best so far.
 /// Built on FocusSession, where a "pause" is one rest between sets.
 struct GymTimerView: View {
     @Environment(\.modelContext) private var context
@@ -60,11 +60,38 @@ struct GymTimerView: View {
             if task.workoutType.isEmpty, let first = settings?.workoutPresets.first {
                 pickWorkout(first, loadTemplate: logs.isEmpty && !isSimple)
             }
+            // Coming back to a workout keeps the rest length it had on the lock screen.
+            if selectedName.isEmpty, let seconds = WidgetSnapshot.load()?.gym?.restSeconds,
+               let match = presets.first(where: { $0.seconds == seconds }) {
+                selectedName = match.name
+            }
             UIApplication.shared.isIdleTimerDisabled = true
+        }
+        .task {
+            // The lock screen stopwatch starts once the screen has finished opening.
+            try? await Task.sleep(for: .seconds(0.6))
+            syncOutside()
         }
         .onDisappear {
             UIApplication.shared.isIdleTimerDisabled = false
         }
+        .onChange(of: selectedName) {
+            // A different length during a rest moves its end notification too.
+            guard let since = session?.pausedSince else { return }
+            let remaining = target - Date.now.timeIntervalSince(since)
+            NotificationManager.cancelRestEnd()
+            if remaining > 0 {
+                Task { await NotificationManager.scheduleRestEnd(in: remaining) }
+            }
+        }
+        .onChange(of: selectedName) { syncOutside() }
+        .onChange(of: session?.pausedSince) { syncOutside() }
+        .onChange(of: task.workoutType) { syncOutside() }
+    }
+
+    /// Keeps the stopwatch on the lock screen and in the widget in step with this screen.
+    private func syncOutside() {
+        GymActivityManager.sync(task: task, rest: preset)
     }
 
     // MARK: Layout
@@ -173,6 +200,7 @@ struct GymTimerView: View {
                     if !logs.isEmpty, !task.workoutType.isEmpty {
                         Button(savedTemplate ? "Uloženo jako šablona „\(task.workoutType)“" : "Uložit cviky jako šablonu „\(task.workoutType)“") {
                             settings?.setTemplate(logs.map(\.name), for: task.workoutType)
+                            try? context.save()
                             withAnimation { savedTemplate = true }
                         }
                         .font(.system(size: 13, weight: .semibold))
@@ -214,30 +242,53 @@ struct GymTimerView: View {
                     .foregroundStyle(Theme.textSecondary)
                     .frame(minHeight: 44)
             }
-            // Always there, so ticking a set off never shifts the rows under the finger.
+            // Always the same height, so starting a rest never shifts the rows under the finger.
             VStack(spacing: 6) {
                 HStack {
                     if let rest {
-                        Text(reached ? "JDI NA DALŠÍ SÉRII" : "PAUZA").labelStyle(reached ? Theme.green : Theme.orange)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(reached ? "ODPOČINUTO" : "PAUZA").labelStyle(reached ? Theme.green : Theme.orange)
+                            Text("\(FocusView.clock(rest)) / \(FocusView.clock(target))")
+                                .font(.system(size: 15, weight: .bold))
+                                .monospacedDigit()
+                                .foregroundStyle(Theme.textPrimary)
+                        }
                         Spacer()
-                        Text("\(FocusView.clock(rest)) / \(FocusView.clock(target))")
-                            .font(.system(size: 15, weight: .bold))
-                            .monospacedDigit()
-                            .foregroundStyle(Theme.textPrimary)
-                        Button("Konec pauzy") { endRest() }
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(Theme.textSecondary)
-                            .padding(.leading, 8)
+                        // A real button, so it does not read as part of the status.
+                        Button { endRest() } label: {
+                            Label("DALŠÍ SÉRIE", systemImage: "forward.fill")
+                                .font(.system(size: 13, weight: .heavy))
+                                .tracking(0.5)
+                                .foregroundStyle(Color(hex: 0x000000))
+                                .padding(.horizontal, 14)
+                                .frame(minHeight: 40)
+                                .background(reached ? Theme.green : Theme.orange)
+                                .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
                     } else {
-                        Text("PAUZA SE SPUSTÍ PO ODŠKRTNUTÍ SÉRIE").labelStyle()
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("PAUZA").labelStyle()
+                            Text(FocusView.clock(target))
+                                .font(.system(size: 15, weight: .bold))
+                                .monospacedDigit()
+                                .foregroundStyle(Theme.textSecondary)
+                        }
                         Spacer()
-                        Text(FocusView.clock(target))
-                            .font(.system(size: 15, weight: .bold))
-                            .monospacedDigit()
-                            .foregroundStyle(Theme.textSecondary)
+                        Button { startRest() } label: {
+                            Label("ZAČÍT PAUZU", systemImage: "timer")
+                                .font(.system(size: 13, weight: .heavy))
+                                .tracking(0.5)
+                                .foregroundStyle(Theme.onPrimary)
+                                .padding(.horizontal, 14)
+                                .frame(minHeight: 40)
+                                .background(Theme.textPrimary)
+                                .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
                     }
                 }
-                .frame(minHeight: 24)
+                .frame(minHeight: 40)
                 ThinBar(value: rest.map { $0 / target } ?? 0, color: reached ? Theme.green : Theme.orange)
                 restPicker
                     .padding(.top, 4)
@@ -278,21 +329,46 @@ struct GymTimerView: View {
     /// A segmented control gets cramped beyond a few choices.
     private static let maxSegments = 4
 
-    /// Switching the rest length: segments for a few presets, a menu for more.
-    @ViewBuilder
+    /// Switching the rest length: a labelled row of choices showing each length, a menu when there are many.
     private var restPicker: some View {
-        let selection = Binding(get: { preset.name }, set: { selectedName = $0 })
-        if presets.count <= Self.maxSegments {
-            Picker("Pauza", selection: selection) {
-                ForEach(presets) { Text($0.name).tag($0.name) }
+        VStack(alignment: .leading, spacing: 6) {
+            Text("DÉLKA PAUZY").labelStyle()
+            if presets.count <= Self.maxSegments {
+                HStack(spacing: 4) {
+                    ForEach(presets) { item in
+                        let isOn = item.name == preset.name
+                        Button { selectedName = item.name } label: {
+                            VStack(spacing: 1) {
+                                Text(item.name)
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+                                Text(FocusView.clock(TimeInterval(item.seconds)))
+                                    .font(.system(size: 12, weight: .medium))
+                                    .monospacedDigit()
+                                    .opacity(0.7)
+                            }
+                            .foregroundStyle(isOn ? Theme.onPrimary : Theme.textPrimary)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .background(isOn ? Theme.textPrimary : Color.clear)
+                            .clipShape(RoundedRectangle(cornerRadius: 9))
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Pauza \(item.name), \(FocusView.clock(TimeInterval(item.seconds)))")
+                        .accessibilityAddTraits(isOn ? .isSelected : [])
+                    }
+                }
+                .padding(3)
+                .background(Theme.cardRaised)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .sensoryFeedback(.selection, trigger: preset.name)
+            } else {
+                Picker("Délka pauzy", selection: Binding(get: { preset.name }, set: { selectedName = $0 })) {
+                    ForEach(presets) { Text("\($0.name) · \(FocusView.clock(TimeInterval($0.seconds)))").tag($0.name) }
+                }
+                .pickerStyle(.menu)
+                .tint(Theme.textPrimary)
             }
-            .pickerStyle(.segmented)
-        } else {
-            Picker("Pauza", selection: selection) {
-                ForEach(presets) { Text("\($0.name) · \(FocusView.clock(TimeInterval($0.seconds)))").tag($0.name) }
-            }
-            .pickerStyle(.menu)
-            .tint(Theme.textPrimary)
         }
     }
 
@@ -323,6 +399,7 @@ struct GymTimerView: View {
     private func pickWorkout(_ name: String, loadTemplate: Bool) {
         task.workoutType = name
         savedTemplate = false
+        defer { try? context.save() }
         guard loadTemplate else { return }
         for log in logs where !log.setLogs.contains(where: \.isDone) {
             remove(log)
@@ -350,9 +427,10 @@ struct GymTimerView: View {
 
     private func remove(_ log: ExerciseLog) {
         context.delete(log)
+        try? context.save()
     }
 
-    /// Ticking a set off starts the rest and checks for a new record.
+    /// Ticking a set off checks for a new record. The rest is started with its own button, never by ticking.
     private func tick(_ set: SetLog, of log: ExerciseLog) {
         set.isDone.toggle()
         try? context.save()
@@ -368,7 +446,6 @@ struct GymTimerView: View {
                 }
             }
         }
-        startRest()
     }
 
     /// Starting a rest schedules a notification for the target time, so it also works with the screen locked.
@@ -389,6 +466,7 @@ struct GymTimerView: View {
     /// Completing leaves the session running until the workout log is saved, like the focus timer.
     private func end(completing: Bool) {
         NotificationManager.cancelRestEnd()
+        GymActivityManager.end()
         if completing {
             // The rest in progress ends here, so time spent filling in the log is not counted as a pause.
             if session?.isPaused == true { session?.resume() }
@@ -442,6 +520,9 @@ private struct ExerciseCard: View {
                 }
                 .accessibilityLabel("Možnosti cviku")
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .swipeToDelete("Odebrat cvik", cornerRadius: 8) { confirmsRemove = true }
             if let hint = GymService.suggestion(for: log.name, in: history) {
                 Label(hint, systemImage: "arrow.up.right")
                     .font(.system(size: 12, weight: .semibold))
@@ -453,13 +534,15 @@ private struct ExerciseCard: View {
                 Text("KG").frame(width: 66)
                 Text("OPAK.").frame(width: 50)
                 Text("").frame(width: 40)
+                Text("").frame(width: SetRow.deleteWidth)
             }
             .font(.system(size: 10, weight: .semibold))
             .tracking(0.5)
             .foregroundStyle(Theme.textTertiary)
             ForEach(Array(sets.enumerated()), id: \.element.id) { index, set in
                 SetRow(set: set, number: workingNumber(of: set, in: sets),
-                       previous: previous(index: index, of: sets, last: last), onTick: { onTick(set) })
+                       previous: previous(index: index, of: sets, last: last), onTick: { onTick(set) },
+                       onDelete: { delete(set) })
             }
             HStack(spacing: 16) {
                 Button { addSet(warmup: false) } label: { Label("Série", systemImage: "plus") }
@@ -480,6 +563,13 @@ private struct ExerciseCard: View {
             Button("Odebrat", role: .destructive, action: onRemove)
             Button("Zrušit", role: .cancel) {}
         }
+    }
+
+    private func delete(_ set: SetLog) {
+        withAnimation(.easeOut(duration: 0.2)) {
+            context.delete(set)
+        }
+        try? context.save()
     }
 
     /// Warm-ups are marked "R"; working sets are numbered on their own.
@@ -511,20 +601,39 @@ private struct ExerciseCard: View {
         }
         entry.log = log
         context.insert(entry)
+        try? context.save()
     }
 }
 
+/// One set. It is removed with the cross at the end of the row, or by swiping it to the left.
 private struct SetRow: View {
     @Bindable var set: SetLog
     let number: String
     let previous: String
     let onTick: () -> Void
+    let onDelete: () -> Void
+    static let deleteWidth: CGFloat = 26
 
     var body: some View {
+        row
+            .swipeToDelete(set.isWarmup ? "Smazat rozcvičku" : "Smazat sérii", cornerRadius: 8, onDelete: onDelete)
+        .opacity(set.isWarmup && !set.isDone ? 0.75 : 1)
+        .animation(.easeOut(duration: 0.15), value: set.isDone)
+        // Every number goes to disk as it is typed, so a crash or a killed app loses nothing.
+        .onChange(of: set.weight) { save() }
+        .onChange(of: set.reps) { save() }
+        .onChange(of: set.isWarmup) { save() }
+    }
+
+    private func save() {
+        try? set.modelContext?.save()
+    }
+
+    private var row: some View {
         HStack(spacing: 8) {
             Menu {
                 Button(set.isWarmup ? "Změnit na pracovní sérii" : "Změnit na rozcvičku") { set.isWarmup.toggle() }
-                Button("Smazat sérii", role: .destructive) { set.modelContext?.delete(set) }
+                Button("Smazat sérii", role: .destructive, action: onDelete)
             } label: {
                 Text(number)
                     .font(.system(size: 14, weight: .heavy))
@@ -538,7 +647,7 @@ private struct SetRow: View {
                 .font(.system(size: 13))
                 .foregroundStyle(Theme.textTertiary)
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .minimumScaleFactor(0.7)
                 .frame(maxWidth: .infinity, alignment: .leading)
             TextField("0", value: $set.weight, format: .number.precision(.fractionLength(0...2)).locale(.app))
                 .keyboardType(.decimalPad)
@@ -566,8 +675,15 @@ private struct SetRow: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(set.isDone ? "Série hotová" : "Odškrtnout sérii")
+            Button(action: onDelete) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(Theme.textTertiary)
+                    .frame(width: Self.deleteWidth, height: 36)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(set.isWarmup ? "Smazat rozcvičku" : "Smazat sérii \(number)")
         }
-        .opacity(set.isWarmup && !set.isDone ? 0.75 : 1)
-        .animation(.easeOut(duration: 0.15), value: set.isDone)
     }
 }

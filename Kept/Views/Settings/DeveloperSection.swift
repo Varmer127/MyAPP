@@ -61,6 +61,7 @@ struct DeveloperSection: View {
         try? context.delete(model: SetLog.self)
         try? context.delete(model: BodyEntry.self)
         PhotoVault.deleteAll()
+        ActivityIcons.shared.reset()
         try? context.delete(model: ExerciseLog.self)
         try? context.delete(model: Postponement.self)
         try? context.delete(model: WeekReflection.self)

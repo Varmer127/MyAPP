@@ -107,6 +107,9 @@ struct GymSettingsView: View {
                         settings.restPresets = presets.filter { $0 != preset }
                     }
                 }
+                .listSwipeToDelete(isEnabled: presets.count > 1) {
+                    settings.restPresets = presets.filter { $0 != preset }
+                }
             }
             .onMove { from, to in
                 var reordered = presets
@@ -146,6 +149,7 @@ struct GymSettingsView: View {
                     Spacer()
                     removeButton { items.wrappedValue.removeAll { $0 == item } }
                 }
+                .listSwipeToDelete { items.wrappedValue.removeAll { $0 == item } }
             }
             addRow(addLabel, isAdding: isAdding)
             if isAdding.wrappedValue {

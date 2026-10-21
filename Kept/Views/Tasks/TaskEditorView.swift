@@ -112,15 +112,17 @@ struct TaskEditorView: View {
                 Section("Úkol") {
                     TextField("Název", text: $draft.title)
                     Picker("Kategorie", selection: $draft.category) {
-                        ForEach(categoryOptions) { Label($0.title, systemImage: $0.symbol).tag($0) }
+                        ForEach(categoryOptions) { Label($0.title, systemImage: $0.icon).tag($0) }
                     }
                     if task == nil, let custom = settingsList.first?.customActivities, !custom.isEmpty {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
                                 ForEach(custom, id: \.self) { name in
-                                    Button(name) {
+                                    Button {
                                         draft.title = name
                                         draft.category = .other
+                                    } label: {
+                                        Label(name, systemImage: ActivityIcons.shared.symbol(forCustom: name))
                                     }
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundStyle(draft.title == name ? Theme.onPrimary : Theme.textPrimary)
@@ -242,7 +244,7 @@ struct TaskEditorView: View {
                     Button("Zrušit") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Uložit") { isDuplicate ? (confirmsDuplicate = true) : save() }
+                    Button(task == nil ? "Přidat do plánu" : "Uložit") { isDuplicate ? (confirmsDuplicate = true) : save() }
                         .disabled(draft.trimmedTitle.isEmpty)
                 }
             }

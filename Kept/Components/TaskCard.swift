@@ -46,7 +46,7 @@ struct TaskCard: View {
                         .foregroundStyle(task.status == .pending ? Theme.textPrimary : Theme.textSecondary)
                 }
                 HStack(spacing: 6) {
-                    Image(systemName: task.category.symbol)
+                    Image(systemName: task.icon)
                     Text(metadata)
                 }
                 .font(.system(size: 13))

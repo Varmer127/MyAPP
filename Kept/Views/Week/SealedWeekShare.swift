@@ -25,7 +25,7 @@ struct SealedWeekShare: Transferable {
         sealed = committedAt.stampText
         lines = TaskCategory.allCases.compactMap { category in
             let count = snapshot.filter { $0.category == category }.count
-            return count > 0 ? Line(symbol: category.symbol, title: category.title, count: count) : nil
+            return count > 0 ? Line(symbol: category.icon, title: category.title, count: count) : nil
         }
         total = snapshot.count
     }

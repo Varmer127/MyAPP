@@ -25,4 +25,6 @@ struct CompleteTaskIntent: LiveActivityIntent {
 enum WidgetActions {
     /// Set by the app at launch. Stays nil inside the widget extension.
     @MainActor static var complete: ((String) async -> Void)?
+    /// Starts (true) or ends (false) a rest in the running workout.
+    @MainActor static var gymRest: ((Bool) async -> Void)?
 }

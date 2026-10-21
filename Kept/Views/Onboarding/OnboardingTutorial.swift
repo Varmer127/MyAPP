@@ -26,7 +26,7 @@ struct OnboardingTutorial: View {
         var text: String {
             switch self {
             case .task: "Každý den máš na obrazovce Dnes svoje úkoly. Hotovo, částečně, nebo přeskočit. Za splněný závazek dostaneš 100 bodů, za částečný jen jeho díl."
-            case .planning: "Týden si skládáš na obrazovce Týden. Rychlé plánování dá jednu aktivitu na víc dní najednou, zkopírování vezme minulý týden a jeden úkol přidáš plusem u dne. Vyzkoušej všechny tři."
+            case .planning: "Týden si skládáš na obrazovce Týden. Rychlé plánování dá jednu aktivitu na víc dní najednou, Jako minule vezme minulý týden a Jeden úkol přidá úkol se všemi detaily. Vyzkoušej všechny tři."
             case .planner: "Týden naplánuješ a odešleš plánovač. Hodinu ho můžeš měnit bez postihu, pak se sám zapečetí. Od té chvíle je každý úkol slib a každá změna se zaznamená."
             case .streak: "Den, kdy splníš aspoň 80 % úkolů, rozdmýchá plamínek. Jeden špatný den ho zhasne. Kept tě večer varuje a po přerušení ještě týden připomíná."
             case .missed: "Nesplněný úkol nezmizí. Buď ho dodáš pozdě, nebo napíšeš proč a co uděláš příště. Kept si to pamatuje a připomene, až se to bude opakovat."
@@ -267,8 +267,8 @@ private struct PlanningDemo: View {
     private var explanation: String {
         switch mode {
         case .quick: "Na obrazovce Týden klepneš na Rychlé plánování. Vybereš aktivitu a dny a přidáš ji na všechny najednou."
-        case .copy: "Pod Rychlým plánováním je Zkopírovat minulý týden. Co už v plánu máš, se nezdvojí."
-        case .single: "Plusem u dne otevřeš editor úkolu: název, kategorie, čas, délka a priorita."
+        case .copy: "Na obrazovce Týden je karta Naplánuj si týden. Jako minule vezme celý minulý týden, nejdřív se zeptá a co už máš, nezdvojí."
+        case .single: "Jeden úkol nebo plus u dne otevře editor: název, kategorie, čas, délka, priorita i deadline."
         }
     }
 
@@ -282,7 +282,7 @@ private struct PlanningDemo: View {
             Text("CO").labelStyle()
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 8)], spacing: 8) {
                 ForEach([TaskCategory.gym, .reading, .newSkill, .nature]) { category in
-                    chip(category.title, symbol: category.symbol, isSelected: quickCategory == category) {
+                    chip(category.title, symbol: category.icon, isSelected: quickCategory == category) {
                         quickCategory = category
                     }
                 }
@@ -341,19 +341,17 @@ private struct PlanningDemo: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: Zkopírovat minulý týden, as the real button and question
+    // MARK: Zkopírovat minulý týden, as the real card in Rychlé plánování and its question
 
     private var copyPanel: some View {
         VStack(spacing: 12) {
-            Button {
-                withAnimation(.easeOut(duration: 0.2)) { confirmsCopy = true }
-            } label: {
-                Label("ZKOPÍROVAT MINULÝ TÝDEN", systemImage: "doc.on.doc")
-            }
-            .buttonStyle(SecondaryButtonStyle())
+            PlanStartCard(previousWeek: Date.now.weekStart.addingDays(-7).weekNumber,
+                          onQuick: { withAnimation { mode = .quick } },
+                          onSingle: { withAnimation { mode = .single } },
+                          onCopy: { withAnimation(.easeOut(duration: 0.2)) { confirmsCopy = true } })
             if confirmsCopy {
                 VStack(spacing: 6) {
-                    Text("Zkopírovat minulý týden?")
+                    Text("Naplánovat jako minulý týden?")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(Theme.textPrimary)
                     Text("Úkoly z minulého týdne se naplánují na stejné dny tohoto týdne. Co už tu ten den máš pod stejným názvem, se nezdvojí.")
@@ -362,7 +360,7 @@ private struct PlanningDemo: View {
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: 8) {
-                        alertButton("Zrušit") { confirmsCopy = false }
+                        alertButton("Zpět") { confirmsCopy = false }
                         alertButton("Zkopírovat", bold: true) {
                             confirmsCopy = false
                             add([
@@ -535,7 +533,7 @@ private struct PlanningDemo: View {
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Theme.textPrimary)
                 HStack(spacing: 5) {
-                    Image(systemName: item.category.symbol)
+                    Image(systemName: item.category.icon)
                     Text("\(item.category.title) · \(item.minutes) min")
                 }
                 .font(.system(size: 12))

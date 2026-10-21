@@ -58,11 +58,15 @@ struct CommitSummaryView: View {
                                     .font(.system(size: 22, weight: .bold))
                                     .foregroundStyle(Theme.textPrimary)
                                     .frame(width: 48, alignment: .leading)
-                                Label(item.category.title, systemImage: item.category.symbol)
+                                Label(item.category.title, systemImage: item.category.icon)
                                     .font(.system(size: 18))
                                     .foregroundStyle(Theme.textPrimary)
                             }
                         }
+                    }
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("PŘEHLED PO DNECH").labelStyle()
+                        WeekPlanTable(tasks: tasks, weekStart: plan.weekStart)
                     }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("\(tasks.count)")

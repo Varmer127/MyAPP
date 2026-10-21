@@ -10,6 +10,7 @@ struct BodyProgressView: View {
     @Query(sort: \BodyEntry.date, order: .reverse) private var entries: [BodyEntry]
     @State private var editing: BodyEntry?
     @State private var comparing = false
+    @State private var deleting: BodyEntry?
 
     private static let poses: [(key: String, title: String)] = [("front", "Zepředu"), ("side", "Z boku"), ("back", "Zezadu")]
 
@@ -39,6 +40,7 @@ struct BodyProgressView: View {
                 ForEach(entries) { entry in
                     Button { editing = entry } label: { entryCard(entry) }
                         .buttonStyle(.plain)
+                        .swipeToDelete("Smazat zápis", cornerRadius: Theme.radius) { deleting = entry }
                 }
             }
             .padding(.horizontal, Theme.screenPadding)
@@ -48,6 +50,16 @@ struct BodyProgressView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Theme.background, for: .navigationBar)
         .sheet(item: $editing) { BodyEntryEditor(entry: $0) }
+        .alert("Smazat zápis i jeho fotky?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } })) {
+            Button("Smazat", role: .destructive) {
+                if let entry = deleting {
+                    for name in entry.photos.values { PhotoVault.delete(name) }
+                    context.delete(entry)
+                }
+                deleting = nil
+            }
+            Button("Zrušit", role: .cancel) { deleting = nil }
+        }
         // Body photos never show in the app switcher.
         .overlay {
             if scenePhase != .active {

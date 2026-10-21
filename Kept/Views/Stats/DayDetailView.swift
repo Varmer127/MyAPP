@@ -72,7 +72,7 @@ struct DayDetailView: View {
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(Theme.textPrimary)
             HStack(spacing: 6) {
-                Image(systemName: task.category.symbol)
+                Image(systemName: task.icon)
                 Text(meta(task))
             }
             .font(.system(size: 13))

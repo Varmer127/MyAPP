@@ -5,9 +5,12 @@ import SwiftData
 struct QuickPlanView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Query private var tasks: [TaskItem]
     @Query private var settingsList: [UserSettings]
     let weekStart: Date
+    /// Closes the sheet and opens the review of the week's plan.
+    var onReview: () -> Void = {}
 
     @State private var category: TaskCategory = .gym
     @State private var title = TaskCategory.gym.suggestionTitle
@@ -23,6 +26,15 @@ struct QuickPlanView: View {
     private var trimmedTitle: String { title.trimmingCharacters(in: .whitespacesAndNewlines) }
     private var isCustomTitle: Bool { category == .other && (settingsList.first?.customActivities ?? []).contains(trimmedTitle) }
     @State private var confirmsDuplicate = false
+    // What gets added flies from its day into the review button, which counts the plan.
+    @State private var flights: [PlanFlight] = []
+    @State private var flightFrames = FlightFrameStore()
+    @State private var reviewPulse = 0
+    @State private var landedCount = 0
+
+    private var weekTaskCount: Int {
+        tasks.filter { !$0.isRemoved && $0.scheduledDate >= weekStart && $0.scheduledDate < weekStart.addingDays(7) }.count
+    }
 
     private var takenSelected: [Date] { selectedDays.filter(isTaken).sorted() }
     private var canSave: Bool { !trimmedTitle.isEmpty && !selectedDays.isEmpty }
@@ -39,20 +51,30 @@ struct QuickPlanView: View {
         VStack(alignment: .leading, spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("TÝDEN \(weekStart.weekNumber)").labelStyle()
-                        Text("Rychlé plánování")
-                            .font(.system(size: 28, weight: .bold))
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("TÝDEN \(weekStart.weekNumber)").labelStyle()
+                            Text("Rychlé plánování")
+                                .font(.system(size: 28, weight: .bold))
+                                .foregroundStyle(Theme.textPrimary)
+                        }
+                        Spacer()
+                        Button("Zavřít") { dismiss() }
+                            .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(Theme.textPrimary)
+                            .padding(.horizontal, 14)
+                            .frame(minHeight: 40)
+                            .background(Theme.cardRaised)
+                            .clipShape(Capsule())
                     }
                     group("Co") {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 8)], spacing: 8) {
                             ForEach(settingsList.first?.enabledCategories ?? TaskCategory.allCases) { option in
-                                chip(option.title, symbol: option.symbol, isSelected: category == option && !isCustomTitle) { select(option) }
+                                chip(option.title, symbol: option.icon, isSelected: category == option && !isCustomTitle) { select(option) }
                             }
                             // The user's own activities are planned under "Ostatní" with their own name.
                             ForEach(settingsList.first?.customActivities ?? [], id: \.self) { name in
-                                chip(name, symbol: "star", isSelected: category == .other && trimmedTitle == name) {
+                                chip(name, symbol: ActivityIcons.shared.symbol(forCustom: name), isSelected: category == .other && trimmedTitle == name) {
                                     category = .other
                                     title = name
                                 }
@@ -71,6 +93,7 @@ struct QuickPlanView: View {
                                     chip(day.weekdayShortText.uppercased(), isSelected: selectedDays.contains(day)) {
                                         selectedDays.formSymmetricDifference([day])
                                     }
+                                    .flightFrame(Self.frameKey(day))
                                     .disabled(isPast)
                                     .opacity(isPast ? 0.3 : 1)
                                     if taken {
@@ -108,18 +131,47 @@ struct QuickPlanView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             VStack(spacing: 10) {
-                Button(selectedDays.isEmpty ? "VYBER DNY" : "PŘIDAT \(selectedDays.count)×") {
+                Button(selectedDays.isEmpty ? "VYBER DNY" : "PŘIDAT DO PLÁNU · \(selectedDays.count)×") {
                     if takenSelected.isEmpty { save() } else { confirmsDuplicate = true }
                 }
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(!canSave)
-                Button("HOTOVO") { dismiss() }
+                Button(weekTaskCount > 0 ? "ZKONTROLOVAT PLÁN · \(weekTaskCount)" : "ZKONTROLOVAT PLÁN", action: onReview)
                     .buttonStyle(SecondaryButtonStyle())
+                    .disabled(weekTaskCount == 0)
+                    .overlay(alignment: .topTrailing) {
+                        if landedCount > 0 {
+                            Text("+\(landedCount)")
+                                .font(.system(size: 13, weight: .heavy))
+                                .foregroundStyle(Color(hex: 0x000000))
+                                .padding(.horizontal, 8)
+                                .frame(minHeight: 24)
+                                .background(Theme.green)
+                                .clipShape(Capsule())
+                                .offset(x: 6, y: -10)
+                                .transition(.scale.combined(with: .opacity))
+                        }
+                    }
+                    .scaleEffect(reviewPulse % 2 == 1 ? 1.05 : 1)
+                    .shadow(color: Theme.green.opacity(reviewPulse % 2 == 1 ? 0.5 : 0), radius: 14)
+                    .flightFrame(FlightFramesKey.commitButton)
             }
             .padding(Theme.screenPadding)
         }
         .screenBackground()
         .appAppearance()
+        .onPreferenceChange(FlightFramesKey.self) { flightFrames.frames = $0 }
+        .overlay {
+            GeometryReader { proxy in
+                let origin = proxy.frame(in: .global).origin
+                ZStack {
+                    ForEach(flights) { FlyingIcon(flight: $0, origin: origin) }
+                }
+            }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+        }
+        .sensoryFeedback(.success, trigger: reviewPulse) { _, new in new % 2 == 1 }
         .alert("„\(trimmedTitle)“ už v ten den máš", isPresented: $confirmsDuplicate) {
             Button("Přidat znovu") { save() }
             Button("Zrušit", role: .cancel) {}
@@ -174,7 +226,38 @@ struct QuickPlanView: View {
     }
 
     /// Adds the tasks and stays open with the days cleared, so the next category can follow straight away.
+    private static func frameKey(_ day: Date) -> String { "day-\(Int(day.timeIntervalSince1970))" }
+
+    /// Each new task's icon flies from its day into the review button, which then pulses and counts.
+    private func flyIntoReview(_ days: [Date], icon: String) {
+        guard let target = flightFrames.frames[FlightFramesKey.commitButton] else { return }
+        let stagger = 0.07
+        let launched = days.enumerated().compactMap { index, day -> PlanFlight? in
+            guard let frame = flightFrames.frames[Self.frameKey(day)] else { return nil }
+            return PlanFlight(icon: icon, from: CGPoint(x: frame.midX, y: frame.midY),
+                              to: CGPoint(x: target.midX, y: target.midY), delay: Double(index) * stagger)
+        }
+        if !reduceMotion { flights.append(contentsOf: launched) }
+        let ids = Set(launched.map(\.id))
+        let landing = reduceMotion || launched.isEmpty ? 0 : PlanFlight.duration + Double(launched.count - 1) * stagger
+        Task {
+            try? await Task.sleep(for: .seconds(landing))
+            flights.removeAll { ids.contains($0.id) }
+            withAnimation(.spring(duration: 0.3)) {
+                reviewPulse += 1
+                landedCount = days.count
+            }
+            try? await Task.sleep(for: .seconds(0.35))
+            withAnimation(.spring(duration: 0.4)) { reviewPulse += 1 }
+            try? await Task.sleep(for: .seconds(1.6))
+            withAnimation(.easeOut(duration: 0.3)) { landedCount = 0 }
+        }
+    }
+
     private func save() {
+        let added = selectedDays.sorted()
+        let icon = category == .other && isCustomTitle ? ActivityIcons.shared.symbol(forCustom: trimmedTitle) : category.icon
+        defer { flyIntoReview(added, icon: icon) }
         let settings = UserSettings.current(in: context)
         for day in selectedDays.sorted() {
             var draft = TaskDraft(date: day)

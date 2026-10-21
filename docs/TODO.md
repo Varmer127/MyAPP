@@ -21,3 +21,6 @@ Kód používá jen barvy z tématu, ale tyto obrazovky jsme ve světlém režim
 - Deník: hlasový zápis (mikrofon + rozpoznávání češtiny), zámek Face ID, body za zápis
 - Klepnutí na upozornění (oprava pádu z 15. 10.)
 - Gym: přepnutí jednoduchý / pokročilý v Nastavení gymu, jednoduchý trénink (velké tlačítko pauzy), nová mapa svalů ve světlém i tmavém režimu
+- Widgety na ploše: Kept – další úkol, týden, série, spolehlivost, gym (stopky s tlačítkem pauzy) ve světlém i tmavém vzhledu
+- Stopky gymu na zamčené obrazovce a v Dynamic Islandu (tlačítka PAUZA / DALŠÍ SÉRIE, upozornění na konec pauzy)
+- Ikony aktivit: změna v Nastavení → Moje aktivity a v onboardingu, zobrazení v úkolech a plánování

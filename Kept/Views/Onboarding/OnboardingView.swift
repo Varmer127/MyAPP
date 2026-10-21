@@ -338,7 +338,7 @@ struct OnboardingView: View {
             FlowLayout(spacing: 8) {
                 ForEach(OnboardingDraft.offeredCategories) { category in
                     let isOn = draft.activities.contains(category)
-                    chip(category.title, symbol: category.symbol, isOn: isOn) {
+                    chip(category.title, symbol: draft.icon(for: category), isOn: isOn) {
                         if isOn { draft.activities.remove(category) } else { draft.activities.insert(category) }
                     }
                 }
@@ -369,10 +369,42 @@ struct OnboardingView: View {
                     .disabled(name.isEmpty)
                     .opacity(name.isEmpty ? 0.4 : 1)
             }
+            if !draft.activityNames.isEmpty { activityIcons }
             note(draft.activityNames.isEmpty
                  ? "Vyber aspoň jednu aktivitu, jinak ti Kept nemá co navrhovat."
                  : "Vybráno: \(draft.activityNames.count). Kolikrát týdně je chceš dělat, si nastavíš v Nastavení → Týdenní cíle.")
         }
+    }
+
+    /// Every chosen activity with its icon, which a tap changes.
+    private var activityIcons: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("IKONY · KLEPNUTÍM ZMĚNÍŠ").labelStyle()
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 8)], spacing: 8) {
+                ForEach(OnboardingDraft.offeredCategories.filter { draft.activities.contains($0) }) { category in
+                    iconRow(category.title, symbol: draft.icon(for: category)) { draft.categoryIcons[category] = $0 }
+                }
+                ForEach(draft.customActivities, id: \.self) { name in
+                    iconRow(name, symbol: draft.icon(forCustom: name)) { draft.customIcons[name] = $0 }
+                }
+            }
+        }
+    }
+
+    private func iconRow(_ title: String, symbol: String, onPick: @escaping (String) -> Void) -> some View {
+        HStack(spacing: 10) {
+            ActivityIconButton(activity: title, symbol: symbol, onPick: onPick)
+            Text(title)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Theme.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            Spacer(minLength: 0)
+        }
+        .padding(8)
+        .background(Theme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.border, lineWidth: 1))
     }
 
     private func addActivity() {
@@ -504,6 +536,9 @@ struct OnboardingView: View {
                     .buttonStyle(.plain)
                     .disabled(draft.ownWorkouts.count <= 1)
                     .accessibilityLabel("Odebrat trénink")
+                }
+                .swipeToDelete("Odebrat trénink", isEnabled: draft.ownWorkouts.count > 1) {
+                    withAnimation { _ = draft.ownWorkouts.remove(at: index) }
                 }
             }
             if draft.ownWorkouts.count < 7 {

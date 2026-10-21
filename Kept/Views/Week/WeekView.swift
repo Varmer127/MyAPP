@@ -10,15 +10,34 @@ struct WeekView: View {
     @State private var planToCommit: WeeklyPlan?
     @State private var showsQuickPlan = false
     @State private var detailTask: TaskItem?
-    @State private var confirmsCopy = false
     /// Events of the shown week from the iPhone calendar, when that is switched on.
     @State private var calendarEvents: [CalendarService.Event] = []
     @Environment(\.modelContext) private var context
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    // Newly planned tasks fly into the send button, so it is clear the plan still has to be sent.
+    @State private var knownTaskIDs: Set<UUID> = []
+    @State private var knownWeekStart: Date?
+    @State private var flights: [PlanFlight] = []
+    /// Not observed: the frames change on every scroll and only matter when something flies.
+    @State private var flightFrames = FlightFrameStore()
+    @State private var commitPulse = 0
+    @State private var landedCount = 0
+    /// Where the next flight starts instead of the rows, for example the copy tile.
+    @State private var flightOrigin: CGPoint?
+    @State private var confirmsCopy = false
+    @State private var nothingToCopy = false
+    @State private var confirmsReset = false
 
     /// Last week's plan, offered as a starting point until the shown week is handed in.
+    /// The week can still take tasks copied from the one before.
+    private var canCopyWeek: Bool {
+        plan?.isCommitted != true && plan?.isSealing != true && Date.now < weekStart.addingDays(7)
+    }
+
     private var planToCopy: WeeklyPlan? {
-        guard plan?.isCommitted != true, plan?.isSealing != true, Date.now < weekStart.addingDays(7),
+        guard canCopyWeek,
               let previous = plans.first(where: { $0.weekStart == weekStart.addingDays(-7) }),
               !previous.committableTasks.isEmpty else { return nil }
         return previous
@@ -54,16 +73,11 @@ struct WeekView: View {
                     header
                     statusCard
                     if Date.now < weekStart.addingDays(7) {
-                        Button("RYCHLÉ PLÁNOVÁNÍ") { showsQuickPlan = true }
-                            .buttonStyle(SecondaryButtonStyle())
-                        if planToCopy != nil {
-                            Button {
-                                confirmsCopy = true
-                            } label: {
-                                Label("ZKOPÍROVAT MINULÝ TÝDEN", systemImage: "doc.on.doc")
-                            }
-                            .buttonStyle(SecondaryButtonStyle())
-                        }
+                        PlanStartCard(previousWeek: weekStart.addingDays(-7).weekNumber,
+                                      onQuick: { showsQuickPlan = true },
+                                      onSingle: { editor = EditorRequest(date: max(Date.now, weekStart)) },
+                                      onCopy: { if planToCopy == nil { nothingToCopy = true } else { confirmsCopy = true } },
+                                      onReset: resettableTasks.isEmpty ? nil : { confirmsReset = true })
                     }
                     if !goals.isEmpty || weeklyTotal != nil {
                         WeeklyGoalsCard(goals: goals, total: weeklyTotal)
@@ -97,6 +111,22 @@ struct WeekView: View {
                 if canCommit, let plan {
                     Button("ZKONTROLOVAT A ODESLAT PLÁNOVAČ") { planToCommit = plan }
                         .buttonStyle(PrimaryButtonStyle())
+                        .overlay(alignment: .topTrailing) {
+                            if landedCount > 0 {
+                                Text("+\(landedCount)")
+                                    .font(.system(size: 13, weight: .heavy))
+                                    .foregroundStyle(Color(hex: 0x000000))
+                                    .padding(.horizontal, 8)
+                                    .frame(minHeight: 24)
+                                    .background(Theme.green)
+                                    .clipShape(Capsule())
+                                    .offset(x: 6, y: -10)
+                                    .transition(.scale.combined(with: .opacity))
+                            }
+                        }
+                        .scaleEffect(commitPulse % 2 == 1 ? 1.05 : 1)
+                        .shadow(color: Theme.green.opacity(commitPulse % 2 == 1 ? 0.5 : 0), radius: 14)
+                        .flightFrame(FlightFramesKey.commitButton)
                         .padding(.horizontal, Theme.screenPadding)
                         .padding(.vertical, 12)
                         .background(Theme.background)
@@ -104,23 +134,159 @@ struct WeekView: View {
             }
             .toolbarBackground(Theme.background, for: .navigationBar)
         }
+        .onPreferenceChange(FlightFramesKey.self) { flightFrames.frames = $0 }
+        .overlay {
+            GeometryReader { proxy in
+                let origin = proxy.frame(in: .global).origin
+                ZStack {
+                    ForEach(flights) { flight in
+                        FlyingIcon(flight: flight, origin: origin)
+                    }
+                }
+            }
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
+        }
+        .sensoryFeedback(.success, trigger: commitPulse) { _, new in new % 2 == 1 }
+        .onAppear { rememberTasks() }
+        .onChange(of: openTaskIDs) { launchFlights() }
+        .onChange(of: isPresenting) { _, presenting in
+            guard !presenting else { return }
+            // Let the sheet slide away and the new rows settle before anything flies.
+            Task {
+                try? await Task.sleep(for: .seconds(0.45))
+                launchFlights()
+            }
+        }
         .sheet(item: $editor) { TaskEditorView(task: $0.task, defaultDate: $0.date, suggestion: $0.suggestion) }
         .sheet(item: $planToCommit) { CommitSummaryView(plan: $0) }
         .sheet(item: $detailTask) { TaskDetailView(task: $0) }
-        .sheet(isPresented: $showsQuickPlan) { QuickPlanView(weekStart: weekStart) }
-        .alert("Zkopírovat minulý týden?", isPresented: $confirmsCopy) {
-            Button("Zkopírovat") {
-                if let planToCopy {
-                    withAnimation { PlanService.copyWeek(planToCopy, in: context) }
-                }
-            }
-            Button("Zrušit", role: .cancel) {}
-        } message: {
-            Text("Úkoly z minulého týdne se naplánují na stejné dny tohoto týdne. Co už tu ten den máš pod stejným názvem, se nezdvojí. Je to jen návrh, který pak můžeš upravit a odeslat.")
-        }
+        .modifier(PlanningDialogs(view: self))
         .task(id: "\(weekStart)-\(settingsList.first?.calendarEnabled == true)-\(scenePhase == .active)") {
             calendarEvents = settingsList.first?.calendarEnabled == true
                 ? CalendarService.events(from: weekStart, to: weekStart.addingDays(7)) : []
+        }
+    }
+
+    // MARK: Planning dialogs
+
+    fileprivate func planningDialogs<Content: View>(_ content: Content) -> some View {
+        content
+        .sheet(isPresented: $showsQuickPlan) {
+            QuickPlanView(weekStart: weekStart) {
+                showsQuickPlan = false
+                guard let plan else { return }
+                Task {
+                    try? await Task.sleep(for: .seconds(0.5))
+                    planToCommit = plan
+                }
+            }
+        }
+        // What was planned in Rychlé plánování already flew there, so it does not fly again here.
+        .onChange(of: showsQuickPlan) { _, isShown in if !isShown { rememberTasks() } }
+        .alert("Naplánovat jako minulý týden?", isPresented: $confirmsCopy) {
+            Button("Zkopírovat týden \(weekStart.addingDays(-7).weekNumber)") {
+                guard let planToCopy else { return }
+                if let tile = flightFrames.frames[PlanStartCard.copyTile] {
+                    flightOrigin = CGPoint(x: tile.midX, y: tile.midY)
+                }
+                // Copy once the question has gone, so the icons fly over a clear screen.
+                Task {
+                    try? await Task.sleep(for: .seconds(0.35))
+                    withAnimation { _ = PlanService.copyWeek(planToCopy, in: context) }
+                }
+            }
+            Button("Zpět", role: .cancel) {}
+        } message: {
+            Text("Úkoly z týdne \(weekStart.addingDays(-7).weekNumber) se naplánují na stejné dny tohoto týdne. Co už tu ten den máš pod stejným názvem, se nezdvojí. Pořád je to jen návrh, upravíš ho a pak odešleš.")
+        }
+        .alert("Minulý týden jsi nic neměl", isPresented: $nothingToCopy) {
+            Button("Rozumím", role: .cancel) {}
+        } message: {
+            Text("V týdnu \(weekStart.addingDays(-7).weekNumber) nemáš žádné úkoly, takže není co kopírovat. Začni Rychlým plánováním nebo jedním úkolem.")
+        }
+        .alert("Začít plán znovu?", isPresented: $confirmsReset) {
+            Button("Vymazat naplánované", role: .destructive) { resetPlan() }
+            Button("Nechat, jak je", role: .cancel) {}
+        } message: {
+            Text("Všechny úkoly, které tu ještě čekají, zmizí a můžeš plánovat od nuly. Splněné zůstanou. Plán ještě není odeslaný, takže to nic nestojí.")
+        }
+    }
+
+    // MARK: Planning flight
+
+    private var openTaskIDs: Set<UUID> { Set((plan?.activeTasks ?? []).filter { $0.status == .pending }.map(\.uid)) }
+    private var isPresenting: Bool { showsQuickPlan || editor != nil || planToCommit != nil || detailTask != nil }
+
+    /// The draft's tasks that a fresh start clears: open ones that are not done yet.
+    private var resettableTasks: [TaskItem] {
+        guard canCopyWeek, let plan else { return [] }
+        return plan.activeTasks.filter { $0.status == .pending && $0.scheduledDate.endOfDay > Date.now }
+    }
+
+    private func resetPlan() {
+        withAnimation {
+            for task in resettableTasks { PlanService.remove(task, in: context) }
+        }
+        try? context.save()
+        rememberTasks()
+    }
+
+    private func rememberTasks() {
+        knownTaskIDs = openTaskIDs
+        knownWeekStart = weekStart
+    }
+
+    /// Sends every task planned since the last look into the send button, one after another.
+    private func launchFlights() {
+        guard knownWeekStart == weekStart else { return rememberTasks() }
+        guard !isPresenting else { return }
+        let added = openTaskIDs.subtracting(knownTaskIDs)
+        knownTaskIDs = openTaskIDs
+        guard !added.isEmpty else { return }
+        fly(added, attempt: 0)
+    }
+
+    /// In an empty week the send button only appears with the first task, so wait for it a moment.
+    private func fly(_ added: Set<UUID>, attempt: Int) {
+        guard canCommit, let target = flightFrames.frames[FlightFramesKey.commitButton] else {
+            guard attempt < 5 else { return }
+            Task {
+                try? await Task.sleep(for: .seconds(0.12))
+                fly(added, attempt: attempt + 1)
+            }
+            return
+        }
+        let newTasks = (plan?.activeTasks ?? []).filter { added.contains($0.uid) }.sorted { $0.dueDate < $1.dueDate }
+        let screen = UIScreen.main.bounds
+        let fallback = CGPoint(x: screen.midX, y: screen.height * 0.4)
+        let stagger = 0.07
+        let shown = Array(newTasks.prefix(12))
+        if !reduceMotion {
+            let launched = shown.enumerated().map { index, task -> PlanFlight in
+                let row = flightFrames.frames[task.uid.uuidString]
+                let start = flightOrigin
+                    ?? row.flatMap { screen.intersects($0) ? CGPoint(x: $0.minX + 34, y: $0.midY) : nil }
+                    ?? fallback
+                return PlanFlight(icon: task.icon, from: start, to: CGPoint(x: target.midX, y: target.midY),
+                                  delay: Double(index) * stagger)
+            }
+            flights.append(contentsOf: launched)
+        }
+        flightOrigin = nil
+        let landing = reduceMotion ? 0 : PlanFlight.duration + Double(shown.count - 1) * stagger
+        let ids = Set(flights.map(\.id))
+        Task {
+            try? await Task.sleep(for: .seconds(landing))
+            withAnimation(.spring(duration: 0.3)) {
+                commitPulse += 1
+                landedCount = newTasks.count
+            }
+            flights.removeAll { ids.contains($0.id) }
+            try? await Task.sleep(for: .seconds(0.35))
+            withAnimation(.spring(duration: 0.4)) { commitPulse += 1 }
+            try? await Task.sleep(for: .seconds(1.6))
+            withAnimation(.easeOut(duration: 0.3)) { landedCount = 0 }
         }
     }
 
@@ -235,6 +401,7 @@ struct WeekView: View {
                             Divider().overlay(Theme.border)
                         }
                         WeekTaskRow(task: task)
+                            .flightFrame(task.uid.uuidString)
                             .contentShape(Rectangle())
                             .onTapGesture {
                                 if task.status == .pending, !task.isMissed(.now) {
@@ -394,7 +561,7 @@ private struct SealNowSheet: View {
                                 ForEach(Array(tasks.filter { $0.scheduledDate.isSameDay(as: day) }.enumerated()), id: \.element.id) { index, task in
                                     if index > 0 { Divider().overlay(Theme.border) }
                                     HStack(spacing: 10) {
-                                        Image(systemName: task.category.symbol)
+                                        Image(systemName: task.icon)
                                             .foregroundStyle(task.priority == .critical ? Theme.orange : Theme.textSecondary)
                                             .frame(width: 22)
                                         Text(task.title)
@@ -501,7 +668,7 @@ private extension SealingCard {
                             .foregroundStyle(Theme.textTertiary)
                     }
                     ForEach(items.prefix(Self.maxIconsPerDay)) { task in
-                        Image(systemName: task.category.symbol)
+                        Image(systemName: task.icon)
                             .font(.system(size: 13))
                             .foregroundStyle(!isPledgeable(task) ? Theme.textTertiary
                                              : (task.priority == .critical ? Theme.orange : Theme.textPrimary))
@@ -536,7 +703,7 @@ private extension SealingCard {
             }
             ForEach(items) { task in
                 HStack(spacing: 10) {
-                    Image(systemName: task.category.symbol)
+                    Image(systemName: task.icon)
                         .font(.system(size: 13))
                         .foregroundStyle(task.priority == .critical ? Theme.orange : Theme.textSecondary)
                         .frame(width: 20)
@@ -585,7 +752,7 @@ private struct WeekTaskRow: View {
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(task.status == .pending ? Theme.textPrimary : Theme.textSecondary)
                 HStack(spacing: 5) {
-                    Image(systemName: task.category.symbol)
+                    Image(systemName: task.icon)
                     Text(subtitle)
                 }
                 .font(.system(size: 12))
@@ -664,5 +831,14 @@ private struct PlanChangesView: View {
                 .card(padding: 0)
             }
         }
+    }
+}
+
+/// The planning sheets and questions of the week screen, kept apart so the screen's body stays simple.
+private struct PlanningDialogs: ViewModifier {
+    let view: WeekView
+
+    func body(content: Content) -> some View {
+        view.planningDialogs(content)
     }
 }

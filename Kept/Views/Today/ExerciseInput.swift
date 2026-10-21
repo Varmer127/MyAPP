@@ -144,6 +144,7 @@ struct ExerciseInput: View {
             }
         }
         .card(padding: 12)
+        .swipeToDelete("Odebrat cvik", cornerRadius: Theme.radius) { toggle(draft.wrappedValue.name) }
     }
 
     /// One labelled input cell of an exercise row.

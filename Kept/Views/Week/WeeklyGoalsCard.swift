@@ -31,7 +31,7 @@ struct WeeklyGoalsCard: View {
             ForEach(goals) { goal in
                 VStack(spacing: 6) {
                     HStack {
-                        Label(goal.category.title, systemImage: goal.category.symbol)
+                        Label(goal.category.title, systemImage: goal.category.icon)
                             .font(.system(size: 15))
                             .foregroundStyle(Theme.textPrimary)
                         if goal.planned > 0, !goal.isMet {

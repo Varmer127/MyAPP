@@ -543,7 +543,7 @@ struct TodayView: View {
                 ForEach(suggestions) { suggestion in
                     VStack(alignment: .leading, spacing: 12) {
                         VStack(alignment: .leading, spacing: 5) {
-                            Label(suggestion.category.suggestionTitle, systemImage: suggestion.category.symbol)
+                            Label(suggestion.category.suggestionTitle, systemImage: suggestion.category.icon)
                                 .font(.system(size: 18, weight: .semibold))
                                 .foregroundStyle(Theme.textPrimary)
                             Text(suggestion.reason)
@@ -787,6 +787,9 @@ struct TodayView: View {
                     onFail: { giveUp(on: task, now: now) },
                     onFocus: {
                         if task.category == .gym {
+                            // The workout starts before the screen opens, so nothing on this screen
+                            // changes under the opening animation.
+                            _ = task.startFocusIfNeeded(in: context)
                             gymTimerTask = task
                         } else {
                             focusTask = task

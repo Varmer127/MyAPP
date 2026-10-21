@@ -42,6 +42,9 @@ struct OnboardingDraft {
 
     var activities: Set<TaskCategory> = [.gym, .reading, .newSkill, .nature]
     var customActivities: [String] = []
+    /// Icons changed in the guide; everything else keeps its default.
+    var categoryIcons: [TaskCategory: String] = [:]
+    var customIcons: [String: String] = [:]
     var minimum = UserSettings.defaultMinimumWeeklyTasks
     var gymMode: GymMode = .simple
     var split: Split = .pushPullLegs
@@ -59,6 +62,9 @@ struct OnboardingDraft {
     var sundayStartHour = 10
 
     var doesGym: Bool { activities.contains(.gym) }
+
+    func icon(for category: TaskCategory) -> String { categoryIcons[category] ?? category.symbol }
+    func icon(forCustom name: String) -> String { customIcons[name] ?? ActivityIcons.customDefault }
 
     /// Names of everything chosen, as the user would read them.
     var activityNames: [String] {
@@ -78,6 +84,8 @@ struct OnboardingDraft {
     func apply(to settings: UserSettings, now: Date = .now) {
         settings.enabledCategories = Array(activities) + [.other]
         settings.customActivities = customActivities
+        ActivityIcons.shared.apply(categories: categoryIcons, custom: customIcons.filter { customActivities.contains($0.key) })
+        ActivityIcons.shared.register(custom: customActivities)
         settings.minimumWeeklyTasks = minimum
 
         if doesGym {

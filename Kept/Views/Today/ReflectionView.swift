@@ -100,7 +100,7 @@ struct ReflectionView: View {
     private func categoryRow(_ item: (category: TaskCategory, done: Int, total: Int)) -> some View {
         VStack(spacing: 6) {
             HStack {
-                Label(item.category.title, systemImage: item.category.symbol)
+                Label(item.category.title, systemImage: item.category.icon)
                     .font(.system(size: 16))
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
