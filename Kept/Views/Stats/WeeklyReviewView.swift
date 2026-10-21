@@ -25,6 +25,9 @@ struct WeeklyReviewView: View {
     private var weekPlans: [WeeklyPlan] { plans.filter { $0.weekStart == weekStart } }
     private var promisesKept: Double? { ScoreEngine.promisesKept(closed, now: now) }
     private var productivity: Double? { ScoreEngine.productivity(closed, now: now) }
+    private var plannedCount: Int {
+        tasks.filter { !$0.isRemoved && $0.scheduledDate >= weekStart && $0.scheduledDate < weekStart.addingDays(7) }.count
+    }
     private var dayScores: [StatisticsService.DayScore] {
         StatisticsService.dailyScores(tasks: tasks, from: weekStart, days: Self.daysInWeek, now: now)
     }
@@ -33,12 +36,7 @@ struct WeeklyReviewView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                 header
-                if closed.isEmpty {
-                    Text("V tomto týdnu zatím není žádný uzavřený úkol.")
-                        .font(.system(size: 15))
-                        .foregroundStyle(Theme.textSecondary)
-                        .card()
-                } else {
+                if !closed.isEmpty {
                     counts
                     dayChart
                     highlights
@@ -63,10 +61,33 @@ struct WeeklyReviewView: View {
         VStack(alignment: .leading, spacing: 4) {
             Text("TÝDEN \(weekStart.weekNumber) · \(weekStart.dayMonthText) – \(weekStart.addingDays(6).dayMonthText)")
                 .labelStyle()
-            Text(promisesKept.percentText)
-                .font(.system(size: 72, weight: .heavy))
-                .foregroundStyle(Theme.textPrimary)
-            Text("DODRŽENÉ SLIBY").labelStyle()
+            // Nothing measured yet is said in words, never as a dash.
+            if closed.isEmpty {
+                Text("Týden teprve začíná.")
+                    .font(.system(size: 30, weight: .heavy))
+                    .foregroundStyle(Theme.textPrimary)
+                    .padding(.top, 8)
+                Text(plannedCount > 0
+                     ? "V plánu máš \(plannedCount) \(plannedCount == 1 ? "úkol" : (2...4).contains(plannedCount) ? "úkoly" : "úkolů"). Přehled se naplní, jak je budeš plnit."
+                     : "Zatím tu nic není. Naplánuj si týden a přehled se začne plnit.")
+                    .font(.system(size: 15))
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else if let kept = promisesKept {
+                Text(kept.percentText)
+                    .font(.system(size: 72, weight: .heavy))
+                    .foregroundStyle(Theme.textPrimary)
+                Text("DODRŽENÉ SLIBY").labelStyle()
+            } else {
+                Text(productivity.percentText)
+                    .font(.system(size: 72, weight: .heavy))
+                    .foregroundStyle(Theme.textPrimary)
+                Text("PRODUKTIVITA").labelStyle()
+                Text("Dodržené sliby se počítají, až plán týdne odešleš.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.textSecondary)
+                    .padding(.top, 2)
+            }
             if let current = promisesKept,
                let previous = ScoreEngine.promisesKept(closedTasks(in: weekStart.addingDays(-7)), now: now) {
                 let delta = Int(((current - previous) * 100).rounded())
@@ -75,11 +96,20 @@ struct WeeklyReviewView: View {
                     .foregroundStyle(delta >= 0 ? Theme.green : Theme.red)
                     .padding(.top, 4)
             }
-            HStack(spacing: 10) {
-                MetricTile(value: productivity.percentText, label: "Produktivita")
-                MetricTile(value: weekPlans.first.flatMap(ScoreEngine.commitmentIntegrity).percentText, label: "Věrnost plánu")
+            // Only what has a value; an empty tile reads like an error.
+            let integrity = weekPlans.first.flatMap(ScoreEngine.commitmentIntegrity)
+            let showsProductivity = promisesKept != nil && productivity != nil
+            if !closed.isEmpty, showsProductivity || integrity != nil {
+                HStack(spacing: 10) {
+                    if showsProductivity {
+                        MetricTile(value: productivity.percentText, label: "Produktivita")
+                    }
+                    if let integrity {
+                        MetricTile(value: integrity.percentText, label: "Věrnost plánu")
+                    }
+                }
+                .padding(.top, 12)
             }
-            .padding(.top, 12)
         }
     }
 

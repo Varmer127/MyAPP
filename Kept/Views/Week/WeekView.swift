@@ -29,6 +29,7 @@ struct WeekView: View {
     @State private var confirmsCopy = false
     @State private var nothingToCopy = false
     @State private var confirmsReset = false
+    @State private var goalsExpanded = false
 
     /// Last week's plan, offered as a starting point until the shown week is handed in.
     /// The week can still take tasks copied from the one before.
@@ -72,7 +73,7 @@ struct WeekView: View {
                 VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                     header
                     statusCard
-                    if Date.now < weekStart.addingDays(7) {
+                    if Date.now < weekStart.addingDays(7), plan?.isCommitted != true, plan?.isSealing != true {
                         PlanStartCard(previousWeek: weekStart.addingDays(-7).weekNumber,
                                       onQuick: { showsQuickPlan = true },
                                       onSingle: { editor = EditorRequest(date: max(Date.now, weekStart)) },
@@ -80,7 +81,13 @@ struct WeekView: View {
                                       onReset: resettableTasks.isEmpty ? nil : { confirmsReset = true })
                     }
                     if !goals.isEmpty || weeklyTotal != nil {
-                        WeeklyGoalsCard(goals: goals, total: weeklyTotal)
+                        // Once the plan is sent the days matter most; the goals fold into one line.
+                        if plan?.isCommitted == true, !goalsExpanded {
+                            goalsSummaryRow
+                        } else {
+                            WeeklyGoalsCard(goals: goals, total: weeklyTotal)
+                                .onTapGesture { if plan?.isCommitted == true { withAnimation { goalsExpanded = false } } }
+                        }
                     }
                     if !showsNextWeek, plan?.tasks.isEmpty == false {
                         NavigationLink {
@@ -211,6 +218,34 @@ struct WeekView: View {
         } message: {
             Text("Všechny úkoly, které tu ještě čekají, zmizí a můžeš plánovat od nuly. Splněné zůstanou. Plán ještě není odeslaný, takže to nic nestojí.")
         }
+    }
+
+    /// The sent week's goals in one tappable line.
+    private var goalsSummaryRow: some View {
+        let met = goals.filter(\.isMet).count
+        return Button {
+            withAnimation { goalsExpanded = true }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "target")
+                    .foregroundStyle(Theme.textPrimary)
+                if let total = weeklyTotal {
+                    Text("\(total.done) / \(total.minimum) aktivit")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                }
+                if !goals.isEmpty {
+                    Text("· cíle \(met) / \(goals.count)")
+                        .font(.system(size: 15))
+                        .foregroundStyle(met == goals.count ? Theme.green : Theme.textSecondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.down").foregroundStyle(Theme.textTertiary)
+            }
+            .card(padding: 14)
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint("Rozbalí cíle týdne")
     }
 
     // MARK: Planning flight
@@ -390,10 +425,26 @@ struct WeekView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             if tasks.isEmpty {
-                Text("Žádné závazky")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Theme.textTertiary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                if isPast {
+                    Text("Žádné závazky")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Theme.textTertiary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    // An empty day invites the first task right where it would go.
+                    Button {
+                        editor = EditorRequest(date: day)
+                    } label: {
+                        Label("Přidat úkol na tento den", systemImage: "plus")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(Theme.textSecondary)
+                            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                            .padding(.horizontal, 14)
+                            .overlay(RoundedRectangle(cornerRadius: 12)
+                                .strokeBorder(Theme.textTertiary.opacity(0.5), style: StrokeStyle(lineWidth: 1, dash: [5, 4])))
+                    }
+                    .buttonStyle(.plain)
+                }
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(tasks.enumerated()), id: \.element.id) { index, task in

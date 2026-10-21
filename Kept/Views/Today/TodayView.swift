@@ -56,6 +56,8 @@ struct TodayView: View {
     private static let comebackThreshold = 0.6
     private static let stakeQuestionDays = 7
     private static let slippingAfterMinutes = 18 * 60
+    /// From this time on, a streak that today would break is shown as at risk.
+    private static let streakWarningFromMinutes = 19 * 60
     private static let slippingCriticalCount = 2
     private static let streakUrgentSeconds: TimeInterval = 6 * 3600
 
@@ -145,7 +147,8 @@ struct TodayView: View {
         }
         .overlay {
             if showsDayKept {
-                DayKeptCelebration(done: todayTasks.filter(\.isDone).count, streak: ScoreEngine.dayStreak(tasks)) {
+                DayKeptCelebration(done: todayTasks.filter(\.isDone).count, streak: ScoreEngine.dayStreak(tasks),
+                                   milestone: StreakService.milestones(tasks).last { $0.reachedOn?.isSameDay(as: .now) == true }) {
                     withAnimation(.easeIn(duration: 0.25)) { showsDayKept = false }
                 }
                 .transition(.opacity)
@@ -244,7 +247,8 @@ struct TodayView: View {
         let slipping = isSlipping(day, now: now)
         return ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
-                header(now: now, streak: day.streak)
+                header(now: now, day: day)
+                todaysPromise(day, now: now)
                 if slipping {
                     slippingBanner(day)
                 }
@@ -326,8 +330,10 @@ struct TodayView: View {
         }
     }
 
-    private func header(now: Date, streak: Int) -> some View {
-        HStack(alignment: .center) {
+    private func header(now: Date, day: TodaySnapshot) -> some View {
+        let streak = day.streak
+        let atRisk = streakAtRisk(day, now: now)
+        return HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("DNES").labelStyle()
                 Text(now.longDayText)
@@ -335,17 +341,111 @@ struct TodayView: View {
                     .foregroundStyle(Theme.textPrimary)
             }
             Spacer()
-            // Days in a row at 80 % or better. Lit only while the streak is alive.
-            VStack(spacing: 0) {
-                Image(systemName: "flame.fill")
-                    .font(.system(size: 30))
-                    .symbolEffect(.bounce, options: .nonRepeating, value: streak)
-                Text("\(streak)")
-                    .font(.system(size: 17, weight: .heavy))
-                    .contentTransition(.numericText())
+            // Days in a row at 80 % or better. Lit only while the streak is alive; in the evening of a day
+            // that would break it, it pulses and says so.
+            HStack(spacing: 8) {
+                if streak == 0 || atRisk {
+                    Text(streak == 0 ? "Začni\nsérii dnes" : "Zhasne\no půlnoci")
+                        .font(.system(size: 11, weight: .semibold))
+                        .multilineTextAlignment(.trailing)
+                        .foregroundStyle(atRisk ? Theme.orange : Theme.textSecondary)
+                }
+                VStack(spacing: 0) {
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: 30))
+                        .symbolEffect(.bounce, options: .nonRepeating, value: streak)
+                        .symbolEffect(.pulse, options: .repeating, isActive: atRisk)
+                    Text("\(streak)")
+                        .font(.system(size: 17, weight: .heavy))
+                        .contentTransition(.numericText())
+                }
+                .foregroundStyle(streak > 0 ? Theme.orange : Theme.textTertiary)
             }
-            .foregroundStyle(streak > 0 ? Theme.orange : Theme.textTertiary)
             .animation(.easeOut(duration: 0.4), value: streak)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(streak == 0 ? "Série 0 dní. Začni ji dnes." : (atRisk ? "Série \(streak) dní, o půlnoci zhasne" : "Série \(streak) dní"))
+        }
+    }
+
+    /// The streak is alive from earlier days, but today is still under the bar and the evening has come.
+    private func streakAtRisk(_ day: TodaySnapshot, now: Date) -> Bool {
+        day.streak > 0 && now.minutesIntoDay >= Self.streakWarningFromMinutes
+            && !day.scored.isEmpty && (day.productivity ?? 0) < ScoreEngine.Config.streakThreshold
+    }
+
+    /// Today's promise in one card: how much is kept, what comes next, and the way to start it.
+    @ViewBuilder
+    private func todaysPromise(_ day: TodaySnapshot, now: Date) -> some View {
+        if !day.scored.isEmpty {
+            let total = day.scored.count
+            let done = day.doneCount
+            let next = (day.critical + day.open).first
+            let allDone = done == total
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text("DNEŠNÍ SLIB").labelStyle(allDone ? Theme.green : Theme.textSecondary)
+                    Spacer()
+                    if day.partialCount > 0 {
+                        Text("částečně: \(day.partialCount)")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Theme.orange)
+                    }
+                }
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text("\(done) / \(total)")
+                        .font(.system(size: 34, weight: .heavy))
+                        .foregroundStyle(allDone ? Theme.green : Theme.textPrimary)
+                        .contentTransition(.numericText())
+                    Text(allDone ? "Den dodržen." : (total - done == 1 ? "Zbývá poslední." : "Zbývá \(total - done)."))
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                ThinBar(value: Double(done) / Double(total), color: allDone ? Theme.green : Theme.textPrimary)
+                if let next {
+                    HStack(spacing: 10) {
+                        Image(systemName: next.icon)
+                            .font(.system(size: 15))
+                            .foregroundStyle(Theme.textPrimary)
+                            .frame(width: 32, height: 32)
+                            .background(Theme.cardRaised)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("NA ŘADĚ").labelStyle()
+                            Text(next.title)
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(Theme.textPrimary)
+                                .lineLimit(1)
+                        }
+                        Spacer(minLength: 8)
+                        if next.activeFocusSession == nil, next.category == .gym || next.usesFocus {
+                            Button(next.category == .gym ? "ZAČÍT" : "FOCUS") {
+                                if next.category == .gym {
+                                    _ = next.startFocusIfNeeded(in: context)
+                                    gymTimerTask = next
+                                } else {
+                                    focusTask = next
+                                }
+                            }
+                            .font(.system(size: 13, weight: .heavy))
+                            .foregroundStyle(Theme.onPrimary)
+                            .padding(.horizontal, 14)
+                            .frame(minHeight: 36)
+                            .background(Theme.textPrimary)
+                            .clipShape(Capsule())
+                        } else if !next.requiresProof, next.category != .gym {
+                            Button("SPLNIL JSEM") { confirmDone = next }
+                                .font(.system(size: 13, weight: .heavy))
+                                .foregroundStyle(Color(hex: 0x000000))
+                                .padding(.horizontal, 14)
+                                .frame(minHeight: 36)
+                                .background(Theme.green)
+                                .clipShape(Capsule())
+                        }
+                    }
+                }
+            }
+            .card()
+            .animation(.easeOut(duration: 0.3), value: done)
         }
     }
 
@@ -483,7 +583,7 @@ struct TodayView: View {
         VStack(alignment: .leading, spacing: 4) {
             // A new user starts with a clean record, not with dashes.
             Text("\(day.accountability?.score ?? ScoreEngine.startingScore)")
-                .font(.system(size: 72, weight: .heavy))
+                .font(.system(size: 56, weight: .heavy))
                 .foregroundStyle(day.accountability == nil ? Theme.green : heroColor(day.accountability?.score))
                 .contentTransition(.numericText())
                 .animation(.easeOut(duration: 0.6), value: day.accountability?.score)
@@ -511,24 +611,6 @@ struct TodayView: View {
                 MetricTile(value: day.freshValue(day.promisesKept), label: "Dodržené sliby")
                 MetricTile(value: day.freshValue(day.productivity), label: "Produktivita")
                 MetricTile(value: "\(day.streak)", label: "Série dní")
-            }
-            if !day.scored.isEmpty {
-                VStack(spacing: 8) {
-                    HStack {
-                        Text("\(day.doneCount) / \(day.scored.count)")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(Theme.textPrimary)
-                        Text("ÚKOLŮ SPLNĚNO").labelStyle()
-                        if day.partialCount > 0 {
-                            Text("z toho částečně: \(day.partialCount)")
-                                .font(.system(size: 12))
-                                .foregroundStyle(Theme.orange)
-                        }
-                        Spacer()
-                    }
-                    ThinBar(value: Double(day.doneCount) / Double(day.scored.count),
-                            color: day.doneCount == day.scored.count && day.partialCount == 0 ? Theme.green : Theme.textPrimary)
-                }
             }
         }
     }
