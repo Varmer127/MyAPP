@@ -143,6 +143,11 @@ struct WeekView: View {
                 .padding(.bottom, 32)
             }
             .screenBackground()
+            .refreshesData {
+                // The calendar is read again too.
+                calendarEvents = settingsList.first?.calendarEnabled == true
+                    ? CalendarService.events(from: weekStart, to: weekStart.addingDays(7)) : []
+            }
             .safeAreaInset(edge: .bottom) {
                 if canCommit, let plan {
                     Button("ZKONTROLOVAT A ODESLAT PLÁNOVAČ") { planToCommit = plan }

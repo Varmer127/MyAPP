@@ -149,6 +149,7 @@ struct ProfileView: View {
             .padding(.bottom, 32)
         }
         .screenBackground()
+        .refreshesData()
         .overlay(alignment: .bottom) {
             // A small window with the details of the chosen badge. It stays until another badge is chosen or it is closed.
             if let selected {

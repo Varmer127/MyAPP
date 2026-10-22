@@ -33,3 +33,9 @@ Kód používá jen barvy z tématu, ale tyto obrazovky jsme ve světlém režim
 - **Svědek a serverový čas:** potřebují server (fáze App Storu).
 - **Zdraví, načítání při návratu do popředí:** zatím beze změny; nejdřív vysvětlit, co to dělá.
 - **Nezpracováno z auditu:** pět stupňů písma místo 29 velikostí, střídmější verzálky u popisků, jemné světlo na horní hraně karet v tmavém režimu, rozdělení velkých pohledů (`TodayView`, `WeekView`, `OnboardingView`).
+
+## Dodělat (domluveno 22. 10. 2026)
+- **Svědek zprávou bez serveru** (systémové sdílení hotové zprávy po zapečetění a uzavření dne) – zatím nedělat, zapsáno.
+- **Serverový čas** – poslední fáze před App Storem (`supabase-myapp`).
+- **Synchronizace přes iCloud (CloudKit)** místo exportu souboru: ověřit, že modely splňují pravidla CloudKitu, zapnout iCloud schopnost, testovat na dvou zařízeních. Export JSON zůstává jako malá záložní volba.
+- **Propojení uživatelů** (pošťouchnutí, sdílení plánů): sociální vrstva se serverem, účty, pravidla přístupu (RLS), GDPR; zvážit po vydání nebo dřív, podle tempa.

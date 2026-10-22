@@ -16,7 +16,6 @@ struct DeveloperSection: View {
     @AppStorage("devShowDayKept") private var showDayKept = false
     @AppStorage("devShowEvening") private var showEvening = false
     @AppStorage("devHealthDemo") private var healthDemo = false
-    @AppStorage("devUpcomingStyle") private var upcomingStyle = 0
     @State private var confirms = false
     @State private var confirmsReset = false
 
@@ -51,10 +50,6 @@ struct DeveloperSection: View {
                 showEvening = true
             }
             .foregroundStyle(Theme.textPrimary)
-            Picker("Další úkoly na Dnes", selection: $upcomingStyle) {
-                Text("Boxy").tag(0)
-                Text("Rozbalení").tag(1)
-            }
             Toggle("Zdraví s ukázkovými daty", isOn: $healthDemo)
                 .tint(Theme.textSecondary)
                 .onChange(of: healthDemo) { _, on in

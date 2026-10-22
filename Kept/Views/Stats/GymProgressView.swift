@@ -87,6 +87,7 @@ struct GymProgressView: View {
             .padding(.bottom, 32)
         }
         .screenBackground()
+        .refreshesData()
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Theme.background, for: .navigationBar)
         .task {

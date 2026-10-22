@@ -91,6 +91,7 @@ struct StatsView: View {
             .padding(.bottom, 32)
         }
         .screenBackground()
+        .refreshesData()
         .toolbarBackground(Theme.background, for: .navigationBar)
     }
 

@@ -86,8 +86,8 @@ struct TodayView: View {
 
     @State var upcomingExpanded = false
 
-    /// 0 = boxes, 1 = a line that unfolds. Both are kept for now so they can be compared.
-    @AppStorage("devUpcomingStyle") var upcomingStyle = 0
+    /// The open task the user picked from the list to be the main one, with its "Splnil jsem" button.
+    @State var pinnedNext: UUID?
 
     /// Watched only so the screen is drawn again when a rest day is set or cleared.
     @AppStorage(RestDays.storageKey) var restDaysRaw = ""
@@ -463,13 +463,7 @@ struct TodayView: View {
             .padding(.horizontal, Theme.screenPadding)
             .padding(.bottom, 32)
         }
-        .refreshable {
-            // Pulling down reads everything again: Health, and the notifications planned from the data.
-            if settingsList.first?.healthEnabled == true {
-                _ = await HealthService.summary(force: true)
-            }
-            await NotificationManager.reschedule(context: context)
-        }
+        .refreshesData()
         .onScrollGeometryChange(for: Bool.self) { $0.contentOffset.y + $0.contentInsets.top > 170 } action: { _, scrolled in
             withAnimation(.easeOut(duration: 0.2)) { compactHeader = scrolled }
         }

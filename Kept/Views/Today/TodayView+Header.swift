@@ -25,56 +25,56 @@ extension TodayView {
         .accessibilityLabel("Dnešní slib \(done) z \(total), série \(String.days(day.streak))")
     }
 
-    /// What else is still open today, under the next task: an overview, nothing to do here.
-    /// Two ways to show it are tried side by side (switch in the developer section): boxes, or a line that unfolds.
+    /// What else is still open today, under the next task. It unfolds, and touching one of the others makes it
+    /// the main task above (the one with "Splnil jsem"), while the main one takes its place in the list.
     @ViewBuilder
     func upcoming(_ others: [TaskItem]) -> some View {
-        if upcomingStyle == 0 {
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 118), spacing: 8)], alignment: .leading, spacing: 8) {
-                ForEach(others) { task in
-                    HStack(spacing: 6) {
-                        Image(systemName: task.icon)
-                            .scaledFont(.caption)
-                            .foregroundStyle(Theme.textSecondary)
-                        Text(task.title)
-                            .scaledFont(.caption, weight: .semibold)
-                            .foregroundStyle(Theme.textPrimary)
-                            .lineLimit(1)
-                        Spacer(minLength: 0)
-                    }
-                    .padding(.horizontal, 10)
-                    .frame(minHeight: 34)
-                    .background(Theme.cardRaised)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
+        VStack(alignment: .leading, spacing: 4) {
+            Button {
+                Haptics.light()
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { upcomingExpanded.toggle() }
+            } label: {
+                HStack(spacing: 6) {
+                    Text("a další \(others.count)")
+                        .scaledFont(.caption, weight: .semibold)
+                    Image(systemName: "chevron.down")
+                        .scaledFont(.caption, weight: .bold)
+                        .rotationEffect(.degrees(upcomingExpanded ? 180 : 0))
                 }
+                .foregroundStyle(Theme.textSecondary)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
             }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("Dál čeká: \(others.map(\.title).joined(separator: ", "))")
-        } else {
-            VStack(alignment: .leading, spacing: 8) {
-                Button {
-                    Haptics.light()
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { upcomingExpanded.toggle() }
-                } label: {
-                    HStack(spacing: 6) {
-                        Text("a další \(others.count)")
-                            .scaledFont(.caption, weight: .semibold)
-                        Image(systemName: "chevron.down")
-                            .scaledFont(.caption, weight: .bold)
-                            .rotationEffect(.degrees(upcomingExpanded ? 180 : 0))
+            .buttonStyle(.plain)
+            .accessibilityHint(upcomingExpanded ? "Skryje další úkoly" : "Ukáže další úkoly")
+            if upcomingExpanded {
+                ForEach(others) { task in
+                    Button {
+                        Haptics.light()
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { pinnedNext = task.uid }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: task.icon)
+                                .scaledFont(.body)
+                                .foregroundStyle(Theme.textSecondary)
+                                .frame(width: 24)
+                            Text(task.title)
+                                .scaledFont(.body, weight: .semibold)
+                                .foregroundStyle(Theme.textPrimary)
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                            Image(systemName: "arrow.up")
+                                .scaledFont(.caption, weight: .bold)
+                                .foregroundStyle(Theme.textTertiary)
+                        }
+                        .padding(.horizontal, 10)
+                        .frame(minHeight: 44)
+                        .background(Theme.cardRaised)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .contentShape(Rectangle())
                     }
-                    .foregroundStyle(Theme.textSecondary)
-                    .frame(minHeight: 32)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                if upcomingExpanded {
-                    ForEach(others) { task in
-                        Label(task.title, systemImage: task.icon)
-                            .scaledFont(.body)
-                            .foregroundStyle(Theme.textPrimary)
-                            .lineLimit(1)
-                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("Udělá z něj hlavní úkol")
                     .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
@@ -184,7 +184,9 @@ extension TodayView {
             let total = day.visible.count
             let done = day.doneCount
             let broken = day.scored.count - day.visible.count
-            let next = (day.critical + day.open).first
+            let open = day.critical + day.open
+            // The user can pick which open task is the main one; otherwise it is the first.
+            let next = open.first { $0.uid == pinnedNext } ?? open.first
             let allDone = done == total && broken == 0
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .firstTextBaseline) {
@@ -253,7 +255,7 @@ extension TodayView {
                         }
                     }
                 }
-                let others = Array((day.critical + day.open).dropFirst())
+                let others = open.filter { $0.uid != next?.uid }
                 if !others.isEmpty {
                     upcoming(others)
                 }
