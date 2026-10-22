@@ -18,14 +18,31 @@ enum MorningMoment {
     }
 }
 
+/// A new week or a new month is a natural moment for a fresh start. On those mornings the greeting says so
+/// instead of the usual line: a look back in one sentence and a clean page ahead.
+enum FreshStart {
+    case week(lastDone: Int, lastTotal: Int)
+    case month
+
+    /// The kind of morning it is today, if it is one: the first of a month wins over a Monday.
+    static func today(tasks: [TaskItem], now: Date) -> FreshStart? {
+        if Calendar.app.component(.day, from: now) == 1 { return .month }
+        guard Calendar.app.component(.weekday, from: now) == 2 else { return nil }
+        let last = tasks.filter { !$0.isRemoved && $0.countsInScores && $0.scheduledDate.weekStart == now.weekStart.addingDays(-7) }
+        return .week(lastDone: last.filter(\.isDone).count, lastTotal: last.count)
+    }
+}
+
 /// The first screen of the day: a greeting by name, today's promise in one glance and a single way to start.
 struct MorningGreeting: View {
     let name: String
     let tasks: [TaskItem]
     let streak: Int
     let openFromBefore: Int
+    var freshStart: FreshStart?
     let onStart: () -> Void
     let onAdd: () -> Void
+    var onPlanWeek: () -> Void = {}
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var step = 0
 
@@ -41,14 +58,14 @@ struct MorningGreeting: View {
                 Text(Date.now.longDayText.uppercased())
                     .labelStyle()
                     .modifier(Reveal(isOn: step >= 1, reduceMotion: reduceMotion))
-                Text(name.isEmpty ? "Dobré ráno." : "Dobré ráno, \(name).")
-                    .font(.system(size: 38, weight: .heavy))
+                Text(greeting)
+                    .scaledFont(38, weight: .heavy)
                     .foregroundStyle(Theme.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 6)
                     .modifier(Reveal(isOn: step >= 1, reduceMotion: reduceMotion))
                 Text(headline)
-                    .font(.system(size: 18, weight: .semibold))
+                    .scaledFont(.heading, weight: .semibold)
                     .foregroundStyle(Theme.textSecondary)
                     .padding(.top, 10)
                     .modifier(Reveal(isOn: step >= 2, reduceMotion: reduceMotion))
@@ -57,19 +74,19 @@ struct MorningGreeting: View {
                         ForEach(open.prefix(4)) { task in
                             HStack(spacing: 12) {
                                 Image(systemName: task.icon)
-                                    .font(.system(size: 16))
+                                    .scaledFont(.body)
                                     .foregroundStyle(Theme.textPrimary)
                                     .frame(width: 36, height: 36)
                                     .background(Theme.cardRaised)
                                     .clipShape(RoundedRectangle(cornerRadius: 10))
                                 Text(task.title)
-                                    .font(.system(size: 16, weight: .semibold))
+                                    .scaledFont(.body, weight: .semibold)
                                     .foregroundStyle(Theme.textPrimary)
                                     .lineLimit(1)
                                 Spacer()
                                 if let deadline = task.deadline {
                                     Text(deadline.timeText)
-                                        .font(.system(size: 13))
+                                        .scaledFont(.caption)
                                         .foregroundStyle(Theme.textSecondary)
                                 }
                             }
@@ -79,7 +96,7 @@ struct MorningGreeting: View {
                         }
                         if open.count > 4 {
                             Text("a další \(open.count - 4)")
-                                .font(.system(size: 13))
+                                .scaledFont(.caption)
                                 .foregroundStyle(Theme.textSecondary)
                         }
                     }
@@ -93,18 +110,25 @@ struct MorningGreeting: View {
                 }
                 if let line = streakLine {
                     Label(line.text, systemImage: "flame.fill")
-                        .font(.system(size: 15, weight: .semibold))
+                        .scaledFont(.body, weight: .semibold)
                         .foregroundStyle(line.isAlive ? Theme.orange : Theme.textSecondary)
                         .padding(.top, 18)
                         .modifier(Reveal(isOn: step >= 3, reduceMotion: reduceMotion))
                 }
                 Spacer()
                 VStack(spacing: 10) {
-                    if open.isEmpty {
+                    if case .week = freshStart {
+                        Button("NAPLÁNOVAT TÝDEN", action: onPlanWeek)
+                            .buttonStyle(PrimaryButtonStyle())
+                        Button("Teď ne", action: onStart)
+                            .scaledFont(.body)
+                            .foregroundStyle(Theme.textSecondary)
+                            .frame(minHeight: 44)
+                    } else if open.isEmpty {
                         Button("PŘIDAT DNEŠNÍ SLIB", action: onAdd)
                             .buttonStyle(PrimaryButtonStyle())
                         Button("Teď ne", action: onStart)
-                            .font(.system(size: 15))
+                            .scaledFont(.body)
                             .foregroundStyle(Theme.textSecondary)
                             .frame(minHeight: 44)
                     } else {
@@ -125,7 +149,19 @@ struct MorningGreeting: View {
         }
     }
 
+    private var greeting: String {
+        switch freshStart {
+        case .week: name.isEmpty ? "Nový týden. Čistá tabule." : "Nový týden, \(name). Čistá tabule."
+        case .month: name.isEmpty ? "Nový měsíc. Čistá tabule." : "Nový měsíc, \(name). Čistá tabule."
+        case nil: name.isEmpty ? "Dobré ráno." : "Dobré ráno, \(name)."
+        }
+    }
+
     private var headline: String {
+        if case let .week(done, total) = freshStart {
+            return total > 0 ? "Minulý týden jsi dodržel \(done) z \(total) slibů. Teď to můžeš zopakovat, nebo přidat." : "Minulý týden nic nebylo. Dnes se dá začít."
+        }
+        if case .month = freshStart { return "Dnes začíná nový měsíc. Co sis na něj slíbil?" }
         let count = open.count
         if count == 0 {
             return openFromBefore > 0 ? "Dnes nic v plánu, ale z minula čeká \(openFromBefore) otevřených." : "Dnes máš prázdno."

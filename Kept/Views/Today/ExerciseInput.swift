@@ -48,7 +48,7 @@ struct ExerciseInput: View {
                         toggle(name)
                     } label: {
                         Text(name)
-                            .font(.system(size: 13, weight: .semibold))
+                            .scaledFont(.caption, weight: .semibold)
                             .foregroundStyle(isSelected ? Theme.onPrimary : Theme.textPrimary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
@@ -64,7 +64,7 @@ struct ExerciseInput: View {
             }
             HStack(spacing: 10) {
                 TextField("Jiný cvik", text: $custom)
-                    .font(.system(size: 16))
+                    .scaledFont(.body)
                     .card()
                 Button("PŘIDAT") {
                     let name = customName
@@ -86,7 +86,7 @@ struct ExerciseInput: View {
             Text(drafts.isEmpty
                  ? "Nepovinné. Klepni na cvik a zapiš váhu, opakování a série. Předvolby upravíš v sekci Gym."
                  : "Váhu nech prázdnou u cviků s vlastní vahou.")
-                .font(.system(size: 12))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textTertiary)
         }
     }
@@ -95,14 +95,14 @@ struct ExerciseInput: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(draft.wrappedValue.name)
-                    .font(.system(size: 16, weight: .semibold))
+                    .scaledFont(.body, weight: .semibold)
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
                 Button {
                     toggle(draft.wrappedValue.name)
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 12, weight: .bold))
+                        .scaledFont(.caption, weight: .bold)
                         .foregroundStyle(Theme.textSecondary)
                         .frame(width: 28, height: 28)
                 }
@@ -112,7 +112,7 @@ struct ExerciseInput: View {
                 column("KG") {
                     TextField("0", text: draft.weightText)
                         .keyboardType(.decimalPad)
-                        .font(.system(size: 17, weight: .semibold))
+                        .scaledFont(.heading, weight: .semibold)
                         .multilineTextAlignment(.center)
                 }
                 column("OPAKOVÁNÍ") {
@@ -134,12 +134,12 @@ struct ExerciseInput: View {
             }
             if let last = lastLog(draft.wrappedValue.name) {
                 Text("Minule (\(last.date.dayMonthText)): \(last.summary)")
-                    .font(.system(size: 12))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
             if !draft.wrappedValue.isValid {
                 Text("Zadej váhu v kilogramech, např. 82,5.")
-                    .font(.system(size: 12))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.orange)
             }
         }
@@ -151,7 +151,7 @@ struct ExerciseInput: View {
     private func column(_ label: String, @ViewBuilder content: () -> some View) -> some View {
         VStack(spacing: 4) {
             Text(label)
-                .font(.system(size: 9, weight: .semibold))
+                .scaledFont(.caption, weight: .semibold)
                 .tracking(0.6)
                 .foregroundStyle(Theme.textTertiary)
             content()

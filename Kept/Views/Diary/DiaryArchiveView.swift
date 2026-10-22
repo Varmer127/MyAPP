@@ -78,13 +78,13 @@ struct DiaryArchiveView: View {
                 .pickerStyle(.segmented)
                 if months.isEmpty {
                     Text(search.isEmpty ? "Zatím tu nic není. První zápis přidáš na obrazovce Deník." : "Nic takového jsi nenapsal.")
-                        .font(.system(size: 15))
+                        .scaledFont(.body)
                         .foregroundStyle(Theme.textSecondary)
                         .card()
                 }
                 ForEach(months, id: \.month) { group in
                     Text(group.month.formatted(Date.FormatStyle(locale: .app).month(.wide).year()).capitalizedFirst)
-                        .font(.system(size: 20, weight: .bold))
+                        .scaledFont(.heading, weight: .bold)
                         .foregroundStyle(Theme.textPrimary)
                         .padding(.top, 8)
                     ForEach(group.items) { item in
@@ -113,7 +113,7 @@ struct DiaryArchiveView: View {
                 Text("SEBEREFLEXE · TÝDEN \(reflection.weekStart.weekNumber)").labelStyle(Theme.textPrimary)
                 Spacer()
                 Text(reflection.satisfactionLabel)
-                    .font(.system(size: 12, weight: .semibold))
+                    .scaledFont(.caption, weight: .semibold)
                     .foregroundStyle(Theme.textSecondary)
             }
             DiaryQuote(label: "Jak jsem se sebou spokojený", text: reflection.text)
@@ -126,7 +126,7 @@ struct DiaryArchiveView: View {
             Label("DOPIS BUDOUCÍMU JÁ · \(letter.writtenAt.dayMonthText)", systemImage: "envelope.open")
                 .labelStyle(Theme.green)
             Text(letter.text)
-                .font(.system(size: 15))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -143,11 +143,11 @@ struct DiaryQuote: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label.uppercased())
-                .font(.system(size: 10, weight: .semibold))
+                .scaledFont(.caption, weight: .semibold)
                 .tracking(0.6)
                 .foregroundStyle(Theme.textTertiary)
             Text("„\(text)“")
-                .font(.system(size: 15))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -194,7 +194,7 @@ struct FailureNoteCard: View {
             Text("\(record.kind == .missed ? "NESPLNĚNO" : "PŘESKOČENO") · \(record.taskDate.dayMonthText)")
                 .labelStyle(Theme.red)
             Text(record.taskTitle)
-                .font(.system(size: 16, weight: .semibold))
+                .scaledFont(.body, weight: .semibold)
                 .foregroundStyle(Theme.textPrimary)
             DiaryQuote(label: record.reason.title, text: record.critique)
             if !record.prevention.isEmpty {

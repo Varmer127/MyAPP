@@ -20,12 +20,12 @@ struct ProfileCard: View {
                 ProfileAvatar(name: settings?.addressName ?? "", size: 54)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(ProfileData.displayName(settings))
-                        .font(.system(size: 18, weight: .bold))
+                        .scaledFont(.heading, weight: .bold)
                         .foregroundStyle(Theme.textPrimary)
                     Text(streak > 0
                          ? "Držíš slovo \(streak) \(streak == 1 ? "den" : (2...4).contains(streak) ? "dny" : "dní") · odznaky \(badges.filter(\.isEarned).count) / \(badges.count)"
                          : "Odznaky \(badges.filter(\.isEarned).count) / \(badges.count) · začni sérii dnes")
-                        .font(.system(size: 13))
+                        .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary)
                 }
             }
@@ -58,7 +58,7 @@ struct ProfileAvatar: View {
             Circle().fill(Theme.textPrimary)
             if let first = name.trimmingCharacters(in: .whitespaces).first {
                 Text(String(first).uppercased())
-                    .font(.system(size: size * 0.46, weight: .heavy))
+                    .scaledFont(size * 0.46, weight: .heavy)
                     .foregroundStyle(Theme.onPrimary)
             } else {
                 CheckStroke()
@@ -95,7 +95,7 @@ struct ProfileView: View {
     var body: some View {
         let all = badges
         let shown = all.filter { filter == .all || (filter == .earned) == $0.isEarned }
-        let selected = all.first { $0.id == selectedID } ?? all.first { $0.isEarned } ?? all.first
+        let selected = all.first { $0.id == selectedID }
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                 header
@@ -105,9 +105,10 @@ struct ProfileView: View {
                         SectionLabel(text: "Odznaky")
                         Spacer()
                         Text("\(all.filter(\.isEarned).count) z \(all.count)")
-                            .font(.system(size: 14, weight: .bold))
+                            .scaledFont(.body, weight: .bold)
                             .foregroundStyle(Theme.textSecondary)
                     }
+                    nearest(all)
                     Picker("Filtr", selection: $filter) {
                         ForEach(Filter.allCases) { Text($0.rawValue).tag($0) }
                     }
@@ -115,22 +116,20 @@ struct ProfileView: View {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3), spacing: 16) {
                         ForEach(shown) { badge in
                             Button {
-                                Haptics.light()
-                                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) { selectedID = badge.id }
+                                select(badge)
                             } label: {
                                 BadgeTile(badge: badge, isSelected: badge.id == selected?.id)
                             }
                             .buttonStyle(.plain)
                         }
                     }
-                    if let selected { BadgeDetail(badge: selected) }
                 }
                 if let settings {
                     VStack(alignment: .leading, spacing: 10) {
                         SectionLabel(text: "Oslovení")
                         VStack(alignment: .leading, spacing: 0) {
                             TextField("Oslovení, např. Filipe", text: Bindable(settings).addressName)
-                                .font(.system(size: 16))
+                                .scaledFont(.body)
                                 .frame(minHeight: 44)
                             Divider().overlay(Theme.border)
                             Picker("Mluvit se mnou", selection: Bindable(settings).grammar) {
@@ -141,7 +140,7 @@ struct ProfileView: View {
                         }
                         .card(padding: 14)
                         Text("Takhle tě Kept oslovuje ráno a v textech. Napiš oslovení tak, jak ho chceš číst, třeba „Filipe“ nebo „Anežko“.")
-                            .font(.system(size: 12))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.textSecondary)
                     }
                 }
@@ -150,9 +149,70 @@ struct ProfileView: View {
             .padding(.bottom, 32)
         }
         .screenBackground()
+        .overlay(alignment: .bottom) {
+            // A small window with the details of the chosen badge. It stays until another badge is chosen or it is closed.
+            if let selected {
+                BadgePopup(badge: selected) {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { selectedID = nil }
+                }
+                .id(selected.id)
+                .padding(.horizontal, Theme.screenPadding)
+                .padding(.bottom, 96)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
+        }
         .navigationTitle("Profil")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Theme.background, for: .navigationBar)
+    }
+
+    private func select(_ badge: Achievement) {
+        Haptics.light()
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { selectedID = badge.id }
+    }
+
+    /// The locked badges that are closest to being earned: a goal that is almost reached pulls harder than a list of grey circles.
+    @ViewBuilder
+    private func nearest(_ all: [Achievement]) -> some View {
+        let close = all.filter { !$0.isEarned }
+            .compactMap { badge -> (Achievement, Double)? in
+                guard let progress = badge.progress, progress.current > 0 else { return nil }
+                return (badge, Double(progress.current) / Double(max(progress.target, 1)))
+            }
+            .sorted { $0.1 > $1.1 }
+            .prefix(3)
+        if !close.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("NEJBLÍŽ K ZÍSKÁNÍ").labelStyle()
+                ForEach(Array(close), id: \.0.id) { badge, fraction in
+                    Button { select(badge) } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: badge.symbol)
+                                .scaledFont(.body, weight: .semibold)
+                                .foregroundStyle(Theme.textPrimary)
+                                .frame(width: 36, height: 36)
+                                .background(Theme.cardRaised)
+                                .clipShape(Circle())
+                            VStack(alignment: .leading, spacing: 5) {
+                                HStack {
+                                    Text(badge.name)
+                                        .scaledFont(.body, weight: .semibold)
+                                        .foregroundStyle(Theme.textPrimary)
+                                    Spacer()
+                                    Text(badge.statusText)
+                                        .scaledFont(.caption, weight: .bold)
+                                        .foregroundStyle(Theme.textSecondary)
+                                }
+                                ThinBar(value: fraction, color: Theme.green)
+                            }
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .card()
+        }
     }
 
     private var header: some View {
@@ -164,15 +224,15 @@ struct ProfileView: View {
                 ProfileAvatar(name: settings?.addressName ?? "", size: 72)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(ProfileData.displayName(settings))
-                        .font(.system(size: 26, weight: .bold))
+                        .scaledFont(.title, weight: .bold)
                         .foregroundStyle(Theme.textPrimary)
                     Text(streak > 0 ? "Držíš slovo \(streak) \(streak == 1 ? "den" : (2...4).contains(streak) ? "dny" : "dní") v řadě." : "Dnes můžeš začít novou sérii.")
-                        .font(.system(size: 14))
+                        .scaledFont(.body)
                         .foregroundStyle(Theme.textSecondary)
                 }
                 Spacer(minLength: 0)
             }
-            HStack(spacing: 10) {
+            TileRow {
                 MetricTile(value: "\(streak)", label: "Série dní")
                 MetricTile(value: "\(sealed)", label: "Pečetí")
                 MetricTile(value: points.formatted(.number.locale(.app)), label: "Bodů")
@@ -190,14 +250,21 @@ private struct BadgeTile: View {
             ZStack {
                 if badge.isEarned {
                     Circle().fill(Theme.textPrimary)
-                    Image(systemName: badge.symbol)
-                        .font(.system(size: 26, weight: .semibold))
+                    Image(systemName: badge.shownSymbol)
+                        .scaledFont(.title, weight: .semibold)
                         .foregroundStyle(Theme.onPrimary)
                 } else {
                     Circle().fill(Theme.card)
                     Circle().strokeBorder(Theme.textTertiary.opacity(0.6), style: StrokeStyle(lineWidth: 1, dash: [3, 3]))
-                    Image(systemName: badge.symbol)
-                        .font(.system(size: 24))
+                    if let progress = badge.progress, progress.current > 0 {
+                        // How far along: a ring that fills around the grey circle.
+                        Circle()
+                            .trim(from: 0, to: min(Double(progress.current) / Double(max(progress.target, 1)), 1))
+                            .stroke(Theme.green, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                    }
+                    Image(systemName: badge.shownSymbol)
+                        .scaledFont(.title)
                         .foregroundStyle(Theme.textTertiary)
                 }
             }
@@ -208,8 +275,8 @@ private struct BadgeTile: View {
                 }
             }
             .scaleEffect(isSelected ? 1.08 : 1)
-            Text(badge.name)
-                .font(.system(size: 11, weight: .semibold))
+            Text(badge.shownName)
+                .scaledFont(.caption, weight: .semibold)
                 .foregroundStyle(badge.isEarned ? Theme.textPrimary : Theme.textTertiary)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
@@ -217,42 +284,66 @@ private struct BadgeTile: View {
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(badge.name), \(badge.statusText)")
+        .accessibilityLabel("\(badge.shownName), \(badge.statusText.isEmpty ? "zamčeno" : badge.statusText). \(badge.shownHow)")
     }
 }
 
-private struct BadgeDetail: View {
+/// The details of one badge in a small floating window with a close button in its corner.
+private struct BadgePopup: View {
     let badge: Achievement
+    let onClose: () -> Void
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(alignment: .top, spacing: 14) {
             ZStack {
                 Circle().fill(badge.isEarned ? Theme.textPrimary : Theme.cardRaised)
-                Image(systemName: badge.symbol)
-                    .font(.system(size: 24, weight: .semibold))
+                Image(systemName: badge.shownSymbol)
+                    .scaledFont(.title, weight: .semibold)
                     .foregroundStyle(badge.isEarned ? Theme.onPrimary : Theme.textTertiary)
             }
-            .frame(width: 56, height: 56)
+            .frame(width: 52, height: 52)
             VStack(alignment: .leading, spacing: 3) {
                 Text(badge.tier.title)
-                    .font(.system(size: 10, weight: .heavy))
+                    .scaledFont(.caption, weight: .heavy)
                     .tracking(1)
                     .foregroundStyle(badge.tier == .legendary ? Theme.orange : (badge.tier == .rare ? Theme.green : Theme.textSecondary))
-                Text(badge.name)
-                    .font(.system(size: 17, weight: .bold))
+                Text(badge.shownName)
+                    .scaledFont(.heading, weight: .bold)
                     .foregroundStyle(Theme.textPrimary)
-                Text(badge.how)
-                    .font(.system(size: 13))
+                Text(badge.shownHow)
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(badge.statusText)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(badge.isEarned ? Theme.green : Theme.textSecondary)
+                if let progress = badge.progress, !badge.isEarned {
+                    ThinBar(value: Double(min(progress.current, progress.target)) / Double(max(progress.target, 1)), color: Theme.green)
+                        .padding(.top, 3)
+                }
+                if !badge.statusText.isEmpty {
+                    Text(badge.statusText)
+                        .scaledFont(.caption, weight: .bold)
+                        .foregroundStyle(badge.isEarned ? Theme.green : Theme.textSecondary)
+                        .padding(.top, 1)
+                }
             }
             Spacer(minLength: 0)
+            Button(action: onClose) {
+                Image(systemName: "xmark")
+                    .scaledFont(.caption, weight: .bold)
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.trailing, -10)
+            .padding(.top, -10)
+            .accessibilityLabel("Zavřít")
         }
-        .card()
-        .animation(.easeOut(duration: 0.2), value: badge.id)
+        .padding(16)
+        .background(Theme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Theme.border, lineWidth: 1))
+        .shadow(color: .black.opacity(0.22), radius: 16, y: 6)
+        .accessibilityElement(children: .contain)
     }
 }
 
@@ -318,7 +409,7 @@ struct StreakCalendar: View {
                 Button { shift(-1) } label: { Image(systemName: "chevron.left").frame(width: 36, height: 36) }
                     .accessibilityLabel("Předchozí měsíc")
                 Text(month.monthYearText)
-                    .font(.system(size: 14, weight: .bold))
+                    .scaledFont(.body, weight: .bold)
                     .foregroundStyle(Theme.textPrimary)
                     .frame(minWidth: 110)
                 Button { shift(1) } label: { Image(systemName: "chevron.right").frame(width: 36, height: 36) }
@@ -328,7 +419,7 @@ struct StreakCalendar: View {
             .foregroundStyle(Theme.textPrimary)
             LazyVGrid(columns: columns, spacing: 6) {
                 ForEach(["Po", "Út", "St", "Čt", "Pá", "So", "Ne"], id: \.self) { name in
-                    Text(name).font(.system(size: 11, weight: .bold)).foregroundStyle(Theme.textTertiary)
+                    Text(name).scaledFont(.caption, weight: .bold).foregroundStyle(Theme.textTertiary)
                 }
                 ForEach(Array(days.enumerated()), id: \.offset) { _, day in
                     if let day {
@@ -342,9 +433,9 @@ struct StreakCalendar: View {
                 legend(Theme.green, "den dodržen")
                 legend(Theme.red, "slib porušen")
                 legend(Theme.orange.opacity(0.35), "série")
-                Label("milník", systemImage: "flame.fill").font(.system(size: 11)).foregroundStyle(Theme.orange)
+                Label("milník", systemImage: "flame.fill").scaledFont(.caption).foregroundStyle(Theme.orange)
             }
-            .font(.system(size: 11))
+            .scaledFont(.caption)
             .foregroundStyle(Theme.textSecondary)
             dayDetail
         }
@@ -364,6 +455,13 @@ struct StreakCalendar: View {
         }
     }
 
+    /// Days still to come are grey; days before the first task ever are fainter, since there was nothing to keep yet.
+    private func dayColor(_ day: Date) -> Color {
+        if day > .now { return Theme.textSecondary }
+        if let first = byDay.keys.min(), day >= first { return Theme.textPrimary }
+        return Theme.textTertiary.opacity(0.45)
+    }
+
     private func cell(_ day: Date, streak: Bool, milestone: Bool) -> some View {
         let state = status(of: day)
         let isToday = day.isSameDay(as: .now)
@@ -380,12 +478,12 @@ struct StreakCalendar: View {
                 Circle().fill(fill).frame(width: 32, height: 32)
                     .overlay(Circle().stroke(isSelected || isToday ? Theme.textPrimary : .clear, lineWidth: 2))
                 Text("\(Calendar.app.component(.day, from: day))")
-                    .font(.system(size: 13, weight: .bold))
+                    .scaledFont(.caption, weight: .bold)
                     .foregroundStyle(state == .kept ? Color(hex: 0x000000) : (state == .broken ? Color(hex: 0xFFFFFF)
-                        : (day > .now ? Theme.textTertiary : Theme.textPrimary)))
+                        : dayColor(day)))
                 if milestone {
                     Image(systemName: "flame.fill")
-                        .font(.system(size: 11))
+                        .scaledFont(.caption)
                         .foregroundStyle(Theme.orange)
                         .offset(x: 12, y: -14)
                 }
@@ -410,10 +508,10 @@ struct StreakCalendar: View {
         }()
         return VStack(alignment: .leading, spacing: 4) {
             Text(selected.longDayText.uppercased()).labelStyle()
-            Text(title).font(.system(size: 18, weight: .bold)).foregroundStyle(Theme.textPrimary)
+            Text(title).scaledFont(.heading, weight: .bold).foregroundStyle(Theme.textPrimary)
             if !items.isEmpty {
                 Text("\(items.filter(\.isDone).count) z \(items.count) úkolů splněno")
-                    .font(.system(size: 13))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
         }
@@ -428,15 +526,5 @@ struct StreakCalendar: View {
             Circle().fill(color).frame(width: 9, height: 9)
             Text(text)
         }
-    }
-}
-
-private extension Date {
-    var startOfMonth: Date {
-        Calendar.app.date(from: Calendar.app.dateComponents([.year, .month], from: self)) ?? self
-    }
-
-    var monthYearText: String {
-        formatted(.dateTime.month(.wide).year().locale(.app)).capitalizedFirst
     }
 }

@@ -77,14 +77,14 @@ struct ShopView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text("\(balance.formatted(.number.locale(.app)))")
-                    .font(.system(size: 56, weight: .heavy))
+                    .scaledFont(.hero, weight: .heavy)
                     .foregroundStyle(Theme.textPrimary)
                     .contentTransition(.numericText())
                 Text("BODŮ").labelStyle()
             }
             ThinBar(value: Double(balance) / Double(PointsService.cap))
             Text("Strop je \(PointsService.cap.formatted(.number.locale(.app))). \(PointsService.perCommitment) za splněný týdenní závazek, \(PointsService.perSuggestion) za splněný návrh aplikace, \(DiaryService.pointsPerEntry) za den v deníku, bonusy za milníky série.")
-                .font(.system(size: 12))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -106,20 +106,20 @@ struct ShopView: View {
                      action: @escaping () -> Void) -> some View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: symbol)
-                .font(.system(size: 22))
+                .scaledFont(.title)
                 .foregroundStyle(Theme.orange)
                 .frame(width: 30)
             VStack(alignment: .leading, spacing: 5) {
                 Text(title)
-                    .font(.system(size: 17, weight: .semibold))
+                    .scaledFont(.heading, weight: .semibold)
                     .foregroundStyle(Theme.textPrimary)
                 Text(summary)
-                    .font(.system(size: 13))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                 if let note {
                     Text(note)
-                        .font(.system(size: 12, weight: .semibold))
+                        .scaledFont(.caption, weight: .semibold)
                         .foregroundStyle(Theme.green)
                 }
                 Button(soldOut ? "MÁŠ MAXIMUM" : "\(cost.formatted(.number.locale(.app))) BODŮ") {
@@ -134,7 +134,7 @@ struct ShopView: View {
                 .padding(.top, 6)
                 if !soldOut, balance < cost {
                     Text("Chybí ti \((cost - balance).formatted(.number.locale(.app))) bodů")
-                        .font(.system(size: 12, weight: .semibold))
+                        .scaledFont(.caption, weight: .semibold)
                         .foregroundStyle(Theme.textTertiary)
                 }
             }
@@ -158,13 +158,13 @@ struct ShopView: View {
                     let reached = milestone.reachedOn != nil
                     VStack(spacing: 6) {
                         Image(systemName: reached ? "flame.fill" : "flame")
-                            .font(.system(size: 26))
+                            .scaledFont(.title)
                             .foregroundStyle(reached ? Theme.orange : Theme.textTertiary)
                         Text(String.days(milestone.days))
-                            .font(.system(size: 16, weight: .heavy))
+                            .scaledFont(.body, weight: .heavy)
                             .foregroundStyle(reached ? Theme.textPrimary : Theme.textSecondary)
                         Text(reached ? (milestone.reachedOn?.dayMonthText ?? "") : "+\(milestone.bonus.formatted(.number.locale(.app))) bodů")
-                            .font(.system(size: 11, weight: .semibold))
+                            .scaledFont(.caption, weight: .semibold)
                             .foregroundStyle(reached ? Theme.green : Theme.textTertiary)
                     }
                     .frame(maxWidth: .infinity)
@@ -176,7 +176,7 @@ struct ShopView: View {
                 }
             }
             Text("Za každý milník dostaneš body jednou, ve chvíli, kdy na něj série poprvé dosáhne.")
-                .font(.system(size: 12))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textTertiary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -190,7 +190,7 @@ private struct PriceButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 15, weight: .bold))
+            .scaledFont(.body, weight: .bold)
             .tracking(0.8)
             .foregroundStyle(state == .affordable ? Theme.onPrimary : (state == .tooExpensive ? Theme.red : Theme.textSecondary))
             .frame(maxWidth: .infinity)

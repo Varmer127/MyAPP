@@ -21,9 +21,9 @@ struct GymModePreview: View {
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(mode.features, id: \.self) { feature in
                     Label {
-                        Text(feature).font(.system(size: 14)).foregroundStyle(Theme.textPrimary)
+                        Text(feature).scaledFont(.body).foregroundStyle(Theme.textPrimary)
                     } icon: {
-                        Image(systemName: "checkmark").font(.system(size: 12, weight: .bold)).foregroundStyle(Theme.green)
+                        Image(systemName: "checkmark").scaledFont(.caption, weight: .bold).foregroundStyle(Theme.green)
                     }
                 }
             }
@@ -37,19 +37,19 @@ struct GymModePreview: View {
             VStack(spacing: 4) {
                 Text("PAUZA").labelStyle(Theme.orange)
                 Text("01:12")
-                    .font(.system(size: 40, weight: .heavy))
+                    .scaledFont(40, weight: .heavy)
                     .monospacedDigit()
                     .foregroundStyle(Theme.textPrimary)
                 ThinBar(value: 0.8, color: Theme.orange)
                     .frame(width: 140)
                 Text("Cíl 01:30 · celkem 42:15")
-                    .font(.system(size: 11))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
             HStack(spacing: 4) {
                 ForEach(["Svaly", "Síla", "Vytrvalost"], id: \.self) { name in
                     Text(name)
-                        .font(.system(size: 12, weight: .semibold))
+                        .scaledFont(.caption, weight: .semibold)
                         .foregroundStyle(Theme.textPrimary)
                         .frame(maxWidth: .infinity, minHeight: 28)
                         .background(name == "Svaly" ? Theme.cardRaised : Color.clear)
@@ -60,7 +60,7 @@ struct GymModePreview: View {
             .background(Theme.card)
             .clipShape(RoundedRectangle(cornerRadius: 9))
             Text("DALŠÍ SÉRIE")
-                .font(.system(size: 13, weight: .bold))
+                .scaledFont(.caption, weight: .bold)
                 .tracking(0.6)
                 .foregroundStyle(Theme.onPrimary)
                 .frame(maxWidth: .infinity, minHeight: 38)
@@ -73,14 +73,14 @@ struct GymModePreview: View {
     private var advanced: some View {
         HStack(alignment: .top, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Bench press").font(.system(size: 14, weight: .bold)).foregroundStyle(Theme.textPrimary)
+                Text("Bench press").scaledFont(.body, weight: .bold).foregroundStyle(Theme.textPrimary)
                 ForEach(Array(sampleSets.enumerated()), id: \.offset) { index, set in
                     HStack(spacing: 8) {
-                        Text("\(index + 1)").font(.system(size: 12, weight: .semibold)).foregroundStyle(Theme.textTertiary)
-                        Text(set.text).font(.system(size: 13, weight: .semibold)).monospacedDigit().foregroundStyle(Theme.textPrimary)
+                        Text("\(index + 1)").scaledFont(.caption, weight: .semibold).foregroundStyle(Theme.textTertiary)
+                        Text(set.text).scaledFont(.caption, weight: .semibold).monospacedDigit().foregroundStyle(Theme.textPrimary)
                         Spacer(minLength: 4)
                         Image(systemName: set.done ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 15))
+                            .scaledFont(.body)
                             .foregroundStyle(set.done ? Theme.green : Theme.textTertiary)
                     }
                     .padding(.horizontal, 8)
@@ -89,7 +89,7 @@ struct GymModePreview: View {
                     .clipShape(RoundedRectangle(cornerRadius: 7))
                 }
                 Text("Minule 80 kg × 8")
-                    .font(.system(size: 11))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
             .frame(maxWidth: .infinity)

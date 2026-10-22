@@ -18,6 +18,13 @@
 			remoteGlobalIDString = B1000000000000000000000A;
 			remoteInfo = KeptWidgets;
 		};
+		C10000000000000000000006 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A10000000000000000000009 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A10000000000000000000006;
+			remoteInfo = Kept;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -38,6 +45,7 @@
 		A10000000000000000000001 /* Kept.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Kept.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B10000000000000000000001 /* KeptWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = KeptWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B1000000000000000000000F /* KeptWidgets-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "KeptWidgets-Info.plist"; sourceTree = "<group>"; };
+		C10000000000000000000001 /* KeptTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KeptTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -54,6 +62,11 @@
 		B10000000000000000000003 /* Shared */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Shared;
+			sourceTree = "<group>";
+		};
+		C10000000000000000000002 /* KeptTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = KeptTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -73,6 +86,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C10000000000000000000003 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -82,6 +102,7 @@
 				A10000000000000000000002 /* Kept */,
 				B10000000000000000000002 /* KeptWidgets */,
 				B10000000000000000000003 /* Shared */,
+				C10000000000000000000002 /* KeptTests */,
 				B1000000000000000000000F /* KeptWidgets-Info.plist */,
 				A10000000000000000000005 /* Products */,
 			);
@@ -92,6 +113,7 @@
 			children = (
 				A10000000000000000000001 /* Kept.app */,
 				B10000000000000000000001 /* KeptWidgets.appex */,
+				C10000000000000000000001 /* KeptTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -147,6 +169,29 @@
 			productReference = B10000000000000000000001 /* KeptWidgets.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		C10000000000000000000008 /* KeptTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C10000000000000000000009 /* Build configuration list for PBXNativeTarget "KeptTests" */;
+			buildPhases = (
+				C10000000000000000000004 /* Sources */,
+				C10000000000000000000003 /* Frameworks */,
+				C10000000000000000000005 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C10000000000000000000007 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				C10000000000000000000002 /* KeptTests */,
+			);
+			name = KeptTests;
+			packageProductDependencies = (
+			);
+			productName = KeptTests;
+			productReference = C10000000000000000000001 /* KeptTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -162,6 +207,10 @@
 					};
 					B1000000000000000000000A = {
 						CreatedOnToolsVersion = 26.0;
+					};
+					C10000000000000000000008 = {
+						CreatedOnToolsVersion = 26.0;
+						TestTargetID = A10000000000000000000006;
 					};
 				};
 			};
@@ -181,6 +230,7 @@
 			targets = (
 				A10000000000000000000006 /* Kept */,
 				B1000000000000000000000A /* KeptWidgets */,
+				C10000000000000000000008 /* KeptTests */,
 			);
 		};
 /* End PBXProject section */
@@ -194,6 +244,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		B10000000000000000000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C10000000000000000000005 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -217,6 +274,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C10000000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -224,6 +288,11 @@
 			isa = PBXTargetDependency;
 			target = B1000000000000000000000A /* KeptWidgets */;
 			targetProxy = B10000000000000000000009 /* PBXContainerItemProxy */;
+		};
+		C10000000000000000000007 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A10000000000000000000006 /* Kept */;
+			targetProxy = C10000000000000000000006 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -295,7 +364,7 @@
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kept čte události z kalendáře, aby tě při plánování upozornil, že se úkol kryje s něčím, co už máš domluvené. Nic nezapisuje ani neukládá.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kept potřebuje fotoaparát, abys mohl vyfotit důkaz splnění úkolu.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Kept zamyká tvůj deník pomocí Face ID.";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Kept čte tvoji váhu a tréninky, aby je nemusel zapisovat ručně.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Kept čte tvoje kroky, kilometry, aktivní energii, váhu a tréninky, aby je mohl ukázat v přehledu Zdraví a nemusel je zapisovat ručně. Nic do Zdraví nezapisuje.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Kept potřebuje mikrofon, když si zápis do deníku nadiktuješ.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Kept převádí tvůj nadiktovaný zápis do deníku na text.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
@@ -330,7 +399,7 @@
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kept čte události z kalendáře, aby tě při plánování upozornil, že se úkol kryje s něčím, co už máš domluvené. Nic nezapisuje ani neukládá.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kept potřebuje fotoaparát, abys mohl vyfotit důkaz splnění úkolu.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Kept zamyká tvůj deník pomocí Face ID.";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Kept čte tvoji váhu a tréninky, aby je nemusel zapisovat ručně.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Kept čte tvoje kroky, kilometry, aktivní energii, váhu a tréninky, aby je mohl ukázat v přehledu Zdraví a nemusel je zapisovat ručně. Nic do Zdraví nezapisuje.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Kept potřebuje mikrofon, když si zápis do deníku nadiktuješ.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Kept převádí tvůj nadiktovaný zápis do deníku na text.";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
@@ -399,6 +468,52 @@
 			};
 			name = Release;
 		};
+		C1000000000000000000000A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 869PST2DT3;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = cz.philipstryka.kept.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Kept.app/Kept";
+			};
+			name = Debug;
+		};
+		C1000000000000000000000B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 869PST2DT3;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1;
+				PRODUCT_BUNDLE_IDENTIFIER = cz.philipstryka.kept.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Kept.app/Kept";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -425,6 +540,15 @@
 			buildConfigurations = (
 				B1000000000000000000000D /* Debug */,
 				B1000000000000000000000E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C10000000000000000000009 /* Build configuration list for PBXNativeTarget "KeptTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C1000000000000000000000A /* Debug */,
+				C1000000000000000000000B /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

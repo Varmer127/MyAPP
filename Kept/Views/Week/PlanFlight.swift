@@ -44,7 +44,7 @@ struct FlyingIcon: View {
 
     var body: some View {
         Image(systemName: flight.icon)
-            .font(.system(size: 15, weight: .semibold))
+            .scaledFont(.body, weight: .semibold)
             .foregroundStyle(Theme.onPrimary)
             .frame(width: 34, height: 34)
             .background(Theme.textPrimary)

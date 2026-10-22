@@ -30,7 +30,7 @@ struct IntroView: View {
                 HStack {
                     Button(action: toggleSound) {
                         Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                            .font(.system(size: 17, weight: .semibold))
+                            .scaledFont(.heading, weight: .semibold)
                             .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
                             .background(.black.opacity(0.45))
@@ -40,7 +40,7 @@ struct IntroView: View {
                 }
                 Spacer()
                 Text(isReady ? "Aplikace je načtená · klepni pro přeskočení" : "Načítám aplikaci…")
-                    .font(.system(size: 13, weight: .medium))
+                    .scaledFont(.caption, weight: .medium)
                     .foregroundStyle(.white.opacity(0.75))
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)

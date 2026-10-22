@@ -70,7 +70,7 @@ final class FocusSession {
     /// SwiftData saves on its own schedule; a timer must be on disk the moment it changes,
     /// otherwise force-quitting the app right after starting or pausing would lose that state.
     func persist() {
-        try? modelContext?.save()
+        Persistence.save(modelContext)
     }
 
     /// Ends sessions that were left running on a task that is no longer open today.

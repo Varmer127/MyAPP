@@ -20,7 +20,7 @@ struct PointsGainToast: View {
 
     var body: some View {
         Label(text ?? "+\(amount.formatted(.number.locale(.app))) BODŮ", systemImage: text == nil ? "sparkles" : "checkmark")
-            .font(.system(size: 15, weight: .heavy))
+            .scaledFont(.body, weight: .heavy)
             .tracking(0.8)
             .foregroundStyle(Theme.onPrimary)
             .padding(.horizontal, 18)

@@ -50,7 +50,7 @@ struct TaskCard: View {
                         }
                     }
                     Text(task.title)
-                        .font(.system(size: 18, weight: .semibold))
+                        .scaledFont(.heading, weight: .semibold)
                         .foregroundStyle(task.status == .pending ? Theme.textPrimary : Theme.textSecondary)
                     sealMark
                 }
@@ -58,12 +58,12 @@ struct TaskCard: View {
                     Image(systemName: task.icon)
                     Text(metadata)
                 }
-                .font(.system(size: 13))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textSecondary)
             }
             if let warning, task.status == .pending {
                 Text(warning)
-                    .font(.system(size: 13, weight: .medium))
+                    .scaledFont(.caption, weight: .medium)
                     .foregroundStyle(Theme.red)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -133,12 +133,12 @@ struct TaskCard: View {
     private var sealMark: some View {
         if task.isCommitted {
             Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 14))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.textTertiary)
                 .accessibilityLabel("Zapečetěný slib")
         } else if task.plan?.isSealing == true {
             Image(systemName: "checkmark.seal")
-                .font(.system(size: 14))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.orange)
                 .accessibilityLabel("Čeká na pečeť")
         }
@@ -168,7 +168,7 @@ struct TaskCard: View {
                     Text(session.isPaused ? "FOCUS POZASTAVEN" : (isBehind ? "NESTÍHÁŠ PLÁN" : (isOvertime ? "NAD PLÁN" : "FOCUS BĚŽÍ")))
                         .labelStyle(highlighted ? Theme.orange : Theme.textSecondary)
                     Text("\(isOvertime ? "+" : "")\(FocusView.clock(abs(remaining)))")
-                        .font(.system(size: 34, weight: .heavy))
+                        .scaledFont(34, weight: .heavy)
                         .monospacedDigit()
                         .foregroundStyle(Theme.textPrimary)
                 }
@@ -205,7 +205,7 @@ struct TaskCard: View {
                     Text(rest == nil ? "TRÉNINK BĚŽÍ" : "PAUZA")
                         .labelStyle(rest == nil ? Theme.textSecondary : Theme.orange)
                     Text(FocusView.clock(rest ?? total))
-                        .font(.system(size: 34, weight: .heavy))
+                        .scaledFont(34, weight: .heavy)
                         .monospacedDigit()
                         .foregroundStyle(Theme.textPrimary)
                 }
@@ -228,7 +228,7 @@ struct TaskCard: View {
 
     private func timerIcon(_ name: String, color: Color = Theme.textPrimary) -> some View {
         Image(systemName: name)
-            .font(.system(size: 15, weight: .semibold))
+            .scaledFont(.body, weight: .semibold)
             .foregroundStyle(color)
             .frame(width: 44, height: 44)
             .background(Theme.card)
@@ -273,7 +273,7 @@ struct TaskCard: View {
                         Button("Dnes to nezvládnu", systemImage: "xmark", role: .destructive, action: onFail)
                     } label: {
                         Image(systemName: "ellipsis")
-                            .font(.system(size: 17, weight: .bold))
+                            .scaledFont(.heading, weight: .bold)
                             .foregroundStyle(Theme.textPrimary)
                             .frame(width: 54, height: 50)
                             .background(Theme.cardRaised)

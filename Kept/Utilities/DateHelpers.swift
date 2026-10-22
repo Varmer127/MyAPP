@@ -84,3 +84,13 @@ extension String {
         }
     }
 }
+
+extension Date {
+    var startOfMonth: Date {
+        Calendar.app.date(from: Calendar.app.dateComponents([.year, .month], from: self)) ?? self
+    }
+
+    var monthYearText: String {
+        formatted(.dateTime.month(.wide).year().locale(.app)).capitalizedFirst
+    }
+}

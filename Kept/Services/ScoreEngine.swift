@@ -106,9 +106,10 @@ enum ScoreEngine {
 
     // MARK: Streak
 
-    /// Days whose broken streak was bought back with points.
+    /// Days that are left out of the streak: ones bought back with points, and planned rest days.
     static func repairedDays(_ tasks: [TaskItem]) -> Set<Date> {
-        Set(tasks.compactMap(\.streakRepairDay))
+        // Rest days planned in advance count the same way: they neither extend nor break the streak.
+        Set(tasks.compactMap(\.streakRepairDay)).union(RestDays.all)
     }
 
     /// Consecutive days with productivity ≥ 80%. Days without tasks and days bought back with points

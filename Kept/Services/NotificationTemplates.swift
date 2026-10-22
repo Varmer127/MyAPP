@@ -388,6 +388,11 @@ enum NotificationTemplates {
             .replacingOccurrences(of: "{n}", with: "\(failures)")
     }
 
+    /// Preparation and start with the user's own "when, then" plan, which says more than a clock time does.
+    static func cueMessage(level: Int, title: String, cue: String) -> String {
+        level <= 0 ? "Za chvíli: \(title). Tvůj plán: \(cue)." : "Teď: \(title). Tvůj plán: \(cue)."
+    }
+
     static func pick(_ pool: [String], seed: Int) -> String {
         guard !pool.isEmpty else { return "" }
         return pool[abs(seed) % pool.count]

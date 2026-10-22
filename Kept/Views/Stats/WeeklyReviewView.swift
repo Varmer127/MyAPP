@@ -85,7 +85,7 @@ struct WeeklyReviewView: View {
                         VStack(spacing: 4) {
                             ForEach(items.prefix(4)) { task in
                                 Image(systemName: task.icon)
-                                    .font(.system(size: 13))
+                                    .scaledFont(.caption)
                                     .foregroundStyle(task.isDone ? Theme.green : Theme.textPrimary)
                                     .frame(width: 30, height: 30)
                                     .background(Theme.cardRaised)
@@ -93,7 +93,7 @@ struct WeeklyReviewView: View {
                             }
                             if items.count > 4 {
                                 Text("+\(items.count - 4)")
-                                    .font(.system(size: 11, weight: .bold))
+                                    .scaledFont(.caption, weight: .bold)
                                     .foregroundStyle(Theme.textSecondary)
                             }
                             if items.isEmpty {
@@ -104,7 +104,7 @@ struct WeeklyReviewView: View {
                         }
                         .frame(maxHeight: .infinity, alignment: .bottom)
                         Text(day.weekdayShortText.uppercased())
-                            .font(.system(size: 11, weight: isToday ? .heavy : .semibold))
+                            .scaledFont(.caption, weight: isToday ? .heavy : .semibold)
                             .foregroundStyle(isToday ? Theme.textPrimary : Theme.textSecondary)
                     }
                     .frame(maxWidth: .infinity)
@@ -113,7 +113,7 @@ struct WeeklyReviewView: View {
             }
             .frame(height: CGFloat(min(busiest, 4)) * 34 + 30)
             Text(weekAheadNote(byDay: byDay, days: days))
-                .font(.system(size: 13))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -152,7 +152,7 @@ struct WeeklyReviewView: View {
                     Text("CÍLE TÝDNE").labelStyle()
                     Spacer()
                     Text(daysLeft == 1 ? "zbývá 1 den" : (2...4).contains(daysLeft) ? "zbývají \(daysLeft) dny" : "zbývá \(daysLeft) dní")
-                        .font(.system(size: 12, weight: .semibold))
+                        .scaledFont(.caption, weight: .semibold)
                         .foregroundStyle(Theme.textSecondary)
                 }
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 10)], spacing: 14) {
@@ -181,16 +181,16 @@ struct WeeklyReviewView: View {
                     .rotationEffect(.degrees(-90))
                     .animation(.easeOut(duration: 0.9).delay(0.15), value: ringsShown)
                 Image(systemName: met ? "checkmark" : symbol)
-                    .font(.system(size: 16, weight: .semibold))
+                    .scaledFont(.body, weight: .semibold)
                     .foregroundStyle(met ? Theme.green : Theme.textPrimary)
             }
             .frame(width: 56, height: 56)
             Text("\(done) / \(target)")
-                .font(.system(size: 14, weight: .bold))
+                .scaledFont(.body, weight: .bold)
                 .monospacedDigit()
                 .foregroundStyle(Theme.textPrimary)
             Text(title)
-                .font(.system(size: 12))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textSecondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
@@ -206,27 +206,27 @@ struct WeeklyReviewView: View {
             // Nothing measured yet is said in words, never as a dash.
             if closed.isEmpty {
                 Text("Týden teprve začíná.")
-                    .font(.system(size: 30, weight: .heavy))
+                    .scaledFont(.title, weight: .heavy)
                     .foregroundStyle(Theme.textPrimary)
                     .padding(.top, 8)
                 Text(plannedCount > 0
                      ? "V plánu máš \(plannedCount) \(plannedCount == 1 ? "úkol" : (2...4).contains(plannedCount) ? "úkoly" : "úkolů"). Přehled se naplní, jak je budeš plnit."
                      : "Zatím tu nic není. Naplánuj si týden a přehled se začne plnit.")
-                    .font(.system(size: 15))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             } else if let kept = promisesKept {
                 Text(kept.percentText)
-                    .font(.system(size: 72, weight: .heavy))
+                    .scaledFont(72, weight: .heavy)
                     .foregroundStyle(Theme.textPrimary)
                 Text("DODRŽENÉ SLIBY").labelStyle()
             } else {
                 Text(productivity.percentText)
-                    .font(.system(size: 72, weight: .heavy))
+                    .scaledFont(72, weight: .heavy)
                     .foregroundStyle(Theme.textPrimary)
                 Text("PRODUKTIVITA").labelStyle()
                 Text("Dodržené sliby se počítají, až plán týdne odešleš.")
-                    .font(.system(size: 13))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
                     .padding(.top, 2)
             }
@@ -234,7 +234,7 @@ struct WeeklyReviewView: View {
                let previous = ScoreEngine.promisesKept(closedTasks(in: weekStart.addingDays(-7)), now: now) {
                 let delta = Int(((current - previous) * 100).rounded())
                 Text("\(delta >= 0 ? "+" : "−")\(abs(delta)) % oproti minulému týdnu")
-                    .font(.system(size: 15, weight: .semibold))
+                    .scaledFont(.body, weight: .semibold)
                     .foregroundStyle(delta >= 0 ? Theme.green : Theme.red)
                     .padding(.top, 4)
             }
@@ -260,12 +260,12 @@ struct WeeklyReviewView: View {
         let late = done.filter { $0.status == .completedLate }.count
         let missed = closed.count - done.count
         return VStack(spacing: 10) {
-            HStack(spacing: 10) {
+            TileRow {
                 MetricTile(value: "\(closed.count)", label: "Celkem")
                 MetricTile(value: "\(done.count)", label: "Splněno")
                 MetricTile(value: "\(missed)", label: "Nesplněno", color: missed > 0 ? Theme.red : Theme.textPrimary)
             }
-            HStack(spacing: 10) {
+            TileRow {
                 MetricTile(value: "\(done.count - late)", label: "Včas")
                 MetricTile(value: "\(late)", label: "Pozdě", color: late > 0 ? Theme.orange : Theme.textPrimary)
             }
@@ -283,7 +283,7 @@ struct WeeklyReviewView: View {
                     .annotation(position: .top) {
                         if let value = score.productivity {
                             Text("\(Int((value * 100).rounded()))")
-                                .font(.system(size: 11, weight: .semibold))
+                                .scaledFont(.caption, weight: .semibold)
                                 .foregroundStyle(Theme.textSecondary)
                         }
                     }
@@ -332,16 +332,16 @@ struct WeeklyReviewView: View {
     private func highlight(_ label: String, _ value: String, _ detail: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(label.uppercased())
-                .font(.system(size: 10, weight: .semibold))
+                .scaledFont(.caption, weight: .semibold)
                 .tracking(0.4)
                 .foregroundStyle(Theme.textSecondary)
             Text(value)
-                .font(.system(size: 17, weight: .semibold))
+                .scaledFont(.heading, weight: .semibold)
                 .foregroundStyle(Theme.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
             Text(detail)
-                .font(.system(size: 13))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textSecondary)
         }
         .card(padding: 14)
@@ -380,16 +380,16 @@ struct WeeklyReviewView: View {
                     ForEach(records) { record in
                         VStack(alignment: .leading, spacing: 3) {
                             Text("\(record.taskDate.weekdayText.capitalizedFirst) · \(record.taskTitle)")
-                                .font(.system(size: 12))
+                                .scaledFont(.caption)
                                 .foregroundStyle(Theme.textSecondary)
                             Text("„\(record.critique)“")
-                                .font(.system(size: 15))
+                                .scaledFont(.body)
                                 .foregroundStyle(Theme.textPrimary)
                         }
                     }
                     if let repeated {
                         Text("„\(repeated.reason.title)“ jsi jako důvod uvedl \(repeated.count)×. Pojmenoval jsi problém a stejně se opakoval.")
-                            .font(.system(size: 14, weight: .semibold))
+                            .scaledFont(.body, weight: .semibold)
                             .foregroundStyle(Theme.orange)
                     }
                 }
@@ -407,16 +407,16 @@ struct WeeklyReviewView: View {
             Text("PRAVDA").labelStyle(verdict.color)
             if let rest {
                 Text("Sport, čtení a ostatní jsi splnil na \(rest.percentText).")
-                    .font(.system(size: 16))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textPrimary)
             }
             if let highValue {
                 Text("To nejdůležitější jsi splnil na \(highValue.percentText).")
-                    .font(.system(size: 16))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textPrimary)
             }
             Text(verdict.text)
-                .font(.system(size: 24, weight: .bold))
+                .scaledFont(.title, weight: .bold)
                 .foregroundStyle(verdict.color)
         }
         .padding(20)
@@ -452,17 +452,17 @@ struct ExcuseList: View {
                 VStack(spacing: 6) {
                     HStack {
                         Text(item.reason.title)
-                            .font(.system(size: 15))
+                            .scaledFont(.body)
                             .foregroundStyle(Theme.textPrimary)
                         Spacer()
                         Text("\(item.count)×")
-                            .font(.system(size: 15, weight: .semibold))
+                            .scaledFont(.body, weight: .semibold)
                             .foregroundStyle(Theme.textPrimary)
                     }
                     ThinBar(value: Double(item.count) / Double(maximum), color: Theme.red)
                     if item.highValue > 0 {
                         Text("Z toho \(item.highValue)× u toho nejdůležitějšího.")
-                            .font(.system(size: 12))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.textSecondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -480,7 +480,7 @@ struct InsightList: View {
         VStack(alignment: .leading, spacing: 14) {
             ForEach(insights, id: \.self) { insight in
                 Text(insight)
-                    .font(.system(size: 15))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
             }

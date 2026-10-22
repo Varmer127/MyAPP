@@ -22,7 +22,7 @@ struct PlanStartCard: View {
             if let onReset {
                 Button(action: onReset) {
                     Label("Začít plán znovu", systemImage: "arrow.counterclockwise")
-                        .font(.system(size: 13, weight: .semibold))
+                        .scaledFont(.caption, weight: .semibold)
                         .foregroundStyle(Theme.red)
                         .frame(maxWidth: .infinity, minHeight: 32)
                 }
@@ -41,17 +41,17 @@ struct PlanStartCard: View {
         } label: {
             VStack(alignment: .leading, spacing: 0) {
                 Image(systemName: symbol)
-                    .font(.system(size: 18, weight: .semibold))
+                    .scaledFont(.heading, weight: .semibold)
                     .foregroundStyle(Theme.textPrimary)
                 Text(title)
                     .padding(.top, 12)
-                    .font(.system(size: 14, weight: .bold))
+                    .scaledFont(.body, weight: .bold)
                     .foregroundStyle(Theme.textPrimary)
                     .lineLimit(2)
                     .minimumScaleFactor(0.85)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(detail)
-                    .font(.system(size: 11))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)

@@ -56,7 +56,7 @@ struct CalendarSection: View {
                     if !diaryDays.isEmpty {
                         HStack(spacing: 4) {
                             Circle().fill(Theme.textPrimary).frame(width: 4, height: 4)
-                            Text("deník").font(.system(size: 11)).foregroundStyle(Theme.textSecondary)
+                            Text("deník").scaledFont(.caption).foregroundStyle(Theme.textSecondary)
                         }
                     }
                 }
@@ -76,14 +76,14 @@ struct CalendarSection: View {
             HStack(spacing: 4) {
                 ForEach(Self.weekdayLabels, id: \.self) { label in
                     Text(label)
-                        .font(.system(size: 10, weight: .semibold))
+                        .scaledFont(.caption, weight: .semibold)
                         .foregroundStyle(Theme.textSecondary)
                         .frame(maxWidth: .infinity)
                 }
             }
             monthGrid(month, spacing: 4, showsNumbers: true)
             Text("Klepni na den a uvidíš, co jsi ten den udělal.")
-                .font(.system(size: 12))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textTertiary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -113,7 +113,7 @@ struct CalendarSection: View {
                     .overlay {
                         if showsNumbers {
                             Text("\(Calendar.app.component(.day, from: score.day))")
-                                .font(.system(size: 13, weight: score.day == today ? .heavy : .medium))
+                                .scaledFont(.caption, weight: score.day == today ? .heavy : .medium)
                                 .foregroundStyle(isFuture ? Theme.textTertiary : Theme.textPrimary)
                                 .overlay(alignment: .bottom) {
                                     if diaryDays.contains(score.day) {
@@ -155,7 +155,7 @@ struct CalendarSection: View {
                     } label: {
                         VStack(alignment: .leading, spacing: 5) {
                             Text(start.formatted(Date.FormatStyle(locale: .app).month(.wide)).capitalizedFirst)
-                                .font(.system(size: 11, weight: .semibold))
+                                .scaledFont(.caption, weight: .semibold)
                                 .foregroundStyle(start == currentMonth ? Theme.textPrimary : Theme.textSecondary)
                             monthGrid(start, spacing: 2, showsNumbers: false)
                         }
@@ -174,7 +174,7 @@ struct CalendarSection: View {
             arrow("chevron.left", enabled: canGoBack, action: back)
             Spacer()
             Text(title)
-                .font(.system(size: 17, weight: .bold))
+                .scaledFont(.heading, weight: .bold)
                 .foregroundStyle(Theme.textPrimary)
             Spacer()
             arrow("chevron.right", enabled: canGoForward, action: forward)
@@ -184,7 +184,7 @@ struct CalendarSection: View {
     private func arrow(_ symbol: String, enabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 14, weight: .semibold))
+                .scaledFont(.body, weight: .semibold)
                 .foregroundStyle(enabled ? Theme.textPrimary : Theme.textTertiary)
                 .frame(width: 36, height: 30)
         }
@@ -196,7 +196,7 @@ struct CalendarSection: View {
         HStack(spacing: 5) {
             RoundedRectangle(cornerRadius: 2).fill(color).frame(width: 10, height: 10)
             Text(text)
-                .font(.system(size: 11))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textSecondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)

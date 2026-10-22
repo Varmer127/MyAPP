@@ -14,6 +14,8 @@ final class TaskItem {
     var notes: String = ""
     /// "Why does this matter?" — reused later to confront the user with their own motivation.
     var why: String = ""
+    /// An "if this, then that" plan for when and where the task is started: "když dopiju kávu, začnu číst".
+    var cue: String = ""
     /// Start of the day the task is currently scheduled on.
     var scheduledDate: Date = Date()
     /// Optional exact deadline. Without it the task is due by the end of `scheduledDate`.
@@ -136,7 +138,7 @@ final class TaskItem {
         if let running = activeFocusSession { return running }
         let session = FocusSession(task: self, now: now)
         context.insert(session)
-        try? context.save()
+        Persistence.save(context)
         return session
     }
 

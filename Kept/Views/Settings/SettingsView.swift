@@ -17,44 +17,54 @@ struct SettingsView: View {
     private static let hourRange = 5...23
     private static let overdueOptions = [20, 30, 45, 60, 90]
 
+    /// The settings are split into pages; the first screen only lists them with a line about what is set in each.
+    private enum Page: String, Hashable, CaseIterable, Identifiable {
+        case look, notifications, activities, gym, health, calendar, diary
+        var id: String { rawValue }
+
+        var title: LocalizedStringKey {
+            switch self {
+            case .look: "Vzhled a záložky"
+            case .notifications: "Upozornění"
+            case .activities: "Aktivity a cíle"
+            case .gym: "Gym"
+            case .health: "Zdraví"
+            case .calendar: "Kalendář iPhonu"
+            case .diary: "Deník a soukromí"
+            }
+        }
+
+        var symbol: String {
+            switch self {
+            case .look: "paintbrush"
+            case .notifications: "bell"
+            case .activities: "target"
+            case .gym: "dumbbell"
+            case .health: "heart"
+            case .calendar: "calendar"
+            case .diary: "book.closed"
+            }
+        }
+    }
+
+    @State private var path: [Page] = []
+
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Form {
-                Section("Vzhled") {
-                    Picker("Vzhled", selection: $appearanceRaw) {
-                        ForEach(AppAppearance.allCases) { Text($0.title).tag($0.rawValue) }
-                    }
-                    .pickerStyle(.segmented)
-                }
-                .listRowBackground(Theme.card)
                 Section {
                     ProfileCard()
                 }
                 .listRowBackground(Theme.card)
+                permissionSection
                 if let settings = settingsList.first {
-                    tabsSection(settings)
-                    hiddenScreensSection(settings)
-                    permissionSection
-                    toneSection(settings)
-                    remindersSection(settings)
-                    dailySection(settings)
-                    sundaySection(settings)
-                    activitiesSection(settings)
-                    targetsSection(settings)
-                    gymSection
-                    healthSection(settings)
-                    calendarSection(settings)
-                    diarySection(settings)
-                    privacySection(settings)
-                    weightsSection(settings)
+                    Section {
+                        ForEach(Page.allCases) { page in
+                            NavigationLink(value: page) { pageRow(page, settings) }
+                        }
+                    }
+                    .listRowBackground(Theme.card)
                 }
-                Section {
-                    Toggle("Úvodní video", isOn: $introEnabled)
-                        .tint(Theme.textSecondary)
-                } footer: {
-                    Text("Přehraje se při spuštění aplikace, ve výchozím stavu bez zvuku. Klepnutím ho přeskočíš.")
-                }
-                .listRowBackground(Theme.card)
 
                 // DEVELOPER VERSION ONLY — remove before real testing (see DeveloperSection.swift).
                 #if DEBUG
@@ -71,11 +81,124 @@ struct SettingsView: View {
             .scrollContentBackground(.hidden)
             .screenBackground()
             .navigationTitle("Nastavení")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Theme.background, for: .navigationBar)
+            .navigationDestination(for: Page.self) { page in
+                if let settings = settingsList.first { pageView(page, settings) }
+            }
             .task(id: scenePhase) {
                 authorization = await NotificationManager.authorizationStatus()
             }
+            // Choosing the Settings tab again, while it is open, goes back to this first screen.
+            .onReceive(NotificationCenter.default.publisher(for: .tabReselected)) { note in
+                if note.object as? AppTab == .settings { path.removeAll() }
+            }
         }
+    }
+
+    private func pageRow(_ page: Page, _ settings: UserSettings) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: page.symbol)
+                .scaledFont(.body, weight: .semibold)
+                .foregroundStyle(Theme.textPrimary)
+                .frame(width: 32, height: 32)
+                .background(Theme.cardRaised)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(page.title)
+                    .foregroundStyle(Theme.textPrimary)
+                Text(summary(of: page, settings))
+                    .scaledFont(.caption)
+                    .foregroundStyle(Theme.textSecondary)
+                    .lineLimit(1)
+            }
+        }
+        .padding(.vertical, 3)
+    }
+
+    /// One line on what is set on a page, so most of the time there is no need to open it.
+    private func summary(of page: Page, _ settings: UserSettings) -> String {
+        switch page {
+        case .look:
+            let appearance = AppAppearance(rawValue: appearanceRaw)?.title ?? ""
+            return "\(appearance) · záložky navíc: \(settings.optionalTabCount)"
+        case .notifications:
+            guard settings.taskRemindersEnabled || settings.realityCheckEnabled || settings.morningBriefEnabled else { return "Vypnuto" }
+            let nudges = settings.nudgesPerDay > 0 ? "úkoly bez termínu \(settings.nudgesPerDay)× denně" : "úkoly bez termínu bez připomínek"
+            return "\(settings.tone.title) · \(nudges)"
+        case .activities:
+            return "Aktivit: \(settings.enabledCategories.count - 1 + settings.customActivities.count)"
+        case .gym:
+            return "Partie, cviky, pauzy"
+        case .health:
+            return settings.healthEnabled ? "Propojeno, cíl \(settings.stepGoal.formatted(.number.locale(.app))) kroků" : "Nepropojeno"
+        case .calendar:
+            return settings.calendarEnabled ? "Zapnuto" : "Vypnuto"
+        case .diary:
+            let lock = settings.diaryLockEnabled || settings.appLockEnabled ? "zámek zapnutý" : "bez zámku"
+            return (settings.diaryEnabled ? "Deník zapnutý" : "Deník vypnutý") + " · " + lock
+        }
+    }
+
+    @ViewBuilder
+    private func pageView(_ page: Page, _ settings: UserSettings) -> some View {
+        switch page {
+        case .gym:
+            GymSettingsView()
+        default:
+            Form {
+                switch page {
+                case .look:
+                    appearanceSection
+                    tabsSection(settings)
+                    hiddenScreensSection(settings)
+                    introSection
+                case .notifications:
+                    toneSection(settings)
+                    remindersSection(settings)
+                    dailySection(settings)
+                    sundaySection(settings)
+                case .activities:
+                    activitiesSection(settings)
+                    targetsSection(settings)
+                    weightsSection(settings)
+                case .health:
+                    healthSection(settings)
+                case .calendar:
+                    calendarSection(settings)
+                case .diary:
+                    diarySection(settings)
+                    privacySection(settings)
+                case .gym:
+                    EmptyView()
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .screenBackground()
+            .navigationTitle(page.title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Theme.background, for: .navigationBar)
+        }
+    }
+
+    private var appearanceSection: some View {
+        Section("Vzhled") {
+            Picker("Vzhled", selection: $appearanceRaw) {
+                ForEach(AppAppearance.allCases) { Text($0.title).tag($0.rawValue) }
+            }
+            .pickerStyle(.segmented)
+        }
+        .listRowBackground(Theme.card)
+    }
+
+    private var introSection: some View {
+        Section {
+            Toggle("Úvodní video", isOn: $introEnabled)
+                .tint(Theme.textSecondary)
+        } footer: {
+            Text("Přehraje se při spuštění aplikace, ve výchozím stavu bez zvuku. Klepnutím ho přeskočíš.")
+        }
+        .listRowBackground(Theme.card)
     }
 
     private func nameSection(_ settings: UserSettings) -> some View {
@@ -97,7 +220,7 @@ struct SettingsView: View {
         if authorization == .denied {
             Section {
                 Text("Notifikace pro Kept jsou v Nastavení iOS vypnuté. Bez nich ti aplikace nemůže nic připomenout.")
-                    .font(.system(size: 13))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.red)
                 Button("Otevřít Nastavení iOS") {
                     if let url = URL(string: UIApplication.openNotificationSettingsURLString) {
@@ -148,11 +271,21 @@ struct SettingsView: View {
                 Picker("Opakovat po termínu", selection: Bindable(settings).overdueRepeatMinutes) {
                     ForEach(Self.overdueOptions, id: \.self) { Text("každých \($0) min").tag($0) }
                 }
+                Picker("Úkoly bez termínu", selection: Bindable(settings).nudgesPerDay) {
+                    Text("nepřipomínat").tag(0)
+                    ForEach(1...NotificationManager.maxNudgesPerDay, id: \.self) { Text("\($0)× denně").tag($0) }
+                }
+                if settings.nudgesPerDay > 0 {
+                    DatePicker("Připomínat od", selection: timeBinding(Bindable(settings).nudgeFromMinutes),
+                               displayedComponents: .hourAndMinute)
+                    DatePicker("Připomínat do", selection: timeBinding(Bindable(settings).nudgeToMinutes),
+                               displayedComponents: .hourAndMinute)
+                }
             }
         } header: {
             Text("Úkoly")
         } footer: {
-            Text("Úkol s deadlinem se ohlásí 30 minut před začátkem, při startu a pak znovu, dokud není hotový. Kritické úkoly a opakovaná selhání eskalují rychleji.")
+            Text("Úkol s deadlinem se ohlásí 30 minut před začátkem, při startu a pak znovu, dokud není hotový. Kritické úkoly a opakovaná selhání eskalují rychleji. Úkoly bez termínu, třeba z rychlého plánu, se připomenou souhrnně: jen ve zvoleném čase, nejvýš tolikrát denně, kolik nastavíš, a ne dřív než po pauze 90 minut. Když je všechno hotové, Kept mlčí.")
         }
         .listRowBackground(Theme.card)
     }
@@ -353,7 +486,7 @@ struct SettingsView: View {
                 .tint(Theme.textSecondary)
             if calendarDenied || (settings.calendarEnabled && CalendarService.isDenied) {
                 Text("Kept nemá ke kalendáři přístup. Povol ho v Nastavení iPhonu → Aplikace → Kept → Kalendáře (úplný přístup).")
-                    .font(.system(size: 13))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.orange)
                 Button("Otevřít Nastavení iPhonu") {
                     if let url = URL(string: UIApplication.openSettingsURLString) {

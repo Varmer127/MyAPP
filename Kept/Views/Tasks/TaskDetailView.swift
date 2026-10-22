@@ -17,10 +17,10 @@ struct TaskDetailView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(statusText.text.uppercased()).labelStyle(statusText.color)
                         Text(task.title)
-                            .font(.system(size: 28, weight: .bold))
+                            .scaledFont(.title, weight: .bold)
                             .foregroundStyle(Theme.textPrimary)
                         Text("\(task.category.title) · \(task.scheduledDate.longDayText) · \(task.plannedMinutes) min")
-                            .font(.system(size: 14))
+                            .scaledFont(.body)
                             .foregroundStyle(Theme.textSecondary)
                     }
                     if !task.partialNote.isEmpty {
@@ -34,7 +34,7 @@ struct TaskDetailView: View {
                             quote(task.stake)
                             if task.stakeOutcome != 0 {
                                 Text(task.stakeOutcome == 1 ? "Dodržena" : "Nedodržena")
-                                    .font(.system(size: 14, weight: .semibold))
+                                    .scaledFont(.body, weight: .semibold)
                                     .foregroundStyle(task.stakeOutcome == 1 ? Theme.green : Theme.red)
                             }
                         }
@@ -47,11 +47,11 @@ struct TaskDetailView: View {
                             ForEach(task.exercises.sorted { $0.name < $1.name }) { exercise in
                                 HStack {
                                     Text(exercise.name)
-                                        .font(.system(size: 15, weight: .semibold))
+                                        .scaledFont(.body, weight: .semibold)
                                         .foregroundStyle(Theme.textPrimary)
                                     Spacer()
                                     Text(exercise.summary)
-                                        .font(.system(size: 14))
+                                        .scaledFont(.body)
                                         .foregroundStyle(Theme.textSecondary)
                                 }
                             }
@@ -61,7 +61,7 @@ struct TaskDetailView: View {
                         let active = finishedSessions.reduce(0) { $0 + $1.activeSeconds }
                         let paused = finishedSessions.reduce(0) { $0 + $1.pauseSeconds }
                         let pauses = finishedSessions.reduce(0) { $0 + $1.pauseCount }
-                        HStack(spacing: 10) {
+                        TileRow {
                             MetricTile(value: "\(task.plannedMinutes) min", label: "Plán")
                             MetricTile(value: FocusView.minutes(active), label: "Soustředění")
                             MetricTile(value: FocusView.minutes(paused), label: "Pauza \(pauses)×")
@@ -83,7 +83,7 @@ struct TaskDetailView: View {
                             quote("„\(record.critique)“")
                             if !record.prevention.isEmpty {
                                 Text("Příště: \(record.prevention)")
-                                    .font(.system(size: 14))
+                                    .scaledFont(.body)
                                     .foregroundStyle(Theme.textSecondary)
                             }
                         }
@@ -127,7 +127,7 @@ struct TaskDetailView: View {
 
     private func quote(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 16))
+            .scaledFont(.body)
             .foregroundStyle(Theme.textPrimary)
             .fixedSize(horizontal: false, vertical: true)
     }

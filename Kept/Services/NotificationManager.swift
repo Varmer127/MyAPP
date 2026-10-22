@@ -43,7 +43,10 @@ enum NotificationManager {
     private static let prepLead: TimeInterval = 30 * 60
     private static let directDelay: TimeInterval = 15 * 60
     private static let overdueRepeats = 2
-    private static let nudgeHours = [12, 16, 19]
+    /// Reminders about tasks without a deadline never come closer together than this, and never right next to a task's own reminder.
+    private static let minimumNudgeGap = 90
+    private static let nudgeClearance: TimeInterval = 40 * 60
+    static let maxNudgesPerDay = 5
     private static let daysAhead = 2
     private static let briefDaysAhead = 3
     private static let failureWindowDays = 30
@@ -81,9 +84,15 @@ enum NotificationManager {
 
     static func reschedule(context: ModelContext, now: Date = .now) async {
         let planned = plan(context: context, now: now)
-        // Everything is replaced except the running focus timer's end notification.
-        let stale = await center.pendingNotificationRequests().map(\.identifier).filter { $0 != focusEndID && $0 != restEndID }
-        center.removePendingNotificationRequests(withIdentifiers: stale)
+        // Only what is no longer planned is removed, then the plan is added (a request with the same identifier
+        // replaces the old one). What stays planned is never absent in between, so being stopped half way costs
+        // little, and removing first keeps the total under the system limit of pending notifications.
+        // The running focus timer's end notification is never touched.
+        let keep = Set(planned.map(\.id))
+        let existing = await center.pendingNotificationRequests().map(\.identifier)
+        center.removePendingNotificationRequests(withIdentifiers: existing.filter {
+            !keep.contains($0) && $0 != focusEndID && $0 != restEndID
+        })
         for item in planned {
             let content = UNMutableNotificationContent()
             content.title = item.title
@@ -94,8 +103,9 @@ enum NotificationManager {
             let trigger = UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)
             try? await center.add(UNNotificationRequest(identifier: item.id, content: content, trigger: trigger))
         }
-        let summary = planned.map { "\($0.date.stampText) [\($0.id.prefix(12))] \($0.body)" }.joined(separator: "\n")
-        logger.info("Scheduled \(planned.count) notifications:\n\(summary, privacy: .public)")
+        // Only when and which kind: the texts hold task titles and the user's own reasons, so they never go to the log.
+        let summary = planned.map { "\($0.date.stampText) [\($0.id.prefix(12))]" }.joined(separator: "\n")
+        logger.info("Scheduled \(planned.count) notifications:\n\(summary, privacy: .private)")
     }
 
     static func scheduleFocusEnd(title: String, in seconds: TimeInterval) async {
@@ -203,7 +213,13 @@ enum NotificationManager {
                               purchases: (try? context.fetch(FetchDescriptor<PointsPurchase>())) ?? [],
                               diary: (try? context.fetch(FetchDescriptor<DiaryEntry>())) ?? [], now: now)
                 .filter { $0.date > now } : []
-        let rest = planned.filter { $0.date > now }.sorted { $0.date < $1.date }.prefix(maxPending - streak.count)
+        var upcoming = planned.filter { $0.date > now }
+        // A day reminder that would land next to a task's own reminder is dropped: one of them is enough.
+        let taskTimes = upcoming.filter { !$0.id.hasPrefix("nudge.") }.map(\.date)
+        upcoming.removeAll { item in
+            item.id.hasPrefix("nudge.") && taskTimes.contains { abs($0.timeIntervalSince(item.date)) < nudgeClearance }
+        }
+        let rest = upcoming.sorted { $0.date < $1.date }.prefix(maxPending - streak.count)
         return (rest + streak).sorted { $0.date < $1.date }
     }
 
@@ -329,19 +345,27 @@ enum NotificationManager {
         }
     }
 
-    /// Aggregated "N still open" reminders at fixed hours, sharpening through the day.
+    /// Reminders about the tasks that have no deadline, spread evenly over the day within the user's limits.
+    /// A task with a deadline has its own reminders; one added by quick plan has none, so these are its only voice.
     private static func dayNudges(settings: UserSettings, tasks: [TaskItem], now: Date) -> [Planned] {
+        let span = settings.nudgeToMinutes - settings.nudgeFromMinutes
+        guard settings.nudgesPerDay > 0, span >= minimumNudgeGap else { return [] }
+        let count = min(settings.nudgesPerDay, maxNudgesPerDay, max(1, span / minimumNudgeGap - 1))
         let pool = NotificationTemplates.dayNudge[settings.tone] ?? []
+        let minutes = (1...count).map { settings.nudgeFromMinutes + (span * $0 / (count + 1)) / 5 * 5 }
+
         return (0..<daysAhead).flatMap { offset -> [Planned] in
             let day = now.startOfDay.addingDays(offset)
-            let open = openTasks(tasks, on: day).count
+            let open = openTasks(tasks, on: day).filter { $0.deadline == nil }.count
             guard open > 0 else { return [] }
-            return nudgeHours.enumerated().map { index, hour in
-                let body = pool.isEmpty ? "" : pool[min(index, pool.count - 1)]
+            return minutes.map { minute in
+                // The wording follows the time of day, not the position in the series.
+                let level = minute < 13 * 60 ? 0 : (minute < 17 * 60 ? 1 : 2)
+                let body = pool.isEmpty ? "" : pool[min(level, pool.count - 1)]
                 let title = settings.tone == .savage
-                    ? NotificationTemplates.pick(NotificationTemplates.punchlines, seed: day.daySeed &+ hour)
+                    ? NotificationTemplates.pick(NotificationTemplates.punchlines, seed: day.daySeed &+ minute)
                     : "KEPT"
-                return Planned(id: "nudge.\(offset).\(hour)", date: time(hour * 60, on: day), title: title,
+                return Planned(id: "nudge.\(offset).\(minute)", date: time(minute, on: day), title: title,
                                body: body.replacingOccurrences(of: "{n}", with: "\(open)"), route: .today)
             }
         }
@@ -366,9 +390,12 @@ enum NotificationManager {
                 return steps(for: task, settings: settings).map { step in
                     // Preparation and start stay factual; later steps sharpen with the boosts, capped by the tone.
                     let level = step.level <= 1 ? step.level : min(settings.tone.maxLevel, step.level + boost)
-                    let body = NotificationTemplates.taskMessage(
-                        level: level, title: task.title, time: step.date.timeText, why: task.why,
-                        failures: failureCount, seed: task.uid.hashValue &+ step.index)
+                    // The first two steps use the user's own plan for starting, when there is one.
+                    let body = !task.cue.isEmpty && level <= 1
+                        ? NotificationTemplates.cueMessage(level: level, title: task.title, cue: task.cue)
+                        : NotificationTemplates.taskMessage(
+                            level: level, title: task.title, time: step.date.timeText, why: task.why,
+                            failures: failureCount, seed: task.uid.hashValue &+ step.index)
                     // In the savage tone the escalated steps lead with a punchline; the task is named in the body.
                     let title = settings.tone == .savage && level >= savageHeadlineLevel
                         ? NotificationTemplates.pick(NotificationTemplates.punchlines, seed: task.uid.hashValue &+ step.index &* 7)
@@ -380,14 +407,12 @@ enum NotificationManager {
         }
     }
 
-    /// Base timeline of one task. A task without a deadline has no start time, so it only
-    /// gets a "last chance to start" before the evening Reality Check.
+    /// Base timeline of one task. A task without a deadline has no timeline of its own.
     private static func steps(for task: TaskItem, settings: UserSettings) -> [(index: Int, date: Date, level: Int)] {
         let duration = TimeInterval(task.plannedMinutes * 60)
-        guard let deadline = task.deadline else {
-            let lastChance = time(settings.realityCheckMinutes, on: task.scheduledDate).addingTimeInterval(-duration)
-            return [(0, lastChance, 2)]
-        }
+        // Without a deadline there is no start time to remind about: the day's reminders speak for all such tasks at once,
+        // so a plan of ten quick tasks cannot send ten notifications in the same minute.
+        guard let deadline = task.deadline else { return [] }
 
         let start = deadline.addingTimeInterval(-duration)
         var steps: [(Int, Date, Int)] = [

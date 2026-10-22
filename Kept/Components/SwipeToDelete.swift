@@ -23,7 +23,7 @@ private struct SwipeToDelete: ViewModifier {
                     onDelete()
                 } label: {
                     Image(systemName: "trash")
-                        .font(.system(size: 16, weight: .semibold))
+                        .scaledFont(.body, weight: .semibold)
                         .foregroundStyle(Color(hex: 0xFFFFFF))
                         .frame(width: Self.revealWidth - 8)
                         .frame(maxHeight: .infinity)

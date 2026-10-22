@@ -21,12 +21,12 @@ struct PartialView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("SPLNĚNO ČÁSTEČNĚ").labelStyle(Theme.orange)
                         Text(task.title)
-                            .font(.system(size: 28, weight: .bold))
+                            .scaledFont(.title, weight: .bold)
                             .foregroundStyle(Theme.textPrimary)
                     }
                     VStack(alignment: .leading, spacing: 6) {
                         Text("\(Int(percent)) %")
-                            .font(.system(size: 72, weight: .heavy))
+                            .scaledFont(72, weight: .heavy)
                             .foregroundStyle(Theme.textPrimary)
                             .contentTransition(.numericText())
                             .animation(.easeOut(duration: 0.15), value: percent)
@@ -36,14 +36,14 @@ struct PartialView: View {
                             .padding(.top, 8)
                     }
                     Text("Úkol se započítá jen z \(Int(percent)) %: do produktivity, dodržených slibů i spolehlivosti. Zbylých \(100 - Int(percent)) % je nedodržený slib.")
-                        .font(.system(size: 14))
+                        .scaledFont(.body)
                         .foregroundStyle(Theme.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                     VStack(alignment: .leading, spacing: 8) {
                         Text("CO CHYBĚLO").labelStyle()
                         TextField("Nepovinné – co jsi nestihl nebo vynechal", text: $note, axis: .vertical)
                             .lineLimit(2...5)
-                            .font(.system(size: 16))
+                            .scaledFont(.body)
                             .card()
                     }
                 }

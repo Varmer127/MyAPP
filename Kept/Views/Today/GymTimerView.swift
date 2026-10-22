@@ -125,7 +125,7 @@ struct GymTimerView: View {
             HStack {
                 Spacer()
                 Button("Skrýt") { dismiss() }
-                    .font(.system(size: 15))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
                     .frame(minHeight: 44)
             }
@@ -137,7 +137,7 @@ struct GymTimerView: View {
                         Text(rest == nil ? "TRÉNINK" : (reached ? "JDI NA DALŠÍ SÉRII" : "PAUZA"))
                             .labelStyle(rest == nil ? Theme.textSecondary : (reached ? Theme.green : Theme.orange))
                         Text(FocusView.clock(rest ?? total))
-                            .font(.system(size: 76, weight: .heavy))
+                            .scaledFont(76, weight: .heavy)
                             .monospacedDigit()
                             .foregroundStyle(Theme.textPrimary)
                             .minimumScaleFactor(0.5)
@@ -146,17 +146,17 @@ struct GymTimerView: View {
                             ThinBar(value: rest / target, color: reached ? Theme.green : Theme.orange)
                                 .frame(width: 220)
                             Text("Cíl \(FocusView.clock(target)) · celkem \(FocusView.clock(total))")
-                                .font(.system(size: 13))
+                                .scaledFont(.caption)
                                 .foregroundStyle(Theme.textSecondary)
                         } else {
                             Text((task.workoutType.isEmpty ? task.title : task.workoutType).uppercased())
-                                .font(.system(size: 17, weight: .semibold))
+                                .scaledFont(.heading, weight: .semibold)
                                 .tracking(1)
                                 .foregroundStyle(Theme.textPrimary)
                         }
                     }
                     .padding(.top, 16)
-                    HStack(spacing: 10) {
+                    TileRow {
                         MetricTile(value: "\(session?.pauseCount ?? 0)", label: "Pauzy")
                         MetricTile(value: averageRest.map(FocusView.clock) ?? "—", label: "Průměrná pauza")
                         MetricTile(value: FocusView.minutes(session?.paused(at: now) ?? 0), label: "V pauzách")
@@ -164,7 +164,7 @@ struct GymTimerView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         restPicker
                         Text("Orientačně: síla (těžké váhy, 1–5 opakování) 2–5 min, růst svalů 1–2 min, vytrvalost kolem 30 s. U dřepů a mrtvých tahů počítej s delší pauzou než u izolovaných cviků. Je to obecné vodítko, ne rada na míru – hlavní je zvládnout další sérii se stejnou technikou. Vlastní délky pauz si nastavíš v Nastavení gymu.")
-                            .font(.system(size: 11))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.textTertiary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -180,7 +180,7 @@ struct GymTimerView: View {
                     .buttonStyle(SecondaryButtonStyle())
                 Button { confirmsStop = true } label: {
                     Label("STOP", systemImage: "stop.fill")
-                        .font(.system(size: 14, weight: .heavy))
+                        .scaledFont(.body, weight: .heavy)
                         .tracking(0.6)
                         .foregroundStyle(Theme.red)
                         .frame(maxWidth: .infinity, minHeight: 40)
@@ -211,10 +211,10 @@ struct GymTimerView: View {
                     if !logs.isEmpty, !task.workoutType.isEmpty {
                         Button(savedTemplate ? "Uloženo jako šablona „\(task.workoutType)“" : "Uložit cviky jako šablonu „\(task.workoutType)“") {
                             settings?.setTemplate(logs.map(\.name), for: task.workoutType)
-                            try? context.save()
+                            Persistence.save(context)
                             withAnimation { savedTemplate = true }
                         }
-                        .font(.system(size: 13, weight: .semibold))
+                        .scaledFont(.caption, weight: .semibold)
                         .foregroundStyle(savedTemplate ? Theme.green : Theme.textSecondary)
                         .frame(maxWidth: .infinity, minHeight: 44)
                     }
@@ -227,7 +227,7 @@ struct GymTimerView: View {
                 Button("DOKONČIT TRÉNINK") { end(completing: true) }
                     .buttonStyle(PrimaryButtonStyle())
                 Button("Ukončit bez splnění") { end(completing: false) }
-                    .font(.system(size: 14))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
                     .frame(minHeight: 36)
             }
@@ -243,13 +243,13 @@ struct GymTimerView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("TRÉNINK").labelStyle()
                     Text(FocusView.clock(total))
-                        .font(.system(size: 28, weight: .heavy))
+                        .scaledFont(.title, weight: .heavy)
                         .monospacedDigit()
                         .foregroundStyle(Theme.textPrimary)
                 }
                 Spacer()
                 Button("Skrýt") { dismiss() }
-                    .font(.system(size: 15))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
                     .frame(minHeight: 44)
             }
@@ -260,7 +260,7 @@ struct GymTimerView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(reached ? "ODPOČINUTO" : "PAUZA").labelStyle(reached ? Theme.green : Theme.orange)
                             Text("\(FocusView.clock(rest)) / \(FocusView.clock(target))")
-                                .font(.system(size: 15, weight: .bold))
+                                .scaledFont(.body, weight: .bold)
                                 .monospacedDigit()
                                 .foregroundStyle(Theme.textPrimary)
                         }
@@ -268,7 +268,7 @@ struct GymTimerView: View {
                         // A real button, so it does not read as part of the status.
                         Button { endRest() } label: {
                             Label("DALŠÍ SÉRIE", systemImage: "forward.fill")
-                                .font(.system(size: 13, weight: .heavy))
+                                .scaledFont(.caption, weight: .heavy)
                                 .tracking(0.5)
                                 .foregroundStyle(Color(hex: 0x000000))
                                 .padding(.horizontal, 14)
@@ -281,14 +281,14 @@ struct GymTimerView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("PAUZA").labelStyle()
                             Text(FocusView.clock(target))
-                                .font(.system(size: 15, weight: .bold))
+                                .scaledFont(.body, weight: .bold)
                                 .monospacedDigit()
                                 .foregroundStyle(Theme.textSecondary)
                         }
                         Spacer()
                         Button { startRest() } label: {
                             Label("ZAČÍT PAUZU", systemImage: "timer")
-                                .font(.system(size: 13, weight: .heavy))
+                                .scaledFont(.caption, weight: .heavy)
                                 .tracking(0.5)
                                 .foregroundStyle(Theme.onPrimary)
                                 .padding(.horizontal, 14)
@@ -322,7 +322,7 @@ struct GymTimerView: View {
                         let isOn = task.workoutType == name
                         Button { pickWorkout(name, loadTemplate: !isSimple && logs.allSatisfy { log in !log.setLogs.contains(where: \.isDone) }) } label: {
                             Text(name)
-                                .font(.system(size: 14, weight: .semibold))
+                                .scaledFont(.body, weight: .semibold)
                                 .padding(.horizontal, 14)
                                 .frame(minHeight: 40)
                                 .foregroundStyle(isOn ? Theme.onPrimary : Theme.textPrimary)
@@ -351,11 +351,11 @@ struct GymTimerView: View {
                         Button { selectedName = item.name } label: {
                             VStack(spacing: 1) {
                                 Text(item.name)
-                                    .font(.system(size: 13, weight: .semibold))
+                                    .scaledFont(.caption, weight: .semibold)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.8)
                                 Text(FocusView.clock(TimeInterval(item.seconds)))
-                                    .font(.system(size: 12, weight: .medium))
+                                    .scaledFont(.caption, weight: .medium)
                                     .monospacedDigit()
                                     .opacity(0.7)
                             }
@@ -386,12 +386,12 @@ struct GymTimerView: View {
     private func recordBanner(_ banner: RecordBanner) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "trophy.fill")
-                .font(.system(size: 22))
+                .scaledFont(.title)
                 .foregroundStyle(Color(hex: 0x000000))
             VStack(alignment: .leading, spacing: 2) {
-                Text("NOVÝ REKORD").font(.system(size: 12, weight: .heavy)).tracking(1).foregroundStyle(Color(hex: 0x000000))
+                Text("NOVÝ REKORD").scaledFont(.caption, weight: .heavy).tracking(1).foregroundStyle(Color(hex: 0x000000))
                 Text("\(banner.exercise) · \(banner.text)")
-                    .font(.system(size: 14, weight: .semibold))
+                    .scaledFont(.body, weight: .semibold)
                     .foregroundStyle(Color(hex: 0x000000))
             }
             Spacer()
@@ -410,7 +410,7 @@ struct GymTimerView: View {
     private func pickWorkout(_ name: String, loadTemplate: Bool) {
         task.workoutType = name
         savedTemplate = false
-        defer { try? context.save() }
+        defer { Persistence.save(context) }
         guard loadTemplate else { return }
         for log in logs where !log.setLogs.contains(where: \.isDone) {
             remove(log)
@@ -433,18 +433,18 @@ struct GymTimerView: View {
             entry.log = log
             context.insert(entry)
         }
-        try? context.save()
+        Persistence.save(context)
     }
 
     private func remove(_ log: ExerciseLog) {
         context.delete(log)
-        try? context.save()
+        Persistence.save(context)
     }
 
     /// Ticking a set off checks for a new record. The rest is started with its own button, never by ticking.
     private func tick(_ set: SetLog, of log: ExerciseLog) {
         set.isDone.toggle()
-        try? context.save()
+        Persistence.save(context)
         guard set.isDone else { return }
         if !set.isWarmup, set.weight > 0, ExerciseLog.plausibleWeight.contains(set.weight),
            ExerciseLog.plausibleReps.contains(set.reps) {
@@ -485,7 +485,7 @@ struct GymTimerView: View {
             for log in task.exercises where !log.settle() {
                 context.delete(log)
             }
-            try? context.save()
+            Persistence.save(context)
         } else {
             task.finishFocusSessions()
         }
@@ -514,11 +514,11 @@ private struct ExerciseCard: View {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(log.name)
-                        .font(.system(size: 17, weight: .bold))
+                        .scaledFont(.heading, weight: .bold)
                         .foregroundStyle(Theme.textPrimary)
                     if let catalog {
                         Text(catalog.primary.map(\.title).joined(separator: ", "))
-                            .font(.system(size: 12))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.textSecondary)
                     }
                 }
@@ -537,7 +537,7 @@ private struct ExerciseCard: View {
             .swipeToDelete("Odebrat cvik", cornerRadius: 8) { confirmsRemove = true }
             if let hint = GymService.suggestion(for: log.name, in: history) {
                 Label(hint, systemImage: "arrow.up.right")
-                    .font(.system(size: 12, weight: .semibold))
+                    .scaledFont(.caption, weight: .semibold)
                     .foregroundStyle(Theme.green)
             }
             HStack(spacing: 8) {
@@ -548,7 +548,7 @@ private struct ExerciseCard: View {
                 Text("").frame(width: 40)
                 Text("").frame(width: SetRow.deleteWidth)
             }
-            .font(.system(size: 10, weight: .semibold))
+            .scaledFont(.caption, weight: .semibold)
             .tracking(0.5)
             .foregroundStyle(Theme.textTertiary)
             ForEach(Array(sets.enumerated()), id: \.element.id) { index, set in
@@ -560,12 +560,12 @@ private struct ExerciseCard: View {
                 Button { addSet(warmup: false) } label: { Label("Série", systemImage: "plus") }
                 Button { addSet(warmup: true) } label: { Label("Rozcvička", systemImage: "flame") }
             }
-            .font(.system(size: 14, weight: .semibold))
+            .scaledFont(.body, weight: .semibold)
             .foregroundStyle(Theme.textPrimary)
             .frame(minHeight: 36)
             if let tip = catalog?.tip {
                 Text(tip)
-                    .font(.system(size: 12))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -581,7 +581,7 @@ private struct ExerciseCard: View {
         withAnimation(.easeOut(duration: 0.2)) {
             context.delete(set)
         }
-        try? context.save()
+        Persistence.save(context)
     }
 
     /// Warm-ups are marked "R"; working sets are numbered on their own.
@@ -613,7 +613,7 @@ private struct ExerciseCard: View {
         }
         entry.log = log
         context.insert(entry)
-        try? context.save()
+        Persistence.save(context)
     }
 }
 
@@ -646,7 +646,7 @@ private struct SetRow: View {
                 .swipeToDelete(set.isWarmup ? "Smazat rozcvičku" : "Smazat sérii", cornerRadius: 8, onDelete: onDelete)
             if let warning {
                 Label(warning, systemImage: "exclamationmark.triangle.fill")
-                    .font(.system(size: 12, weight: .medium))
+                    .scaledFont(.caption, weight: .medium)
                     .foregroundStyle(Theme.orange)
                     .fixedSize(horizontal: false, vertical: true)
                     .transition(.opacity)
@@ -662,7 +662,7 @@ private struct SetRow: View {
     }
 
     private func save() {
-        try? set.modelContext?.save()
+        Persistence.save(set.modelContext)
     }
 
     private var row: some View {
@@ -672,7 +672,7 @@ private struct SetRow: View {
                 Button("Smazat sérii", role: .destructive, action: onDelete)
             } label: {
                 Text(number)
-                    .font(.system(size: 14, weight: .heavy))
+                    .scaledFont(.body, weight: .heavy)
                     .foregroundStyle(set.isWarmup ? Theme.orange : Theme.textPrimary)
                     .frame(width: 40, height: 36)
                     .background(Theme.cardRaised)
@@ -680,7 +680,7 @@ private struct SetRow: View {
             }
             .accessibilityLabel(set.isWarmup ? "Rozcvičovací série" : "Série \(number)")
             Text(previous)
-                .font(.system(size: 13))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textTertiary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
@@ -688,7 +688,7 @@ private struct SetRow: View {
             TextField("0", value: $set.weight, format: .number.precision(.fractionLength(0...2)).locale(.app))
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.center)
-                .font(.system(size: 16, weight: .semibold))
+                .scaledFont(.body, weight: .semibold)
                 .frame(width: 66, height: 36)
                 .background(Theme.cardRaised)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -697,7 +697,7 @@ private struct SetRow: View {
             TextField("0", value: $set.reps, format: .number)
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.center)
-                .font(.system(size: 16, weight: .semibold))
+                .scaledFont(.body, weight: .semibold)
                 .frame(width: 50, height: 36)
                 .background(Theme.cardRaised)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -705,7 +705,7 @@ private struct SetRow: View {
                 .accessibilityLabel("Počet opakování")
             Button(action: onTick) {
                 Image(systemName: "checkmark")
-                    .font(.system(size: 15, weight: .heavy))
+                    .scaledFont(.body, weight: .heavy)
                     .foregroundStyle(set.isDone ? Color(hex: 0x000000) : Theme.textTertiary)
                     .frame(width: 40, height: 36)
                     .background(set.isDone ? Theme.green : Theme.cardRaised)
@@ -715,7 +715,7 @@ private struct SetRow: View {
             .accessibilityLabel(set.isDone ? "Série hotová" : "Odškrtnout sérii")
             Button(action: onDelete) {
                 Image(systemName: "xmark")
-                    .font(.system(size: 12, weight: .bold))
+                    .scaledFont(.caption, weight: .bold)
                     .foregroundStyle(Theme.textTertiary)
                     .frame(width: Self.deleteWidth, height: 36)
                     .contentShape(Rectangle())

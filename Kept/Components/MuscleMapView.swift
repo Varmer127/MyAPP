@@ -137,7 +137,7 @@ struct MuscleMapView: View {
                 }
             }
             if showsLabels {
-                Text(label).font(.system(size: 9, weight: .semibold)).tracking(0.8).foregroundStyle(Theme.textTertiary)
+                Text(label).scaledFont(.caption, weight: .semibold).tracking(0.8).foregroundStyle(Theme.textTertiary)
             }
         }
     }

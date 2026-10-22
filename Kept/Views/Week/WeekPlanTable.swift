@@ -45,12 +45,12 @@ struct WeekPlanTable: View {
                 Text("AKTIVITA").labelStyle().frame(maxWidth: .infinity, alignment: .leading)
                 ForEach(days, id: \.self) { day in
                     Text(day.weekdayShortText.uppercased())
-                        .font(.system(size: 10, weight: .bold))
+                        .scaledFont(.caption, weight: .bold)
                         .foregroundStyle(Theme.textSecondary)
                         .frame(width: Self.dayColumn)
                 }
                 Text("Σ")
-                    .font(.system(size: 11, weight: .bold))
+                    .scaledFont(.caption, weight: .bold)
                     .foregroundStyle(Theme.textSecondary)
                     .frame(width: Self.totalColumn)
             }
@@ -63,16 +63,16 @@ struct WeekPlanTable: View {
                             .lineLimit(1)
                             .minimumScaleFactor(0.8)
                     } icon: {
-                        Image(systemName: row.icon).font(.system(size: 12))
+                        Image(systemName: row.icon).scaledFont(.caption)
                     }
-                    .font(.system(size: 14, weight: .semibold))
+                    .scaledFont(.body, weight: .semibold)
                     .foregroundStyle(Theme.textPrimary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     ForEach(0..<7, id: \.self) { index in
                         cell(row.perDay[index])
                     }
                     Text("\(row.total)")
-                        .font(.system(size: 14, weight: .bold))
+                        .scaledFont(.body, weight: .bold)
                         .monospacedDigit()
                         .foregroundStyle(Theme.textPrimary)
                         .frame(width: Self.totalColumn)
@@ -87,13 +87,13 @@ struct WeekPlanTable: View {
                 ForEach(0..<7, id: \.self) { index in
                     let count = rows.reduce(0) { $0 + $1.perDay[index] }
                     Text(count > 0 ? "\(count)" : "–")
-                        .font(.system(size: 13, weight: .bold))
+                        .scaledFont(.caption, weight: .bold)
                         .monospacedDigit()
                         .foregroundStyle(count > 0 ? Theme.textPrimary : Theme.textTertiary)
                         .frame(width: Self.dayColumn)
                 }
                 Text("\(tasks.count)")
-                    .font(.system(size: 14, weight: .heavy))
+                    .scaledFont(.body, weight: .heavy)
                     .monospacedDigit()
                     .foregroundStyle(Theme.textPrimary)
                     .frame(width: Self.totalColumn)
@@ -109,7 +109,7 @@ struct WeekPlanTable: View {
                 .fill(count > 0 ? Theme.textPrimary : Theme.cardRaised)
             if count > 1 {
                 Text("\(count)")
-                    .font(.system(size: 12, weight: .heavy))
+                    .scaledFont(.caption, weight: .heavy)
                     .foregroundStyle(Theme.onPrimary)
             }
         }

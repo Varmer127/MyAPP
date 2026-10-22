@@ -43,10 +43,10 @@ struct WorkoutLogView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("GYM").labelStyle()
                         Text("Co jsi jel?")
-                            .font(.system(size: 28, weight: .bold))
+                            .scaledFont(.title, weight: .bold)
                             .foregroundStyle(Theme.textPrimary)
                         Text("Partie i cviky v nabídce si nastavíš podle sebe v sekci Gym → Nastavení.")
-                            .font(.system(size: 13))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.textSecondary)
                     }
                     VStack(spacing: 10) {
@@ -57,25 +57,25 @@ struct WorkoutLogView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("NEBO VLASTNÍMI SLOVY").labelStyle()
                         TextField("Např. kardio a mobilita", text: $custom)
-                            .font(.system(size: 16))
+                            .scaledFont(.body)
                             .card()
                         Text("Uloží se jako nová předvolba. Předvolby spravuješ v sekci Gym.")
-                            .font(.system(size: 12))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.textTertiary)
                     }
                     Toggle("Jel jsem i břicho", isOn: $includesAbs)
                         .tint(Theme.textSecondary)
-                        .font(.system(size: 16, weight: .medium))
+                        .scaledFont(.body, weight: .medium)
                         .card()
                     VStack(alignment: .leading, spacing: 8) {
                         Text("DNEŠNÍ VÁHA (KG)").labelStyle()
                         TextField(lastWeight.map { "Minule \($0.kilogramText)" } ?? "Nepovinné", text: $weightText)
                             .keyboardType(.decimalPad)
-                            .font(.system(size: 16))
+                            .scaledFont(.body)
                             .card()
                         if weightIsInvalid {
                             Text("Zadej váhu v kilogramech, např. 82,5.")
-                                .font(.system(size: 12))
+                                .scaledFont(.caption)
                                 .foregroundStyle(Theme.orange)
                         }
                     }
@@ -127,10 +127,10 @@ struct WorkoutLogView: View {
             Text("ODCVIČENO").labelStyle()
             ForEach(task.exercises.sorted { $0.date < $1.date }) { log in
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(log.name).font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.textPrimary)
+                    Text(log.name).scaledFont(.body, weight: .semibold).foregroundStyle(Theme.textPrimary)
                     Text(log.workingSets.map { $0.weight > 0 ? "\($0.weight.kilogramText) × \($0.reps)" : "\($0.reps) opak." }
                         .joined(separator: " · "))
-                        .font(.system(size: 13))
+                        .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -147,7 +147,7 @@ struct WorkoutLogView: View {
         } label: {
             HStack {
                 Text(preset)
-                    .font(.system(size: 16, weight: .medium))
+                    .scaledFont(.body, weight: .medium)
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
                 if isSelected {

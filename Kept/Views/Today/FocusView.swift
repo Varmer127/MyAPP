@@ -46,7 +46,7 @@ struct FocusView: View {
             HStack {
                 Spacer()
                 Button("Skrýt") { dismiss() }
-                    .font(.system(size: 15))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
             }
             .padding(Theme.screenPadding)
@@ -55,13 +55,13 @@ struct FocusView: View {
                 Text(session?.isPaused == true ? "POZASTAVENO" : (isBehind ? "NESTÍHÁŠ PLÁN" : (isOvertime ? "NAD PLÁN" : "FOCUS")))
                     .labelStyle(session?.isPaused == true || isBehind ? Theme.orange : Theme.textSecondary)
                 Text("\(isOvertime ? "+" : "")\(Self.clock(abs(remaining)))")
-                    .font(.system(size: 76, weight: .heavy))
+                    .scaledFont(76, weight: .heavy)
                     .monospacedDigit()
                     .foregroundStyle(Theme.textPrimary)
                     .minimumScaleFactor(0.5)
                     .lineLimit(1)
                 Text(task.title.uppercased())
-                    .font(.system(size: 17, weight: .semibold))
+                    .scaledFont(.heading, weight: .semibold)
                     .tracking(1)
                     .foregroundStyle(Theme.textPrimary)
                     .multilineTextAlignment(.center)
@@ -69,14 +69,14 @@ struct FocusView: View {
                     Text(isBehind
                          ? "Jsi přes plánovaný čas a deadline máš v \(task.deadline?.timeText ?? "")."
                          : "Trvá to déle, než jsi plánoval. Na skóre to nemá žádný vliv.")
-                        .font(.system(size: 13))
+                        .scaledFont(.caption)
                         .foregroundStyle(isBehind ? Theme.orange : Theme.textSecondary)
                         .multilineTextAlignment(.center)
                 }
             }
             .padding(.horizontal, Theme.screenPadding)
             Spacer()
-            HStack(spacing: 10) {
+            TileRow {
                 MetricTile(value: "\(task.plannedMinutes) min", label: "Plán")
                 MetricTile(value: Self.minutes(session?.active(at: now) ?? 0), label: "Soustředění")
                 MetricTile(value: Self.minutes(session?.paused(at: now) ?? 0), label: "Pauza \(session?.pauseCount ?? 0)×")

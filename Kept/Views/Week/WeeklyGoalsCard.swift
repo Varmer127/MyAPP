@@ -14,14 +14,14 @@ struct WeeklyGoalsCard: View {
                 VStack(spacing: 6) {
                     HStack {
                         Text("Aktivity celkem")
-                            .font(.system(size: 15, weight: .semibold))
+                            .scaledFont(.body, weight: .semibold)
                             .foregroundStyle(Theme.textPrimary)
                         Text(isShort ? "v plánu jen \(total.planned)" : "v plánu \(total.planned)")
-                            .font(.system(size: 12))
+                            .scaledFont(.caption)
                             .foregroundStyle(isShort ? Theme.orange : Theme.textSecondary)
                         Spacer()
                         Text("\(total.done) / \(total.minimum)")
-                            .font(.system(size: 15, weight: .semibold))
+                            .scaledFont(.body, weight: .semibold)
                             .foregroundStyle(Theme.textPrimary)
                     }
                     ThinBar(value: Double(total.done) / Double(total.minimum),
@@ -32,16 +32,16 @@ struct WeeklyGoalsCard: View {
                 VStack(spacing: 6) {
                     HStack {
                         Label(goal.category.title, systemImage: goal.category.icon)
-                            .font(.system(size: 15))
+                            .scaledFont(.body)
                             .foregroundStyle(Theme.textPrimary)
                         if goal.planned > 0, !goal.isMet {
                             Text("+\(goal.planned) v plánu")
-                                .font(.system(size: 12))
+                                .scaledFont(.caption)
                                 .foregroundStyle(Theme.textSecondary)
                         }
                         Spacer()
                         Text("\(goal.done) / \(goal.target)")
-                            .font(.system(size: 15, weight: .semibold))
+                            .scaledFont(.body, weight: .semibold)
                             .foregroundStyle(Theme.textPrimary)
                     }
                     ThinBar(value: Double(goal.done) / Double(goal.target),

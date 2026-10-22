@@ -10,11 +10,11 @@ struct JournalView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Sebereflexe týdne")
-                    .font(.system(size: 24, weight: .bold))
+                    .scaledFont(.title, weight: .bold)
                     .foregroundStyle(Theme.textPrimary)
                 if reflections.isEmpty {
                     Text("Zatím tu nic není. První zápis vznikne v neděli večer při sebereflexi týdne.")
-                        .font(.system(size: 15))
+                        .scaledFont(.body)
                         .foregroundStyle(Theme.textSecondary)
                         .card()
                 }
@@ -38,7 +38,7 @@ struct JournalView: View {
                     .labelStyle()
                 Spacer()
                 Button("Upravit") { editing = ReflectionRequest(weekStart: reflection.weekStart) }
-                    .font(.system(size: 13))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
             HStack(spacing: 5) {
@@ -48,16 +48,16 @@ struct JournalView: View {
                         .frame(width: 10, height: 10)
                 }
                 Text(reflection.satisfactionLabel)
-                    .font(.system(size: 14, weight: .semibold))
+                    .scaledFont(.body, weight: .semibold)
                     .foregroundStyle(Theme.textPrimary)
                     .padding(.leading, 4)
             }
             Text("Splněno \(reflection.doneCount) z \(reflection.totalCount) · sliby \(reflection.promisesKept.percentText) · produktivita \(reflection.productivity.percentText)")
-                .font(.system(size: 13))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textSecondary)
             if !reflection.text.isEmpty {
                 Text(reflection.text)
-                    .font(.system(size: 16))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -65,7 +65,7 @@ struct JournalView: View {
                 WeeklyReviewView(weekStart: reflection.weekStart)
             } label: {
                 Text("Přehled týdne ›")
-                    .font(.system(size: 13, weight: .semibold))
+                    .scaledFont(.caption, weight: .semibold)
                     .foregroundStyle(Theme.textSecondary)
             }
         }

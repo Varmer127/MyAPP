@@ -55,12 +55,12 @@ struct QuickPlanView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("TÝDEN \(weekStart.weekNumber)").labelStyle()
                             Text("Rychlé plánování")
-                                .font(.system(size: 28, weight: .bold))
+                                .scaledFont(.title, weight: .bold)
                                 .foregroundStyle(Theme.textPrimary)
                         }
                         Spacer()
                         Button("Zavřít") { dismiss() }
-                            .font(.system(size: 15, weight: .semibold))
+                            .scaledFont(.body, weight: .semibold)
                             .foregroundStyle(Theme.textPrimary)
                             .padding(.horizontal, 14)
                             .frame(minHeight: 40)
@@ -81,7 +81,7 @@ struct QuickPlanView: View {
                             }
                         }
                         TextField("Název", text: $title)
-                            .font(.system(size: 16))
+                            .scaledFont(.body)
                             .card()
                     }
                     group("Které dny") {
@@ -98,7 +98,7 @@ struct QuickPlanView: View {
                                     .opacity(isPast ? 0.3 : 1)
                                     if taken {
                                         Text("už máš")
-                                            .font(.system(size: 10, weight: .semibold))
+                                            .scaledFont(.caption, weight: .semibold)
                                             .foregroundStyle(Theme.orange)
                                             .lineLimit(1)
                                             .minimumScaleFactor(0.7)
@@ -108,7 +108,7 @@ struct QuickPlanView: View {
                         }
                         if days.contains(where: isTaken) {
                             Text("„\(trimmedTitle)“ už v označené dny máš. Přidat ho tam můžeš i podruhé, zeptám se tě.")
-                                .font(.system(size: 12))
+                                .scaledFont(.caption)
                                 .foregroundStyle(Theme.textSecondary)
                         }
                     }
@@ -142,7 +142,7 @@ struct QuickPlanView: View {
                     .overlay(alignment: .topTrailing) {
                         if landedCount > 0 {
                             Text("+\(landedCount)")
-                                .font(.system(size: 13, weight: .heavy))
+                                .scaledFont(.caption, weight: .heavy)
                                 .foregroundStyle(Color(hex: 0x000000))
                                 .padding(.horizontal, 8)
                                 .frame(minHeight: 24)
@@ -196,11 +196,11 @@ struct QuickPlanView: View {
         Button(action: action) {
             VStack(spacing: 5) {
                 if let symbol {
-                    Image(systemName: symbol).font(.system(size: 17))
+                    Image(systemName: symbol).scaledFont(.heading)
                 }
                 Text(text)
             }
-                .font(.system(size: 14, weight: .semibold))
+                .scaledFont(.body, weight: .semibold)
                 .foregroundStyle(isSelected ? Theme.onPrimary : Theme.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)

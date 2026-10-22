@@ -14,6 +14,7 @@ struct FaceIDLock: ViewModifier {
     func body(content: Content) -> some View {
         if !isEnabled || isUnlocked {
             content
+                .privacyShield(isEnabled)
                 .onChange(of: scenePhase) { _, phase in
                     if phase == .background { isUnlocked = false }
                 }
@@ -21,14 +22,14 @@ struct FaceIDLock: ViewModifier {
             VStack(spacing: 18) {
                 Spacer()
                 Image(systemName: "lock.fill")
-                    .font(.system(size: 40))
+                    .scaledFont(40)
                     .foregroundStyle(Theme.textSecondary)
                 Text(title)
-                    .font(.system(size: 22, weight: .bold))
+                    .scaledFont(.title, weight: .bold)
                     .foregroundStyle(Theme.textPrimary)
                 if failed {
                     Text("Odemknutí se nepovedlo.")
-                        .font(.system(size: 14))
+                        .scaledFont(.body)
                         .foregroundStyle(Theme.orange)
                 }
                 Button("ODEMKNOUT", action: unlock)
@@ -60,5 +61,32 @@ extension View {
 
     func appLock(_ isEnabled: Bool) -> some View {
         modifier(FaceIDLock(isEnabled: isEnabled, title: "Kept je zamčený", reason: "Odemknout Kept"))
+    }
+}
+
+/// Covers a screen while the app is not in front, so the picture iOS takes for the app switcher shows nothing private.
+/// iOS takes that picture when the app becomes inactive, before it goes to the background.
+struct PrivacyShield: ViewModifier {
+    var isEnabled = true
+    @Environment(\.scenePhase) private var scenePhase
+
+    func body(content: Content) -> some View {
+        content.overlay {
+            if isEnabled && scenePhase != .active {
+                ZStack {
+                    Theme.background
+                    Image(systemName: "lock.fill")
+                        .scaledFont(34)
+                        .foregroundStyle(Theme.textTertiary)
+                }
+                .ignoresSafeArea()
+            }
+        }
+    }
+}
+
+extension View {
+    func privacyShield(_ isEnabled: Bool = true) -> some View {
+        modifier(PrivacyShield(isEnabled: isEnabled))
     }
 }

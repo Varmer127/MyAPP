@@ -18,10 +18,10 @@ struct PostponeView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("ODKLAD BEZ POSTIHU").labelStyle()
                         Text(task.title)
-                            .font(.system(size: 28, weight: .bold))
+                            .scaledFont(.title, weight: .bold)
                             .foregroundStyle(Theme.textPrimary)
                         Text("Tento měsíc ti zbývá \(remaining) z \(limit). Odložený úkol se nepočítá jako selhání ani jako změna plánu.")
-                            .font(.system(size: 14))
+                            .scaledFont(.body)
                             .foregroundStyle(Theme.textSecondary)
                     }
                     HStack(spacing: 10) {

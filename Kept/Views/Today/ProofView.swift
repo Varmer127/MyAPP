@@ -41,14 +41,14 @@ struct ProofInput: View {
                 Button("Odebrat fotku") {
                     draft.photo = nil
                 }
-                .font(.system(size: 14))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.textSecondary)
             } else {
                 Button {
                     showsCamera = true
                 } label: {
                     Label("Vyfotit důkaz", systemImage: "camera")
-                        .font(.system(size: 15, weight: .semibold))
+                        .scaledFont(.body, weight: .semibold)
                         .foregroundStyle(Theme.textPrimary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
@@ -62,16 +62,16 @@ struct ProofInput: View {
                 Text(cameraAvailable
                      ? "Fotka se pořizuje teď a tady. Z galerie vybrat nejde."
                      : "Fotoaparát na tomto zařízení není dostupný.")
-                    .font(.system(size: 12))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textTertiary)
             }
             TextField("Nebo krátká poznámka, např. „strany 120–165“", text: $draft.note, axis: .vertical)
                 .lineLimit(2...5)
-                .font(.system(size: 16))
+                .scaledFont(.body)
                 .card()
             if !draft.isValid {
                 Text("Vyfoť důkaz nebo napiš poznámku.")
-                    .font(.system(size: 12))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.orange)
             }
         }
@@ -143,10 +143,10 @@ struct ProofView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("SPLNĚNÍ").labelStyle()
                         Text(task.title)
-                            .font(.system(size: 28, weight: .bold))
+                            .scaledFont(.title, weight: .bold)
                             .foregroundStyle(Theme.textPrimary)
                         Text("Tento úkol vyžaduje důkaz.")
-                            .font(.system(size: 14))
+                            .scaledFont(.body)
                             .foregroundStyle(Theme.textSecondary)
                     }
                     ProofInput(draft: $draft)

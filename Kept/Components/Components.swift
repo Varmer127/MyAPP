@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 struct SectionLabel: View {
     let text: String
@@ -17,7 +18,7 @@ struct Badge: View {
 
     var body: some View {
         Text(text.uppercased())
-            .font(.system(size: 10, weight: .bold))
+            .scaledFont(.caption, weight: .bold)
             .tracking(0.8)
             .foregroundStyle(color)
             .padding(.horizontal, 7)
@@ -39,21 +40,36 @@ struct MetricTile: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(value)
-                .font(.system(size: value == Self.noData ? 15 : 26, weight: value == Self.noData ? .semibold : .bold))
+                .scaledFont(value == Self.noData ? 15 : 26, weight: value == Self.noData ? .semibold : .bold)
                 .foregroundStyle(value == Self.noData ? Theme.textTertiary : color)
                 .frame(minHeight: 32, alignment: .leading)
                 .contentTransition(.numericText())
                 .animation(.easeOut(duration: 0.5), value: value)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
-            Text(label.uppercased())
-                .font(.system(size: 10, weight: .semibold))
-                .tracking(0.4)
+            Text(label)
+                .scaledFont(.caption, weight: .semibold)
                 .foregroundStyle(Theme.textSecondary)
-                .lineLimit(1)
+                .lineLimit(2)
                 .minimumScaleFactor(0.7)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .card(padding: 14)
+    }
+}
+
+/// Tiles side by side, or one under another when the text size is so large that three would not fit.
+struct TileRow<Content: View>: View {
+    var spacing: CGFloat = 10
+    @ViewBuilder let content: Content
+    @Environment(\.dynamicTypeSize) private var typeSize
+
+    var body: some View {
+        if typeSize >= .accessibility1 {
+            VStack(spacing: spacing) { content }
+        } else {
+            HStack(spacing: spacing) { content }
+        }
     }
 }
 
@@ -61,25 +77,64 @@ struct MetricTile: View {
 struct PerformanceBar: View {
     let label: String
     let value: Double?
+    /// The value in the weeks before, oldest first. With enough of them the bar becomes a small curve of its own development.
+    var series: [Double?] = []
 
     var body: some View {
         VStack(spacing: 8) {
             HStack {
-                Text(label.uppercased()).labelStyle()
+                Text(label)
+                    .scaledFont(.caption, weight: .semibold)
+                    .foregroundStyle(Theme.textSecondary)
                 Spacer()
                 // No data yet is not a failure, so it reads as a promise of what comes.
                 if value == nil {
                     Text("po prvním týdnu")
-                        .font(.system(size: 13))
+                        .scaledFont(.caption)
                         .foregroundStyle(Theme.textTertiary)
                 } else {
                     Text(value.percentText)
-                        .font(.system(size: 15, weight: .semibold))
+                        .scaledFont(.body, weight: .semibold)
                         .foregroundStyle(Theme.textPrimary)
                 }
             }
-            ThinBar(value: value ?? 0, color: Theme.performanceColor(value))
+            if series.compactMap({ $0 }).count >= 3 {
+                Sparkline(values: series, color: Theme.performanceColor(value))
+            } else {
+                ThinBar(value: value ?? 0, color: Theme.performanceColor(value))
+            }
         }
+    }
+}
+
+/// A small line of how a share (0...1) developed over the last weeks, with the latest point marked.
+struct Sparkline: View {
+    let values: [Double?]
+    var color: Color = Theme.textPrimary
+
+    var body: some View {
+        let points = values.enumerated().compactMap { index, value in value.map { (index, $0) } }
+        Chart {
+            ForEach(points, id: \.0) { point in
+                LineMark(x: .value("Týden", point.0), y: .value("Hodnota", point.1))
+                    .interpolationMethod(.monotone)
+                    .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round))
+                    .foregroundStyle(color)
+            }
+            if let last = points.last {
+                PointMark(x: .value("Týden", last.0), y: .value("Hodnota", last.1))
+                    .symbolSize(40)
+                    .foregroundStyle(color)
+            }
+        }
+        .chartXAxis(.hidden)
+        .chartYAxis(.hidden)
+        .chartYScale(domain: 0...1)
+        .chartXScale(domain: 0...max(values.count - 1, 1))
+        .frame(height: 34)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Vývoj za poslední týdny")
+        .accessibilityValue(points.last.map { "Naposledy \(Int(($0.1 * 100).rounded())) %" } ?? "")
     }
 }
 
@@ -107,7 +162,7 @@ struct PrimaryButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 15, weight: .bold))
+            .scaledFont(.body, weight: .bold)
             .tracking(0.8)
             .lineLimit(1)
             .minimumScaleFactor(0.7)
@@ -126,7 +181,7 @@ struct SecondaryButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 15, weight: .bold))
+            .scaledFont(.body, weight: .bold)
             .tracking(0.8)
             .lineLimit(1)
             .minimumScaleFactor(0.7)

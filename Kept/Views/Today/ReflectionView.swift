@@ -42,18 +42,18 @@ struct ReflectionView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("SEBEREFLEXE · TÝDEN \(weekStart.weekNumber)").labelStyle()
                         Text("\(weekStart.dayMonthText) – \(weekStart.addingDays(6).dayMonthText)")
-                            .font(.system(size: 24, weight: .bold))
+                            .scaledFont(.title, weight: .bold)
                             .foregroundStyle(Theme.textPrimary)
                     }
                     if stage >= 1 {
                         VStack(alignment: .leading, spacing: 4) {
                             HStack(alignment: .firstTextBaseline, spacing: 8) {
                                 Text("\(shownDone)")
-                                    .font(.system(size: 72, weight: .heavy))
+                                    .scaledFont(72, weight: .heavy)
                                     .foregroundStyle(Theme.textPrimary)
                                     .contentTransition(.numericText())
                                 Text("z \(week.count)")
-                                    .font(.system(size: 24, weight: .bold))
+                                    .scaledFont(.title, weight: .bold)
                                     .foregroundStyle(Theme.textSecondary)
                             }
                             Text("SPLNĚNO TENTO TÝDEN").labelStyle()
@@ -101,14 +101,14 @@ struct ReflectionView: View {
         VStack(spacing: 6) {
             HStack {
                 Label(item.category.title, systemImage: item.category.icon)
-                    .font(.system(size: 16))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
                 Text("\(item.done)×")
-                    .font(.system(size: 20, weight: .bold))
+                    .scaledFont(.heading, weight: .bold)
                     .foregroundStyle(Theme.textPrimary)
                 Text("z \(item.total)")
-                    .font(.system(size: 13))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
             ThinBar(value: Double(item.done) / Double(item.total),
@@ -119,7 +119,7 @@ struct ReflectionView: View {
     private var question: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Jak jsi se sebou spokojený?")
-                .font(.system(size: 20, weight: .bold))
+                .scaledFont(.heading, weight: .bold)
                 .foregroundStyle(Theme.textPrimary)
             HStack(spacing: 8) {
                 ForEach(1...5, id: \.self) { value in
@@ -127,7 +127,7 @@ struct ReflectionView: View {
                         satisfaction = value
                     } label: {
                         Text("\(value)")
-                            .font(.system(size: 18, weight: .bold))
+                            .scaledFont(.heading, weight: .bold)
                             .foregroundStyle(satisfaction == value ? Theme.onPrimary : Theme.textPrimary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
@@ -139,12 +139,12 @@ struct ReflectionView: View {
                 }
             }
             Text(satisfaction == 0 ? "1 = vůbec, 5 = naprosto" : WeekReflection.satisfactionLabels[satisfaction - 1])
-                .font(.system(size: 13))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textSecondary)
             Text("DENÍČEK").labelStyle().padding(.top, 6)
             TextField("Co se povedlo, co ne a co uděláš příští týden jinak?", text: $text, axis: .vertical)
                 .lineLimit(5...14)
-                .font(.system(size: 16))
+                .scaledFont(.body)
                 .card()
         }
     }

@@ -65,15 +65,15 @@ struct TaskEditorView: View {
             if !clashes.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
                     Label("Kryje se s kalendářem", systemImage: "exclamationmark.triangle.fill")
-                        .font(.system(size: 13, weight: .semibold))
-                    ForEach(clashes) { Text($0.summary).font(.system(size: 13)) }
+                        .scaledFont(.caption, weight: .semibold)
+                    ForEach(clashes) { Text($0.summary).scaledFont(.caption) }
                 }
                 .foregroundStyle(Theme.orange)
             } else if !events.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
                     Label("Ten den máš v kalendáři", systemImage: "calendar")
-                        .font(.system(size: 13, weight: .semibold))
-                    ForEach(events) { Text($0.summary).font(.system(size: 13)) }
+                        .scaledFont(.caption, weight: .semibold)
+                    ForEach(events) { Text($0.summary).scaledFont(.caption) }
                 }
                 .foregroundStyle(Theme.textSecondary)
             }
@@ -103,7 +103,7 @@ struct TaskEditorView: View {
                 if isCommitted {
                     Section {
                         Text("Tento úkol je součástí tvého závazku. Přesun, snížení priority nebo váhy a změna deadlinu se zaznamenají a sníží věrnost plánu.")
-                            .font(.system(size: 13))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.orange)
                     }
                     .listRowBackground(Theme.card)
@@ -124,7 +124,7 @@ struct TaskEditorView: View {
                                     } label: {
                                         Label(name, systemImage: ActivityIcons.shared.symbol(forCustom: name))
                                     }
-                                    .font(.system(size: 14, weight: .semibold))
+                                    .scaledFont(.body, weight: .semibold)
                                     .foregroundStyle(draft.title == name ? Theme.onPrimary : Theme.textPrimary)
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 8)
@@ -145,7 +145,7 @@ struct TaskEditorView: View {
                     DatePicker("Den", selection: $draft.date, in: dateRange, displayedComponents: .date)
                     if isDuplicate {
                         Label("„\(draft.trimmedTitle)“ už v tento den máš naplánované", systemImage: "exclamationmark.circle.fill")
-                            .font(.system(size: 13, weight: .semibold))
+                            .scaledFont(.caption, weight: .semibold)
                             .foregroundStyle(Theme.orange)
                     }
                     Toggle("Použít deadline", isOn: $draft.hasDeadline)
@@ -213,6 +213,16 @@ struct TaskEditorView: View {
                     Text("Sázka")
                 } footer: {
                     Text("Např. „večer bez seriálu“. Po selhání se tě aplikace zeptá, jestli jsi ji dodržel.")
+                }
+                .listRowBackground(Theme.card)
+
+                Section {
+                    TextField("Např. když dopiju kávu, začnu číst", text: $draft.cue, axis: .vertical)
+                        .lineLimit(1...3)
+                } header: {
+                    Text("Kdy to začneš?")
+                } footer: {
+                    Text("Čím konkrétnější, tím líp se úkol splní: pevný spouštěč, ne „někdy dnes“. Věta se ukáže v upozornění.")
                 }
                 .listRowBackground(Theme.card)
 
@@ -296,6 +306,7 @@ struct TaskEditorView: View {
 
     private func remove() {
         if let task {
+            if task.isCommitted { Haptics.warning() }
             PlanService.remove(task, in: context)
         }
         dismiss()

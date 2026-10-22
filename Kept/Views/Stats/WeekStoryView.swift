@@ -109,7 +109,7 @@ struct WeekStoryView: View {
                     Text("TVŮJ TÝDEN \(story.weekNumber)").labelStyle()
                     Spacer()
                     Button("Zavřít", action: onFinish)
-                        .font(.system(size: 15, weight: .semibold))
+                        .scaledFont(.body, weight: .semibold)
                         .foregroundStyle(Theme.textSecondary)
                         .frame(minHeight: 44)
                 }
@@ -120,7 +120,7 @@ struct WeekStoryView: View {
                     .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .opacity))
                 Spacer(minLength: 0)
                 Text(slide == .share ? "" : "Klepni pro další")
-                    .font(.system(size: 12))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textTertiary)
                     .frame(maxWidth: .infinity, minHeight: 24)
             }
@@ -155,20 +155,20 @@ struct WeekStoryView: View {
                  + Text(" / \(story.total)").font(.system(size: 48, weight: .black)).foregroundColor(Theme.textTertiary))
                     .foregroundStyle(Theme.textPrimary)
                 Text("slibů jsi dodržel.")
-                    .font(.system(size: 24, weight: .heavy))
+                    .scaledFont(.title, weight: .heavy)
                     .foregroundStyle(Theme.textPrimary)
                 Text(story.delta.map { "\(story.percent) %, \($0 >= 0 ? "o" : "o") \(abs($0)) % \($0 >= 0 ? "víc" : "méně") než minule" } ?? "\(story.percent) %")
-                    .font(.system(size: 16, weight: .bold))
+                    .scaledFont(.body, weight: .bold)
                     .foregroundStyle((story.delta ?? 0) >= 0 ? Theme.green : Theme.orange)
             }
         case .bestDay:
             VStack(alignment: .leading, spacing: 14) {
                 Text("NEJLEPŠÍ DEN").labelStyle()
                 Text(story.bestDay?.name ?? "")
-                    .font(.system(size: 60, weight: .black))
+                    .scaledFont(.hero, weight: .black)
                     .foregroundStyle(Theme.textPrimary)
                 Text("\(story.bestDay?.percent ?? 0) % splněno.")
-                    .font(.system(size: 18))
+                    .scaledFont(.heading)
                     .foregroundStyle(Theme.textSecondary)
                 HStack(alignment: .bottom, spacing: 10) {
                     ForEach(Array(story.dayValues.enumerated()), id: \.offset) { index, value in
@@ -177,7 +177,7 @@ struct WeekStoryView: View {
                                 .fill(value == story.dayValues.max() && value > 0 ? Theme.green : Theme.cardRaised)
                                 .frame(height: max(value * 140, 6))
                             Text(["P", "Ú", "S", "Č", "P", "S", "N"][index])
-                                .font(.system(size: 11, weight: .bold))
+                                .scaledFont(.caption, weight: .bold)
                                 .foregroundStyle(Theme.textSecondary)
                         }
                         .frame(maxWidth: .infinity, maxHeight: 170, alignment: .bottom)
@@ -189,22 +189,22 @@ struct WeekStoryView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text("NEJTĚŽŠÍ SLIB").labelStyle()
                 Image(systemName: story.hardest?.symbol ?? "circle")
-                    .font(.system(size: 30))
+                    .scaledFont(.title)
                     .foregroundStyle(Theme.textPrimary)
                     .frame(width: 64, height: 64)
                     .background(Theme.cardRaised)
                     .clipShape(RoundedRectangle(cornerRadius: 20))
                 Text(story.hardest?.title ?? "")
-                    .font(.system(size: 50, weight: .black))
+                    .scaledFont(.hero, weight: .black)
                     .foregroundStyle(Theme.textPrimary)
                     .minimumScaleFactor(0.6)
                     .lineLimit(2)
                 Text(story.hardest?.note ?? "")
-                    .font(.system(size: 18))
+                    .scaledFont(.heading)
                     .foregroundStyle(Theme.textSecondary)
                 if story.hardest?.wasDone == true {
                     Text("Neustoupil jsi.")
-                        .font(.system(size: 18, weight: .heavy))
+                        .scaledFont(.heading, weight: .heavy)
                         .foregroundStyle(Theme.orange)
                 }
             }
@@ -212,11 +212,11 @@ struct WeekStoryView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Z TVÉHO DENÍKU").labelStyle()
                 Text("„\(story.diaryQuote ?? "")“")
-                    .font(.system(size: 26, weight: .bold, design: .serif))
+                    .scaledFont(.title, weight: .bold, design: .serif)
                     .foregroundStyle(Theme.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                 Text("Tohle sis tenhle týden napsal. Zůstává jen tvoje.")
-                    .font(.system(size: 14))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
             }
         case .share:
@@ -226,7 +226,7 @@ struct WeekStoryView: View {
                 if let shareImage {
                     ShareLink(item: shareImage, preview: SharePreview("Kept – týden \(story.weekNumber)", image: shareImage)) {
                         Text("SDÍLET KARTU")
-                            .font(.system(size: 15, weight: .heavy))
+                            .scaledFont(.body, weight: .heavy)
                             .tracking(0.8)
                             .foregroundStyle(Theme.onPrimary)
                             .frame(maxWidth: .infinity, minHeight: 54)
@@ -235,7 +235,7 @@ struct WeekStoryView: View {
                     }
                 }
                 Button("Hotovo", action: onFinish)
-                    .font(.system(size: 15))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
                     .frame(minHeight: 44)
             }
@@ -258,17 +258,17 @@ struct WeekStoryShareCard: View {
                 Capsule().fill(Color(red: 0.19, green: 0.82, blue: 0.35)).frame(width: 38, height: 5).offset(y: 26)
             }
             Text("TÝDEN \(story.weekNumber)")
-                .font(.system(size: 12, weight: .heavy))
+                .scaledFont(.caption, weight: .heavy)
                 .tracking(1.4)
                 .foregroundStyle(Color(white: 0.6))
             Text("Držel jsem slovo.")
-                .font(.system(size: 28, weight: .black))
+                .scaledFont(.title, weight: .black)
                 .foregroundStyle(.white)
             Text("\(story.percent) %")
-                .font(.system(size: 56, weight: .black))
+                .scaledFont(.hero, weight: .black)
                 .foregroundStyle(Color(red: 0.19, green: 0.82, blue: 0.35))
             Text("\(story.done) z \(story.total) slibů" + (story.streak > 1 ? " · série \(story.streak) dní" : ""))
-                .font(.system(size: 13))
+                .scaledFont(.caption)
                 .foregroundStyle(Color(white: 0.6))
         }
         .padding(28)

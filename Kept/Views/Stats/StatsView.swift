@@ -58,7 +58,7 @@ struct StatsView: View {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                 VStack(alignment: .leading, spacing: 14) {
                     Text("Statistiky")
-                        .font(.system(size: 24, weight: .bold))
+                        .scaledFont(.title, weight: .bold)
                         .foregroundStyle(Theme.textPrimary)
                     Picker("Období", selection: $period) {
                         ForEach(Period.allCases) { Text($0.rawValue).tag($0) }
@@ -94,33 +94,55 @@ struct StatsView: View {
         .toolbarBackground(Theme.background, for: .navigationBar)
     }
 
+    private static let sparkWeeks = 8
+
+    /// One value per week for the last weeks, oldest first, from the tasks that were planned in that week.
+    private func weeklySeries(now: Date, _ value: ([TaskItem]) -> Double?) -> [Double?] {
+        (0..<Self.sparkWeeks).reversed().map { back in
+            let start = now.weekStart.addingDays(-7 * back)
+            let week = tasks.filter { !$0.isRemoved && $0.scheduledDate.weekStart == start }
+            return week.isEmpty ? nil : value(week)
+        }
+    }
+
     private var scores: some View {
         let now = Date.now
         let targets = settingsList.first?.weeklyTargets ?? [:]
         let accountability = ScoreEngine.accountability(tasks: tasks, plans: plans, targets: targets, now: now)
+        // Before a week of history the score says nothing, so it is not shown: the same rule as on Today.
+        let hasHistory = Set(tasks.filter { !$0.isRemoved && $0.countsInScores && $0.scheduledDate < now.startOfDay }
+            .map { $0.scheduledDate.startOfDay }).count >= 7
         return VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Text("\(accountability?.score ?? ScoreEngine.startingScore)")
-                    .font(.system(size: 48, weight: .heavy))
-                    .foregroundStyle(Theme.textPrimary)
+                if hasHistory {
+                    Text("\(accountability?.score ?? ScoreEngine.startingScore)")
+                        .scaledFont(.hero, weight: .heavy)
+                        .foregroundStyle(Theme.textPrimary)
+                }
                 VStack(alignment: .leading, spacing: 2) {
                     Text("SPOLEHLIVOST").labelStyle()
-                    Text("Vždy za posledních \(ScoreEngine.Config.accountabilityWindowDays) dní")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.textTertiary)
+                    Text(hasHistory ? "Vždy za posledních \(ScoreEngine.Config.accountabilityWindowDays) dní" : "Zatím sbíráme data, ukáže se po prvním týdnu")
+                        .scaledFont(.caption)
+                        .foregroundStyle(Theme.textSecondary)
                 }
             }
-            PerformanceBar(label: "Dodržené sliby", value: ScoreEngine.promisesKept(scoped, now: now))
-            PerformanceBar(label: "Produktivita", value: ScoreEngine.productivity(scoped, now: now))
-            PerformanceBar(label: "Věrnost plánu", value: integrity)
+            PerformanceBar(label: "Dodržené sliby", value: ScoreEngine.promisesKept(scoped, now: now),
+                           series: weeklySeries(now: now) { ScoreEngine.promisesKept($0, now: now) })
+            PerformanceBar(label: "Produktivita", value: ScoreEngine.productivity(scoped, now: now),
+                           series: weeklySeries(now: now) { ScoreEngine.productivity($0, now: now) })
+            PerformanceBar(label: "Věrnost plánu", value: integrity,
+                           series: (0..<Self.sparkWeeks).reversed().map { back in
+                               let start = now.weekStart.addingDays(-7 * back)
+                               return plans.first { $0.weekStart == start }.flatMap(ScoreEngine.commitmentIntegrity)
+                           })
             PerformanceBar(label: "Týdenní cíle", value: accountability?.weeklyGoals)
             if ScoreEngine.isBusyNotProductive(scoped, now: now) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Splněno úkolů: \(ScoreEngine.completionRate(scoped).percentText)")
-                        .font(.system(size: 13))
+                        .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary)
                     Text("Byl jsi aktivní. Nebyl jsi produktivní.")
-                        .font(.system(size: 17, weight: .bold))
+                        .scaledFont(.heading, weight: .bold)
                         .foregroundStyle(Theme.red)
                 }
             }
@@ -143,12 +165,12 @@ struct StatsView: View {
         }
         return AnyView(VStack(spacing: 10) {
             SectionLabel(text: "Výsledky")
-            HStack(spacing: 10) {
+            TileRow {
                 MetricTile(value: "\(completed)", label: "Včas")
                 MetricTile(value: "\(late)", label: "Pozdě", color: late > 0 ? Theme.orange : Theme.textPrimary)
                 MetricTile(value: "\(skipped)", label: "Přeskočeno", color: skipped > 0 ? Theme.red : Theme.textPrimary)
             }
-            HStack(spacing: 10) {
+            TileRow {
                 MetricTile(value: "\(missed)", label: "Nesplněno", color: missed > 0 ? Theme.red : Theme.textPrimary)
                 MetricTile(value: "\(removed)", label: "Odstraněno", color: removed > 0 ? Theme.red : Theme.textPrimary)
                 MetricTile(value: critical.isEmpty ? "—" : "\(critical.filter(\.isDone).count) / \(critical.count)",
@@ -166,11 +188,11 @@ struct StatsView: View {
             VStack(spacing: 12) {
                 EmptyStateArt(kind: .stats)
                 Text("Statistiky se rozjedou po prvním týdnu")
-                    .font(.system(size: 18, weight: .bold))
+                    .scaledFont(.heading, weight: .bold)
                     .foregroundStyle(Theme.textPrimary)
                     .multilineTextAlignment(.center)
                 Text("Zapečeť týden a splň první úkoly. Pak tu uvidíš, kdy ti to jde a kdy ne.")
-                    .font(.system(size: 13))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
                     .multilineTextAlignment(.center)
                 HStack(spacing: 6) {
@@ -180,7 +202,7 @@ struct StatsView: View {
                             .frame(width: 26, height: 6)
                     }
                     Text(sealed ? "Zbývá splnit první úkol" : (planned ? "Další krok: zapečeť týden" : "První krok: naplánuj týden"))
-                        .font(.system(size: 11))
+                        .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary)
                         .padding(.leading, 6)
                 }

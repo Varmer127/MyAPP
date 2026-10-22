@@ -15,6 +15,7 @@ struct DeveloperSection: View {
     @AppStorage("devShowStory") private var showStory = false
     @AppStorage("devShowDayKept") private var showDayKept = false
     @AppStorage("devShowEvening") private var showEvening = false
+    @AppStorage("devHealthDemo") private var healthDemo = false
     @State private var confirms = false
     @State private var confirmsReset = false
 
@@ -49,6 +50,12 @@ struct DeveloperSection: View {
                 showEvening = true
             }
             .foregroundStyle(Theme.textPrimary)
+            Toggle("Zdraví s ukázkovými daty", isOn: $healthDemo)
+                .tint(Theme.textSecondary)
+                .onChange(of: healthDemo) { _, on in
+                    // The tab is optional, so the test turns it on.
+                    if on { UserSettings.current(in: context).showsHealthTab = true }
+                }
             Button("Spustit onboarding znovu") {
                 UserSettings.current(in: context).onboardedAt = nil
             }

@@ -67,13 +67,13 @@ struct OnboardingView: View {
             HStack {
                 if step == .welcome {
                     Text("KEPT")
-                        .font(.system(size: 15, weight: .heavy))
+                        .scaledFont(.body, weight: .heavy)
                         .tracking(3)
                         .foregroundStyle(Theme.textPrimary)
                 } else {
                     Button { go(-1) } label: {
                         Image(systemName: "chevron.left")
-                            .font(.system(size: 17, weight: .semibold))
+                            .scaledFont(.heading, weight: .semibold)
                             .foregroundStyle(Theme.textPrimary)
                             .frame(width: 44, height: 44)
                             .background(Theme.card)
@@ -85,7 +85,7 @@ struct OnboardingView: View {
                 Spacer()
                 if !isLast {
                     Button("Přeskočit") { go(1) }
-                        .font(.system(size: 15, weight: .semibold))
+                        .scaledFont(.body, weight: .semibold)
                         .foregroundStyle(Theme.textSecondary)
                         .frame(minHeight: 44)
                 }
@@ -110,11 +110,11 @@ struct OnboardingView: View {
         return VStack(alignment: .leading, spacing: 8) {
             Text(text.kicker).labelStyle()
             Text(text.title)
-                .font(.system(size: 30, weight: .heavy))
+                .scaledFont(.title, weight: .heavy)
                 .foregroundStyle(Theme.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
             Text(text.subtitle)
-                .font(.system(size: 15))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -172,7 +172,7 @@ struct OnboardingView: View {
     private func advance() {
         guard isLast else { return go(1) }
         draft.apply(to: UserSettings.current(in: context))
-        try? context.save()
+        Persistence.save(context)
         if draft.health {
             HealthService.startWorkoutObserver()
         }
@@ -199,9 +199,9 @@ struct OnboardingView: View {
     private func option(_ title: String, _ subtitle: String?, isOn: Bool, action: @escaping () -> Void) -> some View {
         choice(isOn, action: action) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.system(size: 16, weight: .bold))
+                Text(title).scaledFont(.body, weight: .bold)
                 if let subtitle {
-                    Text(subtitle).font(.system(size: 13)).opacity(isOn ? 0.75 : 1)
+                    Text(subtitle).scaledFont(.caption).opacity(isOn ? 0.75 : 1)
                         .foregroundStyle(isOn ? Theme.onPrimary : Theme.textSecondary)
                 }
             }
@@ -210,7 +210,7 @@ struct OnboardingView: View {
 
     private func note(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 13))
+            .scaledFont(.caption)
             .foregroundStyle(Theme.textSecondary)
             .fixedSize(horizontal: false, vertical: true)
     }
@@ -218,8 +218,8 @@ struct OnboardingView: View {
     private func toggleRow(_ title: String, _ subtitle: String, isOn: Binding<Bool>) -> some View {
         Toggle(isOn: isOn) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.system(size: 16, weight: .bold)).foregroundStyle(Theme.textPrimary)
-                Text(subtitle).font(.system(size: 13)).foregroundStyle(Theme.textSecondary)
+                Text(title).scaledFont(.body, weight: .bold).foregroundStyle(Theme.textPrimary)
+                Text(subtitle).scaledFont(.caption).foregroundStyle(Theme.textSecondary)
             }
         }
         .tint(Theme.green)
@@ -232,7 +232,7 @@ struct OnboardingView: View {
             Spacer()
             VStack(spacing: 2) {
                 Text(value)
-                    .font(.system(size: 48, weight: .heavy))
+                    .scaledFont(.hero, weight: .heavy)
                     .foregroundStyle(Theme.textPrimary)
                     .contentTransition(.numericText())
                 if let caption { Text(caption).labelStyle() }
@@ -246,7 +246,7 @@ struct OnboardingView: View {
     private func roundButton(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 18, weight: .semibold))
+                .scaledFont(.heading, weight: .semibold)
                 .foregroundStyle(Theme.textPrimary)
                 .frame(width: 48, height: 48)
                 .background(Theme.cardRaised)
@@ -261,7 +261,7 @@ struct OnboardingView: View {
     private var nameStep: some View {
         VStack(alignment: .leading, spacing: 16) {
             TextField("Oslovení, např. Filipe", text: $draft.addressName)
-                .font(.system(size: 18, weight: .semibold))
+                .scaledFont(.heading, weight: .semibold)
                 .textContentType(.givenName)
                 .submitLabel(.done)
                 .padding(.horizontal, 16)
@@ -294,7 +294,7 @@ struct OnboardingView: View {
                     } label: {
                         VStack(spacing: 8) {
                             swatch(look)
-                            Text(look.title).font(.system(size: 14, weight: .bold))
+                            Text(look.title).scaledFont(.body, weight: .bold)
                         }
                         .frame(maxWidth: .infinity, minHeight: 92)
                         .foregroundStyle(isOn ? Theme.onPrimary : Theme.textPrimary)
@@ -339,14 +339,14 @@ struct OnboardingView: View {
             ].enumerated()), id: \.offset) { index, item in
                 HStack(alignment: .top, spacing: 14) {
                     Text("\(index + 1)")
-                        .font(.system(size: 15, weight: .heavy))
+                        .scaledFont(.body, weight: .heavy)
                         .foregroundStyle(Theme.onPrimary)
                         .frame(width: 34, height: 34)
                         .background(Theme.textPrimary)
                         .clipShape(Circle())
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(item.0).font(.system(size: 17, weight: .bold)).foregroundStyle(Theme.textPrimary)
-                        Text(item.1).font(.system(size: 14)).foregroundStyle(Theme.textSecondary)
+                        Text(item.0).scaledFont(.heading, weight: .bold).foregroundStyle(Theme.textPrimary)
+                        Text(item.1).scaledFont(.body).foregroundStyle(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -374,7 +374,7 @@ struct OnboardingView: View {
             }
             HStack(spacing: 8) {
                 TextField("Vlastní, např. Kytara", text: $newActivity)
-                    .font(.system(size: 15))
+                    .scaledFont(.body)
                     .padding(.horizontal, 14)
                     .frame(minHeight: 48)
                     .background(Theme.card)
@@ -383,7 +383,7 @@ struct OnboardingView: View {
                     .submitLabel(.done)
                     .onSubmit(addActivity)
                 Button("Přidat", action: addActivity)
-                    .font(.system(size: 15, weight: .bold))
+                    .scaledFont(.body, weight: .bold)
                     .foregroundStyle(Theme.onPrimary)
                     .padding(.horizontal, 18)
                     .frame(minHeight: 48)
@@ -418,7 +418,7 @@ struct OnboardingView: View {
         HStack(spacing: 10) {
             ActivityIconButton(activity: title, symbol: symbol, onPick: onPick)
             Text(title)
-                .font(.system(size: 14, weight: .semibold))
+                .scaledFont(.body, weight: .semibold)
                 .foregroundStyle(Theme.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
@@ -445,7 +445,7 @@ struct OnboardingView: View {
     private func chip(_ title: String, symbol: String, isOn: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Label(title, systemImage: symbol)
-                .font(.system(size: 15, weight: .semibold))
+                .scaledFont(.body, weight: .semibold)
                 .foregroundStyle(isOn ? Theme.onPrimary : Theme.textPrimary)
                 .padding(.horizontal, 14)
                 .frame(minHeight: 44)
@@ -513,8 +513,8 @@ struct OnboardingView: View {
                             let isOn = draft.restName == preset.name
                             Button { draft.restName = preset.name } label: {
                                 VStack(spacing: 2) {
-                                    Text(preset.name).font(.system(size: 15, weight: .bold))
-                                    Text(FocusView.clock(TimeInterval(preset.seconds))).font(.system(size: 13)).opacity(0.75)
+                                    Text(preset.name).scaledFont(.body, weight: .bold)
+                                    Text(FocusView.clock(TimeInterval(preset.seconds))).scaledFont(.caption).opacity(0.75)
                                 }
                                 .frame(maxWidth: .infinity, minHeight: 56)
                                 .foregroundStyle(isOn ? Theme.onPrimary : Theme.textPrimary)
@@ -535,18 +535,18 @@ struct OnboardingView: View {
 
     private var ownSplit: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Tvoje tréninky").font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.textPrimary)
+            Text("Tvoje tréninky").scaledFont(.body, weight: .bold).foregroundStyle(Theme.textPrimary)
             note("Pojmenuj tréninky, které se v týdnu střídají.")
             ForEach(draft.ownWorkouts.indices, id: \.self) { index in
                 HStack(spacing: 8) {
                     Text(String(UnicodeScalar(UInt8(65 + index))))
-                        .font(.system(size: 13, weight: .heavy))
+                        .scaledFont(.caption, weight: .heavy)
                         .foregroundStyle(Theme.textPrimary)
                         .frame(width: 32, height: 32)
                         .background(Theme.card)
                         .clipShape(Circle())
                     TextField("Např. Hrudník a triceps", text: $draft.ownWorkouts[index])
-                        .font(.system(size: 15))
+                        .scaledFont(.body)
                         .padding(.horizontal, 12)
                         .frame(minHeight: 44)
                         .background(Theme.card)
@@ -569,7 +569,7 @@ struct OnboardingView: View {
                     withAnimation { draft.ownWorkouts.append("") }
                 } label: {
                     Label("Přidat trénink", systemImage: "plus")
-                        .font(.system(size: 15, weight: .bold))
+                        .scaledFont(.body, weight: .bold)
                         .foregroundStyle(Theme.textPrimary)
                         .frame(minHeight: 44)
                 }
@@ -589,7 +589,7 @@ struct OnboardingView: View {
                          "Když hodinky uloží silový trénink, Kept ti hned nabídne ho zapsat"], id: \.self) { line in
                     HStack(alignment: .top, spacing: 10) {
                         Circle().fill(Theme.green).frame(width: 6, height: 6).padding(.top, 7)
-                        Text(line).font(.system(size: 14)).foregroundStyle(Theme.textPrimary)
+                        Text(line).scaledFont(.body).foregroundStyle(Theme.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -626,7 +626,7 @@ struct OnboardingView: View {
     private var lock: some View {
         VStack(spacing: 16) {
             Image(systemName: draft.appLock ? "lock.fill" : "lock.open")
-                .font(.system(size: 40))
+                .scaledFont(40)
                 .foregroundStyle(draft.appLock ? Color(hex: 0x000000) : Theme.textPrimary)
                 .frame(width: 96, height: 96)
                 .background(draft.appLock ? Theme.green : Theme.card)
@@ -657,8 +657,8 @@ struct OnboardingView: View {
             HStack(spacing: 2) {
                 ForEach(Array(bar.enumerated()), id: \.offset) { index, item in
                     VStack(spacing: 3) {
-                        Image(systemName: item.1).font(.system(size: 18))
-                        Text(item.0).font(.system(size: 10, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7)
+                        Image(systemName: item.1).scaledFont(.heading)
+                        Text(item.0).scaledFont(.caption, weight: .semibold).lineLimit(1).minimumScaleFactor(0.7)
                     }
                     .frame(maxWidth: .infinity, minHeight: 50)
                     .foregroundStyle(index == 0 ? Theme.textPrimary : Theme.textSecondary)
@@ -676,10 +676,10 @@ struct OnboardingView: View {
                 ForEach(tabOptions, id: \.tab) { item in
                     choice(chosen.contains(item.tab), action: { toggleTab(item.tab, chosen: chosen) }) {
                         HStack(spacing: 10) {
-                            Image(systemName: item.symbol).font(.system(size: 18))
+                            Image(systemName: item.symbol).scaledFont(.heading)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(item.title).font(.system(size: 15, weight: .bold))
-                                Text(item.subtitle).font(.system(size: 12)).opacity(0.75).lineLimit(2)
+                                Text(item.title).scaledFont(.body, weight: .bold)
+                                Text(item.subtitle).scaledFont(.caption).opacity(0.75).lineLimit(2)
                             }
                         }
                     }
@@ -710,7 +710,7 @@ struct OnboardingView: View {
                     let isOn = draft.tone == item
                     Button { withAnimation { draft.tone = item } } label: {
                         Text(item.title)
-                            .font(.system(size: 15, weight: .bold))
+                            .scaledFont(.body, weight: .bold)
                             .frame(maxWidth: .infinity, minHeight: 50)
                             .foregroundStyle(isOn ? Theme.onPrimary : Theme.textPrimary)
                             .background(isOn ? Theme.textPrimary : Theme.card)
@@ -728,11 +728,11 @@ struct OnboardingView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 9))
                 VStack(alignment: .leading, spacing: 2) {
                     HStack {
-                        Text(sample.title).font(.system(size: 14, weight: .bold))
+                        Text(sample.title).scaledFont(.body, weight: .bold)
                         Spacer()
-                        Text("teď").font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                        Text("teď").scaledFont(.caption).foregroundStyle(Theme.textSecondary)
                     }
-                    Text(sample.body).font(.system(size: 14))
+                    Text(sample.body).scaledFont(.body)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .foregroundStyle(Theme.textPrimary)
@@ -745,7 +745,7 @@ struct OnboardingView: View {
             note(sample.about)
             if draft.tone == .savage {
                 Text("Drsný tón obsahuje hrubý jazyk a míří na tvoje chování, nikdy na tebe jako člověka. Zapni ho jen vědomě.")
-                    .font(.system(size: 13))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.orange)
                     .padding(12)
                     .background(Theme.orange.opacity(0.12))
@@ -760,8 +760,8 @@ struct OnboardingView: View {
             timeRow("Večerní bilance", "Jak dnešek dopadl", minutes: $draft.eveningMinutes, range: 17 * 60...23 * 60 + 30)
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("Nedělní plánování").font(.system(size: 16, weight: .bold)).foregroundStyle(Theme.textPrimary)
-                    Text("Připomínky do 21:00").font(.system(size: 13)).foregroundStyle(Theme.textSecondary)
+                    Text("Nedělní plánování").scaledFont(.body, weight: .bold).foregroundStyle(Theme.textPrimary)
+                    Text("Připomínky do 21:00").scaledFont(.caption).foregroundStyle(Theme.textSecondary)
                 }
                 Spacer()
                 compactStepper("od \(draft.sundayStartHour):00",
@@ -788,8 +788,8 @@ struct OnboardingView: View {
     private func timeRow(_ title: String, _ subtitle: String, minutes: Binding<Int>, range: ClosedRange<Int>) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.system(size: 16, weight: .bold)).foregroundStyle(Theme.textPrimary)
-                Text(subtitle).font(.system(size: 13)).foregroundStyle(Theme.textSecondary)
+                Text(title).scaledFont(.body, weight: .bold).foregroundStyle(Theme.textPrimary)
+                Text(subtitle).scaledFont(.caption).foregroundStyle(Theme.textSecondary)
             }
             Spacer()
             compactStepper(String(format: "%02d:%02d", minutes.wrappedValue / 60, minutes.wrappedValue % 60),
@@ -803,7 +803,7 @@ struct OnboardingView: View {
         HStack(spacing: 8) {
             smallRound("minus", label: "Dřív", action: minus)
             Text(value)
-                .font(.system(size: 17, weight: .heavy))
+                .scaledFont(.heading, weight: .heavy)
                 .monospacedDigit()
                 .foregroundStyle(Theme.textPrimary)
                 .frame(minWidth: 62)
@@ -814,7 +814,7 @@ struct OnboardingView: View {
     private func smallRound(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 15, weight: .semibold))
+                .scaledFont(.body, weight: .semibold)
                 .foregroundStyle(Theme.textPrimary)
                 .frame(width: 44, height: 44)
                 .background(Theme.cardRaised)
@@ -829,7 +829,7 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text("\(shownPoints)")
-                        .font(.system(size: 60, weight: .heavy))
+                        .scaledFont(.hero, weight: .heavy)
                         .monospacedDigit()
                         .foregroundStyle(Theme.green)
                         .contentTransition(.numericText())
@@ -837,7 +837,7 @@ struct OnboardingView: View {
                 }
                 ThinBar(value: Double(shownPoints) / Double(PointsService.passCost), color: Theme.green)
                 Text("Do první propustky chybí \(PointsService.passCost - PointsService.startingBalance).")
-                    .font(.system(size: 13))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
             .card()
@@ -859,7 +859,7 @@ struct OnboardingView: View {
             Text(title).labelStyle()
             ForEach(rows, id: \.1) { value, label in
                 (Text(value).fontWeight(.heavy).foregroundColor(color) + Text(" \(label)").foregroundColor(Theme.textPrimary))
-                    .font(.system(size: 13))
+                    .scaledFont(.caption)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -887,10 +887,10 @@ struct OnboardingView: View {
         return VStack(alignment: .leading, spacing: 8) {
             ForEach(rows, id: \.0) { key, value in
                 HStack(alignment: .top) {
-                    Text(key).font(.system(size: 14)).foregroundStyle(Theme.textSecondary)
+                    Text(key).scaledFont(.body).foregroundStyle(Theme.textSecondary)
                     Spacer(minLength: 16)
                     Text(value.isEmpty ? "—" : value)
-                        .font(.system(size: 14, weight: .bold))
+                        .scaledFont(.body, weight: .bold)
                         .foregroundStyle(Theme.textPrimary)
                         .multilineTextAlignment(.trailing)
                 }

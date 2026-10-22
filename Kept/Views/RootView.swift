@@ -5,6 +5,11 @@ enum AppTab: Hashable {
     case today, week, stats, gym, health, diary, settings
 }
 
+extension Notification.Name {
+    /// Posted with the tab as its object when the tab that is already open is chosen again.
+    static let tabReselected = Notification.Name("kept.tabReselected")
+}
+
 struct RootView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.scenePhase) private var scenePhase
@@ -17,6 +22,10 @@ struct RootView: View {
     @State private var weekShowsNext = false
     @State private var showsRealityCheck = false
     @State private var showsSealStamp = false
+    /// Bumped when the day or time zone changes, so what is computed from "now" is computed again.
+    @State private var clockTick = 0
+    /// Planned rest days change what the streak warnings say, so a change reschedules the notifications.
+    @AppStorage(RestDays.storageKey) private var restDaysRaw = ""
     // Switching tabs slides the new screen in a little and fades it up, instead of an instant cut.
     @State private var slide: CGFloat = 0
     @State private var fade: Double = 1
@@ -27,14 +36,25 @@ struct RootView: View {
     /// Badges already shown to the user, so only a new one gets announced.
     @AppStorage("seenBadges") private var seenBadges = ""
     @AppStorage("badgesInitialised") private var badgesInitialised = false
+    /// Health results that earn health badges; a change here is a reason to look for a new badge.
+    @AppStorage(HealthStats.key) private var healthStatsData = Data()
     @State private var unlocked: Achievement?
     @AppStorage("devShowDayKept") private var devShowDayKept = false
     @AppStorage("devShowStory") private var devShowStory = false
     @AppStorage("devShowEvening") private var devShowEvening = false
+    /// The selected tab; choosing the one that is already open tells it, so it can go back to its first screen.
+    private var tabSelection: Binding<AppTab> {
+        Binding(get: { tab }, set: { new in
+            if new == tab { NotificationCenter.default.post(name: .tabReselected, object: new) }
+            tab = new
+        })
+    }
+
     private var committedCount: Int { plans.filter(\.isCommitted).count }
 
     /// The Week tab shows where this week stands: sealed, waiting for its seal, or planned but not sealed yet.
     private var weekTabSymbol: String {
+        _ = clockTick
         let plan = plans.first { $0.weekStart == Date.now.weekStart }
         if plan?.isCommitted == true { return "checkmark.seal.fill" }
         if plan?.isSealing == true { return "calendar.badge.clock" }
@@ -62,6 +82,7 @@ struct RootView: View {
             hasher.combine(task.isRemoved)
             hasher.combine(task.completionShare)
             hasher.combine(task.streakRepairDay)
+            hasher.combine(task.cue)
         }
         for plan in plans {
             hasher.combine(plan.weekStart)
@@ -72,6 +93,7 @@ struct RootView: View {
             hasher.combine(purchase.date)
             hasher.combine(purchase.usedOn)
         }
+        hasher.combine(restDaysRaw)
         hasher.combine(settingsList.first?.notificationSignature)
         return hasher.finalize()
     }
@@ -86,16 +108,23 @@ struct RootView: View {
         SealActivityManager.reconcile(plans)
     }
 
+    /// Days with a finished workout done in Kept: gym, sport, and the user's own activities marked as workouts.
+    private var keptTrainingDays: Set<Date> {
+        guard let settings else { return [] }
+        return Set(tasks.filter { $0.isDone && settings.isWorkout($0) }.map { ($0.completedAt ?? $0.scheduledDate).startOfDay })
+    }
+
     private var badgeSignature: Int {
         let done = tasks.filter(\.isDone).count
         let sealed = plans.filter(\.isCommitted).count
-        return done * 1000 + sealed * 10 + failures.count + diary.count * 7
+        return done * 1000 + sealed * 10 + failures.count + diary.count * 7 + healthStatsData.hashValue
     }
 
     /// Announces a badge that was earned since the last look. The first look only records what exists.
     private func announceNewBadges() async {
         guard settings?.onboardedAt != nil else { return }
         let weeklyTarget: (TaskCategory) -> Int = { settings?.weeklyTarget(for: $0) ?? $0.defaultWeeklyTarget }
+        HealthStats.remember(keptTrainingDays: keptTrainingDays)
         let badges = BadgeService.evaluate(tasks: tasks, plans: plans, failures: failures, diary: diary, targets: weeklyTarget)
         let earned = badges.filter(\.isEarned)
         let seen = Set(seenBadges.split(separator: ",").map(String.init))
@@ -112,7 +141,7 @@ struct RootView: View {
     }
 
     var body: some View {
-        TabView(selection: $tab) {
+        TabView(selection: tabSelection) {
             TodayView(openWeek: { tab = .week })
                 .modifier(TabSlide(offset: slide, opacity: fade))
                 .tabItem { Label("Dnes", systemImage: "sun.max") }
@@ -151,6 +180,7 @@ struct RootView: View {
                 .tag(AppTab.settings)
         }
         .tint(Theme.textPrimary)
+        .softBottomEdge()
         .onChange(of: tab) { old, new in
             guard !reduceMotion else { return }
             let order: [AppTab] = [.today, .week, .stats, .gym, .health, .diary, .settings]
@@ -169,6 +199,11 @@ struct RootView: View {
             }
         }
         .appLock(settings?.appLockEnabled == true)
+        .modifier(StoreAlerts())
+        .modifier(ClockChanges {
+            clockTick += 1
+            Task { await NotificationManager.reschedule(context: context) }
+        })
         // A week turning into a promise gets its moment: the seal drops onto the plan.
         .onChange(of: committedCount) { old, new in
             guard new > old, scenePhase == .active, settings?.onboardedAt != nil else { return }
@@ -225,6 +260,11 @@ struct RootView: View {
             if settings?.healthEnabled == true {
                 HealthService.startWorkoutObserver()
             }
+        }
+        // Every time the app comes to the front, Health is read again so health badges are earned without opening its tab.
+        .task(id: "\(settings?.healthEnabled == true)-\(scenePhase == .active)") {
+            guard settings?.healthEnabled == true, scenePhase == .active else { return }
+            _ = await HealthService.summary(keptTrainingDays: keptTrainingDays)
         }
         .task(id: notificationSignature) {
             ActivityIcons.shared.register(custom: settings?.customActivities ?? [])
@@ -316,26 +356,37 @@ private struct TabSlide: ViewModifier {
 /// "New badge" at the top of the screen, for a few seconds.
 private struct BadgeUnlockBanner: View {
     let badge: Achievement
+    @State private var popped = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
+                if badge.tier != .common {
+                    // Rare and legendary badges send out a ring once.
+                    Circle()
+                        .stroke(badge.tier == .legendary ? Theme.orange : Theme.green, lineWidth: 2)
+                        .scaleEffect(popped ? 1.9 : 1)
+                        .opacity(popped ? 0 : 0.9)
+                }
                 Circle().fill(Theme.textPrimary)
                 Image(systemName: badge.symbol)
-                    .font(.system(size: 20, weight: .semibold))
+                    .scaledFont(.heading, weight: .semibold)
                     .foregroundStyle(Theme.onPrimary)
             }
             .frame(width: 46, height: 46)
+            .scaleEffect(popped || reduceMotion ? 1 : 0.3)
+            .rotationEffect(.degrees(popped || reduceMotion ? 0 : -25))
             VStack(alignment: .leading, spacing: 2) {
                 Text("NOVÝ ODZNAK · \(badge.tier.title)")
-                    .font(.system(size: 10, weight: .heavy))
+                    .scaledFont(.caption, weight: .heavy)
                     .tracking(1)
                     .foregroundStyle(badge.tier == .legendary ? Theme.orange : Theme.green)
                 Text(badge.name)
-                    .font(.system(size: 17, weight: .bold))
+                    .scaledFont(.heading, weight: .bold)
                     .foregroundStyle(Theme.textPrimary)
                 Text(badge.how)
-                    .font(.system(size: 12))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
                     .lineLimit(1)
             }
@@ -349,5 +400,9 @@ private struct BadgeUnlockBanner: View {
         .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
         .padding(.horizontal, Theme.screenPadding)
         .accessibilityElement(children: .combine)
+        .onAppear {
+            guard !reduceMotion else { popped = true; return }
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.55).delay(0.15)) { popped = true }
+        }
     }
 }

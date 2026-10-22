@@ -40,11 +40,11 @@ struct LaunchAnimationView: View {
                 .opacity(tile ? 1 : 0)
                 VStack(spacing: 10) {
                     Text("KEPT")
-                        .font(.system(size: 30, weight: .heavy))
+                        .scaledFont(.title, weight: .heavy)
                         .tracking(word ? 6 : 14)
                         .foregroundStyle(Theme.textPrimary)
                     Text("Keep what you promise.")
-                        .font(.system(size: 15))
+                        .scaledFont(.body)
                         .foregroundStyle(Theme.textSecondary)
                 }
                 .opacity(word ? 1 : 0)

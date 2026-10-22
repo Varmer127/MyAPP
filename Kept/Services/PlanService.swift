@@ -13,6 +13,7 @@ struct TaskDraft {
     var weight = 2
     var notes = ""
     var why = ""
+    var cue = ""
     var requiresProof = false
     var usesFocus = false
     var isRecovery = false
@@ -35,6 +36,7 @@ struct TaskDraft {
         weight = task.weight
         notes = task.notes
         why = task.why
+        cue = task.cue
         requiresProof = task.requiresProof
         stake = task.stake
         usesFocus = task.usesFocus
@@ -91,7 +93,7 @@ enum PlanService {
     static func sealNow(_ plan: WeeklyPlan, minimum: Int, now: Date = .now) {
         guard canSealNow(plan, minimum: minimum, now: now) else { return }
         commit(plan, at: now)
-        try? plan.modelContext?.save()
+        Persistence.save(plan.modelContext)
     }
 
     /// Seals every plan whose hour is over, as of the moment it ran out. A plan that was emptied
@@ -151,6 +153,7 @@ enum PlanService {
         task.plannedMinutes = draft.plannedMinutes
         task.notes = draft.notes
         task.why = draft.why
+        task.cue = draft.cue.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if task.plan !== plan {
             task.plan = plan

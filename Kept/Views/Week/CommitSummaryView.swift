@@ -48,18 +48,18 @@ struct CommitSummaryView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("TÝDEN \(plan.weekStart.weekNumber)").labelStyle()
                         Text("TENTO TÝDEN SE ZAVAZUJI K:")
-                            .font(.system(size: 24, weight: .bold))
+                            .scaledFont(.title, weight: .bold)
                             .foregroundStyle(Theme.textPrimary)
                     }
                     VStack(alignment: .leading, spacing: 14) {
                         ForEach(categoryCounts, id: \.category) { item in
                             HStack(alignment: .firstTextBaseline, spacing: 10) {
                                 Text("\(item.count)×")
-                                    .font(.system(size: 22, weight: .bold))
+                                    .scaledFont(.title, weight: .bold)
                                     .foregroundStyle(Theme.textPrimary)
                                     .frame(width: 48, alignment: .leading)
                                 Label(item.category.title, systemImage: item.category.icon)
-                                    .font(.system(size: 18))
+                                    .scaledFont(.heading)
                                     .foregroundStyle(Theme.textPrimary)
                             }
                         }
@@ -70,17 +70,17 @@ struct CommitSummaryView: View {
                     }
                     VStack(alignment: .leading, spacing: 4) {
                         Text("\(tasks.count)")
-                            .font(.system(size: 64, weight: .heavy))
+                            .scaledFont(64, weight: .heavy)
                             .foregroundStyle(Theme.textPrimary)
                         Text("ZÁVAZKŮ CELKEM").labelStyle()
                         Text("\(plannedText) · kritické: \(criticalCount)")
-                            .font(.system(size: 14))
+                            .scaledFont(.body)
                             .foregroundStyle(Theme.textSecondary)
                             .padding(.top, 4)
                     }
                     if plan.committableTasks.count > tasks.count {
                         Text("Už uzavřené úkoly tohoto týdne: \(plan.committableTasks.count - tasks.count). Do závazku se nepočítají, jen do produktivity.")
-                            .font(.system(size: 13))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -88,12 +88,12 @@ struct CommitSummaryView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("POD MINIMEM").labelStyle(minimumBlocksCommit ? Theme.red : Theme.orange)
                             Text("Minimum je \(minimum) aktivit týdně, v plánu máš \(tasks.count). Chybí \(missingActivities).")
-                                .font(.system(size: 14))
+                                .scaledFont(.body)
                                 .foregroundStyle(Theme.textPrimary)
                             Text(minimumBlocksCommit
                                  ? "Dokud je nedoplníš, plánovač odeslat nejde."
                                  : "Týden už běží, takže plánovač odeslat můžeš i tak.")
-                                .font(.system(size: 13))
+                                .scaledFont(.caption)
                                 .foregroundStyle(Theme.textSecondary)
                         }
                     }
@@ -102,7 +102,7 @@ struct CommitSummaryView: View {
                             Text("POD TÝDENNÍM CÍLEM").labelStyle(Theme.orange)
                             ForEach(shortfalls, id: \.category) { item in
                                 Text("\(item.category.title): v plánu \(item.planned), cíl \(item.target)")
-                                    .font(.system(size: 14))
+                                    .scaledFont(.body)
                                     .foregroundStyle(Theme.textPrimary)
                             }
                         }
@@ -114,7 +114,7 @@ struct CommitSummaryView: View {
                             Text("NEŽ SE ZAVÁŽEŠ").labelStyle(Theme.orange)
                             ForEach(advice, id: \.self) { line in
                                 Text(line)
-                                    .font(.system(size: 14))
+                                    .scaledFont(.body)
                                     .foregroundStyle(Theme.textPrimary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -123,11 +123,11 @@ struct CommitSummaryView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Label("ZAPEČETÍ SE ZA 60 MINUT", systemImage: "calendar.badge.clock").labelStyle(Theme.textPrimary)
                         Text("Plán odešleš do plánovače. Hodinu ho ještě můžeš měnit bez postihu, třeba když si vzpomeneš, co jsi zapomněl. Pak se zapečetí sám. Když máš jasno dřív, můžeš ho zapečetit i hned.")
-                            .font(.system(size: 13))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                         Text("Po zapečetění se každé odstranění, přesun nebo snížení úkolu zaznamená. Odstraněný úkol se dál počítá jako porušený slib.")
-                            .font(.system(size: 13))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }

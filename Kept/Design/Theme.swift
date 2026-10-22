@@ -17,11 +17,13 @@ enum Theme {
     /// Text or icon placed on a `textPrimary` or accent-coloured fill.
     static let onPrimary = Color(dark: 0x000000, light: 0xFFFFFF)
     static let textSecondary = Color(dark: 0x8E8E93, light: 0x6A6A70)
-    static let textTertiary = Color(dark: 0x5C5C61, light: 0x9E9EA4)
+    /// Meant for icons and thin lines. Text in this colour was under 3 : 1 against the cards, so it now sits at about 5 : 1,
+    /// right next to `textSecondary`: there are two readable text levels, not three.
+    static let textTertiary = Color(dark: 0x8A8A90, light: 0x6F6F76)
 
-    // Slightly deeper on a light background so they stay readable as text.
-    static let green = Color(dark: 0x30D158, light: 0x1E9E48)
-    static let orange = Color(dark: 0xFF9F0A, light: 0xD97800)
+    // Deeper on a light background so they reach 4.5 : 1 as text on both the cards and the page.
+    static let green = Color(dark: 0x30D158, light: 0x16803A)
+    static let orange = Color(dark: 0xFF9F0A, light: 0xA35B00)
     static let red = Color(dark: 0xFF453A, light: 0xD92D20)
 
     static let radius: CGFloat = 14
@@ -101,11 +103,12 @@ extension View {
             .background(Theme.card)
             .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
             .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.border, lineWidth: 1))
+            .modifier(CardHighlight())
     }
 
     /// Small uppercase label used above values and sections.
     func labelStyle(_ color: Color = Theme.textSecondary) -> some View {
-        self.font(.system(size: 12, weight: .semibold))
+        self.scaledFont(.caption, weight: .semibold)
             .tracking(1.2)
             .foregroundStyle(color)
     }
@@ -127,4 +130,21 @@ extension Double {
 
 extension Optional where Wrapped == Double {
     var percentText: String { self?.percentText ?? "—" }
+}
+
+
+/// In the dark appearance a card is almost the colour of the page (1.07 : 1), so a thin light on its top edge,
+/// fading out towards the middle, lifts it off the background. Invisible in the light appearance.
+private struct CardHighlight: ViewModifier {
+    @Environment(\.colorScheme) private var scheme
+
+    func body(content: Content) -> some View {
+        content.overlay {
+            if scheme == .dark {
+                RoundedRectangle(cornerRadius: Theme.radius)
+                    .strokeBorder(LinearGradient(colors: [.white.opacity(0.12), .clear], startPoint: .top, endPoint: .center), lineWidth: 1)
+                    .allowsHitTesting(false)
+            }
+        }
+    }
 }

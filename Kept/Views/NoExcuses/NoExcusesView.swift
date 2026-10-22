@@ -87,7 +87,7 @@ struct NoExcusesView: View {
                 }
             } label: {
                 Text(step == .reason ? "Zrušit" : "Zpět")
-                    .font(.system(size: 15))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
             }
             .padding(.leading, 10)
@@ -100,7 +100,7 @@ struct NoExcusesView: View {
             Text(kind == .missed ? "NESPLNĚNO · \(task.scheduledDate.weekdayText.uppercased())" : "PŘESKAKUJEŠ")
                 .labelStyle(Theme.red)
             Text(task.title)
-                .font(.system(size: 28, weight: .bold))
+                .scaledFont(.title, weight: .bold)
                 .foregroundStyle(Theme.textPrimary)
             Text(step.title).labelStyle()
                 .padding(.top, 6)
@@ -116,10 +116,10 @@ struct NoExcusesView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("TVOJE SÁZKA").labelStyle(Theme.orange)
                     Text("„\(task.stake)“")
-                        .font(.system(size: 15))
+                        .scaledFont(.body)
                         .foregroundStyle(Theme.textPrimary)
                     Text("Vsadil ses sám se sebou. Zeptám se tě, jestli jsi ji dodržel.")
-                        .font(.system(size: 13))
+                        .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary)
                 }
                 .card()
@@ -128,7 +128,7 @@ struct NoExcusesView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("ŘEKL JSI, ŽE NA TOM ZÁLEŽÍ, PROTOŽE").labelStyle()
                     Text("„\(task.why)“")
-                        .font(.system(size: 15))
+                        .scaledFont(.body)
                         .foregroundStyle(Theme.textPrimary)
                 }
                 .card()
@@ -139,7 +139,7 @@ struct NoExcusesView: View {
                 } label: {
                     HStack {
                         Text(option.title)
-                            .font(.system(size: 16, weight: .medium))
+                            .scaledFont(.body, weight: .medium)
                             .foregroundStyle(Theme.textPrimary)
                         Spacer()
                         if reason == option {
@@ -161,14 +161,14 @@ struct NoExcusesView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("UŽ \(previousFailures.count)× NESPLNĚNO").labelStyle(Theme.red)
             Text("Minule (\(last.date.weekdayText) \(last.date.dayMonthText)) jsi zvolil „\(last.reason.title)“ a napsal:")
-                .font(.system(size: 13))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textSecondary)
             Text("„\(last.critique)“")
-                .font(.system(size: 15))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.textPrimary)
             if !last.prevention.isEmpty {
                 Text("Slíbil jsi: „\(last.prevention)“")
-                    .font(.system(size: 13))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
         }
@@ -188,14 +188,14 @@ struct NoExcusesView: View {
     private func textStep(prompt: String, text: Binding<String>, length: Int, minimum: Int) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(prompt)
-                .font(.system(size: 17, weight: .semibold))
+                .scaledFont(.heading, weight: .semibold)
                 .foregroundStyle(Theme.textPrimary)
             TextField("Buď upřímný. Nikdo jiný to nečte.", text: text, axis: .vertical)
                 .lineLimit(5...12)
-                .font(.system(size: 16))
+                .scaledFont(.body)
                 .card()
             Text(length >= minimum ? "Znaků: \(length)" : "Chybí ještě znaků: \(minimum - length)")
-                .font(.system(size: 12))
+                .scaledFont(.caption)
                 .foregroundStyle(length >= minimum ? Theme.textTertiary : Theme.orange)
         }
     }

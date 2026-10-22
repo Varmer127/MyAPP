@@ -45,7 +45,7 @@ struct OnboardingTutorial: View {
                         let isOn = demo == item
                         Button { withAnimation(.easeOut(duration: 0.2)) { demo = item } } label: {
                             Text(item.title)
-                                .font(.system(size: 13, weight: .bold))
+                                .scaledFont(.caption, weight: .bold)
                                 .padding(.horizontal, 12)
                                 .frame(minHeight: 36)
                                 .foregroundStyle(isOn ? Theme.onPrimary : Theme.textSecondary)
@@ -58,12 +58,12 @@ struct OnboardingTutorial: View {
                 }
             }
             Text(demo.text)
-                .font(.system(size: 15))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
                 .id(demo)
             VStack(alignment: .leading, spacing: 12) {
-                Text("VYZKOUŠEJ SI TO").font(.system(size: 10, weight: .heavy)).tracking(1.4).foregroundStyle(Theme.orange)
+                Text("VYZKOUŠEJ SI TO").scaledFont(.caption, weight: .heavy).tracking(1.4).foregroundStyle(Theme.orange)
                 switch demo {
                 case .task: TaskDemo(activity: activity)
                 case .planning: PlanningDemo(activity: activity, secondActivity: secondActivity)
@@ -97,7 +97,7 @@ struct OnboardingTutorial: View {
 private func demoButton(_ title: String, fill: Color, text: Color, action: @escaping () -> Void) -> some View {
     Button(action: action) {
         Text(title)
-            .font(.system(size: 13, weight: .heavy))
+            .scaledFont(.caption, weight: .heavy)
             .tracking(0.4)
             .lineLimit(1)
             .minimumScaleFactor(0.7)
@@ -112,7 +112,7 @@ private func demoButton(_ title: String, fill: Color, text: Color, action: @esca
 
 private func resultText(_ text: String, color: Color) -> some View {
     Text(text)
-        .font(.system(size: 14, weight: .semibold))
+        .scaledFont(.body, weight: .semibold)
         .foregroundStyle(color)
         .fixedSize(horizontal: false, vertical: true)
         .padding(12)
@@ -131,8 +131,8 @@ private struct TaskDemo: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(activity).font(.system(size: 18, weight: .bold)).foregroundStyle(Theme.textPrimary)
-                    Text("dnes · 45 min").font(.system(size: 13)).foregroundStyle(Theme.textSecondary)
+                    Text(activity).scaledFont(.heading, weight: .bold).foregroundStyle(Theme.textPrimary)
+                    Text("dnes · 45 min").scaledFont(.caption).foregroundStyle(Theme.textSecondary)
                 }
                 Spacer()
                 Badge(text: badge.text, color: badge.color)
@@ -146,9 +146,9 @@ private struct TaskDemo: View {
                 }
             case .confirm:
                 inner {
-                    Text("Opravdu jsi to splnil podle plánu?").font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.textPrimary)
+                    Text("Opravdu jsi to splnil podle plánu?").scaledFont(.body, weight: .bold).foregroundStyle(Theme.textPrimary)
                     Text("Kept se ptá pokaždé. Chvilka upřímnosti, než se něco započítá.")
-                        .font(.system(size: 13)).foregroundStyle(Theme.textSecondary)
+                        .scaledFont(.caption).foregroundStyle(Theme.textSecondary)
                     HStack(spacing: 8) {
                         demoButton("Ještě ne", fill: Theme.card, text: Theme.textPrimary) { set(.open) }
                         demoButton("Ano, splnil", fill: Theme.green, text: Color(hex: 0x000000)) { set(.done) }
@@ -156,7 +156,7 @@ private struct TaskDemo: View {
                 }
             case .partial:
                 inner {
-                    Text("Kolik jsi toho udělal?").font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.textPrimary)
+                    Text("Kolik jsi toho udělal?").scaledFont(.body, weight: .bold).foregroundStyle(Theme.textPrimary)
                     HStack(spacing: 6) {
                         ForEach([25, 50, 75, 90], id: \.self) { share in
                             demoButton("\(share) %", fill: Theme.card, text: Theme.textPrimary) { set(.partialDone(share)) }
@@ -165,7 +165,7 @@ private struct TaskDemo: View {
                 }
             case .skip:
                 inner {
-                    Text("Co s tím úkolem?").font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.textPrimary)
+                    Text("Co s tím úkolem?").scaledFont(.body, weight: .bold).foregroundStyle(Theme.textPrimary)
                     demoButton("Odložit bez postihu (zbývá 3 ze 3)", fill: Theme.card, text: Theme.textPrimary) { set(.postponed) }
                     demoButton("Přeskočit a vysvětlit", fill: Theme.red, text: Color(hex: 0xFFFFFF)) { set(.skipped) }
                 }
@@ -206,7 +206,7 @@ private struct TaskDemo: View {
         VStack(alignment: .leading, spacing: 6) {
             resultText(text, color: color)
             Button("Zkusit znovu") { set(.open) }
-                .font(.system(size: 15, weight: .bold))
+                .scaledFont(.body, weight: .bold)
                 .foregroundStyle(Theme.textPrimary)
                 .frame(minHeight: 44)
         }
@@ -252,7 +252,7 @@ private struct PlanningDemo: View {
             }
             .pickerStyle(.segmented)
             Text(explanation)
-                .font(.system(size: 13))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             switch mode {
@@ -277,7 +277,7 @@ private struct PlanningDemo: View {
     private var quickSheet: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Rychlé plánování")
-                .font(.system(size: 20, weight: .bold))
+                .scaledFont(.heading, weight: .bold)
                 .foregroundStyle(Theme.textPrimary)
             Text("CO").labelStyle()
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 8)], spacing: 8) {
@@ -288,7 +288,7 @@ private struct PlanningDemo: View {
                 }
             }
             Text(quickTitle)
-                .font(.system(size: 15))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .card(padding: 12)
@@ -302,7 +302,7 @@ private struct PlanningDemo: View {
                         }
                         if taken {
                             Text("už máš")
-                                .font(.system(size: 9, weight: .semibold))
+                                .scaledFont(.caption, weight: .semibold)
                                 .foregroundStyle(Theme.orange)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
@@ -325,10 +325,10 @@ private struct PlanningDemo: View {
     private func chip(_ text: String, symbol: String? = nil, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 4) {
-                if let symbol { Image(systemName: symbol).font(.system(size: 16)) }
+                if let symbol { Image(systemName: symbol).scaledFont(.body) }
                 Text(text)
             }
-            .font(.system(size: 13, weight: .semibold))
+            .scaledFont(.caption, weight: .semibold)
             .foregroundStyle(isSelected ? Theme.onPrimary : Theme.textPrimary)
             .lineLimit(1)
             .minimumScaleFactor(0.7)
@@ -352,10 +352,10 @@ private struct PlanningDemo: View {
             if confirmsCopy {
                 VStack(spacing: 6) {
                     Text("Naplánovat jako minulý týden?")
-                        .font(.system(size: 17, weight: .semibold))
+                        .scaledFont(.heading, weight: .semibold)
                         .foregroundStyle(Theme.textPrimary)
                     Text("Úkoly z minulého týdne se naplánují na stejné dny tohoto týdne. Co už tu ten den máš pod stejným názvem, se nezdvojí.")
-                        .font(.system(size: 13))
+                        .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
@@ -386,7 +386,7 @@ private struct PlanningDemo: View {
     private func alertButton(_ title: String, bold: Bool = false, action: @escaping () -> Void) -> some View {
         Button { withAnimation(.easeOut(duration: 0.2), action) } label: {
             Text(title)
-                .font(.system(size: 16, weight: bold ? .semibold : .regular))
+                .scaledFont(.body, weight: bold ? .semibold : .regular)
                 .foregroundStyle(Theme.textPrimary)
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .background(Theme.card)
@@ -405,7 +405,7 @@ private struct PlanningDemo: View {
                         Button("Zrušit") { withAnimation { editorDay = nil } }
                             .foregroundStyle(Theme.textPrimary)
                         Spacer()
-                        Text("Nový úkol").font(.system(size: 16, weight: .semibold)).foregroundStyle(Theme.textPrimary)
+                        Text("Nový úkol").scaledFont(.body, weight: .semibold).foregroundStyle(Theme.textPrimary)
                         Spacer()
                         Button("Uložit") {
                             let title = editorTitle.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -415,7 +415,7 @@ private struct PlanningDemo: View {
                         .fontWeight(.semibold)
                         .foregroundStyle(Theme.textPrimary)
                     }
-                    .font(.system(size: 15))
+                    .scaledFont(.body)
                     .padding(.bottom, 12)
                     VStack(spacing: 0) {
                         formRow { TextField("Název", text: $editorTitle).foregroundStyle(Theme.textPrimary) }
@@ -435,7 +435,7 @@ private struct PlanningDemo: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             } else {
                 Text("Klepni na + u dne, ke kterému chceš úkol přidat.")
-                    .font(.system(size: 13, weight: .semibold))
+                    .scaledFont(.caption, weight: .semibold)
                     .foregroundStyle(Theme.orange)
             }
         }
@@ -443,7 +443,7 @@ private struct PlanningDemo: View {
 
     private func formRow(@ViewBuilder content: () -> some View) -> some View {
         content()
-            .font(.system(size: 15))
+            .scaledFont(.body)
             .foregroundStyle(Theme.textPrimary)
             .padding(.horizontal, 14)
             .frame(minHeight: 44)
@@ -458,20 +458,20 @@ private struct PlanningDemo: View {
                 Spacer()
                 if !items.isEmpty {
                     Button("Vymazat") { withAnimation { items = []; duplicateNote = nil } }
-                        .font(.system(size: 13, weight: .semibold))
+                        .scaledFont(.caption, weight: .semibold)
                         .foregroundStyle(Theme.textSecondary)
                         .frame(minHeight: 32)
                 }
             }
             if let duplicateNote {
                 Text(duplicateNote)
-                    .font(.system(size: 12, weight: .semibold))
+                    .scaledFont(.caption, weight: .semibold)
                     .foregroundStyle(Theme.orange)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if visibleDays.isEmpty {
                 Text("Týden je zatím prázdný. Přidej něco nahoře.")
-                    .font(.system(size: 13))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textTertiary)
             }
             ForEach(visibleDays, id: \.self) { day in
@@ -488,7 +488,7 @@ private struct PlanningDemo: View {
                             }
                         } label: {
                             Image(systemName: "plus")
-                                .font(.system(size: 14, weight: .semibold))
+                                .scaledFont(.body, weight: .semibold)
                                 .foregroundStyle(Theme.textSecondary)
                                 .frame(width: 44, height: 28)
                         }
@@ -497,7 +497,7 @@ private struct PlanningDemo: View {
                     }
                     if dayItems.isEmpty {
                         Text("Žádné závazky")
-                            .font(.system(size: 13))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.textTertiary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     } else {
@@ -530,13 +530,13 @@ private struct PlanningDemo: View {
             Image(systemName: "circle").foregroundStyle(Theme.textTertiary)
             VStack(alignment: .leading, spacing: 3) {
                 Text(item.title)
-                    .font(.system(size: 15, weight: .semibold))
+                    .scaledFont(.body, weight: .semibold)
                     .foregroundStyle(Theme.textPrimary)
                 HStack(spacing: 5) {
                     Image(systemName: item.category.icon)
                     Text("\(item.category.title) · \(item.minutes) min")
                 }
-                .font(.system(size: 12))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textSecondary)
             }
             Spacer()
@@ -569,22 +569,22 @@ private struct PlannerDemo: View {
                     .rotationEffect(.degrees(-90))
                 VStack(spacing: 2) {
                     if phase == .sealed {
-                        Image(systemName: "checkmark.seal.fill").font(.system(size: 30)).foregroundStyle(Theme.green)
+                        Image(systemName: "checkmark.seal.fill").scaledFont(.title).foregroundStyle(Theme.green)
                     } else {
                         Text(FocusView.clock(TimeInterval(secondsLeft)))
-                            .font(.system(size: 26, weight: .heavy))
+                            .scaledFont(.title, weight: .heavy)
                             .monospacedDigit()
                             .foregroundStyle(Theme.textPrimary)
                     }
                     Text(phase == .draft ? "NÁVRH" : (phase == .sealed ? "ZAPEČETĚNO" : "DO ZAPEČETĚNÍ"))
-                        .font(.system(size: 9, weight: .bold)).tracking(0.8).foregroundStyle(Theme.textSecondary)
+                        .scaledFont(.caption, weight: .bold).tracking(0.8).foregroundStyle(Theme.textSecondary)
                 }
             }
             .frame(width: 132, height: 132)
             Text(phase == .draft ? "Týden je naplánovaný, ale zatím je to jen návrh."
                  : (phase == .sealed ? "Zapečetěno. Teď je každý úkol slib. Smazání nebo přesun sníží věrnost plánu."
                     : "Hodina běží (tady zrychleně). Dokud neskončí, můžeš plán měnit bez postihu."))
-                .font(.system(size: 14))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.textSecondary)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
@@ -624,13 +624,13 @@ private struct StreakDemo: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
                 Image(systemName: "flame.fill")
-                    .font(.system(size: 28))
+                    .scaledFont(.title)
                     .symbolEffect(.bounce, value: count)
                 Text("\(count)")
-                    .font(.system(size: 26, weight: .heavy))
+                    .scaledFont(.title, weight: .heavy)
                     .contentTransition(.numericText())
                 Text(count == 1 ? "den v řadě" : (2...4 ~= count ? "dny v řadě" : "dní v řadě"))
-                    .font(.system(size: 14))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
             }
             .foregroundStyle(count > 0 ? Theme.orange : Theme.textSecondary)
@@ -641,8 +641,8 @@ private struct StreakDemo: View {
                         withAnimation(.easeOut(duration: 0.2)) { days[index].toggle() }
                     } label: {
                         VStack(spacing: 2) {
-                            Text(Self.names[index]).font(.system(size: 10, weight: .bold))
-                            Image(systemName: ok ? "checkmark" : "xmark").font(.system(size: 12, weight: .heavy))
+                            Text(Self.names[index]).scaledFont(.caption, weight: .bold)
+                            Image(systemName: ok ? "checkmark" : "xmark").scaledFont(.caption, weight: .heavy)
                         }
                         .frame(maxWidth: .infinity, minHeight: 52)
                         .foregroundStyle(ok ? Theme.green : Theme.red)
@@ -654,7 +654,7 @@ private struct StreakDemo: View {
                 }
             }
             Text("Klepnutím na den přepínáš, jestli vyšel. Den bez úkolů sérii nepřeruší.")
-                .font(.system(size: 13))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textSecondary)
             if days.last == false {
                 resultText("Série skončila. Do 48 hodin ji můžeš vrátit za \(PointsService.streakRepairCost) bodů za každý vynechaný den, nebo začít znovu.",
@@ -673,8 +673,8 @@ private struct MissedDemo: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("NESPLNĚNO · VČERA").font(.system(size: 11, weight: .bold)).tracking(1).foregroundStyle(Theme.red)
-                Text(activity).font(.system(size: 18, weight: .bold)).foregroundStyle(Theme.textPrimary)
+                Text("NESPLNĚNO · VČERA").scaledFont(.caption, weight: .bold).tracking(1).foregroundStyle(Theme.red)
+                Text(activity).scaledFont(.heading, weight: .bold).foregroundStyle(Theme.textPrimary)
             }
             switch phase {
             case .open:
@@ -684,11 +684,11 @@ private struct MissedDemo: View {
                 }
             case .reasons:
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Proč to nevyšlo?").font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.textPrimary)
+                    Text("Proč to nevyšlo?").scaledFont(.body, weight: .bold).foregroundStyle(Theme.textPrimary)
                     FlowLayout(spacing: 6) {
                         ForEach(["Prokrastinoval jsem", "Nechtělo se mi", "Neměl jsem čas", "Zapomněl jsem"], id: \.self) { reason in
                             Button(reason) { set(.written(reason)) }
-                                .font(.system(size: 14, weight: .semibold))
+                                .scaledFont(.body, weight: .semibold)
                                 .foregroundStyle(Theme.textPrimary)
                                 .padding(.horizontal, 14)
                                 .frame(minHeight: 40)
@@ -717,7 +717,7 @@ private struct MissedDemo: View {
         VStack(alignment: .leading, spacing: 6) {
             resultText(text, color: color)
             Button("Zkusit znovu") { set(.open) }
-                .font(.system(size: 15, weight: .bold))
+                .scaledFont(.body, weight: .bold)
                 .foregroundStyle(Theme.textPrimary)
                 .frame(minHeight: 44)
         }
@@ -738,7 +738,7 @@ private struct ScoreDemo: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Text("86").font(.system(size: 54, weight: .heavy)).foregroundStyle(Theme.textPrimary)
+                Text("86").scaledFont(.hero, weight: .heavy).foregroundStyle(Theme.textPrimary)
                 Text("SPOLEHLIVOST").labelStyle()
             }
             ForEach(Self.parts.indices, id: \.self) { index in
@@ -748,14 +748,14 @@ private struct ScoreDemo: View {
                 } label: {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text(part.label).font(.system(size: 14, weight: .bold))
+                            Text(part.label).scaledFont(.body, weight: .bold)
                             Spacer()
-                            Text("\(part.share) %").font(.system(size: 14, weight: .heavy))
+                            Text("\(part.share) %").scaledFont(.body, weight: .heavy)
                         }
                         ThinBar(value: part.fill)
                         if open == index {
                             Text(part.text)
-                                .font(.system(size: 13))
+                                .scaledFont(.caption)
                                 .foregroundStyle(Theme.textSecondary)
                                 .multilineTextAlignment(.leading)
                                 .fixedSize(horizontal: false, vertical: true)

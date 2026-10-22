@@ -29,19 +29,19 @@ struct GymProgressView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                 Text("Gym")
-                    .font(.system(size: 24, weight: .bold))
+                    .scaledFont(.title, weight: .bold)
                     .foregroundStyle(Theme.textPrimary)
                 NavigationLink {
                     GymSettingsView()
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "gearshape.fill")
-                            .font(.system(size: 20))
+                            .scaledFont(.heading)
                             .foregroundStyle(Theme.textPrimary)
                         VStack(alignment: .leading, spacing: 3) {
                             Text("NASTAVENÍ GYMU").labelStyle(Theme.textPrimary)
                             Text("Partie, cviky, týdenní cíl a pauzy")
-                                .font(.system(size: 13))
+                                .scaledFont(.caption)
                                 .foregroundStyle(Theme.textSecondary)
                         }
                         Spacer()
@@ -69,12 +69,12 @@ struct GymProgressView: View {
                 } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "figure.arms.open")
-                            .font(.system(size: 20))
+                            .scaledFont(.heading)
                             .foregroundStyle(Theme.textPrimary)
                         VStack(alignment: .leading, spacing: 3) {
                             Text("MÍRY A FOTKY POSTAVY").labelStyle(Theme.textPrimary)
                             Text("Soukromé, zamčené Face ID, jen v tomto telefonu")
-                                .font(.system(size: 13))
+                                .scaledFont(.caption)
                                 .foregroundStyle(Theme.textSecondary)
                         }
                         Spacer()
@@ -109,7 +109,7 @@ struct GymProgressView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("POKROČILÝ REŽIM").labelStyle(Theme.textPrimary)
                     Text("Cviky série po sérii, rekordy, síla v čase a mapa svalů. Zapneš v Nastavení gymu.")
-                        .font(.system(size: 13))
+                        .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary)
                         .multilineTextAlignment(.leading)
                 }
@@ -123,7 +123,7 @@ struct GymProgressView: View {
     private var summary: some View {
         let thisWeek = workouts.filter { Self.date(of: $0).weekStart == Date.now.weekStart }.count
         let target = settingsList.first?.weeklyTarget(for: .gym) ?? TaskCategory.gym.defaultWeeklyTarget
-        return HStack(spacing: 10) {
+        return TileRow {
             MetricTile(value: target > 0 ? "\(thisWeek) / \(target)" : "\(thisWeek)", label: "Tento týden",
                        color: target > 0 && thisWeek >= target ? Theme.green : Theme.textPrimary)
             MetricTile(value: "\(recent.count)", label: "Za 30 dní")
@@ -153,17 +153,17 @@ struct GymProgressView: View {
                         VStack(spacing: 6) {
                             HStack {
                                 Text(name)
-                                    .font(.system(size: 15))
+                                    .scaledFont(.body)
                                     .foregroundStyle(Theme.textPrimary)
                                 Spacer()
                                 Text("\(count)×")
-                                    .font(.system(size: 15, weight: .semibold))
+                                    .scaledFont(.body, weight: .semibold)
                                     .foregroundStyle(count == 0 ? Theme.orange : Theme.textPrimary)
                             }
                             ThinBar(value: Double(count) / Double(maximum))
                             if let warning = neglectWarning(name, last: lastTrained[name], isPreset: presets.contains(name)) {
                                 Text(warning)
-                                    .font(.system(size: 12))
+                                    .scaledFont(.caption)
                                     .foregroundStyle(Theme.orange)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }
@@ -172,11 +172,11 @@ struct GymProgressView: View {
                     let abs = recent.filter(\.workoutAbs).count
                     HStack {
                         Text("Břicho")
-                            .font(.system(size: 15))
+                            .scaledFont(.body)
                             .foregroundStyle(Theme.textPrimary)
                         Spacer()
                         Text("\(abs)× z \(recent.count) tréninků")
-                            .font(.system(size: 13))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.textSecondary)
                     }
                 }
@@ -223,7 +223,7 @@ struct GymProgressView: View {
             SectionLabel(text: "Cviky a síla")
             if names.isEmpty {
                 Text("Při zápisu tréninku vyber cviky a zapiš váhu, opakování a série. Tady pak uvidíš, jak sílíš.")
-                    .font(.system(size: 14))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
                     .card()
             } else {
@@ -238,7 +238,7 @@ struct GymProgressView: View {
                     if let first = entries.first, let last = entries.last {
                         let best = entries.map(\.weight).max() ?? last.weight
                         let bestMax = entries.map(\.estimatedMax).max() ?? last.estimatedMax
-                        HStack(spacing: 10) {
+                        TileRow {
                             MetricTile(value: last.weight.kilogramText, label: "Naposledy × \(last.reps)")
                             MetricTile(value: best.kilogramText, label: "Nejtěžší váha")
                             MetricTile(value: bestMax.kilogramText, label: "Odhad maxima")
@@ -246,7 +246,7 @@ struct GymProgressView: View {
                         if entries.count > 1 {
                             let change = last.estimatedMax - first.estimatedMax
                             Text("Odhad maxima na jedno opakování: \(change >= 0 ? "+" : "−")\(abs(change).kilogramText) od \(first.date.dayMonthText)")
-                                .font(.system(size: 13, weight: .semibold))
+                                .scaledFont(.caption, weight: .semibold)
                                 .foregroundStyle(change > 0 ? Theme.green : (change < 0 ? Theme.red : Theme.textSecondary))
                             Picker("Graf", selection: $liftMetric) {
                                 ForEach(LiftMetric.allCases) { Text($0.rawValue).tag($0) }
@@ -255,11 +255,11 @@ struct GymProgressView: View {
                             lineChart(entries.map { ($0.date, liftMetric.value($0.weight, $0.estimatedMax, $0.volume)) })
                         } else {
                             Text("Graf se ukáže po druhém zápisu tohoto cviku.")
-                                .font(.system(size: 13))
+                                .scaledFont(.caption)
                                 .foregroundStyle(Theme.textSecondary)
                         }
                         Text("Odhad maxima je výpočet z váhy a opakování (Epleyho vzorec: váha × (1 + opakování ÷ 30)), aby šlo porovnat 80 kg × 8 s 90 kg × 4. Je jen orientační, nad 10 opakování nepřesný, a není to doporučení, kolik naložit. Skutečné maximum nezkoušej bez jištění a rozcvičení. Objem = váha × opakování × série.")
-                            .font(.system(size: 11))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.textTertiary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -274,16 +274,16 @@ struct GymProgressView: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(name)
-                                    .font(.system(size: 15, weight: .semibold))
+                                    .scaledFont(.body, weight: .semibold)
                                     .foregroundStyle(Theme.textPrimary)
                                 Text("\(entries.count)× · naposledy \(entries.last?.date.dayMonthText ?? "—")")
-                                    .font(.system(size: 12))
+                                    .scaledFont(.caption)
                                     .foregroundStyle(Theme.textSecondary)
                             }
                             Spacer()
                             if let last = entries.last {
                                 Text("\(last.weight > 0 ? last.weight.kilogramText : "vl. váha") × \(last.reps)")
-                                    .font(.system(size: 15, weight: .bold))
+                                    .scaledFont(.body, weight: .bold)
                                     .foregroundStyle(Theme.textPrimary)
                             }
                         }
@@ -327,11 +327,11 @@ struct GymProgressView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack(alignment: .firstTextBaseline, spacing: 10) {
                         Text(last.1.kilogramText)
-                            .font(.system(size: 34, weight: .bold))
+                            .scaledFont(34, weight: .bold)
                             .foregroundStyle(Theme.textPrimary)
                         if entries.count > 1 {
                             Text("\(change >= 0 ? "+" : "−")\(abs(change).kilogramText) od \(first.0.dayMonthText)")
-                                .font(.system(size: 13))
+                                .scaledFont(.caption)
                                 .foregroundStyle(Theme.textSecondary)
                         }
                     }
@@ -339,12 +339,12 @@ struct GymProgressView: View {
                         lineChart(entries)
                     } else {
                         Text("Graf se ukáže po druhém zápisu váhy.")
-                            .font(.system(size: 13))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.textSecondary)
                     }
                     if !healthWeights.isEmpty {
                         Text("Včetně měření z Apple Health.")
-                            .font(.system(size: 12))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.textTertiary)
                     }
                 }

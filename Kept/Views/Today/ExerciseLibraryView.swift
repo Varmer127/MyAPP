@@ -62,10 +62,10 @@ struct ExerciseLibraryView: View {
                             Button { pick(exercise.name) } label: {
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(exercise.name)
-                                        .font(.system(size: 16, weight: .semibold))
+                                        .scaledFont(.body, weight: .semibold)
                                         .foregroundStyle(Theme.textPrimary)
                                     Text("\(exercise.primary.map(\.title).joined(separator: ", ")) · \(exercise.equipment.title)")
-                                        .font(.system(size: 12))
+                                        .scaledFont(.caption)
                                         .foregroundStyle(Theme.textSecondary)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -132,7 +132,7 @@ struct ExerciseLibraryView: View {
     private func chip(_ title: String, isOn: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 13, weight: .semibold))
+                .scaledFont(.caption, weight: .semibold)
                 .padding(.horizontal, 12)
                 .frame(minHeight: 34)
                 .foregroundStyle(isOn ? Theme.onPrimary : Theme.textPrimary)
@@ -158,7 +158,7 @@ struct ExerciseDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 Text(exercise.name)
-                    .font(.system(size: 24, weight: .bold))
+                    .scaledFont(.title, weight: .bold)
                     .foregroundStyle(Theme.textPrimary)
                 Text(exercise.equipment.title.uppercased()).labelStyle()
                 MuscleMapView(intensity: Dictionary(uniqueKeysWithValues:
@@ -166,16 +166,16 @@ struct ExerciseDetailView: View {
                     .frame(height: 230)
                 VStack(alignment: .leading, spacing: 6) {
                     Text("HLAVNĚ: \(exercise.primary.map(\.title).joined(separator: ", "))")
-                        .font(.system(size: 13, weight: .semibold))
+                        .scaledFont(.caption, weight: .semibold)
                         .foregroundStyle(Theme.textPrimary)
                     if !exercise.secondary.isEmpty {
                         Text("POMÁHAJÍ: \(exercise.secondary.map(\.title).joined(separator: ", "))")
-                            .font(.system(size: 13))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.textSecondary)
                     }
                 }
                 Text(exercise.tip)
-                    .font(.system(size: 15))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                 Button("PŘIDAT DO TRÉNINKU", action: onAdd)

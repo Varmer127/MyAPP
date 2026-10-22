@@ -101,7 +101,7 @@ struct DictationButton: View {
             dictation.toggle(field: field, text: $text)
         } label: {
             Image(systemName: isListening ? "stop.circle.fill" : "mic.fill")
-                .font(.system(size: 17))
+                .scaledFont(.heading)
                 .foregroundStyle(isListening ? Theme.red : Theme.textSecondary)
                 .symbolEffect(.pulse, isActive: isListening)
                 .frame(width: 34, height: 34)

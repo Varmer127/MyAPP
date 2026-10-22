@@ -83,7 +83,7 @@ struct ActivityIconPicker: View {
             dismiss()
         } label: {
             Image(systemName: symbol)
-                .font(.system(size: 22))
+                .scaledFont(.title)
                 .foregroundStyle(isOn ? Theme.onPrimary : Theme.textPrimary)
                 .frame(maxWidth: .infinity, minHeight: 56)
                 .background(isOn ? Theme.textPrimary : Theme.card)
@@ -106,14 +106,14 @@ struct ActivityIconButton: View {
     var body: some View {
         Button { isPicking = true } label: {
             Image(systemName: symbol)
-                .font(.system(size: 17))
+                .scaledFont(.heading)
                 .foregroundStyle(Theme.textPrimary)
                 .frame(width: 40, height: 40)
                 .background(Theme.cardRaised)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .overlay(alignment: .bottomTrailing) {
                     Image(systemName: "pencil.circle.fill")
-                        .font(.system(size: 13))
+                        .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary, Theme.card)
                         .offset(x: 4, y: 4)
                 }

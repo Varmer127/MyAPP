@@ -12,6 +12,19 @@ struct GymInsights: View {
 
     private var weekStart: Date { Date.now.weekStart.addingDays(-7 * weekOffset) }
 
+    /// How many weeks back the oldest logged workout is: going further back would only show empty weeks.
+    private var maxOffset: Int {
+        guard let oldest = logs.map({ $0.date.weekStart }).min() else { return 0 }
+        return max(0, (Calendar.app.dateComponents([.day], from: oldest, to: Date.now.weekStart).day ?? 0) / 7)
+    }
+
+    private func moveWeek(by step: Int) {
+        let target = min(max(weekOffset + step, 0), maxOffset)
+        guard target != weekOffset else { return }
+        Haptics.light()
+        withAnimation(.easeInOut(duration: 0.25)) { weekOffset = target }
+    }
+
     /// Working sets per muscle in the shown week; a secondary muscle counts half.
     private var setsPerMuscle: [Muscle: Double] {
         var result: [Muscle: Double] = [:]
@@ -39,11 +52,31 @@ struct GymInsights: View {
         let sets = setsPerMuscle
         let top = sets.values.max() ?? 0
         return VStack(spacing: 10) {
-            HStack {
-                SectionLabel(text: weekOffset == 0 ? "Svaly tento týden" : "Svaly · týden \(weekStart.weekNumber)")
-                Button { weekOffset += 1 } label: { Image(systemName: "chevron.left").frame(width: 36, height: 32) }
+            HStack(spacing: 4) {
+                SectionLabel(text: weekOffset == 0 ? "Svaly tento týden"
+                             : "Týden \(weekStart.weekNumber) · \(weekStart.dayMonthText) – \(weekStart.addingDays(6).dayMonthText)")
+                Spacer(minLength: 6)
+                if weekOffset > 0 {
+                    // One tap from any week back to the present.
+                    Button { moveWeek(by: -weekOffset) } label: {
+                        Text("TEĎ")
+                            .scaledFont(.caption, weight: .heavy)
+                            .foregroundStyle(Theme.onPrimary)
+                            .padding(.horizontal, 12)
+                            .frame(height: 28)
+                            .background(Theme.textPrimary)
+                            .clipShape(Capsule())
+                            // The capsule stays small; the area that can be tapped is the 44 points iOS asks for.
+                            .padding(.vertical, 8)
+                            .contentShape(Rectangle())
+                    }
+                    .transition(.scale.combined(with: .opacity))
+                    .accessibilityLabel("Zpět na tento týden")
+                }
+                Button { moveWeek(by: 1) } label: { Image(systemName: "chevron.left").frame(width: 36, height: 32) }
+                    .disabled(weekOffset >= maxOffset)
                     .accessibilityLabel("Předchozí týden")
-                Button { weekOffset -= 1 } label: { Image(systemName: "chevron.right").frame(width: 36, height: 32) }
+                Button { moveWeek(by: -1) } label: { Image(systemName: "chevron.right").frame(width: 36, height: 32) }
                     .disabled(weekOffset == 0)
                     .accessibilityLabel("Další týden")
             }
@@ -51,9 +84,16 @@ struct GymInsights: View {
             VStack(alignment: .leading, spacing: 14) {
                 MuscleMapView(intensity: top > 0 ? sets.mapValues { $0 / top } : [:])
                     .frame(height: 220)
+                    .contentShape(Rectangle())
+                    // Swiping the map moves between weeks, like the arrows.
+                    .simultaneousGesture(DragGesture(minimumDistance: 30).onEnded { drag in
+                        guard abs(drag.translation.width) > abs(drag.translation.height) * 1.5 else { return }
+                        moveWeek(by: drag.translation.width > 0 ? 1 : -1)
+                    })
                 if sets.isEmpty {
-                    Text("Tento týden zatím žádný zapsaný trénink. Partie se rozsvítí podle odcvičených sérií.")
-                        .font(.system(size: 13))
+                    Text(weekOffset == 0 ? "Tento týden zatím žádný zapsaný trénink. Partie se rozsvítí podle odcvičených sérií."
+                                         : "V tomto týdnu žádný zapsaný trénink.")
+                        .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary)
                 } else {
                     Chart(sets.sorted { $0.value > $1.value }, id: \.key) { muscle, value in
@@ -62,7 +102,7 @@ struct GymInsights: View {
                             .cornerRadius(3)
                             .annotation(position: .trailing) {
                                 Text(value.formatted(.number.precision(.fractionLength(0...1)).locale(.app)))
-                                    .font(.system(size: 11, weight: .semibold))
+                                    .scaledFont(.caption, weight: .semibold)
                                     .foregroundStyle(Theme.textSecondary)
                             }
                     }
@@ -72,7 +112,7 @@ struct GymInsights: View {
                     }
                     .frame(height: CGFloat(sets.count) * 26)
                     Text("Pracovní série za týden. Pomocné svaly se počítají napůl, rozcvičky vůbec.")
-                        .font(.system(size: 12))
+                        .scaledFont(.caption)
                         .foregroundStyle(Theme.textTertiary)
                 }
             }
@@ -92,7 +132,7 @@ struct GymInsights: View {
             SectionLabel(text: "Osobní rekordy")
             if best.isEmpty {
                 Text("Rekordy se objeví po prvních zapsaných sériích s váhou.")
-                    .font(.system(size: 13))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .card()
@@ -104,14 +144,14 @@ struct GymInsights: View {
                         HStack {
                             Image(systemName: "trophy.fill").foregroundStyle(index == 0 ? Theme.orange : Theme.textTertiary)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(item.0).font(.system(size: 15, weight: .semibold)).foregroundStyle(Theme.textPrimary)
+                                Text(item.0).scaledFont(.body, weight: .semibold).foregroundStyle(Theme.textPrimary)
                                 Text(item.1.date.dayMonthText + (set.map { " · \($0.weight.kilogramText) × \($0.reps)" } ?? ""))
-                                    .font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                                    .scaledFont(.caption).foregroundStyle(Theme.textSecondary)
                             }
                             Spacer()
                             VStack(alignment: .trailing, spacing: 2) {
-                                Text(item.1.bestEstimatedMax.kilogramText).font(.system(size: 15, weight: .bold)).foregroundStyle(Theme.textPrimary)
-                                Text("odhad maxima").font(.system(size: 10)).foregroundStyle(Theme.textTertiary)
+                                Text(item.1.bestEstimatedMax.kilogramText).scaledFont(.body, weight: .bold).foregroundStyle(Theme.textPrimary)
+                                Text("odhad maxima").scaledFont(.caption).foregroundStyle(Theme.textTertiary)
                             }
                         }
                         .padding(.horizontal, 14)
@@ -148,7 +188,7 @@ struct GymInsights: View {
                     }
                 }
                 Text("Průměrně \(average.formatted(.number.precision(.fractionLength(0...1)).locale(.app)))× týdně za posledních \(Self.calendarWeeks - 1) dokončených týdnů.")
-                    .font(.system(size: 13))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
             .card()

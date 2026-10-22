@@ -18,9 +18,9 @@ struct BodyProgressView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Míry a fotky").font(.system(size: 24, weight: .bold)).foregroundStyle(Theme.textPrimary)
+                    Text("Míry a fotky").scaledFont(.title, weight: .bold).foregroundStyle(Theme.textPrimary)
                     Label("Jen v tomto telefonu, zašifrované, mimo zálohy a galerii.", systemImage: "lock.fill")
-                        .font(.system(size: 13))
+                        .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary)
                 }
                 Button("NOVÝ ZÁPIS") {
@@ -79,7 +79,7 @@ struct BodyProgressView: View {
             let values = Self.values(of: entry)
             if !values.isEmpty {
                 Text(values.map { "\($0.0) \($0.1.formatted(.number.precision(.fractionLength(0...1)).locale(.app))) \($0.2)" }.joined(separator: " · "))
-                    .font(.system(size: 14))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textPrimary)
             }
             let photos = entry.photos
@@ -106,11 +106,11 @@ struct BodyProgressView: View {
                     HStack(spacing: 8) {
                         VStack(spacing: 4) {
                             VaultImage(name: before).frame(height: 220).clipShape(RoundedRectangle(cornerRadius: 10))
-                            Text(first.date.dayMonthText).font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                            Text(first.date.dayMonthText).scaledFont(.caption).foregroundStyle(Theme.textSecondary)
                         }
                         VStack(spacing: 4) {
                             VaultImage(name: after).frame(height: 220).clipShape(RoundedRectangle(cornerRadius: 10))
-                            Text(last.date.dayMonthText).font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                            Text(last.date.dayMonthText).scaledFont(.caption).foregroundStyle(Theme.textSecondary)
                         }
                     }
                 }
@@ -120,7 +120,7 @@ struct BodyProgressView: View {
                 if let before = firstValues[label] {
                     let change = value - before
                     Text("\(label): \(change >= 0 ? "+" : "−")\(abs(change).formatted(.number.precision(.fractionLength(0...1)).locale(.app))) \(unit)")
-                        .font(.system(size: 14))
+                        .scaledFont(.body)
                         .foregroundStyle(Theme.textPrimary)
                 }
             }
@@ -210,7 +210,7 @@ private struct BodyEntryEditor: View {
                                         RoundedRectangle(cornerRadius: 8).fill(Theme.cardRaised).frame(height: 120)
                                             .overlay(Image(systemName: "camera").foregroundStyle(Theme.textSecondary))
                                     }
-                                    Text(pose.title).font(.system(size: 12)).foregroundStyle(Theme.textSecondary)
+                                    Text(pose.title).scaledFont(.caption).foregroundStyle(Theme.textSecondary)
                                 }
                             }
                             .buttonStyle(.plain)

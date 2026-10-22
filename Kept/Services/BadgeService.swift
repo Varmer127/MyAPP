@@ -16,7 +16,7 @@ enum BadgeTier: Int, Comparable {
 }
 
 enum BadgeGroup: String, CaseIterable, Identifiable {
-    case streak, seal, word, habit, gym
+    case streak, seal, word, habit, gym, health
 
     var id: String { rawValue }
 
@@ -27,6 +27,7 @@ enum BadgeGroup: String, CaseIterable, Identifiable {
         case .word: "Slovo"
         case .habit: "Návyk"
         case .gym: "Gym"
+        case .health: "Zdraví"
         }
     }
 }
@@ -42,6 +43,12 @@ struct Achievement: Identifiable {
     let isEarned: Bool
     /// How far along the user is, for badges that can be counted.
     let progress: (current: Int, target: Int)?
+    /// A hidden badge shows as a question mark until it is earned, so it is a surprise and not a goal.
+    var isSecret = false
+
+    var shownName: String { isSecret && !isEarned ? "???" : name }
+    var shownSymbol: String { isSecret && !isEarned ? "questionmark" : symbol }
+    var shownHow: String { isSecret && !isEarned ? "Skrytý odznak. Prozradí se, až ho získáš." : how }
 
     /// "Získáno", or how far along the user is ("5 / 14") when it can be counted. Nothing for an uncounted locked badge.
     var statusText: String {
@@ -55,7 +62,7 @@ struct Achievement: Identifiable {
 /// so a badge can never be out of step with what really happened.
 enum BadgeService {
     static func evaluate(tasks: [TaskItem], plans: [WeeklyPlan], failures: [FailureRecord], diary: [DiaryEntry],
-                         targets: (TaskCategory) -> Int, now: Date = .now) -> [Achievement] {
+                         targets: (TaskCategory) -> Int, health: HealthStats = .stored, now: Date = .now) -> [Achievement] {
         let live = tasks.filter { !$0.isRemoved }
         let byDay = Dictionary(grouping: live) { $0.scheduledDate.startOfDay }
         let committed = plans.filter(\.isCommitted).sorted { $0.weekStart < $1.weekStart }
@@ -111,6 +118,8 @@ enum BadgeService {
         for (index, day) in sortedDone.enumerated() where index > 0 {
             if Calendar.app.dateComponents([.day], from: sortedDone[index - 1], to: day).day ?? 0 >= 5 { returned = true }
         }
+        // Days since the first completed task, to the day.
+        let monthsInApp = sortedDone.first.map { max(0, Calendar.app.dateComponents([.day], from: $0, to: now.startOfDay).day ?? 0) } ?? 0
         let diaryDays = Array(Set(diary.map { $0.day.startOfDay })).sorted()
         var diaryRun = 0, diaryBest = 0
         for (index, day) in diaryDays.enumerated() {
@@ -122,10 +131,23 @@ enum BadgeService {
         let workouts = live.filter { $0.category == .gym && $0.isDone }.count
 
         func make(_ id: String, _ name: String, _ symbol: String, _ group: BadgeGroup, _ tier: BadgeTier, _ how: String,
-                  earned: Bool, progress: (Int, Int)? = nil) -> Achievement {
+                  earned: Bool, progress: (Int, Int)? = nil, secret: Bool = false) -> Achievement {
             Achievement(id: id, name: name, symbol: symbol, group: group, tier: tier, how: how, isEarned: earned,
-                  progress: progress.map { (current: $0.0, target: $0.1) })
+                  progress: progress.map { (current: $0.0, target: $0.1) }, isSecret: secret)
         }
+
+        // Hidden badges
+        let nightOwl = doneTasks.contains { task in
+            guard let at = task.completedAt else { return false }
+            let hour = Calendar.app.component(.hour, from: at)
+            return hour >= 23 || hour < 4
+        }
+        let lastMinute = doneTasks.contains { task in
+            guard let at = task.completedAt, let deadline = task.deadline else { return false }
+            return at <= deadline && deadline.timeIntervalSince(at) <= 5 * 60
+        }
+        let allRounder = Dictionary(grouping: doneTasks) { $0.completedAt?.weekStart ?? .distantPast }
+            .values.contains { Set($0.map(\.category)).count >= 5 }
 
         return [
             make("streak7", "Týden v kuse", "flame.fill", .streak, .common, "Dodrž slovo 7 dní v řadě.",
@@ -161,6 +183,9 @@ enum BadgeService {
             make("comeback", "Comeback", "arrow.uturn.up", .habit, .rare, "Třikrát po dni pod 60 % hned druhý den na 80 % a víc.",
                  earned: comebacks >= 3, progress: (comebacks, 3)),
             make("back", "Zpátky v sedle", "figure.walk", .habit, .common, "Vrať se po pauze delší než pět dní a splň úkol.", earned: returned),
+            make("month1", "První měsíc", "calendar.badge.checkmark", .habit, .common,
+                 "Měsíc od prvního splněného úkolu v Kept.",
+                 earned: monthsInApp >= 30, progress: (monthsInApp, 30)),
             make("diary", "Reflexe", "book.closed.fill", .habit, .rare, "Deset zápisů v deníku za sebou.",
                  earned: diaryBest >= 10, progress: (diaryBest, 10)),
 
@@ -168,8 +193,51 @@ enum BadgeService {
                  earned: workouts >= 1, progress: (workouts, 1)),
             make("gym25", "Pravidelný", "dumbbell.fill", .gym, .rare, "25 splněných tréninků.",
                  earned: workouts >= 25, progress: (workouts, 25)),
-            make("gym100", "Stovka", "dumbbell.fill", .gym, .legendary, "100 splněných tréninků.",
+            make("gym100", "Sto tréninků", "dumbbell.fill", .gym, .legendary, "100 splněných tréninků.",
                  earned: workouts >= 100, progress: (workouts, 100)),
+            make("night", "Noční sova", "moon.stars.fill", .habit, .rare, "Splň úkol po jedenácté večer nebo před čtvrtou ráno.",
+                 earned: nightOwl, secret: true),
+            make("lastminute", "Na poslední chvíli", "timer", .habit, .rare, "Splň úkol v posledních pěti minutách před deadlinem.",
+                 earned: lastMinute, secret: true),
+            make("allround", "Všestranný", "square.grid.3x3.fill", .habit, .rare, "Splň úkoly v pěti různých oblastech za jeden týden.",
+                 earned: allRounder, secret: true),
+        ] + healthBadges(health)
+    }
+
+    /// Badges earned from what Apple Health records. They stay locked until Health is connected.
+    static func healthBadges(_ health: HealthStats) -> [Achievement] {
+        func make(_ id: String, _ name: String, _ symbol: String, _ tier: BadgeTier, _ how: String,
+                  have: Int, need: Int) -> Achievement {
+            Achievement(id: id, name: name, symbol: symbol, group: .health, tier: tier, how: how,
+                        isEarned: have >= need, progress: (current: have, target: need))
+        }
+        return [
+            make("steps10k", "Desítka", "figure.walk", .common, "10 000 kroků za jeden den.",
+                 have: health.maxSteps, need: 10_000),
+            make("steps20k", "Dvacítka", "figure.walk.motion", .rare, "20 000 kroků za jeden den.",
+                 have: health.maxSteps, need: 20_000),
+            make("steps30k", "Třicítka", "figure.hiking", .legendary, "30 000 kroků za jeden den.",
+                 have: health.maxSteps, need: 30_000),
+            make("steps50k", "Padesátka", "figure.climbing", .legendary, "50 000 kroků za jeden den.",
+                 have: health.maxSteps, need: 50_000),
+            make("steps100k", "Stovka", "mountain.2.fill", .legendary, "100 000 kroků za jeden den.",
+                 have: health.maxSteps, need: 100_000),
+            make("run20k", "Tři dvacítky v řadě", "bolt.fill", .legendary, "Tři dny po sobě přes 20 000 kroků.",
+                 have: health.run20k, need: 3),
+            make("move7", "Týden v pohybu", "calendar.badge.checkmark", .rare, "Sedm dní po sobě aspoň 10 000 kroků.",
+                 have: health.run10k, need: 7),
+            make("move30", "Měsíc v pohybu", "calendar", .legendary, "Třicet dní po sobě aspoň 10 000 kroků.",
+                 have: health.run10k, need: 30),
+            make("km21", "Půlmaraton", "map.fill", .rare, "21 km chůze nebo běhu za jeden den.",
+                 have: Int(health.maxKm), need: 21),
+            make("km42", "Maraton", "flag.checkered", .legendary, "42 km chůze nebo běhu za jeden den.",
+                 have: Int(health.maxKm), need: 42),
+            make("week50", "Týden na nohou", "point.topleft.down.to.point.bottomright.curvepath.fill", .rare,
+                 "50 km chůze nebo běhu za jeden týden.", have: Int(health.bestWeekKm), need: 50),
+            make("kcal1000", "Tisíc kalorií", "flame.fill", .rare, "1 000 aktivních kalorií za jeden den.",
+                 have: health.maxKcal, need: 1_000),
+            make("train5", "Pětkrát týdně", "figure.run", .rare, "Pět dní s tréninkem za jeden týden. Počítá se Gym, Sport, tvoje aktivity označené jako trénink i tréninky ze Zdraví.",
+                 have: health.bestWeekWorkouts, need: 5),
         ]
     }
 }

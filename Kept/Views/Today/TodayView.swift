@@ -17,6 +17,8 @@ struct TodayView: View {
     @State private var stopTask: TaskItem?
     @State private var story: WeekStory?
     @AppStorage("storySeenWeek") private var storySeenWeek = 0.0
+    @AppStorage("storySeenMonth") private var storySeenMonth = 0.0
+    @State private var monthStory: MonthStory?
     @AppStorage("devShowStory") private var devShowStory = false
     @Query private var diaryEntries: [DiaryEntry]
     @State private var sparkTrigger = 0
@@ -43,6 +45,15 @@ struct TodayView: View {
     /// Broken streak waiting for the "really spend the points?" confirmation.
     @State private var confirmRepair: StreakService.Broken?
     @State private var showsRealityCheck = false
+    @State private var statsExpanded = false
+    /// The Dnes header is scrolled out of sight; a thin bar with the day's progress takes its place.
+    @State private var compactHeader = false
+    /// Watched only so the screen is drawn again when a rest day is set or cleared.
+    @AppStorage(RestDays.storageKey) private var restDaysRaw = ""
+    /// A short coloured flash on the promise card (red when a sealed promise was just given up).
+    @State private var promiseFlash: Color?
+    @Namespace private var zoom
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var editor: EditorRequest?
     @State private var workoutTask: TaskItem?
     @State private var proofTask: TaskItem?
@@ -66,6 +77,8 @@ struct TodayView: View {
 
     private static let refreshInterval: TimeInterval = 60
     private static let comebackThreshold = 0.6
+    /// Days with something planned before the reliability score is shown at all.
+    private static let daysBeforeScore = 7
     private static let stakeQuestionDays = 7
     private static let slippingAfterMinutes = 18 * 60
     /// From this time on, a streak that today would break is shown as at risk.
@@ -76,10 +89,16 @@ struct TodayView: View {
     var body: some View {
         NavigationStack {
             TimelineView(.periodic(from: .now, by: Self.refreshInterval)) { timeline in
-                content(now: timeline.date)
+                ZStack {
+                    // When the day turns over while the screen is open, the new day fades up instead of jumping in.
+                    content(now: timeline.date)
+                        .id(timeline.date.startOfDay)
+                        .transition(.asymmetric(insertion: .opacity.combined(with: .offset(y: 18)), removal: .opacity))
+                }
+                .animation(reduceMotion ? nil : .easeInOut(duration: 0.5), value: timeline.date.startOfDay)
             }
             .screenBackground()
-            // The add button lives under the flame now, so the empty bar on top is gone.
+            // The add button sits in the header row, so the empty navigation bar on top is gone.
             .toolbar(.hidden, for: .navigationBar)
         }
         .sheet(item: $editor) {
@@ -124,7 +143,9 @@ struct TodayView: View {
             }
             Button("Přeskočit a vysvětlit", role: .destructive) { excuse = ExcuseRequest(task: task, kind: .skipped) }
         }
-        .sheet(item: $detailTask) { TaskDetailView(task: $0) }
+        .sheet(item: $detailTask) {
+            TaskDetailView(task: $0).navigationTransition(.zoom(sourceID: $0.uid, in: zoom))
+        }
         .sheet(isPresented: $showsShop) { ShopView() }
         // Every rise of the balance gets a short celebration: completing, partial completion, a milestone bonus.
         .onChange(of: PointsService.balance(tasks, purchases: purchases, diary: diary)) { old, new in
@@ -188,6 +209,13 @@ struct TodayView: View {
                     ?? WeekStory.demo
             }
         }
+        .fullScreenCover(item: $monthStory) { month in
+            MonthStoryView(story: month) {
+                storySeenMonth = month.monthStart.timeIntervalSince1970
+                monthStory = nil
+            }
+            .appAppearance()
+        }
         .fullScreenCover(item: Binding(get: { story.map { StoryBox(story: $0) } }, set: { if $0 == nil { story = nil } })) { box in
             WeekStoryView(story: box.story) {
                 storySeenWeek = box.story.weekStart.timeIntervalSince1970
@@ -216,6 +244,7 @@ struct TodayView: View {
                             tasks: todayTasks,
                             streak: ScoreEngine.dayStreak(tasks),
                             openFromBefore: tasks.filter { $0.isMissed(.now) }.count,
+                            freshStart: FreshStart.today(tasks: tasks, now: .now),
                             onStart: { showsMorning = false },
                             onAdd: {
                                 showsMorning = false
@@ -223,6 +252,10 @@ struct TodayView: View {
                                     try? await Task.sleep(for: .milliseconds(450))
                                     editor = EditorRequest(date: .now)
                                 }
+                            },
+                            onPlanWeek: {
+                                showsMorning = false
+                                openWeek()
                             })
                 .appAppearance()
         }
@@ -324,7 +357,10 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                 header(now: now, day: day)
                 weekStoryCard(now: now)
+                monthStoryCard(now: now)
                 todaysPromise(day, now: now)
+                FirstWeekCard(tasks: tasks, plans: plans, streak: day.streak,
+                              onboardedAt: settingsList.first?.onboardedAt, onOpenWeek: openWeek)
                 if slipping {
                     slippingBanner(day)
                 }
@@ -336,14 +372,8 @@ struct TodayView: View {
                 comebackCard(day, now: now)
                 stakeCards(now: now)
                 healthWorkoutCard(day)
-                hero(day)
-                metrics(day)
-                pointsCard
                 if showsRealityCheckCard(day, now: now) {
                     realityCheckCard
-                }
-                if !day.weekIsCommitted {
-                    uncommittedCard
                 }
                 if !day.unresolved.isEmpty {
                     section("Uzavři, co zůstalo otevřené · \(day.unresolved.count)", color: Theme.orange, tasks: day.unresolved, now: now)
@@ -354,6 +384,10 @@ struct TodayView: View {
                 if !day.open.isEmpty {
                     section("Úkoly", tasks: day.open, now: now)
                 }
+                if !day.weekIsCommitted {
+                    uncommittedCard
+                }
+                statsStrip(day, now: now)
                 suggestionsSection(now: now)
                 if !day.closed.isEmpty {
                     section("Uzavřené", tasks: day.closed, now: now)
@@ -362,6 +396,15 @@ struct TodayView: View {
             .padding(.horizontal, Theme.screenPadding)
             .padding(.bottom, 32)
         }
+        .onScrollGeometryChange(for: Bool.self) { $0.contentOffset.y + $0.contentInsets.top > 170 } action: { _, scrolled in
+            withAnimation(.easeOut(duration: 0.2)) { compactHeader = scrolled }
+        }
+        .overlay(alignment: .top) {
+            if compactHeader, !day.visible.isEmpty {
+                compactBar(day)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
         .background(alignment: .top) {
             // Savage tone only: a quiet dark-red wash at the top while the day is being lost.
             LinearGradient(colors: [Theme.red.opacity(slipping ? 0.22 : 0), .clear], startPoint: .top, endPoint: .bottom)
@@ -369,6 +412,29 @@ struct TodayView: View {
                 .ignoresSafeArea()
                 .animation(.easeInOut(duration: 0.6), value: slipping)
         }
+    }
+
+    /// The day's promise when the big card has scrolled away: how many are kept and the streak, in one thin line.
+    private func compactBar(_ day: TodaySnapshot) -> some View {
+        let done = day.doneCount
+        let total = day.visible.count
+        return HStack(spacing: 10) {
+            Text("\(done) / \(total)")
+                .scaledFont(.body, weight: .heavy)
+                .foregroundStyle(done == total ? Theme.green : Theme.textPrimary)
+            ThinBar(value: Double(done) / Double(max(total, 1)), color: done == total ? Theme.green : Theme.textPrimary)
+            Label("\(day.streak)", systemImage: "flame.fill")
+                .scaledFont(.caption, weight: .heavy)
+                .foregroundStyle(day.streak > 0 ? Theme.orange : Theme.textTertiary)
+        }
+        .padding(.horizontal, 14)
+        .frame(minHeight: 40)
+        .background(.regularMaterial, in: Capsule())
+        .overlay(Capsule().stroke(Theme.border, lineWidth: 1))
+        .padding(.horizontal, Theme.screenPadding)
+        .padding(.top, 6)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Dnešní slib \(done) z \(total), série \(String.days(day.streak))")
     }
 
     /// The failure state exists only in the savage tone and only when the day is really going wrong:
@@ -388,12 +454,44 @@ struct TodayView: View {
         let critical = day.scored.filter { $0.scoringPriority == .critical && !$0.isRemoved }
         return VStack(alignment: .leading, spacing: 6) {
             Text("DNEŠEK TI UTÍKÁ")
-                .font(.system(size: 26, weight: .heavy))
+                .scaledFont(.title, weight: .heavy)
                 .foregroundStyle(Theme.red)
             if !critical.isEmpty {
                 Text("KRITICKÉ ÚKOLY \(critical.filter(\.isDone).count) / \(critical.count)")
                     .labelStyle(Theme.red)
             }
+        }
+    }
+
+    /// Offered in the first days of a month, once, when the month that ended has something to tell.
+    @ViewBuilder
+    private func monthStoryCard(now: Date) -> some View {
+        if let month = MonthStory.offeredMonth(now: now), storySeenMonth != month.timeIntervalSince1970,
+           let offered = MonthStory.make(tasks: tasks, monthStart: month, now: now) {
+            Button {
+                Haptics.light()
+                monthStory = offered
+            } label: {
+                HStack(spacing: 14) {
+                    Image(systemName: "calendar.badge.checkmark")
+                        .scaledFont(.heading)
+                        .foregroundStyle(Theme.onPrimary)
+                        .frame(width: 44, height: 44)
+                        .background(Theme.textPrimary)
+                        .clipShape(Circle())
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("TVŮJ MĚSÍC JE HOTOVÝ").labelStyle(Theme.textPrimary)
+                        Text("\(offered.done) z \(offered.total) slibů. Podívej se, jak to dopadlo.")
+                            .scaledFont(.body)
+                            .foregroundStyle(Theme.textSecondary)
+                            .multilineTextAlignment(.leading)
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
+                }
+                .card()
+            }
+            .buttonStyle(.plain)
         }
     }
 
@@ -408,7 +506,7 @@ struct TodayView: View {
             } label: {
                 HStack(spacing: 14) {
                     Image(systemName: "sparkles")
-                        .font(.system(size: 20))
+                        .scaledFont(.heading)
                         .foregroundStyle(Theme.onPrimary)
                         .frame(width: 44, height: 44)
                         .background(Theme.textPrimary)
@@ -416,7 +514,7 @@ struct TodayView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("TVŮJ TÝDEN JE HOTOVÝ").labelStyle(Theme.textPrimary)
                         Text("\(offered.done) z \(offered.total) slibů. Podívej se, jak to dopadlo.")
-                            .font(.system(size: 14))
+                            .scaledFont(.body)
                             .foregroundStyle(Theme.textSecondary)
                             .multilineTextAlignment(.leading)
                     }
@@ -432,67 +530,93 @@ struct TodayView: View {
     private func header(now: Date, day: TodaySnapshot) -> some View {
         let streak = day.streak
         let atRisk = streakAtRisk(day, now: now)
-        return HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("DNES").labelStyle()
-                Text(now.longDayText)
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(Theme.textPrimary)
+        // The date, the flame and the add button share one row; at very large text they stack instead.
+        return ViewThatFits(in: .horizontal) {
+            HStack(alignment: .center, spacing: 12) {
+                dateBlock(now: now, atRisk: atRisk, streak: streak)
+                Spacer(minLength: 8)
+                addButton
+                flame(streak: streak, atRisk: atRisk)
             }
-            .padding(.top, 8)
-            Spacer()
-            VStack(alignment: .trailing, spacing: 10) {
-                // Days in a row at 80 % or better. Lit only while the streak is alive, breathing slowly;
-                // in the evening of a day that would break it, it pulses and says so.
-                HStack(spacing: 8) {
-                    if streak == 0 || atRisk {
-                        Text(streak == 0 ? "Začni\nsérii dnes" : "Zhasne\no půlnoci")
-                            .font(.system(size: 11, weight: .semibold))
-                            .multilineTextAlignment(.trailing)
-                            .foregroundStyle(atRisk ? Theme.orange : Theme.textSecondary)
-                    }
-                    VStack(spacing: 0) {
-                        Image(systemName: "flame.fill")
-                            .font(.system(size: 30))
-                            .symbolEffect(.bounce, options: .nonRepeating, value: streak)
-                            .symbolEffect(.pulse, options: .repeating, isActive: atRisk)
-                            .symbolEffect(.breathe, options: .repeating, isActive: streak > 0 && !atRisk)
-                        Text("\(streak)")
-                            .font(.system(size: 17, weight: .heavy))
-                            .contentTransition(.numericText())
-                    }
-                    .foregroundStyle(streak > 0 ? Theme.orange : Theme.textTertiary)
-                    .overlay { SparkBurst(trigger: sparkTrigger) }
+            VStack(alignment: .leading, spacing: 12) {
+                dateBlock(now: now, atRisk: atRisk, streak: streak)
+                HStack(spacing: 12) {
+                    addButton
+                    Spacer()
+                    flame(streak: streak, atRisk: atRisk)
                 }
-                .animation(.easeOut(duration: 0.4), value: streak)
-                .onChange(of: streak) { old, new in
-                    if new > old { sparkTrigger += 1; Haptics.medium() }
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel(streak == 0 ? "Série 0 dní. Začni ji dnes." : (atRisk ? "Série \(streak) dní, o půlnoci zhasne" : "Série \(streak) dní"))
-                Button {
-                    Haptics.light()
-                    editor = EditorRequest(date: .now)
-                } label: {
-                    Label("ÚKOL", systemImage: "plus")
-                        .font(.system(size: 13, weight: .heavy))
-                        .tracking(0.6)
-                        .foregroundStyle(Theme.textPrimary)
-                        .padding(.horizontal, 14)
-                        .frame(minHeight: 36)
-                        .background(Theme.cardRaised)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Přidat úkol")
             }
         }
+        .padding(.top, 8)
+    }
+
+    private func dateBlock(now: Date, atRisk: Bool, streak: Int) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("DNES").labelStyle()
+            Text(now.longDayText)
+                // Smaller than the title size so the date, the add button and the flame fit in one row.
+                .scaledFont(24, weight: .bold)
+                .foregroundStyle(Theme.textPrimary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            if atRisk {
+                Text("Série zhasne o půlnoci")
+                    .scaledFont(.caption, weight: .semibold)
+                    .foregroundStyle(Theme.orange)
+            } else if RestDays.contains(now) {
+                Label("Odpočinkový den. Série čeká.", systemImage: "moon.zzz.fill")
+                    .scaledFont(.caption, weight: .semibold)
+                    .foregroundStyle(Theme.textSecondary)
+            }
+        }
+    }
+
+    /// Days in a row at 80 % or better. Lit only while the streak is alive, breathing slowly;
+    /// in the evening of a day that would break it, it pulses.
+    private func flame(streak: Int, atRisk: Bool) -> some View {
+        VStack(spacing: 0) {
+            Image(systemName: "flame.fill")
+                .scaledFont(.title)
+                .symbolEffect(.bounce, options: .nonRepeating, value: streak)
+                .symbolEffect(.pulse, options: .repeating, isActive: atRisk && !reduceMotion)
+                .symbolEffect(.breathe, options: .repeating, isActive: streak > 0 && !atRisk && !reduceMotion)
+            Text("\(streak)")
+                .scaledFont(.body, weight: .heavy)
+                .contentTransition(.numericText())
+        }
+        .foregroundStyle(streak > 0 ? Theme.orange : Theme.textTertiary)
+        .overlay { SparkBurst(trigger: sparkTrigger) }
+        .animation(.easeOut(duration: 0.4), value: streak)
+        .onChange(of: streak) { old, new in
+            if new > old { sparkTrigger += 1; Haptics.medium() }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(streak == 0 ? "Série zatím nezačala, začni ji dnes"
+                            : (atRisk ? "Série \(String.days(streak)), o půlnoci zhasne" : "Série \(String.days(streak))"))
+    }
+
+    private var addButton: some View {
+        Button {
+            Haptics.light()
+            editor = EditorRequest(date: .now)
+        } label: {
+            Label("ÚKOL", systemImage: "plus")
+                .scaledFont(.caption, weight: .heavy)
+                .tracking(0.6)
+                .foregroundStyle(Theme.textPrimary)
+                .padding(.horizontal, 14)
+                .frame(minHeight: 44)
+                .background(Theme.cardRaised)
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Přidat úkol")
     }
 
     /// The streak is alive from earlier days, but today is still under the bar and the evening has come.
     private func streakAtRisk(_ day: TodaySnapshot, now: Date) -> Bool {
         day.streak > 0 && now.minutesIntoDay >= Self.streakWarningFromMinutes
-            && !day.scored.isEmpty && (day.productivity ?? 0) < ScoreEngine.Config.streakThreshold
+            && !RestDays.contains(now) && !day.scored.isEmpty && (day.productivity ?? 0) < ScoreEngine.Config.streakThreshold
     }
 
     /// Today's promise in one card: how much is kept, what comes next, and the way to start it.
@@ -514,29 +638,29 @@ struct TodayView: View {
                     Spacer()
                     if broken > 0 {
                         Text("porušeno: \(broken)")
-                            .font(.system(size: 12))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.red)
                     }
                     if day.partialCount > 0 {
                         Text("částečně: \(day.partialCount)")
-                            .font(.system(size: 12))
+                            .scaledFont(.caption)
                             .foregroundStyle(Theme.orange)
                     }
                 }
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text("\(done) / \(total)")
-                        .font(.system(size: 34, weight: .heavy))
+                        .scaledFont(34, weight: .heavy)
                         .foregroundStyle(allDone ? Theme.green : Theme.textPrimary)
                         .contentTransition(.numericText())
                     Text(allDone ? "Den dodržen." : (done == total ? "Zbytek je splněný." : (total - done == 1 ? "Zbývá poslední." : "Zbývá \(total - done).")))
-                        .font(.system(size: 15, weight: .semibold))
+                        .scaledFont(.body, weight: .semibold)
                         .foregroundStyle(Theme.textSecondary)
                 }
                 ThinBar(value: Double(done) / Double(total), color: allDone ? Theme.green : Theme.textPrimary)
                 if let next {
                     HStack(spacing: 10) {
                         Image(systemName: next.icon)
-                            .font(.system(size: 15))
+                            .scaledFont(.body)
                             .foregroundStyle(Theme.textPrimary)
                             .frame(width: 32, height: 32)
                             .background(Theme.cardRaised)
@@ -544,7 +668,7 @@ struct TodayView: View {
                         VStack(alignment: .leading, spacing: 1) {
                             Text("NA ŘADĚ").labelStyle()
                             Text(next.title)
-                                .font(.system(size: 15, weight: .semibold))
+                                .scaledFont(.body, weight: .semibold)
                                 .foregroundStyle(Theme.textPrimary)
                                 .lineLimit(1)
                         }
@@ -558,7 +682,7 @@ struct TodayView: View {
                                     focusTask = next
                                 }
                             }
-                            .font(.system(size: 13, weight: .heavy))
+                            .scaledFont(.caption, weight: .heavy)
                             .foregroundStyle(Theme.onPrimary)
                             .padding(.horizontal, 14)
                             .frame(minHeight: 36)
@@ -566,7 +690,7 @@ struct TodayView: View {
                             .clipShape(Capsule())
                         } else if !next.requiresProof, next.category != .gym {
                             Button("SPLNIL JSEM") { confirmDone = next }
-                                .font(.system(size: 13, weight: .heavy))
+                                .scaledFont(.caption, weight: .heavy)
                                 .foregroundStyle(Color(hex: 0x000000))
                                 .padding(.horizontal, 14)
                                 .frame(minHeight: 36)
@@ -577,7 +701,25 @@ struct TodayView: View {
                 }
             }
             .card()
+            .overlay { SweepHighlight(trigger: allDone) }
+            .overlay {
+                RoundedRectangle(cornerRadius: Theme.radius)
+                    .stroke(promiseFlash ?? .clear, lineWidth: 2)
+                    .opacity(promiseFlash == nil ? 0 : 1)
+                    .allowsHitTesting(false)
+            }
             .animation(.easeOut(duration: 0.3), value: done)
+            .onChange(of: allDone) { old, new in
+                if new && !old { Haptics.success() }
+            }
+            .onChange(of: broken) { old, new in
+                guard new > old else { return }
+                promiseFlash = Theme.red
+                Task {
+                    try? await Task.sleep(for: .milliseconds(700))
+                    withAnimation(.easeOut(duration: 0.4)) { promiseFlash = nil }
+                }
+            }
         }
     }
 
@@ -606,18 +748,18 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Label("SÉRIE SKONČILA", systemImage: "flame.fill").labelStyle(Theme.orange)
                 Text("Měl jsi \(String.days(broken.length)) v řadě.")
-                    .font(.system(size: 20, weight: .bold))
+                    .scaledFont(.heading, weight: .bold)
                     .foregroundStyle(Theme.textPrimary)
                 // The day text already ends with a full stop ("so 10.").
                 Text("Přerušeno: \(broken.failedDays.map(\.shortDayText).joined(separator: ", ")) "
                      + "Za \(cost.formatted(.number.locale(.app))) bodů ji vrátíš, jako by se nepřerušila.")
-                    .font(.system(size: 14))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                 streakCountdown(until: broken.repairEnds, now: now)
                 if balance < cost {
                     Text("Máš \(balance.formatted(.number.locale(.app))) bodů, chybí ti \((cost - balance).formatted(.number.locale(.app))).")
-                        .font(.system(size: 13, weight: .semibold))
+                        .scaledFont(.caption, weight: .semibold)
                         .foregroundStyle(Theme.orange)
                 }
                 HStack(spacing: 10) {
@@ -636,13 +778,13 @@ struct TodayView: View {
                             Text(comeback.succeeded ? "COMEBACK SE POVEDL" : "COMEBACK DAY")
                                 .labelStyle(comeback.succeeded ? Theme.green : Theme.orange)
                             Text("Včera \(comeback.yesterday.percentText) · dnes \(comeback.today.percentText)")
-                                .font(.system(size: 15, weight: .semibold))
+                                .scaledFont(.body, weight: .semibold)
                                 .foregroundStyle(Theme.textPrimary)
                         }
                         Spacer()
                         if !comeback.succeeded {
                             Button("RECOVERY ÚKOL") { editor = EditorRequest(date: now, isRecovery: true) }
-                                .font(.system(size: 12, weight: .bold))
+                                .scaledFont(.caption, weight: .bold)
                                 .tracking(0.6)
                                 .foregroundStyle(Theme.textPrimary)
                                 .padding(.horizontal, 12)
@@ -679,12 +821,12 @@ struct TodayView: View {
         if purchases.contains(where: { $0.kind == .streakInsurance && $0.usedOn == yesterday }) {
             HStack(spacing: 12) {
                 Image(systemName: ShopItem.streakInsurance.symbol)
-                    .font(.system(size: 22))
+                    .scaledFont(.title)
                     .foregroundStyle(Theme.orange)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("POJISTKA SÉRIE POUŽITA").labelStyle(Theme.orange)
                     Text("Včerejšek nevyšel, plamínek ale hoří dál. Zbývá pojistek: \(PointsService.unused(.streakInsurance, in: purchases)).")
-                        .font(.system(size: 13))
+                        .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -703,7 +845,7 @@ struct TodayView: View {
             Text(timerInterval: min(now, end)...end, countsDown: true)
                 .monospacedDigit()
         }
-        .font(.system(size: 12, weight: .bold))
+        .scaledFont(.caption, weight: .bold)
         .foregroundStyle(color)
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
@@ -715,20 +857,11 @@ struct TodayView: View {
         VStack(alignment: .leading, spacing: 4) {
             // A new user starts with a clean record, not with dashes.
             Text("\(day.accountability?.score ?? ScoreEngine.startingScore)")
-                .font(.system(size: 56, weight: .heavy))
+                .scaledFont(.hero, weight: .heavy)
                 .foregroundStyle(heroFlash ?? (day.accountability == nil ? Theme.green : heroColor(day.accountability?.score)))
                 .contentTransition(.numericText())
                 .animation(.easeOut(duration: 0.6), value: day.accountability?.score)
                 .animation(.easeOut(duration: 0.4), value: heroFlash)
-                // The number blinks green when it rises and orange when it falls, then settles.
-                .onChange(of: day.accountability?.score) { old, new in
-                    guard let old, let new, old != new else { return }
-                    heroFlash = new > old ? Theme.green : Theme.orange
-                    Task {
-                        try? await Task.sleep(for: .milliseconds(900))
-                        heroFlash = nil
-                    }
-                }
             HStack(spacing: 8) {
                 Text("SPOLEHLIVOST · 30 DNÍ").labelStyle()
                 if day.accountability == nil {
@@ -736,9 +869,74 @@ struct TodayView: View {
                 }
             }
             Text(day.accountability?.subtitle ?? "Startuješ na plných 100. Zatím jsi nic neporušil. Odešli plánovač na týden a udrž to tak.")
-                .font(.system(size: 14))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.textSecondary)
                 .padding(.top, 4)
+        }
+    }
+
+    /// How many days before today had anything planned. The reliability score says nothing before a week of them.
+    private func daysOfHistory(now: Date) -> Int {
+        Set(tasks.filter { !$0.isRemoved && $0.countsInScores && $0.scheduledDate < now.startOfDay }
+            .map { $0.scheduledDate.startOfDay }).count
+    }
+
+    /// Reliability, the three tiles and the points on one card that opens when touched, below the day's tasks.
+    /// Until a week of history exists it does not show a score: a new user gets "collecting data", not a made-up 100.
+    private func statsStrip(_ day: TodaySnapshot, now: Date) -> some View {
+        let enough = daysOfHistory(now: now) >= Self.daysBeforeScore
+        let score = day.accountability?.score ?? ScoreEngine.startingScore
+        let balance = PointsService.balance(tasks, purchases: purchases, diary: diary)
+        return VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
+            Button {
+                Haptics.light()
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { statsExpanded.toggle() }
+            } label: {
+                HStack(spacing: 14) {
+                    if enough {
+                        Text("\(score)")
+                            .scaledFont(.title, weight: .heavy)
+                            .foregroundStyle(heroFlash ?? heroColor(score))
+                            .contentTransition(.numericText())
+                            .animation(.easeOut(duration: 0.4), value: heroFlash)
+                    }
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(enough ? "SPOLEHLIVOST" : "SPOLEHLIVOST · SBÍRÁME DATA").labelStyle()
+                        Text(enough ? "\(day.freshValue(day.promisesKept)) dodržených slibů · série \(String.days(day.streak)) · \(balance.formatted(.number.locale(.app))) bodů"
+                                    : "Ukáže se po prvním týdnu · \(balance.formatted(.number.locale(.app))) bodů")
+                            .scaledFont(.caption)
+                            .foregroundStyle(Theme.textSecondary)
+                            .lineLimit(2)
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.down")
+                        .scaledFont(.caption, weight: .bold)
+                        .foregroundStyle(Theme.textTertiary)
+                        .rotationEffect(.degrees(statsExpanded ? 180 : 0))
+                }
+                .card()
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(statsExpanded ? "Skryje podrobnosti" : "Ukáže podrobnosti")
+            // The number blinks green when it rises and orange when it falls, then settles.
+            .onChange(of: day.accountability?.score) { old, new in
+                guard let old, let new, old != new else { return }
+                heroFlash = new > old ? Theme.green : Theme.orange
+                Task {
+                    try? await Task.sleep(for: .milliseconds(900))
+                    heroFlash = nil
+                }
+            }
+            if statsExpanded {
+                VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
+                    if enough {
+                        hero(day)
+                        metrics(day)
+                    }
+                    pointsCard
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
         }
     }
 
@@ -748,12 +946,10 @@ struct TodayView: View {
     }
 
     private func metrics(_ day: TodaySnapshot) -> some View {
-        VStack(spacing: 14) {
-            HStack(spacing: 10) {
-                MetricTile(value: day.freshValue(day.promisesKept), label: "Dodržené sliby")
-                MetricTile(value: day.freshValue(day.productivity), label: "Produktivita")
-                MetricTile(value: "\(day.streak)", label: "Série dní")
-            }
+        TileRow {
+            MetricTile(value: day.freshValue(day.promisesKept), label: "Dodržené sliby")
+            MetricTile(value: day.freshValue(day.productivity), label: "Produktivita")
+            MetricTile(value: "\(day.streak)", label: "Série dní")
         }
     }
 
@@ -763,7 +959,7 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("TENTO TÝDEN BEZ ZÁVAZKU").labelStyle(Theme.orange)
                     Text("Dokud neodešleš plánovač a nezapečetí se, nic z toho, co uděláš, se nepočítá jako dodržený slib.")
-                        .font(.system(size: 14))
+                        .scaledFont(.body)
                         .foregroundStyle(Theme.textSecondary)
                         .multilineTextAlignment(.leading)
                 }
@@ -804,18 +1000,18 @@ struct TodayView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         VStack(alignment: .leading, spacing: 5) {
                             Label(suggestion.category.suggestionTitle, systemImage: suggestion.category.icon)
-                                .font(.system(size: 18, weight: .semibold))
+                                .scaledFont(.heading, weight: .semibold)
                                 .foregroundStyle(Theme.textPrimary)
                             Text(suggestion.reason)
-                                .font(.system(size: 13))
+                                .scaledFont(.caption)
                                 .foregroundStyle(suggestion.isUrgent ? Theme.orange : Theme.textSecondary)
                             if let hint = suggestion.hint {
                                 Text(hint)
-                                    .font(.system(size: 13, weight: .semibold))
+                                    .scaledFont(.caption, weight: .semibold)
                                     .foregroundStyle(Theme.textPrimary)
                             }
                             Text("+\(PointsService.perSuggestion) bodů za splnění")
-                                .font(.system(size: 13, weight: .semibold))
+                                .scaledFont(.caption, weight: .semibold)
                                 .foregroundStyle(Theme.green)
                         }
                         HStack(spacing: 10) {
@@ -849,7 +1045,7 @@ struct TodayView: View {
                     comebackFigure("Dnes", comeback.today.percentText, color)
                 }
                 Text(comeback.succeeded ? "Včerejšek jsi nezměnil. Dnešek ano." : "Včerejšek nezměníš. Dnešek ano.")
-                    .font(.system(size: 16, weight: .semibold))
+                    .scaledFont(.body, weight: .semibold)
                     .foregroundStyle(Theme.textPrimary)
                 if !comeback.succeeded {
                     Button("VYTVOŘIT RECOVERY ÚKOL") {
@@ -870,7 +1066,7 @@ struct TodayView: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label.uppercased()).labelStyle()
             Text(value)
-                .font(.system(size: 34, weight: .heavy))
+                .scaledFont(34, weight: .heavy)
                 .foregroundStyle(color)
         }
     }
@@ -887,10 +1083,10 @@ struct TodayView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text("SÁZKA").labelStyle(Theme.orange)
                 Text("Nesplnil jsi „\(task.title)“. Vsadil ses o tohle:")
-                    .font(.system(size: 14))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
                 Text("„\(task.stake)“")
-                    .font(.system(size: 17, weight: .semibold))
+                    .scaledFont(.heading, weight: .semibold)
                     .foregroundStyle(Theme.textPrimary)
                 HStack(spacing: 10) {
                     Button("DODRŽEL JSEM") { withAnimation { task.stakeOutcome = 1 } }
@@ -914,7 +1110,7 @@ struct TodayView: View {
                 Label("APPLE HEALTH", systemImage: "heart.fill").labelStyle(Theme.green)
                 Text(planned.map { "Dnes máš zaznamenaný trénink (\(minutes) min). Zapiš, co jsi jel, a „\($0.title)“ je splněný." }
                      ?? "Dnes máš zaznamenaný trénink (\(minutes) min), i když jsi ho neměl v plánu. Zapiš ho, ať se počítá.")
-                    .font(.system(size: 15))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                 Button("ZAPSAT TRÉNINK") { complete(planned ?? addUnplannedGym(minutes: minutes)) }
@@ -946,7 +1142,7 @@ struct TodayView: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text("\(balance.formatted(.number.locale(.app)))")
-                    .font(.system(size: 15, weight: .semibold))
+                    .scaledFont(.body, weight: .semibold)
                     .foregroundStyle(Theme.textPrimary)
                     .contentTransition(.numericText())
                 Text("/ \(PointsService.cap.formatted(.number.locale(.app))) BODŮ").labelStyle()
@@ -955,7 +1151,7 @@ struct TodayView: View {
                     showsShop = true
                 } label: {
                     Label("OBCHOD", systemImage: "bag.fill")
-                        .font(.system(size: 12, weight: .bold))
+                        .scaledFont(.caption, weight: .bold)
                         .tracking(0.6)
                         .foregroundStyle(Theme.onPrimary)
                         .padding(.horizontal, 12)
@@ -970,7 +1166,7 @@ struct TodayView: View {
             Text(passes == 0 ? "Do propustky chybí \(PointsService.passCost - towardsNext). Co všechno se dá za body pořídit, najdeš v obchodě."
                  : (isFull ? "Propustky: \(passes) · plná zásoba, další body propadají. Utrať je v obchodě."
                     : "Propustky: \(passes). Co všechno se dá za body pořídit, najdeš v obchodě."))
-                .font(.system(size: 11))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textTertiary)
         }
         .animation(.easeOut(duration: 0.4), value: balance)
@@ -984,7 +1180,7 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("SEBEREFLEXE TÝDNE \(pending.weekStart.weekNumber)").labelStyle(Theme.textPrimary)
                     Text("Projdi si týden a zapiš do deníčku, jak jsi se sebou spokojený.")
-                        .font(.system(size: 14))
+                        .scaledFont(.body)
                         .foregroundStyle(Theme.textSecondary)
                         .multilineTextAlignment(.leading)
                 }
@@ -1004,7 +1200,7 @@ struct TodayView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("UZAVŘI DNEŠEK").labelStyle(Theme.orange)
                     Text("Den končí a ty máš pořád otevřené závazky.")
-                        .font(.system(size: 14))
+                        .scaledFont(.body)
                         .foregroundStyle(Theme.textSecondary)
                         .multilineTextAlignment(.leading)
                 }
@@ -1021,10 +1217,10 @@ struct TodayView: View {
         VStack(spacing: 14) {
             EmptyStateArt(kind: .plan)
             Text("Dnes nemáš nic v plánu.")
-                .font(.system(size: 19, weight: .bold))
+                .scaledFont(.heading, weight: .bold)
                 .foregroundStyle(Theme.textPrimary)
             Text("Den bez slibu nejde dodržet ani porušit. Přidej si jeden a začni.")
-                .font(.system(size: 14))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.textSecondary)
                 .multilineTextAlignment(.center)
             Button("PŘIDAT DNEŠNÍ SLIB") {
@@ -1069,6 +1265,7 @@ struct TodayView: View {
                 // A closed task shrinks away and the card settles into "Uzavřené".
                 .transition(.asymmetric(insertion: .scale(scale: 0.94).combined(with: .opacity),
                                         removal: .scale(scale: 0.9).combined(with: .opacity)))
+                .matchedTransitionSource(id: task.uid, in: zoom)
                 .contextMenu {
                     if task.canReopen(now: now) {
                         Button("Změnit rozhodnutí") { withAnimation { task.reopen() } }

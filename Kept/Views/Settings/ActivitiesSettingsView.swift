@@ -6,6 +6,7 @@ struct ActivitiesSettingsView: View {
     @Query private var settingsList: [UserSettings]
     @State private var newActivity = ""
     @State private var isAdding = false
+    @State private var newIsWorkout = false
 
     var body: some View {
         Form {
@@ -47,10 +48,20 @@ struct ActivitiesSettingsView: View {
                     ActivityIconButton(activity: item, symbol: ActivityIcons.shared.symbol(forCustom: item)) {
                         ActivityIcons.shared.set($0, forCustom: item)
                     }
-                    Text(item)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(item)
+                        Toggle("Počítá se jako trénink", isOn: Binding(
+                            get: { settings.countsAsWorkout(custom: item) },
+                            set: { settings.setCountsAsWorkout($0, custom: item) }))
+                            .scaledFont(.caption)
+                            .foregroundStyle(Theme.textSecondary)
+                            .tint(Theme.textSecondary)
+                            .controlSize(.mini)
+                    }
                     Spacer()
                     Button {
                         settings.customActivities = custom.filter { $0 != item }
+                        settings.setCountsAsWorkout(false, custom: item)
                         ActivityIcons.shared.removeCustom(item)
                     } label: {
                         Image(systemName: "minus.circle").foregroundStyle(Theme.red)
@@ -60,6 +71,7 @@ struct ActivitiesSettingsView: View {
                 }
                 .listSwipeToDelete("Odebrat") {
                     settings.customActivities = custom.filter { $0 != item }
+                    settings.setCountsAsWorkout(false, custom: item)
                     ActivityIcons.shared.removeCustom(item)
                 }
             }
@@ -67,15 +79,19 @@ struct ActivitiesSettingsView: View {
                 withAnimation { isAdding.toggle() }
             } label: {
                 Label(isAdding ? "Zrušit" : "Přidat vlastní aktivitu", systemImage: isAdding ? "xmark" : "plus")
-                    .font(.system(size: 16, weight: .semibold))
+                    .scaledFont(.body, weight: .semibold)
                     .foregroundStyle(Theme.textPrimary)
             }
             if isAdding {
                 TextField("Např. Kytara", text: $newActivity)
+                Toggle("Počítá se jako trénink", isOn: $newIsWorkout)
+                    .tint(Theme.textSecondary)
                 Button("ULOŽIT") {
                     settings.customActivities = custom + [name]
+                    settings.setCountsAsWorkout(newIsWorkout, custom: name)
                     ActivityIcons.shared.register(custom: [name])
                     newActivity = ""
+                    newIsWorkout = false
                     withAnimation { isAdding = false }
                 }
                 .buttonStyle(PrimaryButtonStyle())
@@ -85,7 +101,7 @@ struct ActivitiesSettingsView: View {
         } header: {
             Text("Vlastní")
         } footer: {
-            Text("Vlastní aktivity se plánují pod kategorií Ostatní a mají svoje jméno. Najdeš je jako zkratky v Rychlém plánování i v novém úkolu.")
+            Text("Vlastní aktivity se plánují pod kategorií Ostatní a mají svoje jméno. Najdeš je jako zkratky v Rychlém plánování i v novém úkolu. Aktivita označená jako trénink (třeba lezení nebo plavání) se počítá do odznaků a přehledu tréninků ve Zdraví, stejně jako Gym a Sport.")
         }
         .listRowBackground(Theme.card)
     }

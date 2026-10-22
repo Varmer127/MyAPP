@@ -64,13 +64,13 @@ struct DiaryView: View {
                         VStack(alignment: .leading, spacing: 3) {
                             Text("VŠECHNY ZÁPISY").labelStyle(Theme.textPrimary)
                             Text("Dny, selhání, týdny i dopisy. Podle měsíců, s hledáním.")
-                                .font(.system(size: 13))
+                                .scaledFont(.caption)
                                 .foregroundStyle(Theme.textSecondary)
                                 .multilineTextAlignment(.leading)
                         }
                         Spacer()
                         Text("\(entries.filter(\.hasWriting).count)")
-                            .font(.system(size: 15, weight: .bold))
+                            .scaledFont(.body, weight: .bold)
                             .foregroundStyle(Theme.textSecondary)
                         Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
                     }
@@ -81,7 +81,7 @@ struct DiaryView: View {
                         VStack(alignment: .leading, spacing: 3) {
                             Text("SEBEREFLEXE TÝDNE").labelStyle(Theme.textPrimary)
                             Text(reflections.isEmpty ? "První vznikne v neděli večer" : "Zápisy: \(reflections.count)")
-                                .font(.system(size: 13))
+                                .scaledFont(.caption)
                                 .foregroundStyle(Theme.textSecondary)
                         }
                         Spacer()
@@ -126,15 +126,15 @@ struct DiaryView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("DENÍK").labelStyle()
                 Text(now.longDayText)
-                    .font(.system(size: 24, weight: .bold))
+                    .scaledFont(.title, weight: .bold)
                     .foregroundStyle(Theme.textPrimary)
             }
             Spacer()
             VStack(spacing: 0) {
                 Image(systemName: "flame.fill")
-                    .font(.system(size: 26))
+                    .scaledFont(.title)
                 Text("\(streak)")
-                    .font(.system(size: 15, weight: .heavy))
+                    .scaledFont(.body, weight: .heavy)
             }
             .foregroundStyle(streak > 0 ? Theme.orange : Theme.textTertiary)
             .accessibilityLabel("Série psaní: \(String.days(streak))")
@@ -153,7 +153,7 @@ struct DiaryView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("OTÁZKA DNE").labelStyle(Theme.orange)
                 Text(existing?.question ?? DiaryService.question(for: now))
-                    .font(.system(size: 19, weight: .semibold))
+                    .scaledFont(.heading, weight: .semibold)
                     .foregroundStyle(Theme.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                 field("answer", "Stačí jedna věta.", text: $draft.answer, lines: 2...6)
@@ -176,7 +176,7 @@ struct DiaryView: View {
                 .disabled(draft == stored(existing))
             if let savedAt, draft == stored(existing) {
                 Text("Uloženo v \(savedAt.timeText)")
-                    .font(.system(size: 12))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textTertiary)
                     .frame(maxWidth: .infinity)
             }
@@ -189,14 +189,14 @@ struct DiaryView: View {
         HStack(alignment: .top, spacing: 10) {
             if let symbol {
                 Image(systemName: symbol)
-                    .font(.system(size: 13, weight: .bold))
+                    .scaledFont(.caption, weight: .bold)
                     .foregroundStyle(color)
                     .frame(width: 18)
                     .padding(.top, 13)
             }
             TextField(placeholder, text: text, axis: .vertical)
                 .lineLimit(lines)
-                .font(.system(size: 15))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.textPrimary)
                 .padding(10)
                 .background(Theme.cardRaised)
@@ -214,7 +214,7 @@ struct DiaryView: View {
                 Text(title).labelStyle()
                 Spacer()
                 Text(value.wrappedValue == 0 ? "" : (value.wrappedValue <= 2 ? low : (value.wrappedValue >= 4 ? high : "tak napůl")))
-                    .font(.system(size: 12))
+                    .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
             HStack(spacing: 8) {
@@ -225,7 +225,7 @@ struct DiaryView: View {
                         value.wrappedValue = isSelected ? 0 : level
                     } label: {
                         Text("\(level)")
-                            .font(.system(size: 16, weight: .bold))
+                            .scaledFont(.body, weight: .bold)
                             .foregroundStyle(isSelected ? Theme.onPrimary : Theme.textPrimary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)
@@ -277,7 +277,7 @@ struct DiaryView: View {
             entry.createdAt = now
             pointsGain = PointsGain(amount: DiaryService.pointsPerEntry)
         }
-        try? context.save()
+        Persistence.save(context)
         draft = stored(entry)
         savedAt = now
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
@@ -289,7 +289,7 @@ struct DiaryView: View {
         VStack(alignment: .leading, spacing: 8) {
             Label(label, systemImage: "clock.arrow.circlepath").labelStyle(Theme.textPrimary)
             Text(entry.day.longDayText)
-                .font(.system(size: 12))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textTertiary)
             ForEach(lines(of: entry), id: \.label) { line in
                 quote(line.label, line.text)
@@ -308,11 +308,11 @@ struct DiaryView: View {
     private func quote(_ label: String, _ text: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label.uppercased())
-                .font(.system(size: 10, weight: .semibold))
+                .scaledFont(.caption, weight: .semibold)
                 .tracking(0.6)
                 .foregroundStyle(Theme.textTertiary)
             Text("„\(text)“")
-                .font(.system(size: 15))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -329,18 +329,18 @@ struct DiaryView: View {
                 .labelStyle(due != nil ? Theme.green : Theme.textPrimary)
             if let due {
                 Text("Napsal sis ho \(due.writtenAt.longDayText). Teď si ho můžeš přečíst.")
-                    .font(.system(size: 14))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
                 Button("OTEVŘÍT DOPIS") { openLetter = due }
                     .buttonStyle(PrimaryButtonStyle(color: Theme.green))
             } else if let waiting {
                 Text("Zapečetěný dopis se otevře \(waiting.opensAt.longDayText). Do té doby ho nepřečteš.")
-                    .font(.system(size: 14))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
                 Text("Napiš si, kde chceš být za měsíc a co si teď slibuješ. Otevřít ho půjde až za \(DiaryService.letterDelayDays) dní.")
-                    .font(.system(size: 14))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                 Button("NAPSAT DOPIS") { writesLetter = true }
@@ -352,7 +352,7 @@ struct DiaryView: View {
                     Button { openLetter = letter } label: {
                         HStack {
                             Text("Dopis z \(letter.writtenAt.dayMonthText)")
-                                .font(.system(size: 14, weight: .semibold))
+                                .scaledFont(.body, weight: .semibold)
                                 .foregroundStyle(Theme.textPrimary)
                             Spacer()
                             Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
@@ -420,12 +420,12 @@ private struct FutureLetterEditor: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("DOPIS BUDOUCÍMU JÁ").labelStyle(Theme.textPrimary)
             Text("Otevře se \(Date.now.addingDays(DiaryService.letterDelayDays).longDayText). Do té doby ho neuvidíš.")
-                .font(.system(size: 14))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.textSecondary)
             HStack(alignment: .top, spacing: 8) {
                 TextField("Kde chceš být za měsíc? Co si teď slibuješ? Co by sis měl připomenout?", text: $text, axis: .vertical)
                     .lineLimit(8...20)
-                    .font(.system(size: 16))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textPrimary)
                     .card()
                 if settingsList.first?.diaryVoiceEnabled == true {
@@ -462,7 +462,7 @@ private struct FutureLetterReader: View {
             Label("DOPIS Z \(letter.writtenAt.dayMonthText)", systemImage: "envelope.open.fill").labelStyle(Theme.green)
             ScrollView {
                 Text(letter.text)
-                    .font(.system(size: 17))
+                    .scaledFont(.heading)
                     .foregroundStyle(Theme.textPrimary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

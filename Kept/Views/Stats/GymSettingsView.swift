@@ -72,7 +72,7 @@ struct GymSettingsView: View {
             withAnimation { isAdding.wrappedValue.toggle() }
         } label: {
             Label(isAdding.wrappedValue ? "Zrušit" : label, systemImage: isAdding.wrappedValue ? "xmark" : "plus")
-                .font(.system(size: 16, weight: .semibold))
+                .scaledFont(.body, weight: .semibold)
                 .foregroundStyle(Theme.textPrimary)
         }
     }
@@ -95,7 +95,7 @@ struct GymSettingsView: View {
                     Text(preset.name)
                     if preset == presets.first {
                         Text("VÝCHOZÍ")
-                            .font(.system(size: 10, weight: .bold))
+                            .scaledFont(.caption, weight: .bold)
                             .tracking(0.8)
                             .foregroundStyle(Theme.green)
                     }

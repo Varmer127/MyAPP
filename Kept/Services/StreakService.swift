@@ -61,6 +61,7 @@ enum StreakService {
     static func nextBreak(_ tasks: [TaskItem], now: Date = .now) -> Date? {
         let byDay = Dictionary(grouping: tasks) { $0.scheduledDate.startOfDay }
         return (0..<lookAheadDays).map { now.startOfDay.addingDays($0) }.first { day in
+            guard !RestDays.contains(day) else { return false }
             guard let score = ScoreEngine.productivity(byDay[day] ?? [], now: now) else { return false }
             return score < ScoreEngine.Config.streakThreshold
         }

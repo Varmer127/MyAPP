@@ -21,6 +21,13 @@ final class UserSettings {
     var sundayEndHour: Int = 21
     /// Gap between repeated reminders once a deadline has passed.
     var overdueRepeatMinutes: Int = 45
+    /// How many times a day Kept reminds about open tasks that have no deadline (0 = never).
+    var nudgesPerDay: Int = 3
+    /// The part of the day those reminders stay inside, in minutes after midnight.
+    var nudgeFromMinutes: Int = 10 * 60
+    var nudgeToMinutes: Int = 20 * 60
+    /// Daily step goal shown in the Health tab.
+    var stepGoal: Int = 8000
 
     /// JSON-encoded `[TaskCategory.rawValue: Int]` overrides of the default weekly targets.
     var weeklyTargetsData: Data = Data()
@@ -103,6 +110,31 @@ final class UserSettings {
         set { customActivitiesData = (try? JSONEncoder().encode(newValue)) ?? Data() }
     }
 
+    /// JSON-encoded `[String]`: the `activityKey` of every custom activity the user counts as a workout.
+    var sportActivitiesData: Data = Data()
+
+    var sportActivityKeys: Set<String> {
+        get { Set((try? JSONDecoder().decode([String].self, from: sportActivitiesData)) ?? []) }
+        set { sportActivitiesData = (try? JSONEncoder().encode(newValue.sorted())) ?? Data() }
+    }
+
+    func countsAsWorkout(custom name: String) -> Bool { sportActivityKeys.contains(name.activityKey) }
+
+    func setCountsAsWorkout(_ on: Bool, custom name: String) {
+        var keys = sportActivityKeys
+        if on { keys.insert(name.activityKey) } else { keys.remove(name.activityKey) }
+        sportActivityKeys = keys
+    }
+
+    /// Gym and sport always are workouts; a custom activity is one when the user said so.
+    func isWorkout(_ task: TaskItem) -> Bool {
+        switch task.category {
+        case .gym, .sport: true
+        case .other: countsAsWorkout(custom: task.title)
+        default: false
+        }
+    }
+
     static let defaultWorkoutPresets = ["Ruce a ramena", "Záda a prsa", "Nohy"]
     static let defaultExercisePresets = ["Bench press", "Dřep", "Mrtvý tah", "Tlaky nad hlavu", "Shyby", "Přítahy v předklonu"]
 
@@ -181,6 +213,7 @@ final class UserSettings {
         hasher.combine(toneRaw)
         hasher.combine([taskRemindersEnabled, sundayRemindersEnabled, morningBriefEnabled, realityCheckEnabled, streakRemindersEnabled])
         hasher.combine([morningBriefMinutes, realityCheckMinutes, sundayStartHour, sundayEndHour, overdueRepeatMinutes])
+        hasher.combine([nudgesPerDay, nudgeFromMinutes, nudgeToMinutes])
         return hasher.finalize()
     }
 

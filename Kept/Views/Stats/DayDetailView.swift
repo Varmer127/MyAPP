@@ -29,7 +29,7 @@ struct DayDetailView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         Text("DEN").labelStyle()
                         Text(day.longDayText)
-                            .font(.system(size: 28, weight: .bold))
+                            .scaledFont(.title, weight: .bold)
                             .foregroundStyle(Theme.textPrimary)
                     }
                     if let entry = DiaryService.entry(on: day, in: diary), entry.hasWriting || entry.mood > 0 {
@@ -37,12 +37,12 @@ struct DayDetailView: View {
                     }
                     if items.isEmpty {
                         Text("Na tento den nebylo nic v plánu.")
-                            .font(.system(size: 15))
+                            .scaledFont(.body)
                             .foregroundStyle(Theme.textSecondary)
                             .card()
                     } else {
                         let scored = items.filter { !$0.isRecovery && $0.countsInScores }
-                        HStack(spacing: 10) {
+                        TileRow {
                             MetricTile(value: ScoreEngine.productivity(items, now: now).percentText, label: "Produktivita")
                             MetricTile(value: "\(scored.filter(\.isDone).count) / \(scored.count)", label: "Splněno")
                             MetricTile(value: ScoreEngine.promisesKept(items, now: now).percentText, label: "Sliby")
@@ -69,22 +69,22 @@ struct DayDetailView: View {
         return VStack(alignment: .leading, spacing: 8) {
             Text(outcome.text.uppercased()).labelStyle(outcome.color)
             Text(task.title)
-                .font(.system(size: 18, weight: .semibold))
+                .scaledFont(.heading, weight: .semibold)
                 .foregroundStyle(Theme.textPrimary)
             HStack(spacing: 6) {
                 Image(systemName: task.icon)
                 Text(meta(task))
             }
-            .font(.system(size: 13))
+            .scaledFont(.caption)
             .foregroundStyle(Theme.textSecondary)
             ForEach(notes(task), id: \.label) { note in
                 VStack(alignment: .leading, spacing: 2) {
                     Text(note.label.uppercased())
-                        .font(.system(size: 10, weight: .semibold))
+                        .scaledFont(.caption, weight: .semibold)
                         .tracking(0.6)
                         .foregroundStyle(Theme.textTertiary)
                     Text(note.text)
-                        .font(.system(size: 14))
+                        .scaledFont(.body)
                         .foregroundStyle(Theme.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -103,17 +103,17 @@ struct DayDetailView: View {
             HStack {
                 Label("DENÍK", systemImage: "book.closed").labelStyle(Theme.textPrimary)
                 Spacer()
-                if entry.mood > 0 { Text("nálada \(entry.mood)/5").font(.system(size: 12)).foregroundStyle(Theme.textSecondary) }
-                if entry.energy > 0 { Text("energie \(entry.energy)/5").font(.system(size: 12)).foregroundStyle(Theme.textSecondary) }
+                if entry.mood > 0 { Text("nálada \(entry.mood)/5").scaledFont(.caption).foregroundStyle(Theme.textSecondary) }
+                if entry.energy > 0 { Text("energie \(entry.energy)/5").scaledFont(.caption).foregroundStyle(Theme.textSecondary) }
             }
             ForEach(lines, id: \.0) { label, text in
                 VStack(alignment: .leading, spacing: 2) {
                     Text(label.uppercased())
-                        .font(.system(size: 10, weight: .semibold))
+                        .scaledFont(.caption, weight: .semibold)
                         .tracking(0.6)
                         .foregroundStyle(Theme.textTertiary)
                     Text(text)
-                        .font(.system(size: 14))
+                        .scaledFont(.body)
                         .foregroundStyle(Theme.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
                 }

@@ -1,12 +1,18 @@
 import SwiftUI
 import UIKit
 
-/// Haptics by meaning: light for a choice, success for keeping your word, heavy for the seal.
+/// Haptics as a small language, one feel per meaning, so the hand learns what happened without looking:
+/// - `light`: a touch, a choice, a switch.
+/// - `medium`: something is done (a task, a set).
+/// - `success`: keeping your word (the day is kept, a badge is earned).
+/// - `heavy`: the seal.
+/// - `warning`: a promise is broken or a limit is hit. Never a hard knock: the app is a coach, not a judge.
 enum Haptics {
     static func light() { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
     static func medium() { UIImpactFeedbackGenerator(style: .medium).impactOccurred() }
     static func heavy() { UIImpactFeedbackGenerator(style: .heavy).impactOccurred() }
     static func success() { UINotificationFeedbackGenerator().notificationOccurred(.success) }
+    static func warning() { UINotificationFeedbackGenerator().notificationOccurred(.warning) }
 }
 
 /// The circle with a check that draws itself, as in the welcome animation. A task that was just completed
@@ -39,13 +45,14 @@ struct DrawnCheck: View {
 struct SparkBurst: View {
     let trigger: Int
     @State private var progress: CGFloat = 1
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
             ForEach(0..<6, id: \.self) { index in
                 let angle = Double(index) / 6 * 2 * .pi - .pi / 2
                 Image(systemName: "sparkle")
-                    .font(.system(size: 10, weight: .bold))
+                    .scaledFont(.caption, weight: .bold)
                     .foregroundStyle(Theme.orange)
                     .offset(x: cos(angle) * 30 * progress, y: sin(angle) * 30 * progress)
                     .scaleEffect(1 - progress * 0.5)
@@ -54,6 +61,7 @@ struct SparkBurst: View {
         }
         .allowsHitTesting(false)
         .onChange(of: trigger) {
+            guard !reduceMotion else { return }
             progress = 0
             withAnimation(.easeOut(duration: 0.7)) { progress = 1 }
         }
@@ -100,11 +108,11 @@ struct SealStamp: View {
                 .opacity(landed || reduceMotion ? 1 : 0)
                 VStack(spacing: 6) {
                     Text("ZAPEČETĚNO")
-                        .font(.system(size: 28, weight: .heavy))
+                        .scaledFont(.title, weight: .heavy)
                         .tracking(2)
                         .foregroundStyle(Theme.textPrimary)
                     Text("Tohle je teď tvůj slib. Dodrž ho.")
-                        .font(.system(size: 16))
+                        .scaledFont(.body)
                         .foregroundStyle(Theme.textSecondary)
                 }
                 .opacity(textShown || reduceMotion ? 1 : 0)
@@ -128,6 +136,30 @@ struct SealStamp: View {
             }
             try? await Task.sleep(for: .seconds(2.2))
             onFinish()
+        }
+    }
+}
+
+
+/// A band of light that sweeps once across a card, for the moment something is completed.
+struct SweepHighlight: View {
+    let trigger: Bool
+    var cornerRadius: CGFloat = Theme.radius
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var position: CGFloat = -0.4
+
+    var body: some View {
+        GeometryReader { proxy in
+            LinearGradient(colors: [.clear, Theme.green.opacity(0.35), .clear], startPoint: .leading, endPoint: .trailing)
+                .frame(width: proxy.size.width * 0.4)
+                .offset(x: proxy.size.width * position)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+        .allowsHitTesting(false)
+        .onChange(of: trigger) { _, on in
+            guard on, !reduceMotion else { return }
+            position = -0.4
+            withAnimation(.easeInOut(duration: 0.9)) { position = 1.0 }
         }
     }
 }

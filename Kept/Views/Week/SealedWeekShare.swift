@@ -59,35 +59,35 @@ private struct SealedWeekCard: View {
         VStack(alignment: .leading, spacing: 22) {
             HStack {
                 Text("KEPT")
-                    .font(.system(size: 15, weight: .heavy))
+                    .scaledFont(.body, weight: .heavy)
                     .tracking(3)
                     .foregroundStyle(Self.primary)
                 Spacer()
                 Label("ZAPEČETĚNO", systemImage: "checkmark.seal.fill")
-                    .font(.system(size: 11, weight: .bold))
+                    .scaledFont(.caption, weight: .bold)
                     .tracking(1)
                     .foregroundStyle(Self.orange)
             }
             VStack(alignment: .leading, spacing: 4) {
                 Text("TÝDEN \(share.weekNumber) · \(share.range)")
-                    .font(.system(size: 12, weight: .semibold))
+                    .scaledFont(.caption, weight: .semibold)
                     .tracking(1.2)
                     .foregroundStyle(Self.secondary)
                 Text("TENTO TÝDEN SE ZAVAZUJI K:")
-                    .font(.system(size: 22, weight: .bold))
+                    .scaledFont(.title, weight: .bold)
                     .foregroundStyle(Self.primary)
             }
             VStack(alignment: .leading, spacing: 12) {
                 ForEach(share.lines, id: \.self) { line in
                     HStack(spacing: 10) {
                         Text("\(line.count)×")
-                            .font(.system(size: 20, weight: .bold))
+                            .scaledFont(.heading, weight: .bold)
                             .frame(width: 44, alignment: .leading)
                         Image(systemName: line.symbol)
-                            .font(.system(size: 16))
+                            .scaledFont(.body)
                             .frame(width: 24)
                         Text(line.title)
-                            .font(.system(size: 17))
+                            .scaledFont(.heading)
                     }
                     .foregroundStyle(Self.primary)
                 }
@@ -95,15 +95,15 @@ private struct SealedWeekCard: View {
             Spacer(minLength: 0)
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(share.total)")
-                    .font(.system(size: 64, weight: .heavy))
+                    .scaledFont(64, weight: .heavy)
                     .foregroundStyle(Self.primary)
                 Text("ZÁVAZKŮ CELKEM")
-                    .font(.system(size: 12, weight: .semibold))
+                    .scaledFont(.caption, weight: .semibold)
                     .tracking(1.2)
                     .foregroundStyle(Self.secondary)
             }
             Text("Zapečetěno \(share.sealed). Změnit to už nejde bez postihu. Hlídej mě.")
-                .font(.system(size: 13))
+                .scaledFont(.caption)
                 .foregroundStyle(Self.secondary)
         }
         .padding(28)

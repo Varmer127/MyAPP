@@ -7,7 +7,7 @@ struct StreaksSection: View {
     var body: some View {
         VStack(spacing: 10) {
             SectionLabel(text: "Série")
-            HStack(spacing: 10) {
+            TileRow {
                 MetricTile(value: "\(ScoreEngine.dayStreak(tasks))", label: "Dní nad 80 %")
                 MetricTile(value: "\(StatisticsService.perfectDayStreak(tasks))", label: "Perfektní dny")
                 MetricTile(value: "\(StatisticsService.weeklyPromiseStreak(tasks))", label: "Týdny nad 80 %")
@@ -59,7 +59,7 @@ struct TrendSection: View {
                     .frame(height: 180)
                 } else {
                     Text("Trend se ukáže, až budeš mít aspoň dva dny s úkoly.")
-                        .font(.system(size: 13))
+                        .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -82,14 +82,14 @@ struct CategorySection: View {
                         VStack(spacing: 6) {
                             HStack {
                                 Label(item.category.title, systemImage: item.category.icon)
-                                    .font(.system(size: 15))
+                                    .scaledFont(.body)
                                     .foregroundStyle(Theme.textPrimary)
                                 Text("\(item.count)×")
-                                    .font(.system(size: 12))
+                                    .scaledFont(.caption)
                                     .foregroundStyle(Theme.textSecondary)
                                 Spacer()
                                 Text(item.rate.percentText)
-                                    .font(.system(size: 15, weight: .semibold))
+                                    .scaledFont(.body, weight: .semibold)
                                     .foregroundStyle(Theme.textPrimary)
                             }
                             ThinBar(value: item.rate, color: Theme.performanceColor(item.rate))
@@ -123,18 +123,18 @@ struct ReviewHistorySection: View {
                             HStack {
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("Týden \(week.weekNumber)")
-                                        .font(.system(size: 16, weight: .semibold))
+                                        .scaledFont(.body, weight: .semibold)
                                         .foregroundStyle(Theme.textPrimary)
                                     Text("\(week.dayMonthText) – \(week.addingDays(6).dayMonthText)")
-                                        .font(.system(size: 12))
+                                        .scaledFont(.caption)
                                         .foregroundStyle(Theme.textSecondary)
                                 }
                                 Spacer()
                                 Text(ScoreEngine.promisesKept(tasks.filter { $0.scheduledDate.weekStart == week }, now: now).percentText)
-                                    .font(.system(size: 15, weight: .semibold))
+                                    .scaledFont(.body, weight: .semibold)
                                     .foregroundStyle(Theme.textPrimary)
                                 Image(systemName: "chevron.right")
-                                    .font(.system(size: 13))
+                                    .scaledFont(.caption)
                                     .foregroundStyle(Theme.textTertiary)
                             }
                             .padding(.horizontal, 14)
@@ -166,7 +166,7 @@ struct EffortSection: View {
             VStack(spacing: 10) {
                 SectionLabel(text: "Plán vs. skutečnost")
                 VStack(alignment: .leading, spacing: 16) {
-                    HStack(spacing: 10) {
+                    TileRow {
                         MetricTile(value: Self.hours(current.plannedMinutes), label: "Plán tento týden")
                         MetricTile(value: Self.hours(current.focusedMinutes), label: "Soustředění")
                     }
@@ -192,7 +192,7 @@ struct EffortSection: View {
                     .chartLegend(position: .bottom, alignment: .leading)
                     .frame(height: 170)
                     Text("Počítá se jen čas odměřený focus timerem.")
-                        .font(.system(size: 12))
+                        .scaledFont(.caption)
                         .foregroundStyle(Theme.textTertiary)
                 }
                 .card()
@@ -218,15 +218,15 @@ struct RecordsSection: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(record.label)
-                                    .font(.system(size: 15, weight: .semibold))
+                                    .scaledFont(.body, weight: .semibold)
                                     .foregroundStyle(Theme.textPrimary)
                                 Text(record.detail)
-                                    .font(.system(size: 12))
+                                    .scaledFont(.caption)
                                     .foregroundStyle(Theme.textSecondary)
                             }
                             Spacer()
                             Text(record.value)
-                                .font(.system(size: 17, weight: .bold))
+                                .scaledFont(.heading, weight: .bold)
                                 .foregroundStyle(Theme.textPrimary)
                         }
                         .padding(.horizontal, 14)
@@ -251,7 +251,7 @@ struct JournalLinkSection: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("SEBEREFLEXE TÝDNE").labelStyle(Theme.textPrimary)
                     Text(count == 0 ? "První zápis vznikne v neděli večer" : "Zápisy: \(count)")
-                        .font(.system(size: 13))
+                        .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary)
                 }
                 Spacer()

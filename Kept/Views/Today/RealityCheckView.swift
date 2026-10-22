@@ -64,7 +64,7 @@ struct RealityCheckView: View {
                 .textCase(.uppercase)
             Spacer()
             Button("Zavřít") { dismiss() }
-                .font(.system(size: 15, weight: .semibold))
+                .scaledFont(.body, weight: .semibold)
                 .foregroundStyle(Theme.textSecondary)
         }
         .padding(.horizontal, Theme.screenPadding)
@@ -74,10 +74,10 @@ struct RealityCheckView: View {
     private func heading(_ title: LocalizedStringKey, _ subtitle: LocalizedStringKey) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
-                .font(.system(size: 30, weight: .heavy))
+                .scaledFont(.title, weight: .heavy)
                 .foregroundStyle(Theme.textPrimary)
             Text(subtitle)
-                .font(.system(size: 15))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.textSecondary)
             progress
                 .padding(.top, 10)
@@ -134,21 +134,21 @@ struct RealityCheckView: View {
     private func card(_ task: TaskItem) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Image(systemName: task.icon)
-                .font(.system(size: 24, weight: .semibold))
+                .scaledFont(.title, weight: .semibold)
                 .foregroundStyle(Theme.textPrimary)
                 .frame(width: 52, height: 52)
                 .background(Theme.cardRaised)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
             Text(task.title)
-                .font(.system(size: 26, weight: .heavy))
+                .scaledFont(.title, weight: .heavy)
                 .foregroundStyle(Theme.textPrimary)
                 .padding(.top, 8)
             Text(metadata(of: task))
-                .font(.system(size: 14))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.textSecondary)
             Spacer(minLength: 0)
             Text("Podvedl bys jen sám sebe.")
-                .font(.system(size: 13))
+                .scaledFont(.caption)
                 .foregroundStyle(Theme.textTertiary)
         }
         .padding(24)
@@ -173,7 +173,7 @@ struct RealityCheckView: View {
                     .buttonStyle(PrimaryButtonStyle(color: Theme.green))
             }
             Button("Ještě to dnes stihnu") { putAside(task) }
-                .font(.system(size: 14))
+                .scaledFont(.body)
                 .foregroundStyle(Theme.textSecondary)
                 .frame(height: 40)
         }
@@ -194,7 +194,7 @@ struct RealityCheckView: View {
                             .frame(width: 24)
                             .foregroundStyle(Theme.orange)
                         Text(task.title)
-                            .font(.system(size: 16, weight: .semibold))
+                            .scaledFont(.body, weight: .semibold)
                             .foregroundStyle(Theme.textPrimary)
                         Spacer()
                     }
@@ -210,7 +210,7 @@ struct RealityCheckView: View {
                 Button("ZPĚT NA DNEŠEK") { dismiss() }
                     .buttonStyle(PrimaryButtonStyle())
                 Button("Projít je znovu") { later.removeAll() }
-                    .font(.system(size: 14))
+                    .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
                     .frame(height: 40)
             }
@@ -228,17 +228,17 @@ struct RealityCheckView: View {
                 DrawnCheck(isRecent: true, size: 64)
                     .frame(width: 64, height: 64)
                 Text(today.isEmpty ? "Dnes bez slibů." : "DEN UZAVŘEN")
-                    .font(.system(size: 26, weight: .heavy))
+                    .scaledFont(.title, weight: .heavy)
                     .foregroundStyle(Theme.textPrimary)
                 if !today.isEmpty {
                     Text(kept == today.count ? "Dodrženo: \(kept) z \(today.count). Takhle vypadá dodržené slovo."
                                              : "Dodrženo: \(kept) z \(today.count). Zbytek je zavřený čestně, a to se počítá.")
-                        .font(.system(size: 15))
+                        .scaledFont(.body)
                         .foregroundStyle(Theme.textSecondary)
                         .multilineTextAlignment(.center)
                 }
                 TextField("Jedna věta do deníku: co ti dnes šlo?", text: $diaryLine, axis: .vertical)
-                    .font(.system(size: 14))
+                    .scaledFont(.body)
                     .lineLimit(1...4)
                     .focused($diaryFocused)
                     .padding(14)
@@ -274,7 +274,7 @@ struct RealityCheckView: View {
         } else {
             Haptics.medium()
             withAnimation { task.markDone() }
-            try? context.save()
+            Persistence.save(context)
         }
     }
 
@@ -309,7 +309,7 @@ struct RealityCheckView: View {
             if !entry.hasWriting { entry.createdAt = .now }
             entry.answer = text
             entry.updatedAt = .now
-            try? context.save()
+            Persistence.save(context)
         }
         dismiss()
     }
