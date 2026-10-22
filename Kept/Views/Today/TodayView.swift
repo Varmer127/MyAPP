@@ -2,89 +2,156 @@ import SwiftUI
 import SwiftData
 
 struct TodayView: View {
-    @Query private var tasks: [TaskItem]
-    @Query private var plans: [WeeklyPlan]
-    @Query private var settingsList: [UserSettings]
-    @Query private var failures: [FailureRecord]
-    @Query private var postponements: [Postponement]
-    @Query private var reflections: [WeekReflection]
-    @Query private var purchases: [PointsPurchase]
-    @Query private var diary: [DiaryEntry]
-    @State private var showsShop = false
+    @Query var tasks: [TaskItem]
+
+    @Query var plans: [WeeklyPlan]
+
+    @Query var settingsList: [UserSettings]
+
+    @Query var failures: [FailureRecord]
+
+    @Query var postponements: [Postponement]
+
+    @Query var reflections: [WeekReflection]
+
+    @Query var purchases: [PointsPurchase]
+
+    @Query var diary: [DiaryEntry]
+
+    @State var showsShop = false
+
     /// Points just earned, shown for a moment above the tab bar.
-    @State private var pointsGain: PointsGain?
-    @State private var showsDayKept = false
-    @State private var stopTask: TaskItem?
-    @State private var story: WeekStory?
-    @AppStorage("storySeenWeek") private var storySeenWeek = 0.0
-    @AppStorage("storySeenMonth") private var storySeenMonth = 0.0
-    @State private var monthStory: MonthStory?
-    @AppStorage("devShowStory") private var devShowStory = false
-    @Query private var diaryEntries: [DiaryEntry]
-    @State private var sparkTrigger = 0
-    @State private var heroFlash: Color?
-    @State private var showsMorning = false
-    @AppStorage("lastActiveAt") private var lastActiveAt = 0.0
-    @AppStorage("morningGreetedDay") private var morningGreetedDay = 0.0
+    @State var pointsGain: PointsGain?
+
+    @State var showsDayKept = false
+
+    @State var stopTask: TaskItem?
+
+    @State var story: WeekStory?
+
+    @AppStorage("storySeenWeek") var storySeenWeek = 0.0
+
+    @AppStorage("storySeenMonth") var storySeenMonth = 0.0
+
+    @State var monthStory: MonthStory?
+
+    @AppStorage("devShowStory") var devShowStory = false
+
+    @Query var diaryEntries: [DiaryEntry]
+
+    @State var sparkTrigger = 0
+
+    @State var heroFlash: Color?
+
+    @State var showsMorning = false
+
+    @AppStorage("lastActiveAt") var lastActiveAt = 0.0
+
+    @AppStorage("morningGreetedDay") var morningGreetedDay = 0.0
+
     // Test switches set from the developer section (Debug builds only), harmless otherwise.
-    @AppStorage("devShowMorning") private var devShowMorning = false
-    @AppStorage("devShowDayKept") private var devShowDayKept = false
-    @AppStorage("devShowEvening") private var devShowEvening = false
+    @AppStorage("devShowMorning") var devShowMorning = false
+
+    @AppStorage("devShowDayKept") var devShowDayKept = false
+
+    @AppStorage("devShowEvening") var devShowEvening = false
+
     /// The day already celebrated, so undoing and redoing a task does not repeat it.
-    @AppStorage("dayKeptCelebratedDay") private var dayKeptCelebratedDay = 0.0
+    @AppStorage("dayKeptCelebratedDay") var dayKeptCelebratedDay = 0.0
+
     /// Day on which the weekly reflection last opened by itself, so it only interrupts once a day.
-    @AppStorage("reflectionPromptDay") private var reflectionPromptDay = 0.0
-    @State private var reflection: ReflectionRequest?
+    @AppStorage("reflectionPromptDay") var reflectionPromptDay = 0.0
+
+    @State var reflection: ReflectionRequest?
+
     /// Minutes of a gym workout Apple Health recorded today, if any.
-    @State private var healthGymMinutes: Int?
+    @State var healthGymMinutes: Int?
+
     /// Start of the day (as a timestamp) on which the Morning Brief was last dismissed.
     /// "<day seed>:<category>,<category>" — suggestions the user declined today.
-    @AppStorage("declinedSuggestions") private var declinedSuggestions = ""
-    /// Day (as a timestamp) of the streak break whose buy-back offer the user turned down.
-    @AppStorage(StreakService.offerDismissedKey) private var streakOfferDismissed = 0.0
-    /// Broken streak waiting for the "really spend the points?" confirmation.
-    @State private var confirmRepair: StreakService.Broken?
-    @State private var showsRealityCheck = false
-    @State private var statsExpanded = false
-    /// The Dnes header is scrolled out of sight; a thin bar with the day's progress takes its place.
-    @State private var compactHeader = false
-    /// Watched only so the screen is drawn again when a rest day is set or cleared.
-    @AppStorage(RestDays.storageKey) private var restDaysRaw = ""
-    /// A short coloured flash on the promise card (red when a sealed promise was just given up).
-    @State private var promiseFlash: Color?
-    @Namespace private var zoom
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var editor: EditorRequest?
-    @State private var workoutTask: TaskItem?
-    @State private var proofTask: TaskItem?
-    @State private var partialTask: TaskItem?
-    /// Partial completion confirmed in the sheet; applied once the sheet has finished closing.
-    @State private var pendingPartial: (task: TaskItem, share: Double, note: String)?
-    @State private var postponeTask: TaskItem?
-    /// Task the user wants to give up on; asks whether to postpone or to skip.
-    @State private var failChoice: TaskItem?
-    @State private var focusTask: TaskItem?
-    @State private var gymTimerTask: TaskItem?
-    @State private var detailTask: TaskItem?
-    /// Task to complete once the focus screen has finished closing.
-    @State private var completeAfterFocus: TaskItem?
-    /// Task waiting for the "did you really do it as planned?" confirmation.
-    @State private var confirmDone: TaskItem?
-    @State private var excuse: ExcuseRequest?
-    let openWeek: () -> Void
-    @Environment(\.modelContext) private var context
-    @Environment(\.scenePhase) private var scenePhase
+    @AppStorage("declinedSuggestions") var declinedSuggestions = ""
 
-    private static let refreshInterval: TimeInterval = 60
-    private static let comebackThreshold = 0.6
+    /// Day (as a timestamp) of the streak break whose buy-back offer the user turned down.
+    @AppStorage(StreakService.offerDismissedKey) var streakOfferDismissed = 0.0
+
+    /// Broken streak waiting for the "really spend the points?" confirmation.
+    @State var confirmRepair: StreakService.Broken?
+
+    @State var showsRealityCheck = false
+
+    @State var statsExpanded = false
+
+    /// The Dnes header is scrolled out of sight; a thin bar with the day's progress takes its place.
+    @State var compactHeader = false
+
+    @State var upcomingExpanded = false
+
+    /// 0 = boxes, 1 = a line that unfolds. Both are kept for now so they can be compared.
+    @AppStorage("devUpcomingStyle") var upcomingStyle = 0
+
+    /// Watched only so the screen is drawn again when a rest day is set or cleared.
+    @AppStorage(RestDays.storageKey) var restDaysRaw = ""
+
+    /// A short coloured flash on the promise card (red when a sealed promise was just given up).
+    @State var promiseFlash: Color?
+
+    @Namespace var zoom
+
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
+
+    @State var editor: EditorRequest?
+
+    @State var workoutTask: TaskItem?
+
+    @State var proofTask: TaskItem?
+
+    @State var partialTask: TaskItem?
+
+    /// Partial completion confirmed in the sheet; applied once the sheet has finished closing.
+    @State var pendingPartial: (task: TaskItem, share: Double, note: String)?
+
+    @State var postponeTask: TaskItem?
+
+    /// Task the user wants to give up on; asks whether to postpone or to skip.
+    @State var failChoice: TaskItem?
+
+    @State var focusTask: TaskItem?
+
+    @State var gymTimerTask: TaskItem?
+
+    @State var detailTask: TaskItem?
+
+    /// Task to complete once the focus screen has finished closing.
+    @State var completeAfterFocus: TaskItem?
+
+    /// Task waiting for the "did you really do it as planned?" confirmation.
+    @State var confirmDone: TaskItem?
+
+    @State var excuse: ExcuseRequest?
+
+    let openWeek: () -> Void
+
+    @Environment(\.modelContext) var context
+
+    @Environment(\.scenePhase) var scenePhase
+
+    static let refreshInterval: TimeInterval = 60
+
+    static let comebackThreshold = 0.6
+
     /// Days with something planned before the reliability score is shown at all.
-    private static let daysBeforeScore = 7
-    private static let stakeQuestionDays = 7
-    private static let slippingAfterMinutes = 18 * 60
+    static let daysBeforeScore = 7
+
+    static let stakeQuestionDays = 7
+
+    static let slippingAfterMinutes = 18 * 60
+
     /// From this time on, a streak that today would break is shown as at risk.
-    private static let streakWarningFromMinutes = 19 * 60
-    private static let slippingCriticalCount = 2
-    private static let streakUrgentSeconds: TimeInterval = 6 * 3600
+    static let streakWarningFromMinutes = 19 * 60
+
+    static let slippingCriticalCount = 2
+
+    static let streakUrgentSeconds: TimeInterval = 6 * 3600
 
     var body: some View {
         NavigationStack {
@@ -299,13 +366,14 @@ struct TodayView: View {
         }
     }
 
-    private var postponeLimit: Int { settingsList.first?.postponeLimit ?? UserSettings.postponeLimitRange.upperBound }
-    private var postponesLeft: Int {
+    var postponeLimit: Int { settingsList.first?.postponeLimit ?? UserSettings.postponeLimitRange.upperBound }
+
+    var postponesLeft: Int {
         max(0, postponeLimit + PointsService.extraPostponements(purchases) - PlanService.postponementsUsed(postponements))
     }
 
     /// Skipping first offers a penalty-free postponement while the month's allowance lasts.
-    private func giveUp(on task: TaskItem, now: Date) {
+    func giveUp(on task: TaskItem, now: Date) {
         if task.isMissed(now) {
             excuse = ExcuseRequest(task: task, kind: .missed)
         } else if (postponesLeft > 0 && !task.isRecovery) || PointsService.canRedeem(task, balance: PointsService.balance(tasks, purchases: purchases, diary: diary), now: now) {
@@ -316,7 +384,7 @@ struct TodayView: View {
     }
 
     /// Gym tasks ask what was trained and proof tasks ask for proof before they count as done.
-    private func complete(_ task: TaskItem, share: Double = 1, note: String = "") {
+    func complete(_ task: TaskItem, share: Double = 1, note: String = "") {
         // Set on every attempt, so a cancelled partial completion never leaks into a later full one.
         task.completionShare = share
         task.partialNote = note
@@ -333,24 +401,23 @@ struct TodayView: View {
         }
     }
 
-    private var todayTasks: [TaskItem] {
+    var todayTasks: [TaskItem] {
         tasks.filter { $0.scheduledDate.isSameDay(as: .now) && $0.countsInScores && !$0.isRemoved }
     }
 
     /// Everything planned for today is done, and there was something.
-    private var todayKept: Bool {
+    var todayKept: Bool {
         let today = todayTasks
         return !today.isEmpty && today.allSatisfy(\.isDone)
     }
 
-
     /// From the configured time on, as long as something is still open today.
-    private func showsRealityCheckCard(_ day: TodaySnapshot, now: Date) -> Bool {
+    func showsRealityCheckCard(_ day: TodaySnapshot, now: Date) -> Bool {
         guard let settings = settingsList.first, settings.realityCheckEnabled else { return false }
         return now.minutesIntoDay >= settings.realityCheckMinutes && !(day.critical + day.open).isEmpty
     }
 
-    private func content(now: Date) -> some View {
+    func content(now: Date) -> some View {
         let day = TodaySnapshot(tasks: tasks, plans: plans, targets: settingsList.first?.weeklyTargets ?? [:], now: now)
         let slipping = isSlipping(day, now: now)
         return ScrollView {
@@ -396,6 +463,13 @@ struct TodayView: View {
             .padding(.horizontal, Theme.screenPadding)
             .padding(.bottom, 32)
         }
+        .refreshable {
+            // Pulling down reads everything again: Health, and the notifications planned from the data.
+            if settingsList.first?.healthEnabled == true {
+                _ = await HealthService.summary(force: true)
+            }
+            await NotificationManager.reschedule(context: context)
+        }
         .onScrollGeometryChange(for: Bool.self) { $0.contentOffset.y + $0.contentInsets.top > 170 } action: { _, scrolled in
             withAnimation(.easeOut(duration: 0.2)) { compactHeader = scrolled }
         }
@@ -414,914 +488,4 @@ struct TodayView: View {
         }
     }
 
-    /// The day's promise when the big card has scrolled away: how many are kept and the streak, in one thin line.
-    private func compactBar(_ day: TodaySnapshot) -> some View {
-        let done = day.doneCount
-        let total = day.visible.count
-        return HStack(spacing: 10) {
-            Text("\(done) / \(total)")
-                .scaledFont(.body, weight: .heavy)
-                .foregroundStyle(done == total ? Theme.green : Theme.textPrimary)
-            ThinBar(value: Double(done) / Double(max(total, 1)), color: done == total ? Theme.green : Theme.textPrimary)
-            Label("\(day.streak)", systemImage: "flame.fill")
-                .scaledFont(.caption, weight: .heavy)
-                .foregroundStyle(day.streak > 0 ? Theme.orange : Theme.textTertiary)
-        }
-        .padding(.horizontal, 14)
-        .frame(minHeight: 40)
-        .background(.regularMaterial, in: Capsule())
-        .overlay(Capsule().stroke(Theme.border, lineWidth: 1))
-        .padding(.horizontal, Theme.screenPadding)
-        .padding(.top, 6)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Dnešní slib \(done) z \(total), série \(String.days(day.streak))")
-    }
-
-    /// The failure state exists only in the savage tone and only when the day is really going wrong:
-    /// several critical tasks overdue or all of them lost, or under 50 % by the evening.
-    private func isSlipping(_ day: TodaySnapshot, now: Date) -> Bool {
-        guard settingsList.first?.tone == .savage else { return false }
-        let critical = day.scored.filter { $0.scoringPriority == .critical && !$0.isRemoved }
-        let overdue = critical.filter { $0.isOverdue(now) }.count
-        let allCriticalGone = critical.count >= Self.slippingCriticalCount
-            && critical.allSatisfy { $0.isLost(now) || $0.isOverdue(now) }
-        let weakEvening = now.minutesIntoDay >= Self.slippingAfterMinutes
-            && !day.scored.isEmpty && (day.productivity ?? 0) < Theme.poorThreshold
-        return overdue >= Self.slippingCriticalCount || allCriticalGone || weakEvening
-    }
-
-    private func slippingBanner(_ day: TodaySnapshot) -> some View {
-        let critical = day.scored.filter { $0.scoringPriority == .critical && !$0.isRemoved }
-        return VStack(alignment: .leading, spacing: 6) {
-            Text("DNEŠEK TI UTÍKÁ")
-                .scaledFont(.title, weight: .heavy)
-                .foregroundStyle(Theme.red)
-            if !critical.isEmpty {
-                Text("KRITICKÉ ÚKOLY \(critical.filter(\.isDone).count) / \(critical.count)")
-                    .labelStyle(Theme.red)
-            }
-        }
-    }
-
-    /// Offered in the first days of a month, once, when the month that ended has something to tell.
-    @ViewBuilder
-    private func monthStoryCard(now: Date) -> some View {
-        if let month = MonthStory.offeredMonth(now: now), storySeenMonth != month.timeIntervalSince1970,
-           let offered = MonthStory.make(tasks: tasks, monthStart: month, now: now) {
-            Button {
-                Haptics.light()
-                monthStory = offered
-            } label: {
-                HStack(spacing: 14) {
-                    Image(systemName: "calendar.badge.checkmark")
-                        .scaledFont(.heading)
-                        .foregroundStyle(Theme.onPrimary)
-                        .frame(width: 44, height: 44)
-                        .background(Theme.textPrimary)
-                        .clipShape(Circle())
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("TVŮJ MĚSÍC JE HOTOVÝ").labelStyle(Theme.textPrimary)
-                        Text("\(offered.done) z \(offered.total) slibů. Podívej se, jak to dopadlo.")
-                            .scaledFont(.body)
-                            .foregroundStyle(Theme.textSecondary)
-                            .multilineTextAlignment(.leading)
-                    }
-                    Spacer(minLength: 0)
-                    Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
-                }
-                .card()
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    /// Offered once the week is over, once per week, when the week has something to tell.
-    @ViewBuilder
-    private func weekStoryCard(now: Date) -> some View {
-        if let week = WeekStory.offeredWeek(now: now), storySeenWeek != week.timeIntervalSince1970,
-           let offered = WeekStory.make(tasks: tasks, diary: diaryEntries, weekStart: week, now: now) {
-            Button {
-                Haptics.light()
-                story = offered
-            } label: {
-                HStack(spacing: 14) {
-                    Image(systemName: "sparkles")
-                        .scaledFont(.heading)
-                        .foregroundStyle(Theme.onPrimary)
-                        .frame(width: 44, height: 44)
-                        .background(Theme.textPrimary)
-                        .clipShape(Circle())
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("TVŮJ TÝDEN JE HOTOVÝ").labelStyle(Theme.textPrimary)
-                        Text("\(offered.done) z \(offered.total) slibů. Podívej se, jak to dopadlo.")
-                            .scaledFont(.body)
-                            .foregroundStyle(Theme.textSecondary)
-                            .multilineTextAlignment(.leading)
-                    }
-                    Spacer(minLength: 0)
-                    Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
-                }
-                .card()
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private func header(now: Date, day: TodaySnapshot) -> some View {
-        let streak = day.streak
-        let atRisk = streakAtRisk(day, now: now)
-        // The date, the flame and the add button share one row; at very large text they stack instead.
-        return ViewThatFits(in: .horizontal) {
-            HStack(alignment: .center, spacing: 12) {
-                dateBlock(now: now, atRisk: atRisk, streak: streak)
-                Spacer(minLength: 8)
-                addButton
-                flame(streak: streak, atRisk: atRisk)
-            }
-            VStack(alignment: .leading, spacing: 12) {
-                dateBlock(now: now, atRisk: atRisk, streak: streak)
-                HStack(spacing: 12) {
-                    addButton
-                    Spacer()
-                    flame(streak: streak, atRisk: atRisk)
-                }
-            }
-        }
-        .padding(.top, 8)
-    }
-
-    private func dateBlock(now: Date, atRisk: Bool, streak: Int) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("DNES").labelStyle()
-            Text(now.longDayText)
-                // Smaller than the title size so the date, the add button and the flame fit in one row.
-                .scaledFont(24, weight: .bold)
-                .foregroundStyle(Theme.textPrimary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            if atRisk {
-                Text("Série zhasne o půlnoci")
-                    .scaledFont(.caption, weight: .semibold)
-                    .foregroundStyle(Theme.orange)
-            } else if RestDays.contains(now) {
-                Label("Odpočinkový den. Série čeká.", systemImage: "moon.zzz.fill")
-                    .scaledFont(.caption, weight: .semibold)
-                    .foregroundStyle(Theme.textSecondary)
-            }
-        }
-    }
-
-    /// Days in a row at 80 % or better. Lit only while the streak is alive, breathing slowly;
-    /// in the evening of a day that would break it, it pulses.
-    private func flame(streak: Int, atRisk: Bool) -> some View {
-        VStack(spacing: 0) {
-            Image(systemName: "flame.fill")
-                .scaledFont(.title)
-                .symbolEffect(.bounce, options: .nonRepeating, value: streak)
-                .symbolEffect(.pulse, options: .repeating, isActive: atRisk && !reduceMotion)
-                .symbolEffect(.breathe, options: .repeating, isActive: streak > 0 && !atRisk && !reduceMotion)
-            Text("\(streak)")
-                .scaledFont(.body, weight: .heavy)
-                .contentTransition(.numericText())
-        }
-        .foregroundStyle(streak > 0 ? Theme.orange : Theme.textTertiary)
-        .overlay { SparkBurst(trigger: sparkTrigger) }
-        .animation(.easeOut(duration: 0.4), value: streak)
-        .onChange(of: streak) { old, new in
-            if new > old { sparkTrigger += 1; Haptics.medium() }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(streak == 0 ? "Série zatím nezačala, začni ji dnes"
-                            : (atRisk ? "Série \(String.days(streak)), o půlnoci zhasne" : "Série \(String.days(streak))"))
-    }
-
-    private var addButton: some View {
-        Button {
-            Haptics.light()
-            editor = EditorRequest(date: .now)
-        } label: {
-            Label("ÚKOL", systemImage: "plus")
-                .scaledFont(.caption, weight: .heavy)
-                .tracking(0.6)
-                .foregroundStyle(Theme.textPrimary)
-                .padding(.horizontal, 14)
-                .frame(minHeight: 44)
-                .background(Theme.cardRaised)
-                .clipShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Přidat úkol")
-    }
-
-    /// The streak is alive from earlier days, but today is still under the bar and the evening has come.
-    private func streakAtRisk(_ day: TodaySnapshot, now: Date) -> Bool {
-        day.streak > 0 && now.minutesIntoDay >= Self.streakWarningFromMinutes
-            && !RestDays.contains(now) && !day.scored.isEmpty && (day.productivity ?? 0) < ScoreEngine.Config.streakThreshold
-    }
-
-    /// Today's promise in one card: how much is kept, what comes next, and the way to start it.
-    @ViewBuilder
-    private func todaysPromise(_ day: TodaySnapshot, now: Date) -> some View {
-        if day.visible.isEmpty {
-            emptyState
-        } else {
-            // A sealed promise that was taken out of the plan is gone from the list and cannot be done any more:
-            // it shows as a broken promise of its own and does not hold the progress of what is left.
-            let total = day.visible.count
-            let done = day.doneCount
-            let broken = day.scored.count - day.visible.count
-            let next = (day.critical + day.open).first
-            let allDone = done == total && broken == 0
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("DNEŠNÍ SLIB").labelStyle(allDone ? Theme.green : Theme.textSecondary)
-                    Spacer()
-                    if broken > 0 {
-                        Text("porušeno: \(broken)")
-                            .scaledFont(.caption)
-                            .foregroundStyle(Theme.red)
-                    }
-                    if day.partialCount > 0 {
-                        Text("částečně: \(day.partialCount)")
-                            .scaledFont(.caption)
-                            .foregroundStyle(Theme.orange)
-                    }
-                }
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text("\(done) / \(total)")
-                        .scaledFont(34, weight: .heavy)
-                        .foregroundStyle(allDone ? Theme.green : Theme.textPrimary)
-                        .contentTransition(.numericText())
-                    Text(allDone ? "Den dodržen." : (done == total ? "Zbytek je splněný." : (total - done == 1 ? "Zbývá poslední." : "Zbývá \(total - done).")))
-                        .scaledFont(.body, weight: .semibold)
-                        .foregroundStyle(Theme.textSecondary)
-                }
-                ThinBar(value: Double(done) / Double(total), color: allDone ? Theme.green : Theme.textPrimary)
-                if let next {
-                    HStack(spacing: 10) {
-                        Image(systemName: next.icon)
-                            .scaledFont(.body)
-                            .foregroundStyle(Theme.textPrimary)
-                            .frame(width: 32, height: 32)
-                            .background(Theme.cardRaised)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text("NA ŘADĚ").labelStyle()
-                            Text(next.title)
-                                .scaledFont(.body, weight: .semibold)
-                                .foregroundStyle(Theme.textPrimary)
-                                .lineLimit(1)
-                        }
-                        Spacer(minLength: 8)
-                        if next.activeFocusSession == nil, next.category == .gym || next.usesFocus {
-                            Button(next.category == .gym ? "ZAČÍT" : "FOCUS") {
-                                if next.category == .gym {
-                                    _ = next.startFocusIfNeeded(in: context)
-                                    gymTimerTask = next
-                                } else {
-                                    focusTask = next
-                                }
-                            }
-                            .scaledFont(.caption, weight: .heavy)
-                            .foregroundStyle(Theme.onPrimary)
-                            .padding(.horizontal, 14)
-                            .frame(minHeight: 36)
-                            .background(Theme.textPrimary)
-                            .clipShape(Capsule())
-                        } else if !next.requiresProof, next.category != .gym {
-                            Button("SPLNIL JSEM") { confirmDone = next }
-                                .scaledFont(.caption, weight: .heavy)
-                                .foregroundStyle(Color(hex: 0x000000))
-                                .padding(.horizontal, 14)
-                                .frame(minHeight: 36)
-                                .background(Theme.green)
-                                .clipShape(Capsule())
-                        }
-                    }
-                }
-            }
-            .card()
-            .overlay { SweepHighlight(trigger: allDone) }
-            .overlay {
-                RoundedRectangle(cornerRadius: Theme.radius)
-                    .stroke(promiseFlash ?? .clear, lineWidth: 2)
-                    .opacity(promiseFlash == nil ? 0 : 1)
-                    .allowsHitTesting(false)
-            }
-            .animation(.easeOut(duration: 0.3), value: done)
-            .onChange(of: allDone) { old, new in
-                if new && !old { Haptics.success() }
-            }
-            .onChange(of: broken) { old, new in
-                guard new > old else { return }
-                promiseFlash = Theme.red
-                Task {
-                    try? await Task.sleep(for: .milliseconds(700))
-                    withAnimation(.easeOut(duration: 0.4)) { promiseFlash = nil }
-                }
-            }
-        }
-    }
-
-    /// The broken streak that is currently offered for buying back, if any.
-    private func repairOffer(now: Date) -> StreakService.Broken? {
-        guard let broken = StreakService.broken(tasks, now: now), broken.canRepair(now: now),
-              streakOfferDismissed != broken.brokenOn.timeIntervalSince1970 else { return nil }
-        return broken
-    }
-
-    /// Yesterday under 60 %: today is a comeback until it is back above 80 %.
-    private func comeback(_ day: TodaySnapshot, now: Date) -> (yesterday: Double, today: Double, succeeded: Bool)? {
-        let yesterdayTasks = tasks.filter { $0.scheduledDate.isSameDay(as: now.startOfDay.addingDays(-1)) }
-        guard let yesterday = ScoreEngine.productivity(yesterdayTasks, now: now), yesterday < Self.comebackThreshold else { return nil }
-        let today = day.productivity ?? 0
-        return (yesterday, today, today >= ScoreEngine.Config.streakThreshold)
-    }
-
-    /// For a few days after the streak breaks it can be bought back with points.
-    /// A bad yesterday is part of the same story, so the comeback is folded into this card instead of a second one.
-    @ViewBuilder
-    private func streakCard(_ day: TodaySnapshot, now: Date) -> some View {
-        if let broken = repairOffer(now: now) {
-            let balance = PointsService.balance(tasks, purchases: purchases, diary: diary)
-            let cost = broken.cost
-            VStack(alignment: .leading, spacing: 12) {
-                Label("SÉRIE SKONČILA", systemImage: "flame.fill").labelStyle(Theme.orange)
-                Text("Měl jsi \(String.days(broken.length)) v řadě.")
-                    .scaledFont(.heading, weight: .bold)
-                    .foregroundStyle(Theme.textPrimary)
-                // The day text already ends with a full stop ("so 10.").
-                Text("Přerušeno: \(broken.failedDays.map(\.shortDayText).joined(separator: ", ")) "
-                     + "Za \(cost.formatted(.number.locale(.app))) bodů ji vrátíš, jako by se nepřerušila.")
-                    .scaledFont(.body)
-                    .foregroundStyle(Theme.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                streakCountdown(until: broken.repairEnds, now: now)
-                if balance < cost {
-                    Text("Máš \(balance.formatted(.number.locale(.app))) bodů, chybí ti \((cost - balance).formatted(.number.locale(.app))).")
-                        .scaledFont(.caption, weight: .semibold)
-                        .foregroundStyle(Theme.orange)
-                }
-                HStack(spacing: 10) {
-                    Button("VRÁTIT ZA \(cost.formatted(.number.locale(.app))) BODŮ") { confirmRepair = broken }
-                        .buttonStyle(PrimaryButtonStyle(color: Theme.orange))
-                        .disabled(balance < cost)
-                    Button("ZAČÍT OD NULY") {
-                        withAnimation { streakOfferDismissed = broken.brokenOn.timeIntervalSince1970 }
-                    }
-                    .buttonStyle(SecondaryButtonStyle(textColor: Theme.textSecondary))
-                }
-                if let comeback = comeback(day, now: now) {
-                    Divider().overlay(Theme.border)
-                    HStack(spacing: 10) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(comeback.succeeded ? "COMEBACK SE POVEDL" : "COMEBACK DAY")
-                                .labelStyle(comeback.succeeded ? Theme.green : Theme.orange)
-                            Text("Včera \(comeback.yesterday.percentText) · dnes \(comeback.today.percentText)")
-                                .scaledFont(.body, weight: .semibold)
-                                .foregroundStyle(Theme.textPrimary)
-                        }
-                        Spacer()
-                        if !comeback.succeeded {
-                            Button("RECOVERY ÚKOL") { editor = EditorRequest(date: now, isRecovery: true) }
-                                .scaledFont(.caption, weight: .bold)
-                                .tracking(0.6)
-                                .foregroundStyle(Theme.textPrimary)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 9)
-                                .background(Theme.cardRaised)
-                                .clipShape(Capsule())
-                                .buttonStyle(.plain)
-                        }
-                    }
-                }
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.card)
-            .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
-            .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.orange.opacity(0.5), lineWidth: 1))
-            .alert("Vrátit sérii za \(cost.formatted(.number.locale(.app))) bodů?",
-                   isPresented: Binding(get: { confirmRepair != nil }, set: { if !$0 { confirmRepair = nil } }),
-                   presenting: confirmRepair) { broken in
-                Button("Vrátit sérii") {
-                    withAnimation { StreakService.repair(broken, tasks: tasks) }
-                }
-                Button("Zrušit", role: .cancel) {}
-            } message: { _ in
-                Text("Plamínek se vrátí. Nesplněné úkoly těch dnů i jejich vliv na spolehlivost zůstávají.")
-            }
-        }
-    }
-
-    /// The day after a streak insurance stepped in, so it does not get spent unnoticed.
-    @ViewBuilder
-    private func insuranceUsedCard(now: Date) -> some View {
-        let yesterday = now.startOfDay.addingDays(-1)
-        if purchases.contains(where: { $0.kind == .streakInsurance && $0.usedOn == yesterday }) {
-            HStack(spacing: 12) {
-                Image(systemName: ShopItem.streakInsurance.symbol)
-                    .scaledFont(.title)
-                    .foregroundStyle(Theme.orange)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("POJISTKA SÉRIE POUŽITA").labelStyle(Theme.orange)
-                    Text("Včerejšek nevyšel, plamínek ale hoří dál. Zbývá pojistek: \(PointsService.unused(.streakInsurance, in: purchases)).")
-                        .scaledFont(.caption)
-                        .foregroundStyle(Theme.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            .card()
-        }
-    }
-
-    /// Live countdown to the end of the buy-back offer; turns red in the last hours.
-    private func streakCountdown(until end: Date, now: Date) -> some View {
-        let color = end.timeIntervalSince(now) < Self.streakUrgentSeconds ? Theme.red : Theme.orange
-        return HStack(spacing: 6) {
-            Image(systemName: "timer")
-            Text("NABÍDKA KONČÍ ZA")
-                .tracking(0.6)
-            Text(timerInterval: min(now, end)...end, countsDown: true)
-                .monospacedDigit()
-        }
-        .scaledFont(.caption, weight: .bold)
-        .foregroundStyle(color)
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(color.opacity(0.14))
-        .clipShape(Capsule())
-    }
-
-    private func hero(_ day: TodaySnapshot) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            // A new user starts with a clean record, not with dashes.
-            Text("\(day.accountability?.score ?? ScoreEngine.startingScore)")
-                .scaledFont(.hero, weight: .heavy)
-                .foregroundStyle(heroFlash ?? (day.accountability == nil ? Theme.green : heroColor(day.accountability?.score)))
-                .contentTransition(.numericText())
-                .animation(.easeOut(duration: 0.6), value: day.accountability?.score)
-                .animation(.easeOut(duration: 0.4), value: heroFlash)
-            HStack(spacing: 8) {
-                Text("SPOLEHLIVOST · 30 DNÍ").labelStyle()
-                if day.accountability == nil {
-                    Badge(text: "Čistý štít", color: Theme.green)
-                }
-            }
-            Text(day.accountability?.subtitle ?? "Startuješ na plných 100. Zatím jsi nic neporušil. Odešli plánovač na týden a udrž to tak.")
-                .scaledFont(.body)
-                .foregroundStyle(Theme.textSecondary)
-                .padding(.top, 4)
-        }
-    }
-
-    /// How many days before today had anything planned. The reliability score says nothing before a week of them.
-    private func daysOfHistory(now: Date) -> Int {
-        Set(tasks.filter { !$0.isRemoved && $0.countsInScores && $0.scheduledDate < now.startOfDay }
-            .map { $0.scheduledDate.startOfDay }).count
-    }
-
-    /// Reliability, the three tiles and the points on one card that opens when touched, below the day's tasks.
-    /// Until a week of history exists it does not show a score: a new user gets "collecting data", not a made-up 100.
-    private func statsStrip(_ day: TodaySnapshot, now: Date) -> some View {
-        let enough = daysOfHistory(now: now) >= Self.daysBeforeScore
-        let score = day.accountability?.score ?? ScoreEngine.startingScore
-        let balance = PointsService.balance(tasks, purchases: purchases, diary: diary)
-        return VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
-            Button {
-                Haptics.light()
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) { statsExpanded.toggle() }
-            } label: {
-                HStack(spacing: 14) {
-                    if enough {
-                        Text("\(score)")
-                            .scaledFont(.title, weight: .heavy)
-                            .foregroundStyle(heroFlash ?? heroColor(score))
-                            .contentTransition(.numericText())
-                            .animation(.easeOut(duration: 0.4), value: heroFlash)
-                    }
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(enough ? "SPOLEHLIVOST" : "SPOLEHLIVOST · SBÍRÁME DATA").labelStyle()
-                        Text(enough ? "\(day.freshValue(day.promisesKept)) dodržených slibů · série \(String.days(day.streak)) · \(balance.formatted(.number.locale(.app))) bodů"
-                                    : "Ukáže se po prvním týdnu · \(balance.formatted(.number.locale(.app))) bodů")
-                            .scaledFont(.caption)
-                            .foregroundStyle(Theme.textSecondary)
-                            .lineLimit(2)
-                    }
-                    Spacer(minLength: 0)
-                    Image(systemName: "chevron.down")
-                        .scaledFont(.caption, weight: .bold)
-                        .foregroundStyle(Theme.textTertiary)
-                        .rotationEffect(.degrees(statsExpanded ? 180 : 0))
-                }
-                .card()
-            }
-            .buttonStyle(.plain)
-            .accessibilityHint(statsExpanded ? "Skryje podrobnosti" : "Ukáže podrobnosti")
-            // The number blinks green when it rises and orange when it falls, then settles.
-            .onChange(of: day.accountability?.score) { old, new in
-                guard let old, let new, old != new else { return }
-                heroFlash = new > old ? Theme.green : Theme.orange
-                Task {
-                    try? await Task.sleep(for: .milliseconds(900))
-                    heroFlash = nil
-                }
-            }
-            if statsExpanded {
-                VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
-                    if enough {
-                        hero(day)
-                        metrics(day)
-                    }
-                    pointsCard
-                }
-                .transition(.opacity.combined(with: .move(edge: .top)))
-            }
-        }
-    }
-
-    private func heroColor(_ score: Int?) -> Color {
-        guard let score else { return Theme.textTertiary }
-        return Double(score) / 100 < Theme.poorThreshold ? Theme.red : Theme.textPrimary
-    }
-
-    private func metrics(_ day: TodaySnapshot) -> some View {
-        TileRow {
-            MetricTile(value: day.freshValue(day.promisesKept), label: "Dodržené sliby")
-            MetricTile(value: day.freshValue(day.productivity), label: "Produktivita")
-            MetricTile(value: "\(day.streak)", label: "Série dní")
-        }
-    }
-
-    private var uncommittedCard: some View {
-        Button(action: openWeek) {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("TENTO TÝDEN BEZ ZÁVAZKU").labelStyle(Theme.orange)
-                    Text("Dokud neodešleš plánovač a nezapečetí se, nic z toho, co uděláš, se nepočítá jako dodržený slib.")
-                        .scaledFont(.body)
-                        .foregroundStyle(Theme.textSecondary)
-                        .multilineTextAlignment(.leading)
-                }
-                Spacer()
-                Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
-            }
-            .card()
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func declinedToday(_ now: Date) -> Set<String> {
-        let parts = declinedSuggestions.split(separator: ":", maxSplits: 1)
-        guard parts.count == 2, parts[0] == "\(now.daySeed)" else { return [] }
-        return Set(parts[1].split(separator: ",").map(String.init))
-    }
-
-    /// Today's suggestions without the ones declined for the day.
-    private func visibleSuggestions(now: Date) -> [Suggestion] {
-        let declined = declinedToday(now)
-        let settings = settingsList.first
-        return SuggestionService.suggestions(
-            tasks: tasks,
-            workoutPresets: settings?.workoutPresets ?? UserSettings.defaultWorkoutPresets,
-            now: now,
-            target: { settings?.weeklyTarget(for: $0) ?? $0.defaultWeeklyTarget }
-        ).filter { !declined.contains($0.category.rawValue) }
-    }
-
-    @ViewBuilder
-    private func suggestionsSection(now: Date) -> some View {
-        let declined = declinedToday(now)
-        let suggestions = visibleSuggestions(now: now)
-        if !suggestions.isEmpty {
-            VStack(spacing: 10) {
-                SectionLabel(text: "Návrhy")
-                ForEach(suggestions) { suggestion in
-                    VStack(alignment: .leading, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 5) {
-                            Label(suggestion.category.suggestionTitle, systemImage: suggestion.category.icon)
-                                .scaledFont(.heading, weight: .semibold)
-                                .foregroundStyle(Theme.textPrimary)
-                            Text(suggestion.reason)
-                                .scaledFont(.caption)
-                                .foregroundStyle(suggestion.isUrgent ? Theme.orange : Theme.textSecondary)
-                            if let hint = suggestion.hint {
-                                Text(hint)
-                                    .scaledFont(.caption, weight: .semibold)
-                                    .foregroundStyle(Theme.textPrimary)
-                            }
-                            Text("+\(PointsService.perSuggestion) bodů za splnění")
-                                .scaledFont(.caption, weight: .semibold)
-                                .foregroundStyle(Theme.green)
-                        }
-                        HStack(spacing: 10) {
-                            Button("PŘIDAT NA DNES") {
-                                editor = EditorRequest(date: now, suggestion: suggestion.category)
-                            }
-                            .buttonStyle(SecondaryButtonStyle())
-                            Button("DNES NE") {
-                                let all = declined.union([suggestion.category.rawValue])
-                                withAnimation { declinedSuggestions = "\(now.daySeed):\(all.sorted().joined(separator: ","))" }
-                            }
-                            .buttonStyle(SecondaryButtonStyle(textColor: Theme.textSecondary))
-                        }
-                    }
-                    .card()
-                }
-            }
-        }
-    }
-
-    /// After a day under 60 %, today is framed as a comeback: orange until today is back above 80 %.
-    /// While the streak buy-back card is shown, the comeback lives inside that one.
-    @ViewBuilder
-    private func comebackCard(_ day: TodaySnapshot, now: Date) -> some View {
-        if repairOffer(now: now) == nil, let comeback = comeback(day, now: now) {
-            let color = comeback.succeeded ? Theme.green : Theme.orange
-            VStack(alignment: .leading, spacing: 14) {
-                Text(comeback.succeeded ? "COMEBACK SE POVEDL" : "COMEBACK DAY").labelStyle(color)
-                HStack(spacing: 28) {
-                    comebackFigure("Včera", comeback.yesterday.percentText, Theme.textSecondary)
-                    comebackFigure("Dnes", comeback.today.percentText, color)
-                }
-                Text(comeback.succeeded ? "Včerejšek jsi nezměnil. Dnešek ano." : "Včerejšek nezměníš. Dnešek ano.")
-                    .scaledFont(.body, weight: .semibold)
-                    .foregroundStyle(Theme.textPrimary)
-                if !comeback.succeeded {
-                    Button("VYTVOŘIT RECOVERY ÚKOL") {
-                        editor = EditorRequest(date: now, isRecovery: true)
-                    }
-                    .buttonStyle(PrimaryButtonStyle(color: Theme.orange))
-                }
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.card)
-            .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
-            .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(color.opacity(0.5), lineWidth: 1))
-        }
-    }
-
-    private func comebackFigure(_ label: String, _ value: String, _ color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(label.uppercased()).labelStyle()
-            Text(value)
-                .scaledFont(34, weight: .heavy)
-                .foregroundStyle(color)
-        }
-    }
-
-    /// After failing a task with a stake on it, asks whether the stake was honoured.
-    @ViewBuilder
-    private func stakeCards(now: Date) -> some View {
-        let since = now.startOfDay.addingDays(-Self.stakeQuestionDays)
-        let open = tasks.filter {
-            !$0.stake.isEmpty && $0.stakeOutcome == 0 && $0.scheduledDate >= since
-                && ($0.status == .skipped || $0.status == .failed)
-        }
-        ForEach(open) { task in
-            VStack(alignment: .leading, spacing: 12) {
-                Text("SÁZKA").labelStyle(Theme.orange)
-                Text("Nesplnil jsi „\(task.title)“. Vsadil ses o tohle:")
-                    .scaledFont(.body)
-                    .foregroundStyle(Theme.textSecondary)
-                Text("„\(task.stake)“")
-                    .scaledFont(.heading, weight: .semibold)
-                    .foregroundStyle(Theme.textPrimary)
-                HStack(spacing: 10) {
-                    Button("DODRŽEL JSEM") { withAnimation { task.stakeOutcome = 1 } }
-                        .buttonStyle(SecondaryButtonStyle())
-                    Button("NEDODRŽEL") { withAnimation { task.stakeOutcome = 2 } }
-                        .buttonStyle(SecondaryButtonStyle(textColor: Theme.red))
-                }
-            }
-            .card()
-        }
-    }
-
-    /// Apple Health saw a workout today while a gym task is still open: one tap to log and close it.
-    @ViewBuilder
-    private func healthWorkoutCard(_ day: TodaySnapshot) -> some View {
-        let gymToday = day.visible.filter { $0.category == .gym }
-        // Nothing to offer once a gym workout is logged today.
-        if let minutes = healthGymMinutes, !gymToday.contains(where: \.isDone) {
-            let planned = gymToday.first { $0.status == .pending }
-            VStack(alignment: .leading, spacing: 12) {
-                Label("APPLE HEALTH", systemImage: "heart.fill").labelStyle(Theme.green)
-                Text(planned.map { "Dnes máš zaznamenaný trénink (\(minutes) min). Zapiš, co jsi jel, a „\($0.title)“ je splněný." }
-                     ?? "Dnes máš zaznamenaný trénink (\(minutes) min), i když jsi ho neměl v plánu. Zapiš ho, ať se počítá.")
-                    .scaledFont(.body)
-                    .foregroundStyle(Theme.textPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Button("ZAPSAT TRÉNINK") { complete(planned ?? addUnplannedGym(minutes: minutes)) }
-                    .buttonStyle(PrimaryButtonStyle())
-            }
-            .card()
-        }
-    }
-
-    /// A workout Health recorded without a planned task still gets tracked: it becomes today's gym task.
-    private func addUnplannedGym(minutes: Int) -> TaskItem {
-        var draft = TaskDraft(date: .now)
-        draft.title = TaskCategory.gym.title
-        draft.category = .gym
-        draft.plannedMinutes = max(15, minutes / 15 * 15)
-        // If the app was suggesting gym today anyway, the workout earns the suggestion bonus.
-        draft.fromSuggestion = visibleSuggestions(now: .now).contains { $0.category == .gym }
-        draft.weight = settingsList.first?.defaultWeight(category: .gym, priority: draft.priority)
-            ?? UserSettings.weight(points: draft.priority.basePoints, multiplier: TaskCategory.gym.defaultMultiplier)
-        return PlanService.save(draft, to: nil, in: context)
-    }
-
-    /// Points towards the next pass. One pass cancels a weekly commitment without penalty.
-    private var pointsCard: some View {
-        let balance = PointsService.balance(tasks, purchases: purchases, diary: diary)
-        let passes = balance / PointsService.passCost
-        let towardsNext = balance % PointsService.passCost
-        let isFull = balance >= PointsService.cap
-        return VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text("\(balance.formatted(.number.locale(.app)))")
-                    .scaledFont(.body, weight: .semibold)
-                    .foregroundStyle(Theme.textPrimary)
-                    .contentTransition(.numericText())
-                Text("/ \(PointsService.cap.formatted(.number.locale(.app))) BODŮ").labelStyle()
-                Spacer()
-                Button {
-                    showsShop = true
-                } label: {
-                    Label("OBCHOD", systemImage: "bag.fill")
-                        .scaledFont(.caption, weight: .bold)
-                        .tracking(0.6)
-                        .foregroundStyle(Theme.onPrimary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(Theme.textPrimary)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
-            }
-            ThinBar(value: Double(balance) / Double(PointsService.cap),
-                    color: passes > 0 ? Theme.green : Theme.textPrimary)
-            Text(passes == 0 ? "Do propustky chybí \(PointsService.passCost - towardsNext). Co všechno se dá za body pořídit, najdeš v obchodě."
-                 : (isFull ? "Propustky: \(passes) · plná zásoba, další body propadají. Utrať je v obchodě."
-                    : "Propustky: \(passes). Co všechno se dá za body pořídit, najdeš v obchodě."))
-                .scaledFont(.caption)
-                .foregroundStyle(Theme.textTertiary)
-        }
-        .animation(.easeOut(duration: 0.4), value: balance)
-    }
-
-    private func reflectionCard(_ pending: ReflectionRequest) -> some View {
-        Button {
-            reflection = pending
-        } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("SEBEREFLEXE TÝDNE \(pending.weekStart.weekNumber)").labelStyle(Theme.textPrimary)
-                    Text("Projdi si týden a zapiš do deníčku, jak jsi se sebou spokojený.")
-                        .scaledFont(.body)
-                        .foregroundStyle(Theme.textSecondary)
-                        .multilineTextAlignment(.leading)
-                }
-                Spacer()
-                Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
-            }
-            .card()
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var realityCheckCard: some View {
-        Button {
-            showsRealityCheck = true
-        } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("UZAVŘI DNEŠEK").labelStyle(Theme.orange)
-                    Text("Den končí a ty máš pořád otevřené závazky.")
-                        .scaledFont(.body)
-                        .foregroundStyle(Theme.textSecondary)
-                        .multilineTextAlignment(.leading)
-                }
-                Spacer()
-                Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
-            }
-            .card()
-        }
-        .buttonStyle(.plain)
-    }
-
-    /// An empty day invites the first promise instead of showing numbers that mean nothing yet.
-    private var emptyState: some View {
-        VStack(spacing: 14) {
-            EmptyStateArt(kind: .plan)
-            Text("Dnes nemáš nic v plánu.")
-                .scaledFont(.heading, weight: .bold)
-                .foregroundStyle(Theme.textPrimary)
-            Text("Den bez slibu nejde dodržet ani porušit. Přidej si jeden a začni.")
-                .scaledFont(.body)
-                .foregroundStyle(Theme.textSecondary)
-                .multilineTextAlignment(.center)
-            Button("PŘIDAT DNEŠNÍ SLIB") {
-                editor = EditorRequest(date: .now)
-            }
-            .buttonStyle(PrimaryButtonStyle())
-        }
-        .frame(maxWidth: .infinity)
-        .card()
-    }
-
-    private func section(_ title: String, color: Color = Theme.textSecondary, tasks: [TaskItem], now: Date) -> some View {
-        VStack(spacing: 10) {
-            SectionLabel(text: title, color: color)
-            ForEach(tasks) { task in
-                TaskCard(
-                    task: task,
-                    now: now,
-                    warning: PatternDetectionService.warning(for: task, tasks: self.tasks, failures: failures, now: now),
-                    onTap: {
-                        if task.status == .pending, !task.isMissed(now) {
-                            editor = EditorRequest(task: task)
-                        } else {
-                            detailTask = task
-                        }
-                    },
-                    onDone: { confirmDone = task },
-                    onFail: { giveUp(on: task, now: now) },
-                    onFocus: {
-                        if task.category == .gym {
-                            // The workout starts before the screen opens, so nothing on this screen
-                            // changes under the opening animation.
-                            _ = task.startFocusIfNeeded(in: context)
-                            gymTimerTask = task
-                        } else {
-                            focusTask = task
-                        }
-                    },
-                    onPartial: { partialTask = task },
-                    onStop: { stopTask = task }
-                )
-                // A closed task shrinks away and the card settles into "Uzavřené".
-                .transition(.asymmetric(insertion: .scale(scale: 0.94).combined(with: .opacity),
-                                        removal: .scale(scale: 0.9).combined(with: .opacity)))
-                .matchedTransitionSource(id: task.uid, in: zoom)
-                .contextMenu {
-                    if task.canReopen(now: now) {
-                        Button("Změnit rozhodnutí") { withAnimation { task.reopen() } }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Everything the Today screen shows, derived once per render.
-private struct TodaySnapshot {
-    let scored: [TaskItem]
-    let visible: [TaskItem]
-    let unresolved: [TaskItem]
-    let critical: [TaskItem]
-    let open: [TaskItem]
-    let closed: [TaskItem]
-    let accountability: ScoreEngine.Accountability?
-    let promisesKept: Double?
-    let productivity: Double?
-    let streak: Int
-    let weekIsCommitted: Bool
-
-    var doneCount: Int { scored.filter(\.isDone).count }
-
-    /// Before anything was ever closed there is nothing to measure yet, so the record shows as clean (100 %).
-    func freshValue(_ value: Double?) -> String {
-        value == nil && accountability == nil ? MetricTile.noData : value.percentText
-    }
-    var partialCount: Int { scored.filter(\.isPartial).count }
-
-    init(tasks: [TaskItem], plans: [WeeklyPlan], targets: [TaskCategory: Int], now: Date) {
-        let weekStart = now.weekStart
-        scored = tasks.filter { $0.scheduledDate.isSameDay(as: now) && $0.countsInScores }
-        visible = scored.filter { !$0.isRemoved }
-        unresolved = tasks.filter { $0.isMissed(now) }.sorted { $0.scheduledDate > $1.scheduledDate }
-
-        let pending = visible.filter { $0.status == .pending }.sorted {
-            $0.dueDate == $1.dueDate ? $0.priority.rank > $1.priority.rank : $0.dueDate < $1.dueDate
-        }
-        critical = pending.filter { $0.priority == .critical }
-        open = pending.filter { $0.priority != .critical }
-        closed = visible.filter { $0.status != .pending }
-
-        accountability = ScoreEngine.accountability(tasks: tasks, plans: plans, targets: targets, now: now)
-        promisesKept = ScoreEngine.promisesKept(tasks.filter { $0.scheduledDate.weekStart == weekStart }, now: now)
-        productivity = ScoreEngine.productivity(scored, now: now)
-        streak = ScoreEngine.dayStreak(tasks, now: now)
-        // A plan that is handed in and waiting to be sealed is as good as committed here.
-        weekIsCommitted = plans.first { $0.weekStart == weekStart }.map { $0.isCommitted || $0.isSealing } ?? false
-    }
-}
-
-/// Lets the story be used as the item of a full-screen cover.
-private struct StoryBox: Identifiable {
-    let story: WeekStory
-    var id: Date { story.weekStart }
 }

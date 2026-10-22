@@ -81,8 +81,17 @@ enum HealthService {
     static let historyDays = 365
     private static let weightHistoryDays = 365
 
-    static func summary(now: Date = .now, keptTrainingDays: Set<Date> = []) async -> Summary {
+    /// Health is read at most this often, unless the user pulls the screen down.
+    static let minimumRefreshInterval: TimeInterval = 5 * 60
+    nonisolated(unsafe) private static var lastFetch: Date?
+    nonisolated(unsafe) private static var lastSummary: Summary?
+
+    static func summary(now: Date = .now, keptTrainingDays: Set<Date> = [], force: Bool = false) async -> Summary {
         guard isAvailable else { return Summary() }
+        if !force, let lastFetch, let lastSummary, now.timeIntervalSince(lastFetch) < minimumRefreshInterval,
+           lastSummary.days.last?.day == now.startOfDay {
+            return lastSummary
+        }
         let today = now.startOfDay
         let first = today.addingDays(-(historyDays - 1))
 
@@ -103,6 +112,8 @@ enum HealthService {
             workouts: workouts.map { ($0.startDate, name(of: $0.workoutActivityType), Int($0.duration / 60)) },
             weights: await weights(since: today.addingDays(-weightHistoryDays)))
         HealthStats.remember(summary, keptTrainingDays: keptTrainingDays)
+        lastFetch = now
+        lastSummary = summary
         return summary
     }
 

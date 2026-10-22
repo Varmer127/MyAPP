@@ -143,6 +143,14 @@ struct HealthSummaryView: View {
             .padding(.bottom, 32)
         }
         .screenBackground()
+        .refreshable {
+            // Pulling the screen down always reads Health again.
+            #if DEBUG
+            if isDemo { summary = HealthService.demoSummary(); return }
+            #endif
+            guard settings?.healthEnabled == true else { return }
+            summary = await HealthService.summary(keptTrainingDays: keptTrainingDays, force: true)
+        }
         .privacyShield()
         .toolbarBackground(Theme.background, for: .navigationBar)
         .task(id: "\(scenePhase == .active)-\(settings?.healthEnabled == true)-\(isDemo)") {

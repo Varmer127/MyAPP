@@ -169,6 +169,7 @@ struct SettingsView: View {
                 case .diary:
                     diarySection(settings)
                     privacySection(settings)
+                    DataExportSection(settings: settings)
                 case .gym:
                     EmptyView()
                 }
