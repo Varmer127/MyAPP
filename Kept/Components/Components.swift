@@ -29,6 +29,9 @@ struct Badge: View {
 
 /// Number over label, used in rows of three under the hero score.
 struct MetricTile: View {
+    /// What a tile says when there is nothing to measure yet; also what the statistics say.
+    static let noData = "po prvním týdnu"
+
     let value: String
     let label: String
     var color: Color = Theme.textPrimary
@@ -36,8 +39,9 @@ struct MetricTile: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(value)
-                .font(.system(size: 26, weight: .bold))
-                .foregroundStyle(color)
+                .font(.system(size: value == Self.noData ? 15 : 26, weight: value == Self.noData ? .semibold : .bold))
+                .foregroundStyle(value == Self.noData ? Theme.textTertiary : color)
+                .frame(minHeight: 32, alignment: .leading)
                 .contentTransition(.numericText())
                 .animation(.easeOut(duration: 0.5), value: value)
                 .lineLimit(1)

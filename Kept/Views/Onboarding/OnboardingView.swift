@@ -15,7 +15,7 @@ struct OnboardingView: View {
     let onFinish: () -> Void
 
     enum Step: Int, CaseIterable {
-        case welcome, howItWorks, tutorial, activities, minimum, gym, health, diary, lock, tabs, tone, times, points, done
+        case welcome, name, howItWorks, tutorial, activities, minimum, gym, health, diary, lock, tabs, tone, times, points, done
     }
 
     private var isLast: Bool { step == Step.allCases.last }
@@ -123,6 +123,7 @@ struct OnboardingView: View {
     private var headingText: (kicker: String, title: String, subtitle: String) {
         switch step {
         case .welcome: ("VÍTEJ V KEPT", "Dodrž, co si slíbíš.", "Nejdřív jazyk a vzhled. Pak tě Kept provede nastavením, zabere to pár minut.")
+        case .name: ("TY", "Jak ti mám říkat?", "Kept s tebou mluví každý den. Napiš oslovení tak, jak ho chceš slyšet, třeba „Filipe“ nebo „Anežko“.")
         case .howItWorks: ("JAK TO FUNGUJE", "Plán. Pečeť. Slovo.", "Kept není seznam úkolů. Je to smlouva se sebou samým.")
         case .tutorial: ("PRŮVODCE", "Vyzkoušej si Kept.", "Šest krátkých ukázek. Všechno si můžeš naklikat, nic se neuloží.")
         case .activities: ("TVOJE AKTIVITY", "Čemu se chceš věnovat?", "Vyber z nabídky nebo přidej vlastní. Kept je bude navrhovat a hlídat.")
@@ -143,6 +144,7 @@ struct OnboardingView: View {
     private var content: some View {
         switch step {
         case .welcome: welcome
+        case .name: nameStep
         case .howItWorks: howItWorks
         case .tutorial: OnboardingTutorial(activity: draft.exampleActivity, secondActivity: draft.secondExampleActivity) { go(1) }
         case .activities: activities
@@ -255,6 +257,27 @@ struct OnboardingView: View {
     }
 
     // MARK: Steps
+
+    private var nameStep: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            TextField("Oslovení, např. Filipe", text: $draft.addressName)
+                .font(.system(size: 18, weight: .semibold))
+                .textContentType(.givenName)
+                .submitLabel(.done)
+                .padding(.horizontal, 16)
+                .frame(minHeight: 54)
+                .background(Theme.card)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.border, lineWidth: 1))
+            Text("V ČEM SE ZA TEBE MLUVÍ").labelStyle().padding(.top, 6)
+            ForEach(GrammarGender.allCases) { gender in
+                option(gender.title, gender.example, isOn: draft.grammar == gender) {
+                    withAnimation { draft.grammar = gender }
+                }
+            }
+            note("Slouží jen k tomu, aby věty od Kept seděly. Nikam se neposílá a změníš to v Nastavení.")
+        }
+    }
 
     private var welcome: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -851,6 +874,7 @@ struct OnboardingView: View {
         let tabNames = tabOptions.filter { draft.tabs.contains($0.tab) }.map(\.title)
         let rows: [(String, String)] = [
             ("Vzhled", (AppAppearance(rawValue: appearanceRaw) ?? .dark).title),
+            ("Oslovení", draft.addressName.trimmingCharacters(in: .whitespaces).isEmpty ? "bez jména" : draft.addressName),
             ("Aktivity", draft.activityNames.joined(separator: ", ")),
             ("Minimum", draft.minimum == 0 ? "bez minima" : "\(draft.minimum) týdně"),
             ("Gym", draft.doesGym ? "\(draft.gymMode.title) · \(split), asi \(draft.gymPerWeek)× týdně" : "ne"),

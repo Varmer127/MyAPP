@@ -137,7 +137,11 @@ struct StatsView: View {
         let removed = scoped.filter(\.isRemoved).count
         let critical = scoped.filter { $0.scoringPriority == .critical }
 
-        return VStack(spacing: 10) {
+        // Nothing was ever closed: one card instead of tiles of zeros.
+        if scoped.allSatisfy({ $0.status == .pending && !$0.isRemoved && !$0.isMissed(now) }) {
+            return AnyView(newcomerCard)
+        }
+        return AnyView(VStack(spacing: 10) {
             SectionLabel(text: "Výsledky")
             HStack(spacing: 10) {
                 MetricTile(value: "\(completed)", label: "Včas")
@@ -150,6 +154,39 @@ struct StatsView: View {
                 MetricTile(value: critical.isEmpty ? "—" : "\(critical.filter(\.isDone).count) / \(critical.count)",
                            label: "Kritické splněno")
             }
+        })
+    }
+
+    /// Statistics wake up with the first closed task; until then they say what to do.
+    private var newcomerCard: some View {
+        let planned = !tasks.filter { !$0.isRemoved }.isEmpty
+        let sealed = plans.contains(where: \.isCommitted)
+        return VStack(spacing: 10) {
+            SectionLabel(text: "Výsledky")
+            VStack(spacing: 12) {
+                EmptyStateArt(kind: .stats)
+                Text("Statistiky se rozjedou po prvním týdnu")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(Theme.textPrimary)
+                    .multilineTextAlignment(.center)
+                Text("Zapečeť týden a splň první úkoly. Pak tu uvidíš, kdy ti to jde a kdy ne.")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.textSecondary)
+                    .multilineTextAlignment(.center)
+                HStack(spacing: 6) {
+                    ForEach(0..<3, id: \.self) { step in
+                        Capsule()
+                            .fill(step < (sealed ? 2 : (planned ? 1 : 0)) ? Theme.green : Theme.cardRaised)
+                            .frame(width: 26, height: 6)
+                    }
+                    Text(sealed ? "Zbývá splnit první úkol" : (planned ? "Další krok: zapečeť týden" : "První krok: naplánuj týden"))
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.textSecondary)
+                        .padding(.leading, 6)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .card()
         }
     }
 

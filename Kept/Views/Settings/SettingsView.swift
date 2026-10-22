@@ -27,6 +27,10 @@ struct SettingsView: View {
                     .pickerStyle(.segmented)
                 }
                 .listRowBackground(Theme.card)
+                Section {
+                    ProfileCard()
+                }
+                .listRowBackground(Theme.card)
                 if let settings = settingsList.first {
                     tabsSection(settings)
                     hiddenScreensSection(settings)
@@ -72,6 +76,20 @@ struct SettingsView: View {
                 authorization = await NotificationManager.authorizationStatus()
             }
         }
+    }
+
+    private func nameSection(_ settings: UserSettings) -> some View {
+        Section {
+            TextField("Oslovení, např. Filipe", text: Bindable(settings).addressName)
+            Picker("Mluvit se mnou", selection: Bindable(settings).grammar) {
+                ForEach(GrammarGender.allCases) { Text($0.title).tag($0) }
+            }
+        } header: {
+            Text("Ty")
+        } footer: {
+            Text("Takhle tě Kept oslovuje ráno a v textech. Napiš oslovení tak, jak ho chceš číst, třeba „Filipe“ nebo „Anežko“.")
+        }
+        .listRowBackground(Theme.card)
     }
 
     @ViewBuilder

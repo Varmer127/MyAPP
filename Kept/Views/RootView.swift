@@ -16,6 +16,31 @@ struct RootView: View {
     @State private var tab: AppTab = .today
     @State private var weekShowsNext = false
     @State private var showsRealityCheck = false
+    @State private var showsSealStamp = false
+    // Switching tabs slides the new screen in a little and fades it up, instead of an instant cut.
+    @State private var slide: CGFloat = 0
+    @State private var fade: Double = 1
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage("devShowSeal") private var devShowSeal = false
+    @Query private var failures: [FailureRecord]
+    @Query private var diary: [DiaryEntry]
+    /// Badges already shown to the user, so only a new one gets announced.
+    @AppStorage("seenBadges") private var seenBadges = ""
+    @AppStorage("badgesInitialised") private var badgesInitialised = false
+    @State private var unlocked: Achievement?
+    @AppStorage("devShowDayKept") private var devShowDayKept = false
+    @AppStorage("devShowStory") private var devShowStory = false
+    @AppStorage("devShowEvening") private var devShowEvening = false
+    private var committedCount: Int { plans.filter(\.isCommitted).count }
+
+    /// The Week tab shows where this week stands: sealed, waiting for its seal, or planned but not sealed yet.
+    private var weekTabSymbol: String {
+        let plan = plans.first { $0.weekStart == Date.now.weekStart }
+        if plan?.isCommitted == true { return "checkmark.seal.fill" }
+        if plan?.isSealing == true { return "calendar.badge.clock" }
+        if let plan, !plan.pledgeableTasks().isEmpty { return "calendar.badge.exclamationmark" }
+        return "calendar"
+    }
     /// Existing installs from before the guide existed are not sent through it.
     @AppStorage("onboardingMigrated") private var onboardingMigrated = false
     /// Called once the data store is set up and the first screen can be used.
@@ -61,40 +86,120 @@ struct RootView: View {
         SealActivityManager.reconcile(plans)
     }
 
+    private var badgeSignature: Int {
+        let done = tasks.filter(\.isDone).count
+        let sealed = plans.filter(\.isCommitted).count
+        return done * 1000 + sealed * 10 + failures.count + diary.count * 7
+    }
+
+    /// Announces a badge that was earned since the last look. The first look only records what exists.
+    private func announceNewBadges() async {
+        guard settings?.onboardedAt != nil else { return }
+        let weeklyTarget: (TaskCategory) -> Int = { settings?.weeklyTarget(for: $0) ?? $0.defaultWeeklyTarget }
+        let badges = BadgeService.evaluate(tasks: tasks, plans: plans, failures: failures, diary: diary, targets: weeklyTarget)
+        let earned = badges.filter(\.isEarned)
+        let seen = Set(seenBadges.split(separator: ",").map(String.init))
+        seenBadges = earned.map(\.id).joined(separator: ",")
+        guard badgesInitialised else {
+            badgesInitialised = true
+            return
+        }
+        guard let first = earned.filter({ !seen.contains($0.id) }).max(by: { $0.tier < $1.tier }) else { return }
+        Haptics.success()
+        withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) { unlocked = first }
+        try? await Task.sleep(for: .seconds(3.2))
+        withAnimation(.easeIn(duration: 0.3)) { unlocked = nil }
+    }
+
     var body: some View {
         TabView(selection: $tab) {
             TodayView(openWeek: { tab = .week })
+                .modifier(TabSlide(offset: slide, opacity: fade))
                 .tabItem { Label("Dnes", systemImage: "sun.max") }
                 .tag(AppTab.today)
             WeekView(showsNextWeek: $weekShowsNext)
-                .tabItem { Label("Týden", systemImage: "calendar") }
+                .modifier(TabSlide(offset: slide, opacity: fade))
+                .tabItem { Label("Týden", systemImage: weekTabSymbol) }
                 .tag(AppTab.week)
             if settings?.showsStatsTab != false {
                 StatsView()
-                    .tabItem { Label("Statistiky", systemImage: "chart.bar") }
+                    .modifier(TabSlide(offset: slide, opacity: fade))
+                .tabItem { Label("Statistiky", systemImage: "chart.bar") }
                     .tag(AppTab.stats)
             }
             if settings?.showsGymTab == true {
                 NavigationStack { GymProgressView() }
-                    .tabItem { Label("Gym", systemImage: TaskCategory.gym.symbol) }
+                    .modifier(TabSlide(offset: slide, opacity: fade))
+                .tabItem { Label("Gym", systemImage: TaskCategory.gym.symbol) }
                     .tag(AppTab.gym)
             }
             if settings?.showsHealthTab == true {
                 HealthSummaryView()
-                    .tabItem { Label("Zdraví", systemImage: "heart") }
+                    .modifier(TabSlide(offset: slide, opacity: fade))
+                .tabItem { Label("Zdraví", systemImage: "heart") }
                     .tag(AppTab.health)
             }
             if settings?.showsDiaryTab == true, settings?.diaryEnabled != false {
                 DiaryView()
-                    .tabItem { Label("Deník", systemImage: "book.closed") }
+                    .modifier(TabSlide(offset: slide, opacity: fade))
+                .tabItem { Label("Deník", systemImage: "book.closed") }
                     .tag(AppTab.diary)
             }
             SettingsView()
+                .modifier(TabSlide(offset: slide, opacity: fade))
                 .tabItem { Label("Nastavení", systemImage: "gearshape") }
                 .tag(AppTab.settings)
         }
         .tint(Theme.textPrimary)
+        .onChange(of: tab) { old, new in
+            guard !reduceMotion else { return }
+            let order: [AppTab] = [.today, .week, .stats, .gym, .health, .diary, .settings]
+            let direction: CGFloat = (order.firstIndex(of: new) ?? 0) >= (order.firstIndex(of: old) ?? 0) ? 1 : -1
+            var instant = Transaction()
+            instant.disablesAnimations = true
+            withTransaction(instant) {
+                slide = direction * 28
+                fade = 0
+            }
+            DispatchQueue.main.async {
+                withAnimation(.easeOut(duration: 0.4)) {
+                    slide = 0
+                    fade = 1
+                }
+            }
+        }
         .appLock(settings?.appLockEnabled == true)
+        // A week turning into a promise gets its moment: the seal drops onto the plan.
+        .onChange(of: committedCount) { old, new in
+            guard new > old, scenePhase == .active, settings?.onboardedAt != nil else { return }
+            withAnimation(.easeOut(duration: 0.2)) { showsSealStamp = true }
+        }
+        // The Today celebrations are only visible on Today, so the test switches go there first.
+        .onChange(of: devShowDayKept) { _, on in if on { tab = .today } }
+        .onChange(of: devShowStory) { _, on in if on { tab = .today } }
+        .onChange(of: devShowEvening) { _, on in if on { tab = .today } }
+        .onChange(of: devShowSeal) { _, on in
+            guard on else { return }
+            devShowSeal = false
+            withAnimation(.easeOut(duration: 0.2)) { showsSealStamp = true }
+        }
+        // A newly earned badge slides in from the top for a moment.
+        .task(id: badgeSignature) { await announceNewBadges() }
+        .overlay(alignment: .top) {
+            if let unlocked {
+                BadgeUnlockBanner(badge: unlocked)
+                    .padding(.top, 8)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .zIndex(6)
+            }
+        }
+        .overlay {
+            if showsSealStamp {
+                SealStamp { withAnimation(.easeIn(duration: 0.3)) { showsSealStamp = false } }
+                    .transition(.opacity)
+                    .zIndex(5)
+            }
+        }
         .fullScreenCover(isPresented: $showsRealityCheck) { RealityCheckView() }
         .fullScreenCover(isPresented: Binding(
             get: { onboardingMigrated && settings != nil && settings?.onboardedAt == nil },
@@ -196,4 +301,53 @@ struct ExcuseRequest: Identifiable {
     let id = UUID()
     let task: TaskItem
     let kind: FailureKind
+}
+
+/// The slide-and-fade a screen gets when its tab is chosen.
+private struct TabSlide: ViewModifier {
+    let offset: CGFloat
+    let opacity: Double
+
+    func body(content: Content) -> some View {
+        content.offset(x: offset).opacity(opacity)
+    }
+}
+
+/// "New badge" at the top of the screen, for a few seconds.
+private struct BadgeUnlockBanner: View {
+    let badge: Achievement
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle().fill(Theme.textPrimary)
+                Image(systemName: badge.symbol)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(Theme.onPrimary)
+            }
+            .frame(width: 46, height: 46)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("NOVÝ ODZNAK · \(badge.tier.title)")
+                    .font(.system(size: 10, weight: .heavy))
+                    .tracking(1)
+                    .foregroundStyle(badge.tier == .legendary ? Theme.orange : Theme.green)
+                Text(badge.name)
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(Theme.textPrimary)
+                Text(badge.how)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Theme.textSecondary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .background(.regularMaterial)
+        .background(Theme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .overlay(RoundedRectangle(cornerRadius: 18).stroke(Theme.border, lineWidth: 1))
+        .shadow(color: .black.opacity(0.18), radius: 16, y: 6)
+        .padding(.horizontal, Theme.screenPadding)
+        .accessibilityElement(children: .combine)
+    }
 }

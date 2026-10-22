@@ -10,6 +10,8 @@ struct TaskCard: View {
     var onFail: () -> Void = {}
     var onFocus: () -> Void = {}
     var onPartial: () -> Void = {}
+    /// Stops the running timer without completing the task.
+    var onStop: () -> Void = {}
 
     private static let deadlineWarningWindow: TimeInterval = 3600
 
@@ -36,14 +38,21 @@ struct TaskCard: View {
             VStack(alignment: .leading, spacing: 5) {
                 HStack(spacing: 8) {
                     if task.isDone {
-                        Image(systemName: task.isPartial ? "circle.lefthalf.filled" : "checkmark.circle.fill")
-                            .foregroundStyle(task.isPartial ? Theme.orange : Theme.green)
-                            .symbolEffect(.bounce, options: .nonRepeating, value: task.isDone)
-                            .transition(.scale.combined(with: .opacity))
+                        if task.isPartial {
+                            Image(systemName: "circle.lefthalf.filled")
+                                .foregroundStyle(Theme.orange)
+                                .symbolEffect(.bounce, options: .nonRepeating, value: task.isDone)
+                                .transition(.scale.combined(with: .opacity))
+                        } else {
+                            // Drawn with one stroke, like the check of the logo, when it was done just now.
+                            DrawnCheck(isRecent: task.completedAt.map { Date.now.timeIntervalSince($0) < 4 } ?? false)
+                                .transition(.scale.combined(with: .opacity))
+                        }
                     }
                     Text(task.title)
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(task.status == .pending ? Theme.textPrimary : Theme.textSecondary)
+                    sealMark
                 }
                 HStack(spacing: 6) {
                     Image(systemName: task.icon)
@@ -119,6 +128,22 @@ struct TaskCard: View {
         return minutes < 60 ? "\(minutes) min" : "\(minutes / 60) h \(minutes % 60) min"
     }
 
+    /// A sealed promise carries the seal; one in a plan that is handed in and waiting for its seal carries it outlined.
+    @ViewBuilder
+    private var sealMark: some View {
+        if task.isCommitted {
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 14))
+                .foregroundStyle(Theme.textTertiary)
+                .accessibilityLabel("Zapečetěný slib")
+        } else if task.plan?.isSealing == true {
+            Image(systemName: "checkmark.seal")
+                .font(.system(size: 14))
+                .foregroundStyle(Theme.orange)
+                .accessibilityLabel("Čeká na pečeť")
+        }
+    }
+
     private var metadata: String {
         var parts = [task.category.title, "\(task.plannedMinutes) min"]
         if let deadline = task.deadline {
@@ -148,6 +173,11 @@ struct TaskCard: View {
                         .foregroundStyle(Theme.textPrimary)
                 }
                 Spacer()
+                Button(action: onStop) {
+                    timerIcon("stop.fill", color: Theme.red)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Zastavit časovač")
                 Button {
                     FocusView.togglePause(session, title: task.title)
                 } label: {
@@ -180,6 +210,11 @@ struct TaskCard: View {
                         .foregroundStyle(Theme.textPrimary)
                 }
                 Spacer()
+                Button(action: onStop) {
+                    timerIcon("stop.fill", color: Theme.red)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Zastavit stopky")
                 timerIcon("arrow.up.left.and.arrow.down.right")
             }
             .padding(14)
@@ -191,10 +226,10 @@ struct TaskCard: View {
         }
     }
 
-    private func timerIcon(_ name: String) -> some View {
+    private func timerIcon(_ name: String, color: Color = Theme.textPrimary) -> some View {
         Image(systemName: name)
             .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(Theme.textPrimary)
+            .foregroundStyle(color)
             .frame(width: 44, height: 44)
             .background(Theme.card)
             .clipShape(Circle())

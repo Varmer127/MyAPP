@@ -12,6 +12,7 @@ struct GymTimerView: View {
     @State private var showsLibrary = false
     @State private var record: RecordBanner?
     @State private var savedTemplate = false
+    @State private var confirmsStop = false
     @Query private var settingsList: [UserSettings]
     @Query private var tasks: [TaskItem]
     let task: TaskItem
@@ -55,6 +56,12 @@ struct GymTimerView: View {
             }
         }
         .sensoryFeedback(.success, trigger: record) { _, new in new != nil }
+        .confirmationDialog("Zastavit trénink?", isPresented: $confirmsStop, titleVisibility: .visible) {
+            Button("Zastavit", role: .destructive) { end(completing: false) }
+            Button("Pokračovat v tréninku", role: .cancel) {}
+        } message: {
+            Text("Stopky se zastaví a úkol zůstane otevřený. To, co jsi zapsal, se uloží.")
+        }
         .onAppear {
             task.startFocusIfNeeded(in: context)
             if task.workoutType.isEmpty, let first = settings?.workoutPresets.first {
@@ -171,10 +178,14 @@ struct GymTimerView: View {
                 .buttonStyle(PrimaryButtonStyle(color: rest == nil ? Theme.textPrimary : (reached ? Theme.green : Theme.orange)))
                 Button("DOKONČIT TRÉNINK") { end(completing: true) }
                     .buttonStyle(SecondaryButtonStyle())
-                Button("Ukončit bez splnění") { end(completing: false) }
-                    .font(.system(size: 14))
-                    .foregroundStyle(Theme.textSecondary)
-                    .frame(minHeight: 36)
+                Button { confirmsStop = true } label: {
+                    Label("STOP", systemImage: "stop.fill")
+                        .font(.system(size: 14, weight: .heavy))
+                        .tracking(0.6)
+                        .foregroundStyle(Theme.red)
+                        .frame(maxWidth: .infinity, minHeight: 40)
+                }
+                .buttonStyle(.plain)
             }
             .padding(Theme.screenPadding)
         }

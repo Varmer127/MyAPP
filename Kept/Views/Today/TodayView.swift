@@ -14,6 +14,20 @@ struct TodayView: View {
     /// Points just earned, shown for a moment above the tab bar.
     @State private var pointsGain: PointsGain?
     @State private var showsDayKept = false
+    @State private var stopTask: TaskItem?
+    @State private var story: WeekStory?
+    @AppStorage("storySeenWeek") private var storySeenWeek = 0.0
+    @AppStorage("devShowStory") private var devShowStory = false
+    @Query private var diaryEntries: [DiaryEntry]
+    @State private var sparkTrigger = 0
+    @State private var heroFlash: Color?
+    @State private var showsMorning = false
+    @AppStorage("lastActiveAt") private var lastActiveAt = 0.0
+    @AppStorage("morningGreetedDay") private var morningGreetedDay = 0.0
+    // Test switches set from the developer section (Debug builds only), harmless otherwise.
+    @AppStorage("devShowMorning") private var devShowMorning = false
+    @AppStorage("devShowDayKept") private var devShowDayKept = false
+    @AppStorage("devShowEvening") private var devShowEvening = false
     /// The day already celebrated, so undoing and redoing a task does not repeat it.
     @AppStorage("dayKeptCelebratedDay") private var dayKeptCelebratedDay = 0.0
     /// Day on which the weekly reflection last opened by itself, so it only interrupts once a day.
@@ -22,7 +36,6 @@ struct TodayView: View {
     /// Minutes of a gym workout Apple Health recorded today, if any.
     @State private var healthGymMinutes: Int?
     /// Start of the day (as a timestamp) on which the Morning Brief was last dismissed.
-    @AppStorage("briefDismissedDay") private var briefDismissedDay = 0.0
     /// "<day seed>:<category>,<category>" — suggestions the user declined today.
     @AppStorage("declinedSuggestions") private var declinedSuggestions = ""
     /// Day (as a timestamp) of the streak break whose buy-back offer the user turned down.
@@ -52,7 +65,6 @@ struct TodayView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     private static let refreshInterval: TimeInterval = 60
-    private static let briefVisibleUntilHour = 12
     private static let comebackThreshold = 0.6
     private static let stakeQuestionDays = 7
     private static let slippingAfterMinutes = 18 * 60
@@ -67,16 +79,8 @@ struct TodayView: View {
                 content(now: timeline.date)
             }
             .screenBackground()
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        editor = EditorRequest(date: .now)
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                }
-            }
-            .toolbarBackground(Theme.background, for: .navigationBar)
+            // The add button lives under the flame now, so the empty bar on top is gone.
+            .toolbar(.hidden, for: .navigationBar)
         }
         .sheet(item: $editor) {
             TaskEditorView(task: $0.task, defaultDate: $0.date, suggestion: $0.suggestion, isRecovery: $0.isRecovery)
@@ -135,6 +139,13 @@ struct TodayView: View {
             }
         }
         .sensoryFeedback(.success, trigger: pointsGain?.id) { _, new in new != nil }
+        .confirmationDialog("Zastavit časovač?", isPresented: Binding(get: { stopTask != nil }, set: { if !$0 { stopTask = nil } }),
+                            titleVisibility: .visible, presenting: stopTask) { task in
+            Button("Zastavit", role: .destructive) { withAnimation { FocusView.stop(task) } }
+            Button("Nechat běžet", role: .cancel) {}
+        } message: { _ in
+            Text("Úkol zůstane otevřený a odpracovaný čas se uloží.")
+        }
         // The last open task of the day closes the day: a short, full-screen moment.
         .onChange(of: todayKept) { _, kept in
             let today = Date.now.startOfDay.timeIntervalSince1970
@@ -145,9 +156,79 @@ struct TodayView: View {
                 withAnimation(.easeOut(duration: 0.25)) { showsDayKept = true }
             }
         }
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            let now = Date.now
+            if phase == .active {
+                if !showsMorning, MorningMoment.isDue(now: now,
+                                                      lastActive: lastActiveAt > 0 ? Date(timeIntervalSince1970: lastActiveAt) : nil,
+                                                      lastGreetedDay: morningGreetedDay > 0 ? Date(timeIntervalSince1970: morningGreetedDay) : nil,
+                                                      onboardedAt: settingsList.first?.onboardedAt) {
+                    morningGreetedDay = now.timeIntervalSince1970
+                    showsMorning = true
+                }
+                lastActiveAt = now.timeIntervalSince1970
+            } else {
+                lastActiveAt = now.timeIntervalSince1970
+            }
+        }
+        .onChange(of: devShowMorning) { _, on in
+            guard on else { return }
+            devShowMorning = false
+            showsMorning = true
+        }
+        .onChange(of: devShowStory) { _, on in
+            guard on else { return }
+            devShowStory = false
+            Task {
+                try? await Task.sleep(for: .milliseconds(700))
+                // The test shows this week even before it is over; on a week without closed tasks, the last one with any.
+                let thisWeek = Date.now.weekStart
+                story = [thisWeek, thisWeek.addingDays(-7), thisWeek.addingDays(-14)]
+                    .lazy.compactMap { WeekStory.make(tasks: tasks, diary: diaryEntries, weekStart: $0) }.first
+                    ?? WeekStory.demo
+            }
+        }
+        .fullScreenCover(item: Binding(get: { story.map { StoryBox(story: $0) } }, set: { if $0 == nil { story = nil } })) { box in
+            WeekStoryView(story: box.story) {
+                storySeenWeek = box.story.weekStart.timeIntervalSince1970
+                story = nil
+            }
+            .appAppearance()
+        }
+        .onChange(of: devShowEvening) { _, on in
+            guard on else { return }
+            devShowEvening = false
+            Task {
+                try? await Task.sleep(for: .milliseconds(700))
+                showsRealityCheck = true
+            }
+        }
+        .onChange(of: devShowDayKept) { _, on in
+            guard on else { return }
+            devShowDayKept = false
+            Task {
+                try? await Task.sleep(for: .milliseconds(700))
+                withAnimation(.easeOut(duration: 0.25)) { showsDayKept = true }
+            }
+        }
+        .fullScreenCover(isPresented: $showsMorning) {
+            MorningGreeting(name: settingsList.first?.addressName ?? "",
+                            tasks: todayTasks,
+                            streak: ScoreEngine.dayStreak(tasks),
+                            openFromBefore: tasks.filter { $0.isMissed(.now) }.count,
+                            onStart: { showsMorning = false },
+                            onAdd: {
+                                showsMorning = false
+                                Task {
+                                    try? await Task.sleep(for: .milliseconds(450))
+                                    editor = EditorRequest(date: .now)
+                                }
+                            })
+                .appAppearance()
+        }
         .overlay {
             if showsDayKept {
-                DayKeptCelebration(done: todayTasks.filter(\.isDone).count, streak: ScoreEngine.dayStreak(tasks),
+                DayKeptCelebration(done: max(todayTasks.filter(\.isDone).count, 1), streak: ScoreEngine.dayStreak(tasks),
                                    milestone: StreakService.milestones(tasks).last { $0.reachedOn?.isSameDay(as: .now) == true }) {
                     withAnimation(.easeIn(duration: 0.25)) { showsDayKept = false }
                 }
@@ -211,7 +292,7 @@ struct TodayView: View {
         } else if task.requiresProof {
             proofTask = task
         } else {
-            withAnimation { task.markDone() }
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { task.markDone() }
             // Outside a sent plan a task earns no points, but keeping your word still deserves a moment.
             if PointsService.earned(by: task) == 0 {
                 pointsGain = PointsGain(amount: 0, text: share < 1 ? "ČÁSTEČNĚ SPLNĚNO" : "SPLNĚNO")
@@ -229,12 +310,6 @@ struct TodayView: View {
         return !today.isEmpty && today.allSatisfy(\.isDone)
     }
 
-    private func showsBrief(_ day: TodaySnapshot, now: Date) -> Bool {
-        settingsList.first?.morningBriefEnabled != false
-            && !day.visible.isEmpty
-            && now.minutesIntoDay < Self.briefVisibleUntilHour * 60
-            && briefDismissedDay != now.startOfDay.timeIntervalSince1970
-    }
 
     /// From the configured time on, as long as something is still open today.
     private func showsRealityCheckCard(_ day: TodaySnapshot, now: Date) -> Bool {
@@ -248,18 +323,13 @@ struct TodayView: View {
         return ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                 header(now: now, day: day)
+                weekStoryCard(now: now)
                 todaysPromise(day, now: now)
                 if slipping {
                     slippingBanner(day)
                 }
                 streakCard(day, now: now)
                 insuranceUsedCard(now: now)
-                if showsBrief(day, now: now) {
-                    MorningBriefCard(tasks: tasks, todayTasks: day.visible, promisesKeptThisWeek: day.promisesKept,
-                                     streak: day.streak, now: now) {
-                        withAnimation { briefDismissedDay = now.startOfDay.timeIntervalSince1970 }
-                    }
-                }
                 if let pending = ReflectionRequest.pending(tasks: tasks, reflections: reflections, now: now) {
                     reflectionCard(pending)
                 }
@@ -287,9 +357,6 @@ struct TodayView: View {
                 suggestionsSection(now: now)
                 if !day.closed.isEmpty {
                     section("Uzavřené", tasks: day.closed, now: now)
-                }
-                if day.visible.isEmpty && day.unresolved.isEmpty {
-                    emptyState
                 }
             }
             .padding(.horizontal, Theme.screenPadding)
@@ -330,40 +397,95 @@ struct TodayView: View {
         }
     }
 
+    /// Offered once the week is over, once per week, when the week has something to tell.
+    @ViewBuilder
+    private func weekStoryCard(now: Date) -> some View {
+        if let week = WeekStory.offeredWeek(now: now), storySeenWeek != week.timeIntervalSince1970,
+           let offered = WeekStory.make(tasks: tasks, diary: diaryEntries, weekStart: week, now: now) {
+            Button {
+                Haptics.light()
+                story = offered
+            } label: {
+                HStack(spacing: 14) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 20))
+                        .foregroundStyle(Theme.onPrimary)
+                        .frame(width: 44, height: 44)
+                        .background(Theme.textPrimary)
+                        .clipShape(Circle())
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("TVŮJ TÝDEN JE HOTOVÝ").labelStyle(Theme.textPrimary)
+                        Text("\(offered.done) z \(offered.total) slibů. Podívej se, jak to dopadlo.")
+                            .font(.system(size: 14))
+                            .foregroundStyle(Theme.textSecondary)
+                            .multilineTextAlignment(.leading)
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
+                }
+                .card()
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
     private func header(now: Date, day: TodaySnapshot) -> some View {
         let streak = day.streak
         let atRisk = streakAtRisk(day, now: now)
-        return HStack(alignment: .center) {
+        return HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
                 Text("DNES").labelStyle()
                 Text(now.longDayText)
                     .font(.system(size: 24, weight: .bold))
                     .foregroundStyle(Theme.textPrimary)
             }
+            .padding(.top, 8)
             Spacer()
-            // Days in a row at 80 % or better. Lit only while the streak is alive; in the evening of a day
-            // that would break it, it pulses and says so.
-            HStack(spacing: 8) {
-                if streak == 0 || atRisk {
-                    Text(streak == 0 ? "Začni\nsérii dnes" : "Zhasne\no půlnoci")
-                        .font(.system(size: 11, weight: .semibold))
-                        .multilineTextAlignment(.trailing)
-                        .foregroundStyle(atRisk ? Theme.orange : Theme.textSecondary)
+            VStack(alignment: .trailing, spacing: 10) {
+                // Days in a row at 80 % or better. Lit only while the streak is alive, breathing slowly;
+                // in the evening of a day that would break it, it pulses and says so.
+                HStack(spacing: 8) {
+                    if streak == 0 || atRisk {
+                        Text(streak == 0 ? "Začni\nsérii dnes" : "Zhasne\no půlnoci")
+                            .font(.system(size: 11, weight: .semibold))
+                            .multilineTextAlignment(.trailing)
+                            .foregroundStyle(atRisk ? Theme.orange : Theme.textSecondary)
+                    }
+                    VStack(spacing: 0) {
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: 30))
+                            .symbolEffect(.bounce, options: .nonRepeating, value: streak)
+                            .symbolEffect(.pulse, options: .repeating, isActive: atRisk)
+                            .symbolEffect(.breathe, options: .repeating, isActive: streak > 0 && !atRisk)
+                        Text("\(streak)")
+                            .font(.system(size: 17, weight: .heavy))
+                            .contentTransition(.numericText())
+                    }
+                    .foregroundStyle(streak > 0 ? Theme.orange : Theme.textTertiary)
+                    .overlay { SparkBurst(trigger: sparkTrigger) }
                 }
-                VStack(spacing: 0) {
-                    Image(systemName: "flame.fill")
-                        .font(.system(size: 30))
-                        .symbolEffect(.bounce, options: .nonRepeating, value: streak)
-                        .symbolEffect(.pulse, options: .repeating, isActive: atRisk)
-                    Text("\(streak)")
-                        .font(.system(size: 17, weight: .heavy))
-                        .contentTransition(.numericText())
+                .animation(.easeOut(duration: 0.4), value: streak)
+                .onChange(of: streak) { old, new in
+                    if new > old { sparkTrigger += 1; Haptics.medium() }
                 }
-                .foregroundStyle(streak > 0 ? Theme.orange : Theme.textTertiary)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(streak == 0 ? "Série 0 dní. Začni ji dnes." : (atRisk ? "Série \(streak) dní, o půlnoci zhasne" : "Série \(streak) dní"))
+                Button {
+                    Haptics.light()
+                    editor = EditorRequest(date: .now)
+                } label: {
+                    Label("ÚKOL", systemImage: "plus")
+                        .font(.system(size: 13, weight: .heavy))
+                        .tracking(0.6)
+                        .foregroundStyle(Theme.textPrimary)
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 36)
+                        .background(Theme.cardRaised)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Přidat úkol")
             }
-            .animation(.easeOut(duration: 0.4), value: streak)
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(streak == 0 ? "Série 0 dní. Začni ji dnes." : (atRisk ? "Série \(streak) dní, o půlnoci zhasne" : "Série \(streak) dní"))
         }
     }
 
@@ -376,15 +498,25 @@ struct TodayView: View {
     /// Today's promise in one card: how much is kept, what comes next, and the way to start it.
     @ViewBuilder
     private func todaysPromise(_ day: TodaySnapshot, now: Date) -> some View {
-        if !day.scored.isEmpty {
-            let total = day.scored.count
+        if day.visible.isEmpty {
+            emptyState
+        } else {
+            // A sealed promise that was taken out of the plan is gone from the list and cannot be done any more:
+            // it shows as a broken promise of its own and does not hold the progress of what is left.
+            let total = day.visible.count
             let done = day.doneCount
+            let broken = day.scored.count - day.visible.count
             let next = (day.critical + day.open).first
-            let allDone = done == total
+            let allDone = done == total && broken == 0
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .firstTextBaseline) {
                     Text("DNEŠNÍ SLIB").labelStyle(allDone ? Theme.green : Theme.textSecondary)
                     Spacer()
+                    if broken > 0 {
+                        Text("porušeno: \(broken)")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Theme.red)
+                    }
                     if day.partialCount > 0 {
                         Text("částečně: \(day.partialCount)")
                             .font(.system(size: 12))
@@ -396,7 +528,7 @@ struct TodayView: View {
                         .font(.system(size: 34, weight: .heavy))
                         .foregroundStyle(allDone ? Theme.green : Theme.textPrimary)
                         .contentTransition(.numericText())
-                    Text(allDone ? "Den dodržen." : (total - done == 1 ? "Zbývá poslední." : "Zbývá \(total - done)."))
+                    Text(allDone ? "Den dodržen." : (done == total ? "Zbytek je splněný." : (total - done == 1 ? "Zbývá poslední." : "Zbývá \(total - done).")))
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(Theme.textSecondary)
                 }
@@ -584,9 +716,19 @@ struct TodayView: View {
             // A new user starts with a clean record, not with dashes.
             Text("\(day.accountability?.score ?? ScoreEngine.startingScore)")
                 .font(.system(size: 56, weight: .heavy))
-                .foregroundStyle(day.accountability == nil ? Theme.green : heroColor(day.accountability?.score))
+                .foregroundStyle(heroFlash ?? (day.accountability == nil ? Theme.green : heroColor(day.accountability?.score)))
                 .contentTransition(.numericText())
                 .animation(.easeOut(duration: 0.6), value: day.accountability?.score)
+                .animation(.easeOut(duration: 0.4), value: heroFlash)
+                // The number blinks green when it rises and orange when it falls, then settles.
+                .onChange(of: day.accountability?.score) { old, new in
+                    guard let old, let new, old != new else { return }
+                    heroFlash = new > old ? Theme.green : Theme.orange
+                    Task {
+                        try? await Task.sleep(for: .milliseconds(900))
+                        heroFlash = nil
+                    }
+                }
             HStack(spacing: 8) {
                 Text("SPOLEHLIVOST · 30 DNÍ").labelStyle()
                 if day.accountability == nil {
@@ -860,7 +1002,7 @@ struct TodayView: View {
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("VEČERNÍ BILANCE").labelStyle(Theme.orange)
+                    Text("UZAVŘI DNEŠEK").labelStyle(Theme.orange)
                     Text("Den končí a ty máš pořád otevřené závazky.")
                         .font(.system(size: 14))
                         .foregroundStyle(Theme.textSecondary)
@@ -874,15 +1016,23 @@ struct TodayView: View {
         .buttonStyle(.plain)
     }
 
+    /// An empty day invites the first promise instead of showing numbers that mean nothing yet.
     private var emptyState: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Na dnešek nemáš nic v plánu.")
-                .font(.system(size: 17, weight: .semibold))
+        VStack(spacing: 14) {
+            EmptyStateArt(kind: .plan)
+            Text("Dnes nemáš nic v plánu.")
+                .font(.system(size: 19, weight: .bold))
                 .foregroundStyle(Theme.textPrimary)
-            Text("Den bez závazků nejde dodržet ani porušit.")
+            Text("Den bez slibu nejde dodržet ani porušit. Přidej si jeden a začni.")
                 .font(.system(size: 14))
                 .foregroundStyle(Theme.textSecondary)
+                .multilineTextAlignment(.center)
+            Button("PŘIDAT DNEŠNÍ SLIB") {
+                editor = EditorRequest(date: .now)
+            }
+            .buttonStyle(PrimaryButtonStyle())
         }
+        .frame(maxWidth: .infinity)
         .card()
     }
 
@@ -913,8 +1063,12 @@ struct TodayView: View {
                             focusTask = task
                         }
                     },
-                    onPartial: { partialTask = task }
+                    onPartial: { partialTask = task },
+                    onStop: { stopTask = task }
                 )
+                // A closed task shrinks away and the card settles into "Uzavřené".
+                .transition(.asymmetric(insertion: .scale(scale: 0.94).combined(with: .opacity),
+                                        removal: .scale(scale: 0.9).combined(with: .opacity)))
                 .contextMenu {
                     if task.canReopen(now: now) {
                         Button("Změnit rozhodnutí") { withAnimation { task.reopen() } }
@@ -943,7 +1097,7 @@ private struct TodaySnapshot {
 
     /// Before anything was ever closed there is nothing to measure yet, so the record shows as clean (100 %).
     func freshValue(_ value: Double?) -> String {
-        value == nil && accountability == nil ? 1.0.percentText : value.percentText
+        value == nil && accountability == nil ? MetricTile.noData : value.percentText
     }
     var partialCount: Int { scored.filter(\.isPartial).count }
 
@@ -967,4 +1121,10 @@ private struct TodaySnapshot {
         // A plan that is handed in and waiting to be sealed is as good as committed here.
         weekIsCommitted = plans.first { $0.weekStart == weekStart }.map { $0.isCommitted || $0.isSealing } ?? false
     }
+}
+
+/// Lets the story be used as the item of a full-screen cover.
+private struct StoryBox: Identifiable {
+    let story: WeekStory
+    var id: Date { story.weekStart }
 }

@@ -10,6 +10,11 @@ struct DeveloperSection: View {
     @Environment(\.modelContext) private var context
     @Query private var tasks: [TaskItem]
     @Query private var plans: [WeeklyPlan]
+    @AppStorage("devShowMorning") private var showMorning = false
+    @AppStorage("devShowSeal") private var showSeal = false
+    @AppStorage("devShowStory") private var showStory = false
+    @AppStorage("devShowDayKept") private var showDayKept = false
+    @AppStorage("devShowEvening") private var showEvening = false
     @State private var confirms = false
     @State private var confirmsReset = false
 
@@ -24,6 +29,26 @@ struct DeveloperSection: View {
             Button("Zrušit všechny plány do budoucna", role: .destructive) { confirms = true }
                 .foregroundStyle(Theme.red)
                 .disabled(futureTasks.isEmpty && !plans.contains { $0.weekStart > Date.now.weekStart || $0.isSealing })
+            Button("Ukázat ranní okamžik") {
+                showMorning = true
+            }
+            .foregroundStyle(Theme.textPrimary)
+            Button("Ukázat razítko zapečetění") {
+                showSeal = true
+            }
+            .foregroundStyle(Theme.textPrimary)
+            Button("Ukázat týdenní příběh") {
+                showStory = true
+            }
+            .foregroundStyle(Theme.textPrimary)
+            Button("Ukázat „Den dodržen“") {
+                showDayKept = true
+            }
+            .foregroundStyle(Theme.textPrimary)
+            Button("Ukázat večerní uzavření dne") {
+                showEvening = true
+            }
+            .foregroundStyle(Theme.textPrimary)
             Button("Spustit onboarding znovu") {
                 UserSettings.current(in: context).onboardedAt = nil
             }

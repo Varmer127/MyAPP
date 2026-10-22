@@ -3,6 +3,7 @@ import SwiftData
 
 /// Minimal full-screen timer for one task.
 struct FocusView: View {
+    @State private var confirmsStop = false
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
     let task: TaskItem
@@ -17,6 +18,12 @@ struct FocusView: View {
         }
         .screenBackground()
         .appAppearance()
+        .confirmationDialog("Zastavit časovač?", isPresented: $confirmsStop, titleVisibility: .visible) {
+            Button("Zastavit", role: .destructive) { end(completing: false) }
+            Button("Pokračovat v práci", role: .cancel) {}
+        } message: {
+            Text("Úkol zůstane otevřený a odpracovaný čas se uloží. Dodělat ho můžeš později.")
+        }
         .onAppear {
             task.startFocusIfNeeded(in: context)
             UIApplication.shared.isIdleTimerDisabled = true
@@ -76,14 +83,17 @@ struct FocusView: View {
             }
             .padding(.horizontal, Theme.screenPadding)
             VStack(spacing: 10) {
-                Button(session?.isPaused == true ? "POKRAČOVAT" : "PAUZA", action: togglePause)
-                    .buttonStyle(SecondaryButtonStyle())
+                HStack(spacing: 10) {
+                    Button(session?.isPaused == true ? "POKRAČOVAT" : "PAUZA", action: togglePause)
+                        .buttonStyle(SecondaryButtonStyle())
+                    Button { confirmsStop = true } label: {
+                        Label("STOP", systemImage: "stop.fill")
+                    }
+                    .buttonStyle(SecondaryButtonStyle(textColor: Theme.red))
+                    .frame(maxWidth: 140)
+                }
                 Button("DOKONČIT") { end(completing: true) }
                     .buttonStyle(PrimaryButtonStyle())
-                Button("Ukončit bez splnění") { end(completing: false) }
-                    .font(.system(size: 14))
-                    .foregroundStyle(Theme.textSecondary)
-                    .padding(.top, 4)
             }
             .padding(Theme.screenPadding)
         }
@@ -124,11 +134,20 @@ struct FocusView: View {
 
     /// Completing leaves the timer running until the task is actually marked done, so cancelling
     /// the proof or workout sheet that follows does not throw the session away.
+    /// Stops every timer of a task without completing it, for when the work was interrupted.
+    /// The time worked so far is kept; the task stays open.
+    @MainActor
+    static func stop(_ task: TaskItem) {
+        task.finishFocusSessions()
+        NotificationManager.cancelFocusEnd()
+        NotificationManager.cancelRestEnd()
+        FocusActivityManager.end()
+        GymActivityManager.end()
+    }
+
     private func end(completing: Bool) {
         if !completing {
-            task.finishFocusSessions()
-            NotificationManager.cancelFocusEnd()
-            FocusActivityManager.end()
+            Self.stop(task)
         }
         dismiss()
         if completing {

@@ -46,6 +46,8 @@ struct OnboardingDraft {
     var categoryIcons: [TaskCategory: String] = [:]
     var customIcons: [String: String] = [:]
     var minimum = UserSettings.defaultMinimumWeeklyTasks
+    var addressName = ""
+    var grammar: GrammarGender = .neutral
     var gymMode: GymMode = .simple
     var split: Split = .pushPullLegs
     var ownWorkouts = ["Hrudník a triceps", "Záda a biceps", "Nohy"]
@@ -82,6 +84,8 @@ struct OnboardingDraft {
 
     /// Writes the choices into the settings and marks the guide as done.
     func apply(to settings: UserSettings, now: Date = .now) {
+        settings.addressName = addressName.trimmingCharacters(in: .whitespacesAndNewlines)
+        settings.grammar = grammar
         settings.enabledCategories = Array(activities) + [.other]
         settings.customActivities = customActivities
         ActivityIcons.shared.apply(categories: categoryIcons, custom: customIcons.filter { customActivities.contains($0.key) })

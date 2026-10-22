@@ -395,12 +395,17 @@ struct NextTaskWidgetView: View {
                     Spacer(minLength: 0)
                     if let id = today?.nextCompletableID {
                         Button(intent: CompleteTaskIntent(taskID: id)) {
-                            Label("HOTOVO", systemImage: "checkmark")
-                                .font(.system(size: 12, weight: .heavy))
-                                .foregroundStyle(Color.black)
-                                .frame(maxWidth: .infinity, minHeight: 32)
-                                .background(WidgetStyle.green)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                            HStack(spacing: 6) {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 18))
+                                Text("SPLNIL JSEM")
+                                    .font(.system(size: 11, weight: .heavy))
+                                    .tracking(0.4)
+                            }
+                            .foregroundStyle(Color.black)
+                            .frame(maxWidth: .infinity, minHeight: 38)
+                            .background(WidgetStyle.green)
+                            .clipShape(Capsule())
                         }
                         .buttonStyle(.plain)
                     }

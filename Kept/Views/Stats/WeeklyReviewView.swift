@@ -8,6 +8,8 @@ struct WeeklyReviewView: View {
     @Query private var plans: [WeeklyPlan]
     @Query private var failures: [FailureRecord]
     @Query private var settingsList: [UserSettings]
+    /// Rings start empty and fill when the card appears.
+    @State private var ringsShown = false
     let weekStart: Date
     /// Drives the bars growing in when the report opens.
     @State private var chartProgress = 0.0
@@ -163,6 +165,7 @@ struct WeeklyReviewView: View {
                 }
             }
             .card()
+            .onAppear { ringsShown = true }
         }
     }
 
@@ -173,9 +176,10 @@ struct WeeklyReviewView: View {
             ZStack {
                 Circle().stroke(Theme.cardRaised, lineWidth: 6)
                 Circle()
-                    .trim(from: 0, to: value)
+                    .trim(from: 0, to: ringsShown ? value : 0)
                     .stroke(met ? Theme.green : Theme.textPrimary, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                     .rotationEffect(.degrees(-90))
+                    .animation(.easeOut(duration: 0.9).delay(0.15), value: ringsShown)
                 Image(systemName: met ? "checkmark" : symbol)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(met ? Theme.green : Theme.textPrimary)

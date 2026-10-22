@@ -118,7 +118,7 @@ struct TodayWidgetView: View {
                         Spacer(minLength: 0)
                         if let id = snapshot?.nextCompletableID {
                             Button(intent: CompleteTaskIntent(taskID: id)) {
-                                Label("HOTOVO", systemImage: "checkmark")
+                                Label("SPLNIL JSEM", systemImage: "checkmark")
                                     .font(.system(size: 13, weight: .bold))
                                     .tracking(0.6)
                                     .foregroundStyle(.black)

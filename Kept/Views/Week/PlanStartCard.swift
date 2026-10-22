@@ -35,7 +35,10 @@ struct PlanStartCard: View {
     static let copyTile = "copyTile"
 
     private func tile(_ title: String, detail: String, symbol: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button {
+            Haptics.light()
+            action()
+        } label: {
             VStack(alignment: .leading, spacing: 0) {
                 Image(systemName: symbol)
                     .font(.system(size: 18, weight: .semibold))

@@ -59,6 +59,10 @@ final class UserSettings {
     var workoutTemplatesData: Data = Data()
     /// When the first-launch guide was finished. Nil shows it.
     var onboardedAt: Date?
+    /// How the user wants to be called in greetings, exactly as it should read ("Filipe", "Anežko", "Franto").
+    /// Typed by the user, because the Czech vocative cannot be derived reliably from a name.
+    var addressName: String = ""
+    var grammarRaw: String = GrammarGender.neutral.rawValue
     /// How much the gym section records. Existing installs keep the full version they already use.
     var gymModeRaw: String = GymMode.advanced.rawValue
 
@@ -154,6 +158,11 @@ final class UserSettings {
             return (try? JSONDecoder().decode([String].self, from: workoutPresetsData)) ?? UserSettings.defaultWorkoutPresets
         }
         set { workoutPresetsData = (try? JSONEncoder().encode(newValue)) ?? Data() }
+    }
+
+    var grammar: GrammarGender {
+        get { GrammarGender(rawValue: grammarRaw) ?? .neutral }
+        set { grammarRaw = newValue.rawValue }
     }
 
     var gymMode: GymMode {
@@ -255,6 +264,39 @@ enum GymMode: String, CaseIterable, Identifiable {
         switch self {
         case .simple: ["Stopky celého tréninku", "Odpočet pauzy jedním klepnutím", "Co jsi jel a počet tréninků týdně"]
         case .advanced: ["Cviky série po sérii, s čísly z minula", "Knihovna cviků s mapou svalů", "Rekordy, síla v čase a týdenní mapa svalů", "Šablony tréninků a rozcvičky"]
+        }
+    }
+}
+
+/// Which verb forms Kept uses when it talks about the user ("splnil" / "splnila" / "splnil(a)").
+/// The neutral choice avoids gendered forms where a sentence can be written without them.
+enum GrammarGender: String, CaseIterable, Identifiable {
+    case masculine, feminine, neutral
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .masculine: "Mužský rod"
+        case .feminine: "Ženský rod"
+        case .neutral: "Neutrálně"
+        }
+    }
+
+    var example: String {
+        switch self {
+        case .masculine: "„Splnil jsi to.“"
+        case .feminine: "„Splnila jsi to.“"
+        case .neutral: "„To je splněno.“"
+        }
+    }
+
+    /// Picks the form that matches; the neutral one is used when it differs from both.
+    func pick(_ masculine: String, _ feminine: String, neutral: String? = nil) -> String {
+        switch self {
+        case .masculine: masculine
+        case .feminine: feminine
+        case .neutral: neutral ?? "\(masculine)(a)"
         }
     }
 }
