@@ -44,3 +44,11 @@ Kód používá jen barvy z tématu, ale tyto obrazovky jsme ve světlém režim
 - **CI** hotové (`.github/workflows/ci.yml`, `scripts/ci-checks.sh`): při pushi na `main` a u pull requestů rychlé kontroly, testy v Debug a sestavení Release.
 - **CD (budoucí):** nahrání do TestFlightu a App Storu. Potřebuje placený účet vývojáře, podpisové certifikáty, aplikaci v App Store Connect a klíč API v tajných proměnných GitHubu. Nejméně práce je Xcode Cloud (podepisuje sám), jinak `fastlane` + GitHub Actions. Dělat až těsně před TestFlightem.
 - Před TestFlightem přepnout v `ci-checks.sh` upozornění na vývojářské klíče (`devShow*`, `devHealthDemo`) na chybu.
+
+## Přátelé a sociální část (plán v dokumentu „Kept: přátelé a sociální část, plán“)
+- Fáze 0–7 podle plánu: základ (Supabase dev + prod, RLS, serverový čas, Apple + Discord, App Attest), přátelé a bezpečnost (včetně nahlášení, blokování, smazání účtu), pošťouchnutí a Nerušit, sdílení a žebříčky, sázky a společné věci, zabezpečení a test, právní věci, iPad.
+- Účet je **volitelný a není v onboardingu**; zamčené části s nabídkou odemknutí; karta po prvním zapečetěném týdnu.
+- **Přihlášení přes Facebook:** zatím ne (nákladnější: schvalování u Mety, ověření firmy, horší údaje o soukromí). Vrátit se k tomu později, pokud bude potřeba. Apple a Discord ano.
+- **Věk 16+** s věkovou bránou při založení účtu; ověřit možnost Declared Age Range (iOS 26).
+- **Serverový čas** je součástí základu sociální části.
+- Citlivé údaje (váha, deník, zdraví, fotky, poznámky) nikdy na server; na server jen povolená pole.
