@@ -39,3 +39,8 @@ Kód používá jen barvy z tématu, ale tyto obrazovky jsme ve světlém režim
 - **Serverový čas** – poslední fáze před App Storem (`supabase-myapp`).
 - **Synchronizace přes iCloud (CloudKit)** místo exportu souboru: ověřit, že modely splňují pravidla CloudKitu, zapnout iCloud schopnost, testovat na dvou zařízeních. Export JSON zůstává jako malá záložní volba.
 - **Propojení uživatelů** (pošťouchnutí, sdílení plánů): sociální vrstva se serverem, účty, pravidla přístupu (RLS), GDPR; zvážit po vydání nebo dřív, podle tempa.
+
+## CI / CD
+- **CI** hotové (`.github/workflows/ci.yml`, `scripts/ci-checks.sh`): při pushi na `main` a u pull requestů rychlé kontroly, testy v Debug a sestavení Release.
+- **CD (budoucí):** nahrání do TestFlightu a App Storu. Potřebuje placený účet vývojáře, podpisové certifikáty, aplikaci v App Store Connect a klíč API v tajných proměnných GitHubu. Nejméně práce je Xcode Cloud (podepisuje sám), jinak `fastlane` + GitHub Actions. Dělat až těsně před TestFlightem.
+- Před TestFlightem přepnout v `ci-checks.sh` upozornění na vývojářské klíče (`devShow*`, `devHealthDemo`) na chybu.

@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch cancels the older run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use the newest Xcode on the runner
+        run: |
+          XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+
+      - name: Checks that need no build
+        run: scripts/ci-checks.sh
+
+      - name: Pick a simulator
+        id: sim
+        run: |
+          # iPhone 17 when it exists, otherwise the first iPhone the runner has.
+          NAME=$(xcrun simctl list devices available | grep -oE "iPhone 17( Pro)?( Max)?" | head -1)
+          [ -n "$NAME" ] || NAME=$(xcrun simctl list devices available | grep -oE "iPhone [0-9]+" | head -1)
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "Simulator: $NAME"
+
+      - name: Test (Debug)
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project Kept.xcodeproj -scheme Kept \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }}" \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO | tail -40
+
+      - name: Upload the test results when something failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestResults
+          path: TestResults.xcresult
+          retention-days: 7
+
+      - name: Build for release
+        # Catches code that only exists in debug builds but is used by release code.
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Kept.xcodeproj -scheme Kept -configuration Release \
+            -destination "generic/platform=iOS Simulator" \
+            CODE_SIGNING_ALLOWED=NO | tail -20
