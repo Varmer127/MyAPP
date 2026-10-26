@@ -138,6 +138,8 @@ struct DiaryView: View {
             }
             .foregroundStyle(streak > 0 ? Theme.orange : Theme.textTertiary)
             .accessibilityLabel("Série psaní: \(String.days(streak))")
+            NotificationBell(circled: true)
+                .padding(.leading, 8)
         }
     }
 

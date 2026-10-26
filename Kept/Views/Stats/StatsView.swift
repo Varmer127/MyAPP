@@ -57,9 +57,13 @@ struct StatsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                 VStack(alignment: .leading, spacing: 14) {
-                    Text("Statistiky")
-                        .scaledFont(.title, weight: .bold)
-                        .foregroundStyle(Theme.textPrimary)
+                    HStack {
+                        Text("Statistiky")
+                            .scaledFont(.title, weight: .bold)
+                            .foregroundStyle(Theme.textPrimary)
+                        Spacer()
+                        NotificationBell(circled: true)
+                    }
                     Picker("Období", selection: $period) {
                         ForEach(Period.allCases) { Text($0.rawValue).tag($0) }
                     }

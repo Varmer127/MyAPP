@@ -84,22 +84,26 @@ extension TodayView {
     func header(now: Date, day: TodaySnapshot) -> some View {
         let streak = day.streak
         let atRisk = streakAtRisk(day, now: now)
-        // The date, the flame and the add button share one row; at very large text they stack instead.
-        return ViewThatFits(in: .horizontal) {
-            HStack(alignment: .center, spacing: 12) {
-                dateBlock(now: now, atRisk: atRisk, streak: streak)
-                Spacer(minLength: 8)
-                addButton
-                flame(streak: streak, atRisk: atRisk)
-            }
-            VStack(alignment: .leading, spacing: 12) {
-                dateBlock(now: now, atRisk: atRisk, streak: streak)
-                HStack(spacing: 12) {
-                    addButton
-                    Spacer()
+        // The date shares a row with the bell and the flame; the add button sits under them, across the width.
+        // At very large text the date takes its own row.
+        return VStack(alignment: .leading, spacing: 14) {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .center, spacing: 12) {
+                    dateBlock(now: now, atRisk: atRisk, streak: streak)
+                    Spacer(minLength: 8)
+                    NotificationBell()
                     flame(streak: streak, atRisk: atRisk)
                 }
+                VStack(alignment: .leading, spacing: 12) {
+                    dateBlock(now: now, atRisk: atRisk, streak: streak)
+                    HStack(spacing: 12) {
+                        Spacer()
+                        NotificationBell()
+                        flame(streak: streak, atRisk: atRisk)
+                    }
+                }
             }
+            addButton
         }
         .padding(.top, 8)
     }
@@ -154,12 +158,11 @@ extension TodayView {
             Haptics.light()
             editor = EditorRequest(date: .now)
         } label: {
-            Label("ÚKOL", systemImage: "plus")
+            Label("PŘIDAT ÚKOL", systemImage: "plus")
                 .scaledFont(.caption, weight: .heavy)
                 .tracking(0.6)
                 .foregroundStyle(Theme.textPrimary)
-                .padding(.horizontal, 14)
-                .frame(minHeight: 44)
+                .frame(maxWidth: .infinity, minHeight: 44)
                 .background(Theme.cardRaised)
                 .clipShape(Capsule())
         }

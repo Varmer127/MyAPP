@@ -114,9 +114,13 @@ struct HealthSummaryView: View {
     private var content: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
-                Text("Zdraví")
-                    .scaledFont(.title, weight: .bold)
-                    .foregroundStyle(Theme.textPrimary)
+                HStack {
+                    Text("Zdraví")
+                        .scaledFont(.title, weight: .bold)
+                        .foregroundStyle(Theme.textPrimary)
+                    Spacer()
+                    NotificationBell(circled: true)
+                }
                 if !HealthService.isAvailable && !isDemo {
                     info("Apple Health na tomto zařízení není dostupné.")
                 } else if settings?.healthEnabled != true && !isDemo {

@@ -88,11 +88,15 @@ extension WeekView {
 
     var header: some View {
         VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("TÝDEN \(weekStart.weekNumber)").labelStyle()
-                Text("\(weekStart.dayMonthText) – \(weekStart.addingDays(6).dayMonthText)")
-                    .scaledFont(.title, weight: .bold)
-                    .foregroundStyle(Theme.textPrimary)
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("TÝDEN \(weekStart.weekNumber)").labelStyle()
+                    Text("\(weekStart.dayMonthText) – \(weekStart.addingDays(6).dayMonthText)")
+                        .scaledFont(.title, weight: .bold)
+                        .foregroundStyle(Theme.textPrimary)
+                }
+                Spacer()
+                NotificationBell(circled: true)
             }
             Picker("Týden", selection: $showsNextWeek) {
                 Text("Tento týden").tag(false)

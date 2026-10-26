@@ -45,3 +45,18 @@ struct HelpersTests {
         #expect(GrammarGender.neutral.pick("splnil", "splnila", neutral: "splněno") == "splněno")
     }
 }
+
+@MainActor
+struct DayRecapTests {
+    @Test func yesterdayIsSummedUp() {
+        let tasks = [Fixture.task("A", day: -1, done: true), Fixture.task("B", day: -1), Fixture.task("Dnes", day: 0, done: true)]
+        let recap = DayRecap.make(tasks: tasks, now: Fixture.now)
+        #expect(recap?.total == 2)
+        #expect(recap?.done == 1)
+        #expect(recap?.day == Fixture.now.startOfDay.addingDays(-1))
+    }
+
+    @Test func aDayWithoutTasksHasNoRecap() {
+        #expect(DayRecap.make(tasks: [Fixture.task(day: -3)], now: Fixture.now) == nil)
+    }
+}

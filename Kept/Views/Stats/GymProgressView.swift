@@ -28,9 +28,13 @@ struct GymProgressView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
-                Text("Gym")
-                    .scaledFont(.title, weight: .bold)
-                    .foregroundStyle(Theme.textPrimary)
+                HStack {
+                    Text("Gym")
+                        .scaledFont(.title, weight: .bold)
+                        .foregroundStyle(Theme.textPrimary)
+                    Spacer()
+                    NotificationBell(circled: true)
+                }
                 NavigationLink {
                     GymSettingsView()
                 } label: {

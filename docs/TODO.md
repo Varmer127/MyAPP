@@ -122,5 +122,6 @@ Kód používá jen barvy z tématu, ale tyto obrazovky jsme ve světlém režim
 - Hotovo v kódu: pošťouchnutí jen vlastním textem (1 až 100 znaků, bez odkazů, jednomu člověku 1× za 3 h, bez denního limitu, ochranný strop 120 za hodinu), příchozí pošťouchnutí v seznamu přátel, smazání a nahlášení (nahlášený text zmizí a jde s nahlášením moderátorovi), zrušením přátelství se pošťouchnutí mezi nimi smažou; režim Nerušit (důvod ze seznamu nebo vlastní do 6 slov, volitelně ukázat přátelům, volitelný automatický konec, dokud je zapnuté, nejde šťouchnout).
 - Migrace `supabase/migrations/20261026120000_phase2_pokes_dnd.sql` čeká na spuštění v Supabase; testy `supabase/tests/database/pokes.test.sql` poběží v CI.
 - Upozornění na pošťouchnutí jsou zatím jen uvnitř aplikace. Skutečný push přijde ve fázi 6 (potřebuje Apple Developer účet).
-- Moje rozhodnutí k potvrzení: komu je zapnuto Nerušit, toho nejde šťouchnout; zákaz šťouchání pro zneužití se nastavuje z dashboardu (`poke_banned_at`).
+- Potvrzeno 26. 10.: komu je zapnuto Nerušit, toho nejde šťouchnout; zákaz šťouchání pro zneužití se nastavuje z dashboardu (`poke_banned_at`).
 - Neověřeno vizuálně (simulátor není přihlášený); vyzkoušet na telefonu po spuštění migrace.
+- Schránka Upozornění: zvonek vpravo v řádku s názvem každé záložky; na Dnes vedle plamínku, „PŘIDAT ÚKOL“ je pod tím přes celou šířku. Obsah: „Jak dopadl včerejšek“ (shrnutí včerejšího dne, odlišné od ranního přehledu, který mluví o dnešku), týdenní a měsíční příběh, žádosti o přátelství, nová pošťouchnutí.
