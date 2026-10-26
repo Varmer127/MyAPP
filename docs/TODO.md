@@ -116,3 +116,4 @@ Kód používá jen barvy z tématu, ale tyto obrazovky jsme ve světlém režim
 - Přihlášení e-mailem (SMTP) a vlastní doména přihlášení: fáze 6.
 - Ranní přehled: Philip ověří a ozve se.
 - Chyba přihlášení Discordem (stav se nezměnil): příčinou byl dotaz na sloupec `invite_code`, který vznikne až migrací fáze 1. Opraveno i tím, že se chyba ukáže a nabídne „Zkusit znovu“.
+- Věková brána podle vzoru Instagramu a Facebooku (26. 10.): jen zadání data narození, bez zaškrtávátka věku; souhlas s pravidly je jedna věta pod tlačítkem „Vytvořit účet“; hláška o 16 letech až po zamítnutí. Zbývá právní ověření (v ČR je věk souhlasu se zpracováním osobních údajů 15 let) a odkaz na pravidla, až budou na webu (fáze 6).

@@ -11,7 +11,6 @@ struct RegistrationView: View {
     @State private var name = ""
     @State private var birthMonth: Int?
     @State private var birthYear: Int?
-    @State private var agreed = false
     @State private var email = ""
     @State private var code = ""
     @State private var codeSent = false
@@ -27,7 +26,7 @@ struct RegistrationView: View {
     }
 
     private var canCreate: Bool {
-        !name.trimmingCharacters(in: .whitespaces).isEmpty && birthMonth != nil && birthYear != nil && agreed && !account.isWorking
+        !name.trimmingCharacters(in: .whitespaces).isEmpty && birthMonth != nil && birthYear != nil && !account.isWorking
     }
 
     var body: some View {
@@ -182,7 +181,7 @@ struct RegistrationView: View {
                     .foregroundStyle(Theme.textSecondary)
             }
             VStack(alignment: .leading, spacing: 8) {
-                Text("Kdy ses narodil/a?").labelStyle()
+                Text("Datum narození").labelStyle()
                 HStack(spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Měsíc").scaledFont(.caption).foregroundStyle(Theme.textSecondary)
@@ -208,23 +207,19 @@ struct RegistrationView: View {
                 }
                 .pickerStyle(.menu)
                 .tint(Theme.textPrimary)
-                Text("Měsíc a rok narození. Použijí se jen na kontrolu a neuloží se.")
+                Text("Zadej své skutečné datum narození. Nikdo ho neuvidí a Kept si ho neuloží.")
                     .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
-            Toggle(isOn: $agreed) {
-                Text("Je mi alespoň 16 let a souhlasím s pravidly: žádné urážky ani výhrůžky, žádné cizí údaje a fotky. Nahlášený obsah může být smazán a účet zablokován.")
-                    .scaledFont(.caption)
-                    .foregroundStyle(Theme.textPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .tint(Theme.green)
-            .card()
             Button { create() } label: {
                 Text(account.isWorking ? "VYTVÁŘÍM…" : "VYTVOŘIT ÚČET")
             }
             .buttonStyle(PrimaryButtonStyle())
             .disabled(!canCreate)
+            Text("Vytvořením účtu souhlasíš s pravidly Kept: žádné urážky ani výhrůžky, žádné cizí údaje a fotky. Nahlášený obsah může být smazán a účet zablokován.")
+                .scaledFont(.caption)
+                .foregroundStyle(Theme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
             Button("Zrušit a odhlásit") {
                 Task { await account.signOut() }
             }
