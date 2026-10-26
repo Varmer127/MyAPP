@@ -341,6 +341,32 @@ extension OnboardingView {
         }
     }
 
+    var friends: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(["Sdílej svůj týden a drž se s kamarády",
+                         "Pošťouchni přítele, když si zapomněl makat",
+                         "Sázejte se o body, nikdy o peníze"], id: \.self) { line in
+                    HStack(alignment: .top, spacing: 10) {
+                        Circle().fill(Theme.green).frame(width: 6, height: 6).padding(.top, 7)
+                        Text(line).scaledFont(.body).foregroundStyle(Theme.textPrimary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+            .card()
+            note("Účet je volitelný a Kept funguje i bez něj. Deník, váha, zdraví a fotky zůstanou jen v tvém telefonu a nic se nesdílí, dokud to sám nezapneš. Účet založíš i později v Nastavení.")
+            if AccountService.shared.isSignedIn {
+                note("Účet máš hotový.")
+            } else {
+                Button("Přeskočit, bez účtu to zvládnu") { go(1) }
+                    .scaledFont(.body, weight: .semibold)
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+        }
+    }
+
     var diary: some View {
         VStack(alignment: .leading, spacing: 10) {
             toggleRow("Zapnout deník", "Přidá sekci Deník. Kdo nechce psát, nechá vypnuté.", isOn: $draft.diary)

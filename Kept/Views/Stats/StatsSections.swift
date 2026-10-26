@@ -24,7 +24,11 @@ struct TrendSection: View {
     private static let options = [7, 30, 90]
 
     var body: some View {
+        // A day that is still running would end the line on a low point only because the evening has not happened yet,
+        // so today joins the trend once nothing in it is left open.
+        let todayIsOpen = tasks.contains { !$0.isRemoved && $0.countsInScores && $0.status == .pending && $0.scheduledDate.isSameDay(as: .now) }
         let scores = StatisticsService.dailyScores(tasks: tasks, from: Date.now.startOfDay.addingDays(-days + 1), days: days)
+            .filter { !(todayIsOpen && $0.day.isSameDay(as: .now)) }
             .compactMap { score in score.productivity.map { (day: score.day, value: $0 * 100) } }
         VStack(spacing: 10) {
             SectionLabel(text: "Trend produktivity")

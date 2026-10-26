@@ -7,7 +7,6 @@ struct SettingsView: View {
     @Environment(\.openURL) private var openURL
     @Query private var settingsList: [UserSettings]
     @State private var authorization: UNAuthorizationStatus = .notDetermined
-    @AppStorage("introVideoEnabled") private var introEnabled = false
     /// The system permission question was just answered with "no".
     @State private var calendarDenied = false
     @AppStorage(AppAppearance.storageKey) private var appearanceRaw = AppAppearance.dark.rawValue
@@ -19,12 +18,12 @@ struct SettingsView: View {
 
     /// The settings are split into pages; the first screen only lists them with a line about what is set in each.
     private enum Page: String, Hashable, CaseIterable, Identifiable {
-        case look, notifications, activities, gym, health, calendar, diary
+        case tabs, notifications, activities, gym, health, calendar, diary
         var id: String { rawValue }
 
         var title: LocalizedStringKey {
             switch self {
-            case .look: "Vzhled a záložky"
+            case .tabs: "Záložky"
             case .notifications: "Upozornění"
             case .activities: "Aktivity a cíle"
             case .gym: "Gym"
@@ -36,7 +35,7 @@ struct SettingsView: View {
 
         var symbol: String {
             switch self {
-            case .look: "paintbrush"
+            case .tabs: "rectangle.bottomhalf.inset.filled"
             case .notifications: "bell"
             case .activities: "target"
             case .gym: "dumbbell"
@@ -48,6 +47,7 @@ struct SettingsView: View {
     }
 
     @State private var path: [Page] = []
+    @State private var showsRegistration = false
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -56,7 +56,9 @@ struct SettingsView: View {
                     ProfileCard()
                 }
                 .listRowBackground(Theme.card)
+                appearanceSection
                 permissionSection
+                accountSection
                 if let settings = settingsList.first {
                     Section {
                         ForEach(Page.allCases) { page in
@@ -80,6 +82,7 @@ struct SettingsView: View {
             }
             .scrollContentBackground(.hidden)
             .screenBackground()
+            .sheet(isPresented: $showsRegistration) { RegistrationView() }
             .navigationTitle("Nastavení")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Theme.background, for: .navigationBar)
@@ -94,6 +97,60 @@ struct SettingsView: View {
                 if note.object as? AppTab == .settings { path.removeAll() }
             }
         }
+    }
+
+    /// Sign-in is optional; this is the one place in Settings where it is offered and managed.
+    @ViewBuilder
+    private var accountSection: some View {
+        let account = AccountService.shared
+        Section {
+            switch account.state {
+            case .ready(let profile):
+                NavigationLink {
+                    AccountView()
+                } label: {
+                    LabeledContent {
+                        Text(profile.handle).foregroundStyle(Theme.textSecondary)
+                    } label: {
+                        Label("Účet", systemImage: "person.crop.circle")
+                    }
+                }
+            case .unavailable:
+                Button { Task { await account.reload() } } label: {
+                    Label("Účet se nenačetl, zkusit znovu", systemImage: "arrow.clockwise")
+                }
+            case .needsProfile:
+                Button { showsRegistration = true } label: {
+                    Label("Dokončit registraci", systemImage: "person.crop.circle.badge.plus")
+                }
+            case .unknown, .signedOut:
+                Button { showsRegistration = true } label: {
+                    Label("Registrovat se nebo přihlásit", systemImage: "person.crop.circle.badge.plus")
+                }
+            }
+            NavigationLink {
+                FriendsView()
+            } label: {
+                LabeledContent {
+                    if !account.isSignedIn {
+                        Image(systemName: "lock.fill").foregroundStyle(Theme.textSecondary)
+                    } else if !FriendsService.shared.incoming.isEmpty {
+                        Text("\(FriendsService.shared.incoming.count)")
+                            .scaledFont(.caption, weight: .bold)
+                            .foregroundStyle(Theme.onPrimary)
+                            .padding(.horizontal, 8).padding(.vertical, 2)
+                            .background(Theme.textPrimary).clipShape(Capsule())
+                    }
+                } label: {
+                    Label("Přátelé", systemImage: "person.2")
+                }
+            }
+        } footer: {
+            if !account.isSignedIn {
+                Text("Volitelné. S účtem můžeš mít přátele. Bez něj Kept funguje jako dosud.")
+            }
+        }
+        .listRowBackground(Theme.card)
     }
 
     private func pageRow(_ page: Page, _ settings: UserSettings) -> some View {
@@ -119,9 +176,8 @@ struct SettingsView: View {
     /// One line on what is set on a page, so most of the time there is no need to open it.
     private func summary(of page: Page, _ settings: UserSettings) -> String {
         switch page {
-        case .look:
-            let appearance = AppAppearance(rawValue: appearanceRaw)?.title ?? ""
-            return "\(appearance) · záložky navíc: \(settings.optionalTabCount)"
+        case .tabs:
+            return "Navíc \(settings.optionalTabCount) ze \(UserSettings.maxOptionalTabs)"
         case .notifications:
             guard settings.taskRemindersEnabled || settings.realityCheckEnabled || settings.morningBriefEnabled else { return "Vypnuto" }
             let nudges = settings.nudgesPerDay > 0 ? "úkoly bez termínu \(settings.nudgesPerDay)× denně" : "úkoly bez termínu bez připomínek"
@@ -148,11 +204,10 @@ struct SettingsView: View {
         default:
             Form {
                 switch page {
-                case .look:
-                    appearanceSection
+                case .tabs:
+                    tabsPreviewSection(settings)
                     tabsSection(settings)
                     hiddenScreensSection(settings)
-                    introSection
                 case .notifications:
                     toneSection(settings)
                     remindersSection(settings)
@@ -182,22 +237,13 @@ struct SettingsView: View {
         }
     }
 
+    /// Light, dark or the system setting, one tap under the name.
     private var appearanceSection: some View {
-        Section("Vzhled") {
+        Section {
             Picker("Vzhled", selection: $appearanceRaw) {
                 ForEach(AppAppearance.allCases) { Text($0.title).tag($0.rawValue) }
             }
             .pickerStyle(.segmented)
-        }
-        .listRowBackground(Theme.card)
-    }
-
-    private var introSection: some View {
-        Section {
-            Toggle("Úvodní video", isOn: $introEnabled)
-                .tint(Theme.textSecondary)
-        } footer: {
-            Text("Přehraje se při spuštění aplikace, ve výchozím stavu bez zvuku. Klepnutím ho přeskočíš.")
         }
         .listRowBackground(Theme.card)
     }
@@ -416,10 +462,46 @@ struct SettingsView: View {
         }
     }
 
+    /// The bottom bar as it looks with the current choice, so the effect of each switch is seen at once.
+    private func tabsPreviewSection(_ settings: UserSettings) -> some View {
+        var items: [(title: LocalizedStringKey, symbol: String)] = [("Dnes", "sun.max"), ("Týden", "calendar")]
+        if settings.showsStatsTab { items.append(("Statistiky", "chart.bar")) }
+        if settings.showsGymTab { items.append(("Gym", TaskCategory.gym.symbol)) }
+        if settings.showsHealthTab { items.append(("Zdraví", "heart")) }
+        if settings.showsDiaryTab && settings.diaryEnabled { items.append(("Deník", "book.closed")) }
+        items.append(("Nastavení", "gearshape"))
+        return Section {
+            HStack(spacing: 0) {
+                ForEach(Array(items.enumerated()), id: \.offset) { _, item in
+                    VStack(spacing: 4) {
+                        Image(systemName: item.symbol)
+                            .scaledFont(.body)
+                            .frame(height: 24)
+                        Text(item.title)
+                            .scaledFont(.caption)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
+                    }
+                    .foregroundStyle(Theme.textPrimary)
+                    .frame(maxWidth: .infinity)
+                }
+            }
+            .padding(.vertical, 10)
+            .background(Theme.cardRaised)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .listRowInsets(EdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 14))
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Spodní lišta")
+        } header: {
+            Text("Spodní lišta teď")
+        }
+        .listRowBackground(Theme.card)
+    }
+
     private func tabsSection(_ settings: UserSettings) -> some View {
         let isFull = settings.optionalTabCount >= UserSettings.maxOptionalTabs
         return Section {
-            LabeledContent("Vždy zobrazené", value: "Dnes · Týden · Nastavení")
+            LabeledContent("Vždy v liště", value: "Dnes · Týden · Nastavení")
             tabToggle("Statistiky", "chart.bar", Bindable(settings).showsStatsTab, isFull: isFull)
             tabToggle("Gym", TaskCategory.gym.symbol, Bindable(settings).showsGymTab, isFull: isFull)
             if HealthService.isAvailable {
@@ -429,7 +511,7 @@ struct SettingsView: View {
                 tabToggle("Deník", "book.closed", Bindable(settings).showsDiaryTab, isFull: isFull)
             }
         } header: {
-            Text("Záložky")
+            Text("Navíc v liště: \(settings.optionalTabCount) ze \(UserSettings.maxOptionalTabs)")
         } footer: {
             Text(isFull
                  ? "Navíc můžeš mít nejvýš \(UserSettings.maxOptionalTabs) záložky. Pro další nejdřív jednu vypni. Vypnuté obrazovky otevřeš níž v části Další obrazovky."
@@ -460,6 +542,13 @@ struct SettingsView: View {
                         }
                     }))
                     .tint(Theme.textSecondary)
+                if settings.healthEnabled {
+                    NavigationLink {
+                        HealthSummaryView(isEmbedded: true)
+                    } label: {
+                        Label("Otevřít přehled zdraví", systemImage: "heart.text.square")
+                    }
+                }
             } header: {
                 Text("Zdraví")
             } footer: {

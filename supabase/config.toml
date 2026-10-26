@@ -1,0 +1,14 @@
+# Local stack used by CI to test the database. The real projects are configured in the Supabase dashboard.
+project_id = "kept"
+
+[db]
+port = 54322
+major_version = 17
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+
+[auth]
+enabled = true

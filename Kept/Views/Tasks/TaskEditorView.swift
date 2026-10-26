@@ -12,11 +12,19 @@ struct TaskEditorView: View {
     @State private var draft: TaskDraft
     @State private var usesCustomWeight = false
     @State private var confirmsRemoval = false
-    @State private var showsDurationPicker = false
+    /// The extra options are open by default, with one clear button to fold them away.
+    @State private var showsMore = true
+    @State private var editing: Property?
+    @State private var showsDatePicker = false
+    @FocusState private var titleFocused: Bool
 
-    private static let minuteOptions = [0, 15, 30, 45]
+    /// The little editor that opens under the row of chips.
+    private enum Property { case deadline, duration, priority }
+
     private static let minimumDuration = 15
-    private static let maximumHours = 16
+    private static let maximumMinutes = 16 * 60
+    private static let quickDurations = [15, 30, 45, 60, 90, 120]
+    private static let stripDays = 6
 
     init(task: TaskItem?, defaultDate: Date, suggestion: TaskCategory? = nil, isRecovery: Bool = false) {
         self.task = task
@@ -31,16 +39,6 @@ struct TaskEditorView: View {
             draft.isRecovery = isRecovery
         }
         _draft = State(initialValue: draft)
-    }
-
-    private var hoursBinding: Binding<Int> {
-        Binding(get: { draft.plannedMinutes / 60 },
-                set: { draft.plannedMinutes = max(Self.minimumDuration, $0 * 60 + draft.plannedMinutes % 60) })
-    }
-
-    private var minutesBinding: Binding<Int> {
-        Binding(get: { draft.plannedMinutes % 60 },
-                set: { draft.plannedMinutes = max(Self.minimumDuration, draft.plannedMinutes / 60 * 60 + $0) })
     }
 
     private var durationText: String {
@@ -97,183 +95,449 @@ struct TaskEditorView: View {
         return lower...max(plan.lastDay, lower)
     }
 
+    // MARK: Layout
+
     var body: some View {
-        NavigationStack {
-            Form {
-                if isCommitted {
-                    Section {
-                        Text("Tento úkol je součástí tvého závazku. Přesun, snížení priority nebo váhy a změna deadlinu se zaznamenají a sníží věrnost plánu.")
-                            .scaledFont(.caption)
-                            .foregroundStyle(Theme.orange)
-                    }
-                    .listRowBackground(Theme.card)
-                }
-
-                Section("Úkol") {
-                    TextField("Název", text: $draft.title)
-                    Picker("Kategorie", selection: $draft.category) {
-                        ForEach(categoryOptions) { Label($0.title, systemImage: $0.icon).tag($0) }
-                    }
-                    if task == nil, let custom = settingsList.first?.customActivities, !custom.isEmpty {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
-                                ForEach(custom, id: \.self) { name in
-                                    Button {
-                                        draft.title = name
-                                        draft.category = .other
-                                    } label: {
-                                        Label(name, systemImage: ActivityIcons.shared.symbol(forCustom: name))
-                                    }
-                                    .scaledFont(.body, weight: .semibold)
-                                    .foregroundStyle(draft.title == name ? Theme.onPrimary : Theme.textPrimary)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 8)
-                                    .background(draft.title == name ? Theme.textPrimary : Theme.cardRaised)
-                                    .clipShape(Capsule())
-                                    .buttonStyle(.plain)
-                                }
-                            }
-                        }
-                    }
-                    Picker("Priorita", selection: $draft.priority) {
-                        ForEach(TaskPriority.allCases) { Text($0.title).tag($0) }
-                    }
-                }
-                .listRowBackground(Theme.card)
-
-                Section("Kdy") {
-                    DatePicker("Den", selection: $draft.date, in: dateRange, displayedComponents: .date)
-                    if isDuplicate {
-                        Label("„\(draft.trimmedTitle)“ už v tento den máš naplánované", systemImage: "exclamationmark.circle.fill")
-                            .scaledFont(.caption, weight: .semibold)
-                            .foregroundStyle(Theme.orange)
-                    }
-                    Toggle("Použít deadline", isOn: $draft.hasDeadline)
-                        .tint(Theme.textSecondary)
-                    if draft.hasDeadline {
-                        DatePicker("Deadline", selection: $draft.deadlineTime, displayedComponents: .hourAndMinute)
-                    }
-                    Button {
-                        withAnimation { showsDurationPicker.toggle() }
-                    } label: {
-                        LabeledContent("Délka", value: durationText)
-                    }
-                    .foregroundStyle(Theme.textPrimary)
+        VStack(spacing: 0) {
+            header
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    if isCommitted { committedNote }
+                    titleField
+                    dayStrip
+                    propertyChips
+                    if let editing { editor(for: editing) }
                     calendarRows
-                    if showsDurationPicker {
-                        HStack(spacing: 0) {
-                            Picker("Hodiny", selection: hoursBinding) {
-                                ForEach(0...Self.maximumHours, id: \.self) { Text("\($0) h").tag($0) }
+                    categoryRow
+                    customActivityRow
+                    moreSection
+                    if task != nil { removeButton }
+                }
+                .padding(.horizontal, Theme.screenPadding)
+                .padding(.top, 8)
+                .padding(.bottom, 24)
+            }
+            .scrollDismissesKeyboard(.interactively)
+            addButton
+        }
+        .screenBackground()
+        .appAppearance()
+        .presentationDragIndicator(.visible)
+        .alert("„\(draft.trimmedTitle)“ už v ten den máš", isPresented: $confirmsDuplicate) {
+            Button("Přidat znovu", action: save)
+            Button("Zrušit", role: .cancel) {}
+        } message: {
+            Text("\(draft.date.longDayText) ji už máš naplánovanou. Opravdu ji tam chceš ještě jednou? Třeba když jdeš do gymu dvakrát za den.")
+        }
+        .confirmationDialog(removalMessage, isPresented: $confirmsRemoval, titleVisibility: .visible) {
+            Button(isCommitted ? "Porušit slib" : "Smazat", role: .destructive, action: remove)
+        }
+        .onAppear {
+            if let task { usesCustomWeight = task.weight != automaticWeight }
+            if task == nil { titleFocused = true }
+        }
+    }
+
+    private var header: some View {
+        HStack {
+            Text(task == nil ? "NOVÝ SLIB" : "UPRAVIT SLIB")
+                .labelStyle()
+            Spacer()
+            Button { dismiss() } label: {
+                Image(systemName: "xmark")
+                    .scaledFont(.body, weight: .semibold)
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(width: 34, height: 34)
+                    .background(Theme.cardRaised)
+                    .clipShape(Circle())
+            }
+            .accessibilityLabel("Zavřít")
+        }
+        .padding(.horizontal, Theme.screenPadding)
+        .padding(.top, 22)
+        .padding(.bottom, 6)
+    }
+
+    private var committedNote: some View {
+        Text("Tento úkol je součástí tvého závazku. Přesun, snížení priority nebo váhy a změna deadlinu se zaznamenají a sníží věrnost plánu.")
+            .scaledFont(.caption)
+            .foregroundStyle(Theme.orange)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var titleField: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            TextField("Co slibuješ?", text: $draft.title, axis: .vertical)
+                .scaledFont(.title, weight: .heavy)
+                .foregroundStyle(Theme.textPrimary)
+                .lineLimit(1...3)
+                .focused($titleFocused)
+                .submitLabel(.done)
+            if isDuplicate {
+                Label("„\(draft.trimmedTitle)“ už v tento den máš naplánované", systemImage: "exclamationmark.circle.fill")
+                    .scaledFont(.caption, weight: .semibold)
+                    .foregroundStyle(Theme.orange)
+            }
+        }
+    }
+
+    // MARK: Day
+
+    /// The next days as one tap each; any other day opens a calendar.
+    private var stripDates: [Date] {
+        let today = Date.now.startOfDay
+        var days = (0..<Self.stripDays).map { today.addingDays($0) }.filter { dateRange.contains($0) }
+        if !days.contains(where: { $0.isSameDay(as: draft.date) }) {
+            days.insert(draft.date, at: 0)
+            days.sort()
+        }
+        return days
+    }
+
+    private var dayStrip: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(stripDates, id: \.self) { day in
+                        let isOn = day.isSameDay(as: draft.date)
+                        Button {
+                            Haptics.light()
+                            draft.date = day
+                            showsDatePicker = false
+                        } label: {
+                            VStack(spacing: 2) {
+                                Text(day.isSameDay(as: .now) ? "Dnes" : day.formatted(.dateTime.weekday(.abbreviated).locale(.app)).localizedCapitalized)
+                                    .scaledFont(.caption)
+                                Text(day.formatted(.dateTime.day().locale(.app)))
+                                    .scaledFont(.heading, weight: .bold)
                             }
-                            Picker("Minuty", selection: minutesBinding) {
-                                ForEach(Self.minuteOptions, id: \.self) { Text("\($0) min").tag($0) }
-                            }
+                            .frame(width: 54, height: 58)
+                            .foregroundStyle(isOn ? Theme.onPrimary : Theme.textPrimary)
+                            .background(isOn ? Theme.textPrimary : Theme.card)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                            .overlay(RoundedRectangle(cornerRadius: 14).stroke(isOn ? Theme.textPrimary : Theme.border, lineWidth: 1))
                         }
-                        .pickerStyle(.wheel)
-                        .frame(height: 130)
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(day.longDayText)
+                        .accessibilityAddTraits(isOn ? .isSelected : [])
                     }
-                }
-                .listRowBackground(Theme.card)
-
-                Section {
-                    Toggle("Vlastní váha", isOn: $usesCustomWeight)
-                        .tint(Theme.textSecondary)
-                    if usesCustomWeight {
-                        Stepper("Váha: \(draft.weight)", value: $draft.weight, in: UserSettings.weightRange)
-                    } else {
-                        LabeledContent("Váha", value: "\(automaticWeight)")
+                    Button { withAnimation { showsDatePicker.toggle() } } label: {
+                        VStack(spacing: 2) {
+                            Image(systemName: "calendar").scaledFont(.heading)
+                            Text("Jiný").scaledFont(.caption)
+                        }
+                        .frame(width: 54, height: 58)
+                        .foregroundStyle(Theme.textPrimary)
+                        .background(Theme.card)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(showsDatePicker ? Theme.textPrimary : Theme.border, lineWidth: 1))
                     }
-                } header: {
-                    Text("Body")
-                } footer: {
-                    Text("Váha určuje, jak moc úkol hýbe produktivitou. Ve výchozím stavu vychází z kategorie a priority.")
-                }
-                .listRowBackground(Theme.card)
-
-                Section {
-                    Toggle("Focus timer", isOn: $draft.usesFocus)
-                        .tint(Theme.textSecondary)
-                    Toggle("Vyžadovat důkaz", isOn: $draft.requiresProof)
-                        .tint(Theme.textSecondary)
-                    if task == nil {
-                        Toggle("Recovery úkol", isOn: $draft.isRecovery)
-                            .tint(Theme.textSecondary)
-                    }
-                } header: {
-                    Text("Režim")
-                } footer: {
-                    Text("Důkaz = fotka nebo poznámka před splněním. Recovery úkol je práce navíc po špatném dni: přidá bonus, ale původní selhání nesmaže.")
-                }
-                .listRowBackground(Theme.card)
-
-                Section {
-                    TextField("Co se stane, když to nesplníš", text: $draft.stake, axis: .vertical)
-                        .lineLimit(1...3)
-                } header: {
-                    Text("Sázka")
-                } footer: {
-                    Text("Např. „večer bez seriálu“. Po selhání se tě aplikace zeptá, jestli jsi ji dodržel.")
-                }
-                .listRowBackground(Theme.card)
-
-                Section {
-                    TextField("Např. když dopiju kávu, začnu číst", text: $draft.cue, axis: .vertical)
-                        .lineLimit(1...3)
-                } header: {
-                    Text("Kdy to začneš?")
-                } footer: {
-                    Text("Čím konkrétnější, tím líp se úkol splní: pevný spouštěč, ne „někdy dnes“. Věta se ukáže v upozornění.")
-                }
-                .listRowBackground(Theme.card)
-
-                Section("Proč na tom záleží?") {
-                    TextField("Tvůj vlastní důvod — bude použit proti tobě", text: $draft.why, axis: .vertical)
-                        .lineLimit(2...5)
-                }
-                .listRowBackground(Theme.card)
-
-                Section("Poznámky") {
-                    TextField("Volitelné", text: $draft.notes, axis: .vertical)
-                        .lineLimit(2...6)
-                }
-                .listRowBackground(Theme.card)
-
-                if task != nil {
-                    Section {
-                        Button("Odstranit úkol", role: .destructive) { confirmsRemoval = true }
-                    }
-                    .listRowBackground(Theme.card)
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Vybrat jiný den")
                 }
             }
-            .scrollContentBackground(.hidden)
-            .screenBackground()
-            .navigationTitle(task == nil ? "Nový úkol" : "Upravit úkol")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Zrušit") { dismiss() }
+            if showsDatePicker {
+                DatePicker("Den", selection: $draft.date, in: dateRange, displayedComponents: .date)
+                    .datePickerStyle(.graphical)
+                    .tint(Theme.textPrimary)
+                    .padding(8)
+                    .background(Theme.card)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+            }
+        }
+    }
+
+    // MARK: Chips and their editors
+
+    private var propertyChips: some View {
+        FlowLayout(spacing: 8) {
+            chip(.deadline, "clock", draft.hasDeadline ? "do \(draft.deadlineTime.timeText)" : "bez deadlinu")
+            chip(.duration, "hourglass", durationText)
+            chip(.priority, "flag", draft.priority.title)
+        }
+    }
+
+    private func chip(_ property: Property, _ symbol: String, _ text: String) -> some View {
+        let isOpen = editing == property
+        return Button {
+            Haptics.light()
+            withAnimation(.easeOut(duration: 0.2)) { editing = isOpen ? nil : property }
+        } label: {
+            Label(text, systemImage: symbol)
+                .scaledFont(.body, weight: .semibold)
+                .foregroundStyle(Theme.textPrimary)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(Theme.card)
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(isOpen ? Theme.textPrimary : Theme.border, lineWidth: isOpen ? 1.5 : 1))
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isOpen ? .isSelected : [])
+    }
+
+    @ViewBuilder
+    private func editor(for property: Property) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            switch property {
+            case .deadline:
+                Text("DEADLINE").labelStyle()
+                Toggle(isOn: $draft.hasDeadline) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Použít deadline").scaledFont(.body, weight: .semibold).foregroundStyle(Theme.textPrimary)
+                        Text("Úkol se ohlásí před koncem.").scaledFont(.caption).foregroundStyle(Theme.textSecondary)
+                    }
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(task == nil ? "Přidat do plánu" : "Uložit") { isDuplicate ? (confirmsDuplicate = true) : save() }
-                        .disabled(draft.trimmedTitle.isEmpty)
+                .tint(Theme.green)
+                if draft.hasDeadline {
+                    DatePicker("Hotovo do", selection: $draft.deadlineTime, displayedComponents: .hourAndMinute)
+                        .tint(Theme.textPrimary)
                 }
+            case .duration:
+                Text("DÉLKA").labelStyle()
+                FlowLayout(spacing: 8) {
+                    ForEach(Self.quickDurations, id: \.self) { minutes in
+                        let isOn = draft.plannedMinutes == minutes
+                        Button { draft.plannedMinutes = minutes; Haptics.light() } label: {
+                            Text(Self.durationLabel(minutes))
+                                .scaledFont(.body, weight: .semibold)
+                                .foregroundStyle(isOn ? Theme.onPrimary : Theme.textPrimary)
+                                .padding(.horizontal, 14).padding(.vertical, 8)
+                                .background(isOn ? Theme.textPrimary : Theme.cardRaised)
+                                .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                Stepper("Přesně: \(durationText)", value: $draft.plannedMinutes,
+                        in: Self.minimumDuration...Self.maximumMinutes, step: 15)
+                    .scaledFont(.body)
+                    .foregroundStyle(Theme.textPrimary)
+            case .priority:
+                Text("PRIORITA").labelStyle()
+                Picker("Priorita", selection: $draft.priority) {
+                    ForEach(TaskPriority.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                Text("Váha úkolu vychází z priority a kategorie, dole ji můžeš nastavit ručně.")
+                    .scaledFont(.caption)
+                    .foregroundStyle(Theme.textSecondary)
             }
-            .alert("„\(draft.trimmedTitle)“ už v ten den máš", isPresented: $confirmsDuplicate) {
-                Button("Přidat znovu", action: save)
-                Button("Zrušit", role: .cancel) {}
-            } message: {
-                Text("\(draft.date.longDayText) ji už máš naplánovanou. Opravdu ji tam chceš ještě jednou? Třeba když jdeš do gymu dvakrát za den.")
-            }
-            .confirmationDialog(removalMessage, isPresented: $confirmsRemoval, titleVisibility: .visible) {
-                Button(isCommitted ? "Porušit slib" : "Smazat", role: .destructive, action: remove)
-            }
-            .onAppear {
-                if let task {
-                    usesCustomWeight = task.weight != automaticWeight
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.border, lineWidth: 1))
+        .transition(.opacity.combined(with: .move(edge: .top)))
+    }
+
+    private static func durationLabel(_ minutes: Int) -> String {
+        switch minutes {
+        case ..<60: "\(minutes) min"
+        case 60: "1 h"
+        case 90: "1,5 h"
+        default: "\(minutes / 60) h"
+        }
+    }
+
+    // MARK: Category
+
+    private var categoryRow: some View {
+        categoryScroller.scrollHintBar()
+    }
+
+    private var categoryScroller: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                ForEach(categoryOptions) { category in
+                    let isOn = draft.category == category
+                    Button { Haptics.light(); draft.category = category } label: {
+                        VStack(spacing: 5) {
+                            Image(systemName: category.icon)
+                                .scaledFont(.heading)
+                                .frame(width: 48, height: 48)
+                                .foregroundStyle(isOn ? Theme.onPrimary : Theme.textPrimary)
+                                .background(isOn ? Theme.textPrimary : Theme.card)
+                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                                .overlay(RoundedRectangle(cornerRadius: 14).stroke(isOn ? Theme.textPrimary : Theme.border, lineWidth: 1))
+                            Text(category.title)
+                                .scaledFont(.caption)
+                                .foregroundStyle(isOn ? Theme.textPrimary : Theme.textSecondary)
+                                .lineLimit(1)
+                        }
+                        .frame(width: 66)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(category.title)
+                    .accessibilityAddTraits(isOn ? .isSelected : [])
                 }
             }
         }
-        .appAppearance()
+    }
+
+    /// The user's own activities as one-tap shortcuts, only when adding.
+    @ViewBuilder
+    private var customActivityRow: some View {
+        if task == nil, let custom = settingsList.first?.customActivities, !custom.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(custom, id: \.self) { name in
+                        let isOn = draft.title == name
+                        Button {
+                            draft.title = name
+                            draft.category = .other
+                        } label: {
+                            Label(name, systemImage: ActivityIcons.shared.symbol(forCustom: name))
+                                .scaledFont(.body, weight: .semibold)
+                                .foregroundStyle(isOn ? Theme.onPrimary : Theme.textPrimary)
+                                .padding(.horizontal, 12).padding(.vertical, 8)
+                                .background(isOn ? Theme.textPrimary : Theme.cardRaised)
+                                .clipShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: More options
+
+    private var moreSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Divider().overlay(Theme.border)
+            Button {
+                Haptics.light()
+                withAnimation(.easeInOut(duration: 0.25)) { showsMore.toggle() }
+            } label: {
+                HStack {
+                    Text("Další možnosti")
+                        .scaledFont(.body, weight: .semibold)
+                        .foregroundStyle(Theme.textPrimary)
+                    Spacer()
+                    Text(showsMore ? "Skrýt" : "Zobrazit")
+                        .scaledFont(.body)
+                        .foregroundStyle(Theme.textSecondary)
+                    Image(systemName: "chevron.down")
+                        .scaledFont(.caption, weight: .semibold)
+                        .foregroundStyle(Theme.textSecondary)
+                        .rotationEffect(.degrees(showsMore ? 180 : 0))
+                }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityValue(showsMore ? "Zobrazeno" : "Skryto")
+            if showsMore { moreContent }
+        }
+    }
+
+    private var moreContent: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("BODY A REŽIM").labelStyle()
+                weightRow
+                Divider().overlay(Theme.border)
+                switchRow("Focus timer", "Stopky při plnění úkolu.", $draft.usesFocus)
+                Divider().overlay(Theme.border)
+                switchRow("Vyžadovat důkaz", "Fotka nebo poznámka před splněním.", $draft.requiresProof)
+                if task == nil {
+                    Divider().overlay(Theme.border)
+                    switchRow("Recovery úkol", "Práce navíc po špatném dni: přidá bonus, ale původní selhání nesmaže.", $draft.isRecovery)
+                }
+            }
+            .padding(14)
+            .background(Theme.card)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.border, lineWidth: 1))
+
+            textCard("SÁZKA", "Co se stane, když to nesplníš", "Např. „večer bez seriálu“. Po selhání se tě aplikace zeptá, jestli jsi ji dodržel.", $draft.stake, 1...3)
+            textCard("KDY TO ZAČNEŠ", "Např. když dopiju kávu, začnu číst", "Pevný spouštěč, ne „někdy dnes“. Věta se ukáže v upozornění.", $draft.cue, 1...3)
+            textCard("PROČ NA TOM ZÁLEŽÍ", "Tvůj vlastní důvod, bude použit proti tobě", nil, $draft.why, 2...5)
+            textCard("POZNÁMKY", "Volitelné", nil, $draft.notes, 2...6)
+        }
+        .transition(.opacity)
+    }
+
+    private var weightRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Váha").scaledFont(.body, weight: .semibold).foregroundStyle(Theme.textPrimary)
+                    Text("Jak moc úkol hýbe produktivitou.").scaledFont(.caption).foregroundStyle(Theme.textSecondary)
+                }
+                Spacer()
+                Text(usesCustomWeight ? "\(draft.weight)" : "\(automaticWeight)")
+                    .scaledFont(.heading, weight: .bold)
+                    .foregroundStyle(Theme.textPrimary)
+                    .contentTransition(.numericText())
+            }
+            Picker("Váha", selection: $usesCustomWeight) {
+                Text("Automaticky").tag(false)
+                Text("Vlastní").tag(true)
+            }
+            .pickerStyle(.segmented)
+            if usesCustomWeight {
+                Stepper("Váha: \(draft.weight)", value: $draft.weight, in: UserSettings.weightRange)
+                    .scaledFont(.body)
+                    .foregroundStyle(Theme.textPrimary)
+            }
+        }
+    }
+
+    private func switchRow(_ title: LocalizedStringKey, _ subtitle: LocalizedStringKey, _ isOn: Binding<Bool>) -> some View {
+        Toggle(isOn: isOn) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).scaledFont(.body, weight: .semibold).foregroundStyle(Theme.textPrimary)
+                Text(subtitle).scaledFont(.caption).foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .tint(Theme.green)
+    }
+
+    private func textCard(_ label: LocalizedStringKey, _ placeholder: LocalizedStringKey, _ hint: LocalizedStringKey?,
+                          _ text: Binding<String>, _ lines: ClosedRange<Int>) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(label).labelStyle()
+            TextField(placeholder, text: text, axis: .vertical)
+                .lineLimit(lines)
+                .scaledFont(.body)
+                .foregroundStyle(Theme.textPrimary)
+            if let hint {
+                Text(hint)
+                    .scaledFont(.caption)
+                    .foregroundStyle(Theme.textTertiary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.card)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.border, lineWidth: 1))
+    }
+
+    // MARK: Buttons
+
+    private var addButton: some View {
+        Button(task == nil ? "PŘIDAT DO PLÁNU" : "ULOŽIT") {
+            isDuplicate ? (confirmsDuplicate = true) : save()
+        }
+        .buttonStyle(PrimaryButtonStyle())
+        .disabled(draft.trimmedTitle.isEmpty)
+        .padding(.horizontal, Theme.screenPadding)
+        .padding(.top, 8)
+        .padding(.bottom, 12)
+        .background(Theme.background)
+    }
+
+    private var removeButton: some View {
+        Button("Odstranit úkol", role: .destructive) { confirmsRemoval = true }
+            .scaledFont(.body, weight: .semibold)
+            .foregroundStyle(Theme.red)
+            .frame(maxWidth: .infinity, minHeight: 44)
     }
 
     private var removalMessage: String {

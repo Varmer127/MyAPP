@@ -100,6 +100,7 @@ struct ProfileView: View {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                 header
                 StreakCalendar(tasks: tasks)
+                FriendsEntryCard()
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         SectionLabel(text: "Odznaky")

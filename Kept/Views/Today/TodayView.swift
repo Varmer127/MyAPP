@@ -455,6 +455,7 @@ struct TodayView: View {
                     uncommittedCard
                 }
                 statsStrip(day, now: now)
+                FriendsEntryCard()
                 suggestionsSection(now: now)
                 if !day.closed.isEmpty {
                     section("Uzavřené", tasks: day.closed, now: now)

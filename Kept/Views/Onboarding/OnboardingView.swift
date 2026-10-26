@@ -22,10 +22,21 @@ struct OnboardingView: View {
     let onFinish: () -> Void
 
     enum Step: Int, CaseIterable {
-        case welcome, name, howItWorks, tutorial, activities, minimum, gym, health, diary, lock, tabs, tone, times, points, done
+        case welcome, name, howItWorks, tutorial, activities, minimum, gym, health, diary, lock, tabs, tone, times, points, friends, done
     }
 
     var isLast: Bool { step == Step.allCases.last }
+
+    @State var showsRegistration = false
+
+    /// The friends step offers the account first; the guide goes on once it exists or the step is skipped.
+    var offersAccount: Bool { step == .friends && !AccountService.shared.isSignedIn }
+
+    var primaryTitle: String {
+        if isLast { return "NAPLÁNOVAT PRVNÍ TÝDEN" }
+        if step == .welcome { return "ZAČÍT" }
+        return offersAccount ? "VYTVOŘIT ÚČET" : "POKRAČOVAT"
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -46,7 +57,7 @@ struct OnboardingView: View {
                                         removal: .move(edge: .leading).combined(with: .opacity)))
             }
             .scrollDismissesKeyboard(.interactively)
-            Button(isLast ? "NAPLÁNOVAT PRVNÍ TÝDEN" : (step == .welcome ? "ZAČÍT" : "POKRAČOVAT"), action: advance)
+            Button(primaryTitle, action: advance)
                 .buttonStyle(PrimaryButtonStyle(color: isLast ? Theme.green : Theme.textPrimary,
                                                 textColor: isLast ? Color(hex: 0x000000) : Theme.onPrimary))
                 .padding(.horizontal, Theme.screenPadding)
@@ -55,6 +66,7 @@ struct OnboardingView: View {
         .screenBackground()
         .appAppearance()
         .sensoryFeedback(.selection, trigger: step)
+        .sheet(isPresented: $showsRegistration) { RegistrationView(onDone: { go(1) }) }
         .task(id: step) {
             guard step == .points else { return }
             shownPoints = 0
@@ -144,6 +156,7 @@ struct OnboardingView: View {
         case .tone: ("TÓN UPOZORNĚNÍ", "Jak tvrdě tě má Kept honit?", "Podle toho se píšou připomínky úkolů a série.")
         case .times: ("ČASY", "Kdy ti má Kept psát?", "Ranní přehled, večerní bilance a nedělní připomínky plánu.")
         case .points: ("BODY", "Body za dodržené slovo.", "Za splněné závazky sbíráš body a utrácíš je v obchodě. Na start dostáváš tohle:")
+        case .friends: ("PŘÁTELÉ · VOLITELNÉ", "Kept s kamarády.", "Sdílej týden, pošťouchávejte se a sázejte se o body. Nic z toho nemusíš.")
         case .done: ("HOTOVO", "Připraveno.", "Takhle sis Kept nastavil:")
         }
     }
@@ -165,6 +178,7 @@ struct OnboardingView: View {
         case .tone: tone
         case .times: times
         case .points: points
+        case .friends: friends
         case .done: summary
         }
     }
@@ -179,6 +193,10 @@ struct OnboardingView: View {
     }
 
     func advance() {
+        if offersAccount {
+            showsRegistration = true
+            return
+        }
         guard isLast else { return go(1) }
         draft.apply(to: UserSettings.current(in: context))
         Persistence.save(context)

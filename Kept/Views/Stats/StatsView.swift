@@ -66,6 +66,7 @@ struct StatsView: View {
                     .pickerStyle(.segmented)
                 }
                 scores
+                FriendsEntryCard()
                 NavigationLink {
                     GymProgressView()
                 } label: {

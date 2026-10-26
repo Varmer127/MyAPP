@@ -60,3 +60,20 @@ jobs:
             -project Kept.xcodeproj -scheme Kept -configuration Release \
             -destination "generic/platform=iOS Simulator" \
             CODE_SIGNING_ALLOWED=NO | tail -20
+
+  database-tests:
+    # Starts a local copy of the database, applies the migrations and runs the access-rule tests.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start the local database
+        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,mailpit,realtime,storage-api
+
+      - name: Run the database tests
+        run: supabase test db
