@@ -38,6 +38,21 @@ struct AccountView: View {
                 .listRowBackground(Theme.card)
 
                 Section {
+                    NavigationLink {
+                        DoNotDisturbView()
+                    } label: {
+                        LabeledContent {
+                            Text(profile.dndActive ? "Zapnuto" : "Vypnuto").foregroundStyle(Theme.textSecondary)
+                        } label: {
+                            Label("Nerušit", systemImage: "moon")
+                        }
+                    }
+                } footer: {
+                    Text("Přátelé uvidí, že je neruším, a nemůžou mě šťouchnout.")
+                }
+                .listRowBackground(Theme.card)
+
+                Section {
                     TextField("Nové jméno", text: $newName)
                         .autocorrectionDisabled()
                         .onChange(of: newName) { _, new in

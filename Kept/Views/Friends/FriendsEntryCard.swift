@@ -11,6 +11,7 @@ struct FriendsEntryCard: View {
         guard case .ready = account.state else { return "Odemkni přátele, pošťouchávejte se a sázejte se o body." }
         let waiting = friends.incoming.count
         if waiting > 0 { return "Máš nové žádosti: \(waiting)" }
+        if friends.unreadPokes > 0 { return "Nová pošťouchnutí: \(friends.unreadPokes)" }
         return friends.friends.isEmpty ? "Přidej první kamarády." : "Přátelé: \(friends.friends.count)"
     }
 

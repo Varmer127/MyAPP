@@ -18,6 +18,12 @@ struct AccountProfile: Codable, Equatable {
     var nameChangedAt: Date?
     /// The secret in the personal QR code and link. Only the owner ever receives it.
     var inviteCode: String?
+    // "Do not disturb": whether it is on, why, whether friends may see the reason, and when it ends by itself.
+    var dndActive: Bool = false
+    var dndReasonKey: String?
+    var dndReasonText: String?
+    var dndReasonShared: Bool = false
+    var dndUntil: Date?
 
     /// How friends write it down, for example "Jana#4827".
     var handle: String { "\(displayName)#\(handleNumber)" }
@@ -148,7 +154,7 @@ struct ServerClient {
     }()
 
     func profile(token: String) async throws -> AccountProfile? {
-        let data = try await request("rest/v1/profiles", query: [URLQueryItem(name: "select", value: "id,display_name,handle_number,name_changed_at,invite_code")],
+        let data = try await request("rest/v1/profiles", query: [URLQueryItem(name: "select", value: "id,display_name,handle_number,name_changed_at,invite_code,dnd_active,dnd_reason_key,dnd_reason_text,dnd_reason_shared,dnd_until")],
                                      token: token)
         return try Self.decoder.decode([AccountProfile].self, from: data).first
     }

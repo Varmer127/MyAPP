@@ -12,6 +12,74 @@ struct Friend: Codable, Equatable, Identifiable {
     var displayName: String
     var handle: String
     var since: Date?
+    /// "Do not disturb" is on. The reason is filled in only when the friend chose to show it.
+    var dnd: Bool = false
+    var dndReasonKey: String?
+    var dndReasonText: String?
+}
+
+/// A poke someone sent to the user: their own short text and nothing else.
+struct ReceivedPoke: Codable, Equatable, Identifiable {
+    var id: UUID
+    var senderId: UUID
+    var senderName: String
+    var body: String
+    var createdAt: Date
+    var seen: Bool
+}
+
+struct PokeCooldown: Codable, Equatable {
+    var recipient: UUID
+    var availableAt: Date
+}
+
+/// Why someone does not want to be disturbed. The list is short on purpose; anything else is a custom reason of a few words.
+enum DNDReason: String, CaseIterable, Identifiable {
+    case work, school, training, trip, vacation, sleep, illness, calm, family, focus, custom
+    var id: String { rawValue }
+
+    var title: LocalizedStringResource {
+        switch self {
+        case .work: "Práce"
+        case .school: "Škola"
+        case .training: "Trénink"
+        case .trip: "Cesta"
+        case .vacation: "Dovolená"
+        case .sleep: "Spánek"
+        case .illness: "Nemoc"
+        case .calm: "Klid"
+        case .family: "Rodina"
+        case .focus: "Soustředění"
+        case .custom: "Vlastní důvod"
+        }
+    }
+
+    static let maxWords = 6
+    static let maxCharacters = 60
+
+    static func wordCount(_ text: String) -> Int {
+        text.split(whereSeparator: \.isWhitespace).count
+    }
+
+    static func isValidCustom(_ text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmed.isEmpty && trimmed.count <= maxCharacters && wordCount(trimmed) <= maxWords
+    }
+}
+
+enum PokeText {
+    static let maxCharacters = 100
+
+    /// Links are not allowed. This only catches the plain cases; the server checks again.
+    static func containsLink(_ text: String) -> Bool {
+        text.range(of: #"(https?://|www\.|\b[a-z0-9-]+\.(com|cz|sk|net|org|io|me|ly|app|eu|gg)\b)"#,
+                   options: [.regularExpression, .caseInsensitive]) != nil
+    }
+
+    static func isSendable(_ text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmed.isEmpty && trimmed.count <= maxCharacters && !containsLink(trimmed)
+    }
 }
 
 struct FriendRequest: Codable, Equatable, Identifiable {
@@ -118,6 +186,38 @@ extension ServerClient {
     func rotateInviteCode(token: String) async throws -> String {
         let data = try await rpc("rotate_invite_code", token: token)
         return try Self.decoder.decode(String.self, from: data)
+    }
+
+    func sendPoke(to id: UUID, text: String, token: String) async throws {
+        _ = try await rpc("send_poke", ["p_to": id.uuidString, "p_body": text], token: token)
+    }
+
+    func pokes(token: String) async throws -> [ReceivedPoke] {
+        try Self.decoder.decode([ReceivedPoke].self, from: try await rpc("pokes_inbox", token: token))
+    }
+
+    func cooldowns(token: String) async throws -> [PokeCooldown] {
+        try Self.decoder.decode([PokeCooldown].self, from: try await rpc("poke_cooldowns", token: token))
+    }
+
+    func markPokesSeen(token: String) async throws {
+        _ = try await rpc("mark_pokes_seen", token: token)
+    }
+
+    func deletePoke(_ id: UUID, token: String) async throws {
+        _ = try await rpc("delete_poke", ["p_id": id.uuidString], token: token)
+    }
+
+    func reportPoke(_ id: UUID, reason: ReportReason, token: String) async throws {
+        _ = try await rpc("report_poke", ["p_id": id.uuidString, "p_reason": reason.rawValue], token: token)
+    }
+
+    /// `hours` 0 keeps it on until it is turned off.
+    func setDND(active: Bool, reason: DNDReason?, text: String, shared: Bool, hours: Int, token: String) async throws {
+        var body: [String: Any] = ["p_active": active, "p_share": shared, "p_hours": hours]
+        body["p_reason_key"] = reason?.rawValue ?? NSNull()
+        body["p_reason_text"] = reason == .custom ? text : NSNull()
+        _ = try await rpc("set_dnd", body, token: token)
     }
 
     func friends(token: String) async throws -> [Friend] {

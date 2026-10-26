@@ -134,8 +134,8 @@ struct SettingsView: View {
                 LabeledContent {
                     if !account.isSignedIn {
                         Image(systemName: "lock.fill").foregroundStyle(Theme.textSecondary)
-                    } else if !FriendsService.shared.incoming.isEmpty {
-                        Text("\(FriendsService.shared.incoming.count)")
+                    } else if FriendsService.shared.incoming.count + FriendsService.shared.unreadPokes > 0 {
+                        Text("\(FriendsService.shared.incoming.count + FriendsService.shared.unreadPokes)")
                             .scaledFont(.caption, weight: .bold)
                             .foregroundStyle(Theme.onPrimary)
                             .padding(.horizontal, 8).padding(.vertical, 2)

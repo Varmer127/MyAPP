@@ -7,6 +7,8 @@ struct FriendsView: View {
     @State private var showsAdd = false
     @State private var showsRegistration = false
     @State private var selected: Friend?
+    @State private var poking: Friend?
+    @State private var reportingPoke: ReceivedPoke?
     @State private var errorText: LocalizedStringKey?
 
     var body: some View {
@@ -25,7 +27,21 @@ struct FriendsView: View {
         .sheet(isPresented: $showsRegistration) { RegistrationView() }
         .sheet(isPresented: $showsAdd) { AddFriendView() }
         .sheet(item: $selected) { FriendDetailView(friend: $0) }
-        .task { await friends.reload() }
+        .sheet(item: $poking) { PokeView(friend: $0) }
+        .confirmationDialog("Nahlásit pošťouchnutí", isPresented: Binding(get: { reportingPoke != nil }, set: { if !$0 { reportingPoke = nil } }),
+                            titleVisibility: .visible) {
+            ForEach(ReportReason.allCases) { reason in
+                Button(String(localized: reason.title)) { reportPoke(with: reason) }
+            }
+        } message: {
+            Text("Text zmizí a my ho uvidíme. Ten člověk se nedozví, kdo ho nahlásil.")
+        }
+        .task {
+            await friends.reload()
+            // The list is on screen now, so the pokes count as seen after a moment.
+            try? await Task.sleep(for: .seconds(2))
+            await friends.markPokesSeen()
+        }
     }
 
     // MARK: Signed in
@@ -36,8 +52,47 @@ struct FriendsView: View {
                 Button { showsAdd = true } label: {
                     Label("Přidat přítele", systemImage: "person.badge.plus")
                 }
+                NavigationLink {
+                    DoNotDisturbView()
+                } label: {
+                    LabeledContent {
+                        Text(account.profile?.dndActive == true ? "Zapnuto" : "Vypnuto")
+                            .foregroundStyle(Theme.textSecondary)
+                    } label: {
+                        Label("Nerušit", systemImage: "moon")
+                    }
+                }
             }
             .listRowBackground(Theme.card)
+
+            if !friends.pokes.isEmpty {
+                Section("Pošťouchnutí") {
+                    ForEach(friends.pokes) { poke in
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                if !poke.seen { Circle().fill(Theme.green).frame(width: 8, height: 8) }
+                                Text(poke.senderName)
+                                    .scaledFont(.body, weight: .semibold)
+                                    .foregroundStyle(Theme.textPrimary)
+                                Spacer()
+                                Text(poke.createdAt.formatted(.relative(presentation: .named).locale(.app)))
+                                    .scaledFont(.caption)
+                                    .foregroundStyle(Theme.textSecondary)
+                            }
+                            Text(poke.body)
+                                .scaledFont(.body)
+                                .foregroundStyle(Theme.textPrimary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(.vertical, 2)
+                        .swipeActions {
+                            Button("Smazat", role: .destructive) { Task { try? await friends.delete(poke) } }
+                            Button("Nahlásit") { reportingPoke = poke }.tint(Theme.orange)
+                        }
+                    }
+                }
+                .listRowBackground(Theme.card)
+            }
 
             if !friends.incoming.isEmpty {
                 Section("Chtějí být tvoji přátelé") {
@@ -75,7 +130,7 @@ struct FriendsView: View {
                     .padding(.vertical, 4)
                 }
                 ForEach(friends.friends) { friend in
-                    Button { selected = friend } label: {
+                    HStack(spacing: 12) {
                         HStack(spacing: 12) {
                             Avatar(initial: String(friend.displayName.prefix(1)).uppercased())
                             VStack(alignment: .leading, spacing: 2) {
@@ -86,12 +141,29 @@ struct FriendsView: View {
                                     .scaledFont(.caption)
                                     .foregroundStyle(Theme.textSecondary)
                             }
-                            Spacer()
-                            Image(systemName: "ellipsis")
+                            Spacer(minLength: 0)
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture { selected = friend }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityAddTraits(.isButton)
+                        if friend.dnd {
+                            Label(friend.dndReasonKey == nil ? "Nerušit" : "Nerušit · \(Self.reasonText(friend))", systemImage: "moon.fill")
+                                .scaledFont(.caption, weight: .semibold)
                                 .foregroundStyle(Theme.textSecondary)
+                                .lineLimit(1)
+                        } else {
+                            Button { poking = friend } label: {
+                                Label(waiting(for: friend) ? "Počkej" : "Šťouchnout", systemImage: "hand.point.right")
+                                    .scaledFont(.caption, weight: .semibold)
+                                    .foregroundStyle(Theme.textPrimary)
+                                    .padding(.horizontal, 10).padding(.vertical, 6)
+                                    .background(Theme.cardRaised)
+                                    .clipShape(Capsule())
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
-                    .buttonStyle(.plain)
                 }
             } header: {
                 Text("Přátelé \(friends.friends.count)")
@@ -159,6 +231,22 @@ struct FriendsView: View {
                 .padding(.horizontal, Theme.screenPadding)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func waiting(for friend: Friend) -> Bool {
+        friends.cooldowns[friend.id].map { $0 > account.now } ?? false
+    }
+
+    /// The reason a friend chose to show, in words.
+    private static func reasonText(_ friend: Friend) -> String {
+        if let text = friend.dndReasonText, !text.isEmpty { return text }
+        return DNDReason(rawValue: friend.dndReasonKey ?? "").map { String(localized: $0.title) } ?? ""
+    }
+
+    private func reportPoke(with reason: ReportReason) {
+        guard let poke = reportingPoke else { return }
+        reportingPoke = nil
+        Task { try? await friends.report(poke, reason: reason) }
     }
 
     // MARK: Signed out

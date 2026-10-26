@@ -102,3 +102,27 @@ struct FriendLinkTests {
         #expect(!FriendLink.isSearchable(""))
     }
 }
+
+struct PokeAndDoNotDisturbTests {
+    @Test func pokeTextRules() {
+        #expect(PokeText.isSendable("Jak jde slib?"))
+        #expect(!PokeText.isSendable("   "))
+        #expect(!PokeText.isSendable(String(repeating: "x", count: 101)))
+        #expect(PokeText.isSendable(String(repeating: "x", count: 100)))
+    }
+
+    @Test func linksAreRecognised() {
+        #expect(PokeText.containsLink("mrkni na https://example.com"))
+        #expect(PokeText.containsLink("www.kept.cz"))
+        #expect(PokeText.containsLink("viz kept.cz"))
+        #expect(!PokeText.containsLink("Dnes to dáš, i když je to těžké."))
+        #expect(!PokeText.isSendable("koukni na kept.cz"))
+    }
+
+    @Test func customReasonIsAFewWords() {
+        #expect(DNDReason.isValidCustom("na horách bez signálu"))
+        #expect(!DNDReason.isValidCustom("jedna dva tři čtyři pět šest sedm"))
+        #expect(!DNDReason.isValidCustom("  "))
+        #expect(DNDReason.wordCount("na   horách") == 2)
+    }
+}

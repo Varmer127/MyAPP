@@ -8,7 +8,7 @@ insert into auth.users (id, instance_id, aud, role, email) values
     ('00000000-0000-0000-0000-0000000000b2', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'b@test.invalid');
 
 create temp table outcome (step text primary key, result text);
-grant all on outcome to authenticated;
+grant all on outcome to authenticated, anon;
 
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}', true);

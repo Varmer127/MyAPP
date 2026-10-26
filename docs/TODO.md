@@ -117,3 +117,10 @@ Kód používá jen barvy z tématu, ale tyto obrazovky jsme ve světlém režim
 - Ranní přehled: Philip ověří a ozve se.
 - Chyba přihlášení Discordem (stav se nezměnil): příčinou byl dotaz na sloupec `invite_code`, který vznikne až migrací fáze 1. Opraveno i tím, že se chyba ukáže a nabídne „Zkusit znovu“.
 - Věková brána podle vzoru Instagramu a Facebooku (26. 10.): jen zadání data narození, bez zaškrtávátka věku; souhlas s pravidly je jedna věta pod tlačítkem „Vytvořit účet“; hláška o 16 letech až po zamítnutí. Zbývá právní ověření (v ČR je věk souhlasu se zpracováním osobních údajů 15 let) a odkaz na pravidla, až budou na webu (fáze 6).
+
+## Fáze 2: pošťouchnutí a Nerušit (26. 10. 2026, v práci)
+- Hotovo v kódu: pošťouchnutí jen vlastním textem (1 až 100 znaků, bez odkazů, jednomu člověku 1× za 3 h, bez denního limitu, ochranný strop 120 za hodinu), příchozí pošťouchnutí v seznamu přátel, smazání a nahlášení (nahlášený text zmizí a jde s nahlášením moderátorovi), zrušením přátelství se pošťouchnutí mezi nimi smažou; režim Nerušit (důvod ze seznamu nebo vlastní do 6 slov, volitelně ukázat přátelům, volitelný automatický konec, dokud je zapnuté, nejde šťouchnout).
+- Migrace `supabase/migrations/20261026120000_phase2_pokes_dnd.sql` čeká na spuštění v Supabase; testy `supabase/tests/database/pokes.test.sql` poběží v CI.
+- Upozornění na pošťouchnutí jsou zatím jen uvnitř aplikace. Skutečný push přijde ve fázi 6 (potřebuje Apple Developer účet).
+- Moje rozhodnutí k potvrzení: komu je zapnuto Nerušit, toho nejde šťouchnout; zákaz šťouchání pro zneužití se nastavuje z dashboardu (`poke_banned_at`).
+- Neověřeno vizuálně (simulátor není přihlášený); vyzkoušet na telefonu po spuštění migrace.
