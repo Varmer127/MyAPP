@@ -9,11 +9,12 @@ struct InboxItems {
     var pokes: Int
     var reactions: Int
     var bets: Int
+    var together: Int
     var week: WeekStory?
     var month: MonthStory?
     var yesterday: DayRecap?
 
-    var count: Int { requests + pokes + reactions + bets + (week == nil ? 0 : 1) + (month == nil ? 0 : 1) + (yesterday == nil ? 0 : 1) }
+    var count: Int { requests + pokes + reactions + bets + together + (week == nil ? 0 : 1) + (month == nil ? 0 : 1) + (yesterday == nil ? 0 : 1) }
 
     init(tasks: [TaskItem], diary: [DiaryEntry], seenWeek: Double, seenMonth: Double, seenDay: Double, now: Date = .now) {
         let friends = FriendsService.shared
@@ -21,6 +22,7 @@ struct InboxItems {
         pokes = friends.unreadPokes
         reactions = friends.unreadReactions.count
         bets = BetsService.shared.waiting.count
+        together = TogetherService.shared.waitingCount
         if let start = WeekStory.offeredWeek(now: now), seenWeek != start.timeIntervalSince1970 {
             week = WeekStory.make(tasks: tasks, diary: diary, weekStart: start, now: now)
         }
@@ -75,6 +77,7 @@ struct NotificationBell: View {
             guard AccountService.shared.isSignedIn else { return }
             await FriendsService.shared.reload()
             await BetsService.shared.reload()
+            await TogetherService.shared.reload()
         }
     }
 }
@@ -131,6 +134,12 @@ struct InboxView: View {
                 if items.bets > 0 {
                     NavigationLink { BetsView() } label: {
                         rowLabel("trophy", "Sázky čekají na tebe", "Pozvánky a výsledky k potvrzení: \(items.bets)")
+                    }
+                    .listRowBackground(Theme.card)
+                }
+                if items.together > 0 {
+                    NavigationLink { FriendsView() } label: {
+                        rowLabel("person.2.wave.2", "Pozvánky a potvrzení", "Výzvy, skupiny, aktivity, parťák a svědek: \(items.together)")
                     }
                     .listRowBackground(Theme.card)
                 }

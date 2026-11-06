@@ -39,6 +39,7 @@ struct FriendsView: View {
         .task {
             await friends.reload()
             await BetsService.shared.reload()
+            await TogetherService.shared.reload()
             // The list is on screen now, so the pokes count as seen after a moment.
             try? await Task.sleep(for: .seconds(2))
             await friends.markPokesSeen()
@@ -54,16 +55,6 @@ struct FriendsView: View {
                     Label("Přidat přítele", systemImage: "person.badge.plus")
                 }
                 NavigationLink {
-                    BetsView()
-                } label: {
-                    LabeledContent {
-                        let waiting = BetsService.shared.waiting.count
-                        if waiting > 0 { Text("\(waiting)").foregroundStyle(Theme.orange) }
-                    } label: {
-                        Label("Sázky", systemImage: "trophy")
-                    }
-                }
-                NavigationLink {
                     DoNotDisturbView()
                 } label: {
                     LabeledContent {
@@ -73,6 +64,16 @@ struct FriendsView: View {
                         Label("Nerušit", systemImage: "moon")
                     }
                 }
+            }
+            .listRowBackground(Theme.card)
+
+            Section("Spolu") {
+                togetherRow("Sázky", "trophy", BetsService.shared.waiting.count) { BetsView() }
+                togetherRow("Společné výzvy", "flag.2.crossed", TogetherService.shared.challenges.filter(\.isInvited).count) { ChallengesView() }
+                togetherRow("Skupiny", "person.3", TogetherService.shared.groups.filter(\.isInvited).count) { GroupsView() }
+                togetherRow("Společné aktivity", "calendar.badge.plus", TogetherService.shared.activities.filter(\.isInvited).count) { ActivitiesView() }
+                togetherRow("Parťák", "figure.2", TogetherService.shared.incomingBuddy == nil ? 0 : 1) { BuddyView() }
+                togetherRow("Svědek", "person.badge.shield.checkmark", TogetherService.shared.witnessing.toAnswer.count) { WitnessInboxView() }
             }
             .listRowBackground(Theme.card)
 
@@ -246,6 +247,17 @@ struct FriendsView: View {
                 .padding(.horizontal, Theme.screenPadding)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func togetherRow<Destination: View>(_ title: LocalizedStringKey, _ symbol: String, _ waiting: Int,
+                                                @ViewBuilder destination: @escaping () -> Destination) -> some View {
+        NavigationLink(destination: destination) {
+            LabeledContent {
+                if waiting > 0 { Text("\(waiting)").scaledFont(.body, weight: .bold).foregroundStyle(Theme.orange) }
+            } label: {
+                Label(title, systemImage: symbol)
+            }
+        }
     }
 
     private func waiting(for friend: Friend) -> Bool {

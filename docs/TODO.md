@@ -144,5 +144,9 @@ Kód používá jen barvy z tématu, ale tyto obrazovky jsme ve světlém režim
 - Dva druhy: **Týdenní souboj** (vyšší spolehlivost tohoto týdne vyhrává, rozhodne se z čísel týdne; shoda = vrácení) a **Dlouhodobý cíl** (1 týden až 1 rok; kdo splní první, klepne „Splnil jsem“, ostatní potvrdí nebo rozporují; rozpor = vrácení; bez vítěze do konce = vrácení).
 - Vklad nejméně 200 bodů, bez horního limitu (jen vlastní zůstatek), 2 až 10 lidí, zakladatel může přizvat další, volný text domluvy („kdo prohraje, vaří“). Zakladatel může zrušit, dokud se nikdo nepřidal. Zrušení přátelství vrátí otevřené sázky obou.
 - Body: vklad se odečte při vstupu, vítězi se připíše celý bank, při vrácení vklad zpět; zápis se drží v telefonu i po skončení sázky.
-- Zbývá z fáze 4: společné výzvy, svědek, párový parťák, skupiny, sdílené aktivity v kalendáři.
+- Druhá část (hotová v kódu): **svědek** (u splněného úkolu „Požádat přítele o potvrzení“, přítel potvrdí nebo nepotvrdí, výsledek je u úkolu), **parťák** (jeden na osobu, vidíte navzájem, kolik slibů máte dnes splněno), **společné výzvy** (cíl počtu splněných úkolů jedné kategorie nebo libovolných za 1 týden až 3 měsíce, až 20 lidí, průběh se počítá v telefonu), **skupiny** (rodina, tým, až 30 lidí, žebříček spolehlivosti týdne; když vlastník odejde, skupina končí), **společné aktivity** (pozvánka na čas; po přijetí se úkol přidá do vlastního plánu).
+- Vše je v Přátelé → Spolu; čekající pozvánky a potvrzení ukáže schránka.
+- Známý limit: zrušení přátelství zatím neodebere ze společných výzev a skupin (svědek a parťák se odeberou).
+- Migrace `supabase/migrations/20261106180000_phase4_together.sql`, testy `supabase/tests/database/together.test.sql`.
+- Před vydáním rozhodnout, co z fáze 4 zůstane viditelné a co se skryje (domluveno: „ke konci některé funkce omezíme“).
 - Migrace `supabase/migrations/20261106150000_phase4_bets.sql` čeká na spuštění; testy `supabase/tests/database/bets.test.sql`.

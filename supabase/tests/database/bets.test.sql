@@ -41,7 +41,6 @@ begin
 
  perform set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}',true);
  perform public.judge_bet(v, true);
- insert into out select 'goal_result', status || '/' || (winner = '00000000-0000-0000-0000-0000000000b2')::text from public.bets where id = v;
  insert into out select 'my_bets_count', jsonb_array_length(public.my_bets())::text;
 
  d := public.create_bet('goal', 'Maraton', null, 200, 30, array['00000000-0000-0000-0000-0000000000b2']::uuid[]);
@@ -50,7 +49,7 @@ begin
  perform public.claim_bet(d);
  perform set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}',true);
  perform public.judge_bet(d, false);
- insert into out select 'dispute', status from public.bets where id = d;
+ insert into ids values ('dispute', d);
 
  w := public.create_bet('week', '', null, 250, 0, array['00000000-0000-0000-0000-0000000000b2']::uuid[]);
  insert into ids values ('week', w);
@@ -61,6 +60,8 @@ begin
 
 end $$;
 reset role;
+insert into out select 'goal_result', status || '/' || (winner = '00000000-0000-0000-0000-0000000000b2')::text from public.bets where id = (select id from ids where name = 'goal');
+insert into out select 'dispute', status from public.bets where id = (select id from ids where name = 'dispute');
 insert into public.week_snapshots (user_id, week_start, reliability, done, total)
 select user_id, (select week_start from public.bets where id = (select id from ids where name = 'week')), case when user_id = '00000000-0000-0000-0000-0000000000a1' then 90 else 70 end, 3, 4
   from public.bet_participants where bet_id = (select id from ids where name = 'week');

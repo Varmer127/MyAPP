@@ -82,3 +82,21 @@ struct WeekSnapshotTests {
         #expect(DayString.date("2026-11-02") == day)
     }
 }
+
+@MainActor
+struct ChallengeProgressTests {
+    private func challenge(category: String?) -> Challenge {
+        Challenge(id: UUID(), title: "Výzva", category: category, target: 5,
+                  startsOn: Fixture.now.startOfDay.addingDays(-3), endsOn: Fixture.now.startOfDay.addingDays(3),
+                  isCreator: true, myStatus: "accepted", members: [])
+    }
+
+    @Test func countsFinishedTasksOfTheKindWithinTheDays() {
+        let tasks = [Fixture.task("Gym", day: -1, done: true, category: .gym),
+                     Fixture.task("Gym", day: 0, category: .gym),
+                     Fixture.task("Práce", day: 0, done: true, category: .work),
+                     Fixture.task("Starý gym", day: -10, done: true, category: .gym)]
+        #expect(ChallengeProgress.count(tasks: tasks, challenge: challenge(category: "gym")) == 1)
+        #expect(ChallengeProgress.count(tasks: tasks, challenge: challenge(category: nil)) == 2)
+    }
+}

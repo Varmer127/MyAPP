@@ -23,6 +23,13 @@ struct TaskDetailView: View {
                             .scaledFont(.body)
                             .foregroundStyle(Theme.textSecondary)
                     }
+                    if task.isDone, AccountService.shared.profile != nil {
+                        block("Svědek") {
+                            WitnessRow(task: task)
+                                .scaledFont(.body, weight: .semibold)
+                                .foregroundStyle(Theme.textPrimary)
+                        }
+                    }
                     if !task.partialNote.isEmpty {
                         block("Co chybělo") { quote(task.partialNote) }
                     }

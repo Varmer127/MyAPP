@@ -41,5 +41,7 @@ struct SocialSync: ViewModifier {
                                              includePlan: includePlan, now: now)
             try? await FriendsService.shared.push(snapshot)
         }
+        await TogetherService.shared.reload()
+        await TogetherService.shared.push(tasks: tasks, now: now)
     }
 }
