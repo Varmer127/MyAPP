@@ -158,3 +158,9 @@ Kód používá jen barvy z tématu, ale tyto obrazovky jsme ve světlém režim
 - První verze: gym pauza (spustit a zastavit, odpočet s vibrací, kolikátá série) se stejným stavem na telefonu i hodinkách; další slib na řadě se „Splnil jsem“ (jen úkoly bez důkazu a bez zápisu tréninku); komplikace se sérií.
 - Odhad 3 až 5 dní. Bez placeného Apple Developer účtu se musí na hodinky nahrávat každých 7 dní.
 - Mezitím ověřit, jestli se živá aktivita gym pauzy sama ukazuje na hodinkách ve Smart Stacku (watchOS 11+).
+
+## Fáze 5: připravenost pro App Store (6. 11. 2026, v práci)
+- Hotovo: indexy podle kontroly výkonu Supabase, zrušení přátelství odebere i ze skupin a výzev toho druhého, noční úklid starých dat (pg_cron), moderační fronta jen pro dashboard a postup v `docs/MODERATION.md`, `PrivacyInfo.xcprivacy` s údaji sociální části, `ITSAppUsesNonExemptEncryption = NO`, kontrolní seznam App Store doplněný o sociální část.
+- Bezpečnostní kontrola Supabase: jen očekávaná upozornění (tabulky bez pravidel jsou záměrně zavřené, funkce pro přihlášené jsou API aplikace a každá si kontroluje uživatele). Ochrana proti uniklým heslům se nás netýká (hesla nepoužíváme).
+- Migrace `supabase/migrations/20261106200000_phase5_hardening.sql` čeká na spuštění; testy `supabase/tests/database/hardening.test.sql`.
+- Zbývá: projít aplikaci na dvou účtech, výkon na telefonu, světlý režim nových obrazovek, na úplný konec vývojářská tlačítka a `ci-checks.sh` z varování na chybu.

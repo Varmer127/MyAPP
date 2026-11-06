@@ -17,7 +17,7 @@ Založeno 10. 10. 2026. Aplikace se zatím dolaďuje pro osobní použití; tenh
 ## 1. Musí být, jinak to neprojde nebo nedává smysl
 
 - [ ] **Developer tlačítka „Zrušit všechny plány do budoucna“ a „Smazat všechna data a začít znovu“** (Nastavení → Vývojář, přidáno 14. a 16. 10. 2026). Odstranit ještě před ostrým testováním: smazat `Kept/Views/Settings/DeveloperSection.swift` a jeho použití v `SettingsView.swift`. V Release buildu se nezkompiluje, i tak pryč.
-- [ ] **Úvodní video.** `Kept/Intro.mp4` je klip Davida Gogginse (cizí autorské dílo, mimo git). Odstranit, nebo nahradit vlastním. Kód přehrávání (`IntroView`) může zůstat.
+- [x] **Úvodní video.** Odstraněno i s kódem přehrávání (26. 10. 2026).
 - [ ] **Jazyky.** Všechny texty jsou česky napevno v kódu (odhadem 600–800 řetězců, ~45 souborů).
   - [ ] přesunout texty do String Catalogu
   - [ ] angličtina (a další jazyky)
@@ -46,6 +46,20 @@ Založeno 10. 10. 2026. Aplikace se zatím dolaďuje pro osobní použití; tenh
 - **Obchod za body (přidáno 11. 10. 2026).** Body se dají jen získat v aplikaci. Pokud by se někdy prodávaly za peníze, jde o nákupy v aplikaci se vším, co k tomu patří (viz odpočty výše).
 
 - **Ikona aplikace.** Vlastní, nakreslená od nuly 5. 10. 2026 (černý čtverec, bílá fajfka, zelená čárka). Rozhodnuto 16. 10. 2026: zůstává, zatím nechránit. Před vydáním jen rychle zkontrolovat podobnost s konkurencí v App Storu.
+
+## 1b. Sociální část (přidáno 6. 11. 2026, fáze 5)
+
+- [ ] **Přihlášení přes Apple.** Aplikace nabízí přihlášení přes Discord (a e-mail), proto ho podle pravidla 4.8 musí nabízet i přes Apple. Vyžaduje placený Apple Developer účet (fáze 6).
+- [x] **Smazání účtu v aplikaci** (pravidlo 5.1.1(v)): Nastavení → Účet → Smazat účet.
+- [x] **Obsah od uživatelů** (pravidlo 1.2): nahlášení, blokování, odebrání přítele, skrytí nahlášeného textu, moderační fronta (`public.moderation_queue()`), postup v `docs/MODERATION.md`. Kontakt na podporu a lhůta 24 h musí být na webu a v aplikaci (fáze 6).
+- [ ] **Filtr nevhodného obsahu** (pravidlo 1.2): Philip filtr vulgarit nechce. Pokud ho schvalovatel bude chtít, nabídnout volitelný filtr na straně příjemce.
+- [x] **Údaje o soukromí v aplikaci** (`PrivacyInfo.xcprivacy`): e-mail, jméno, identifikátor uživatele, obsah od uživatele (pošťouchnutí, názvy sdílených úkolů, domluvy sázek, nahlášení), údaje o používání (čísla týdne). Vše propojené s účtem, jen pro funkce aplikace, žádné sledování. Datum narození se neukládá, proto se neuvádí.
+- [ ] **App Privacy v App Store Connect:** vyplnit stejně jako `PrivacyInfo.xcprivacy`, navíc zdraví, kalendář a fotky (ty zůstávají v telefonu, tedy „nesbírá se“).
+- [x] **Šifrování:** `ITSAppUsesNonExemptEncryption = NO` (jen HTTPS a systémové šifrování).
+- [ ] **Věkové hodnocení:** obsah od uživatelů, sociální funkce, sázky o body (bez peněz) a vulgarity drsného tónu. Účty od 16 let.
+- [ ] **Sázky o body:** v popisu i v aplikaci jasně, že body nemají peněžní hodnotu a nejdou koupit ani vyměnit (pravidlo 5.3).
+- [ ] **E-mail z vlastní domény** a ověření domény v Brevu (SPF, DKIM), jinak kódy padají do spamu.
+- [x] **Úklid starých dat** na serveru každou noc (`purge_old_social_data`, pg_cron).
 
 ## 2. Na straně vývojářského účtu
 
