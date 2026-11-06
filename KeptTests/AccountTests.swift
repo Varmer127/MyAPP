@@ -126,3 +126,42 @@ struct PokeAndDoNotDisturbTests {
         #expect(DNDReason.wordCount("na   horách") == 2)
     }
 }
+
+struct BetLedgerTests {
+    private let me = UUID(), friend = UUID()
+
+    private func bet(status: Bet.Status, winner: UUID? = nil, myState: Bet.Participant.State = .accepted) -> Bet {
+        let start = Date(timeIntervalSince1970: 1_800_000_000)
+        return Bet(id: UUID(), kind: .goal, title: "Bench", terms: nil, stake: 300, endsAt: start.addingTimeInterval(86_400),
+                   status: status, winner: winner, claimant: nil, settledAt: start.addingTimeInterval(3600), createdAt: start,
+                   isCreator: true, participants: [
+                    .init(id: me, name: "Já", status: myState, respondedAt: start, verdict: nil, isMe: true),
+                    .init(id: friend, name: "Petr", status: .accepted, respondedAt: start, verdict: nil, isMe: false)
+                   ])
+    }
+
+    @Test func anOpenBetHoldsTheStake() {
+        #expect(BetLedger.events(for: bet(status: .open)).map(\.change) == [-300])
+    }
+
+    @Test func theWinnerTakesThePot() {
+        #expect(BetLedger.events(for: bet(status: .settled, winner: me)).map(\.change) == [-300, 600])
+        #expect(BetLedger.events(for: bet(status: .settled, winner: friend)).map(\.change) == [-300])
+    }
+
+    @Test func aRefundGivesTheStakeBack() {
+        #expect(BetLedger.events(for: bet(status: .refunded)).reduce(0) { $0 + $1.change } == 0)
+    }
+
+    @Test func anInvitationCostsNothing() {
+        #expect(BetLedger.events(for: bet(status: .open, myState: .invited)).isEmpty)
+    }
+
+    @Test func finishedBetsStayInTheLedger() {
+        let defaults = UserDefaults(suiteName: "BetLedgerTests")!
+        defaults.removePersistentDomain(forName: "BetLedgerTests")
+        BetLedger.store([bet(status: .settled, winner: me)], in: defaults)
+        BetLedger.store([], in: defaults)
+        #expect(BetLedger.allEvents(defaults).reduce(0) { $0 + $1.change } == 300)
+    }
+}

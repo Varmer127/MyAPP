@@ -8,17 +8,19 @@ struct InboxItems {
     var requests: Int
     var pokes: Int
     var reactions: Int
+    var bets: Int
     var week: WeekStory?
     var month: MonthStory?
     var yesterday: DayRecap?
 
-    var count: Int { requests + pokes + reactions + (week == nil ? 0 : 1) + (month == nil ? 0 : 1) + (yesterday == nil ? 0 : 1) }
+    var count: Int { requests + pokes + reactions + bets + (week == nil ? 0 : 1) + (month == nil ? 0 : 1) + (yesterday == nil ? 0 : 1) }
 
     init(tasks: [TaskItem], diary: [DiaryEntry], seenWeek: Double, seenMonth: Double, seenDay: Double, now: Date = .now) {
         let friends = FriendsService.shared
         requests = friends.incoming.count
         pokes = friends.unreadPokes
         reactions = friends.unreadReactions.count
+        bets = BetsService.shared.waiting.count
         if let start = WeekStory.offeredWeek(now: now), seenWeek != start.timeIntervalSince1970 {
             week = WeekStory.make(tasks: tasks, diary: diary, weekStart: start, now: now)
         }
@@ -69,7 +71,11 @@ struct NotificationBell: View {
         .buttonStyle(.plain)
         .accessibilityLabel(count > 0 ? "Upozornění, nových: \(count)" : "Upozornění")
         .sheet(isPresented: $isOpen) { InboxView() }
-        .task { if AccountService.shared.isSignedIn { await FriendsService.shared.reload() } }
+        .task {
+            guard AccountService.shared.isSignedIn else { return }
+            await FriendsService.shared.reload()
+            await BetsService.shared.reload()
+        }
     }
 }
 
@@ -119,6 +125,12 @@ struct InboxView: View {
                 if items.requests > 0 {
                     NavigationLink { FriendsView() } label: {
                         rowLabel("person.badge.plus", "Žádosti o přátelství", "Čeká na tebe: \(items.requests)")
+                    }
+                    .listRowBackground(Theme.card)
+                }
+                if items.bets > 0 {
+                    NavigationLink { BetsView() } label: {
+                        rowLabel("trophy", "Sázky čekají na tebe", "Pozvánky a výsledky k potvrzení: \(items.bets)")
                     }
                     .listRowBackground(Theme.card)
                 }

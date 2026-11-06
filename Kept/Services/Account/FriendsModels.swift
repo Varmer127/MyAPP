@@ -133,7 +133,7 @@ enum FriendLink {
 }
 
 extension ServerClient {
-    private static let decoder: JSONDecoder = {
+    static let socialDecoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         decoder.dateDecodingStrategy = .custom { decoder in
@@ -149,19 +149,19 @@ extension ServerClient {
         return decoder
     }()
 
-    private func rpc(_ name: String, _ body: [String: Any] = [:], token: String) async throws -> Data {
+    func rpc(_ name: String, _ body: [String: Any] = [:], token: String) async throws -> Data {
         try await request("rest/v1/rpc/\(name)", method: "POST", body: body, token: token)
     }
 
     func find(_ query: String, token: String) async throws -> FoundPerson? {
         let data = try await rpc("find_profile", ["p_query": query], token: token)
-        return try Self.decoder.decode([FoundPerson].self, from: data).first
+        return try Self.socialDecoder.decode([FoundPerson].self, from: data).first
     }
 
     /// "requested" or, when the other person had asked first, "accepted".
     func sendRequest(to id: UUID, token: String) async throws -> String {
         let data = try await rpc("send_friend_request", ["p_target": id.uuidString], token: token)
-        return try Self.decoder.decode(String.self, from: data)
+        return try Self.socialDecoder.decode(String.self, from: data)
     }
 
     func respond(to id: UUID, accept: Bool, token: String) async throws {
@@ -186,7 +186,7 @@ extension ServerClient {
 
     func rotateInviteCode(token: String) async throws -> String {
         let data = try await rpc("rotate_invite_code", token: token)
-        return try Self.decoder.decode(String.self, from: data)
+        return try Self.socialDecoder.decode(String.self, from: data)
     }
 
     func sendPoke(to id: UUID, text: String, token: String) async throws {
@@ -194,11 +194,11 @@ extension ServerClient {
     }
 
     func pokes(token: String) async throws -> [ReceivedPoke] {
-        try Self.decoder.decode([ReceivedPoke].self, from: try await rpc("pokes_inbox", token: token))
+        try Self.socialDecoder.decode([ReceivedPoke].self, from: try await rpc("pokes_inbox", token: token))
     }
 
     func cooldowns(token: String) async throws -> [PokeCooldown] {
-        try Self.decoder.decode([PokeCooldown].self, from: try await rpc("poke_cooldowns", token: token))
+        try Self.socialDecoder.decode([PokeCooldown].self, from: try await rpc("poke_cooldowns", token: token))
     }
 
     func markPokesSeen(token: String) async throws {
@@ -239,22 +239,22 @@ extension ServerClient {
 
     func friendWeek(_ id: UUID, week: Date, token: String) async throws -> FriendWeek {
         let data = try await rpc("friend_week", ["p_friend": id.uuidString, "p_week": DayString.string(week)], token: token)
-        return try Self.decoder.decode(FriendWeek.self, from: data)
+        return try Self.socialDecoder.decode(FriendWeek.self, from: data)
     }
 
     func leaderboard(week: Date, token: String) async throws -> [LeaderboardRow] {
         let data = try await rpc("leaderboard", ["p_week": DayString.string(week)], token: token)
-        return try Self.decoder.decode([LeaderboardRow].self, from: data)
+        return try Self.socialDecoder.decode([LeaderboardRow].self, from: data)
     }
 
     /// Returns whether the reaction is on after the tap.
     func toggleReaction(_ kind: ReactionKind, to id: UUID, week: Date, token: String) async throws -> Bool {
         let data = try await rpc("toggle_reaction", ["p_to": id.uuidString, "p_week": DayString.string(week), "p_kind": kind.rawValue], token: token)
-        return try Self.decoder.decode(Bool.self, from: data)
+        return try Self.socialDecoder.decode(Bool.self, from: data)
     }
 
     func reactions(token: String) async throws -> [ReceivedReaction] {
-        try Self.decoder.decode([ReceivedReaction].self, from: try await rpc("my_reactions", token: token))
+        try Self.socialDecoder.decode([ReceivedReaction].self, from: try await rpc("my_reactions", token: token))
     }
 
     func markReactionsSeen(token: String) async throws {
@@ -262,14 +262,14 @@ extension ServerClient {
     }
 
     func friends(token: String) async throws -> [Friend] {
-        try Self.decoder.decode([Friend].self, from: try await rpc("my_friends", token: token))
+        try Self.socialDecoder.decode([Friend].self, from: try await rpc("my_friends", token: token))
     }
 
     func requests(token: String) async throws -> [FriendRequest] {
-        try Self.decoder.decode([FriendRequest].self, from: try await rpc("my_requests", token: token))
+        try Self.socialDecoder.decode([FriendRequest].self, from: try await rpc("my_requests", token: token))
     }
 
     func blocks(token: String) async throws -> [BlockedPerson] {
-        try Self.decoder.decode([BlockedPerson].self, from: try await rpc("my_blocks", token: token))
+        try Self.socialDecoder.decode([BlockedPerson].self, from: try await rpc("my_blocks", token: token))
     }
 }

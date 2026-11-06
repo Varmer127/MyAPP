@@ -139,3 +139,10 @@ Kód používá jen barvy z tématu, ale tyto obrazovky jsme ve světlém režim
 - Spolehlivost = podíl dodržených slibů týdne; dokud žádný slib není uzavřený, produktivita uzavřených úkolů.
 - Upřímný limit: čísla počítá telefon, server je jen ukládá (obrana proti podvádění přijde s ověřením aplikace ve fázi 6).
 - Migrace `supabase/migrations/20261106120000_phase3_sharing.sql` čeká na spuštění; testy `supabase/tests/database/sharing.test.sql` poběží v CI.
+
+## Fáze 4: sázky (6. 11. 2026, první část hotová v kódu)
+- Dva druhy: **Týdenní souboj** (vyšší spolehlivost tohoto týdne vyhrává, rozhodne se z čísel týdne; shoda = vrácení) a **Dlouhodobý cíl** (1 týden až 1 rok; kdo splní první, klepne „Splnil jsem“, ostatní potvrdí nebo rozporují; rozpor = vrácení; bez vítěze do konce = vrácení).
+- Vklad nejméně 200 bodů, bez horního limitu (jen vlastní zůstatek), 2 až 10 lidí, zakladatel může přizvat další, volný text domluvy („kdo prohraje, vaří“). Zakladatel může zrušit, dokud se nikdo nepřidal. Zrušení přátelství vrátí otevřené sázky obou.
+- Body: vklad se odečte při vstupu, vítězi se připíše celý bank, při vrácení vklad zpět; zápis se drží v telefonu i po skončení sázky.
+- Zbývá z fáze 4: společné výzvy, svědek, párový parťák, skupiny, sdílené aktivity v kalendáři.
+- Migrace `supabase/migrations/20261106150000_phase4_bets.sql` čeká na spuštění; testy `supabase/tests/database/bets.test.sql`.

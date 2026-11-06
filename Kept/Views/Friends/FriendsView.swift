@@ -38,6 +38,7 @@ struct FriendsView: View {
         }
         .task {
             await friends.reload()
+            await BetsService.shared.reload()
             // The list is on screen now, so the pokes count as seen after a moment.
             try? await Task.sleep(for: .seconds(2))
             await friends.markPokesSeen()
@@ -51,6 +52,16 @@ struct FriendsView: View {
             Section {
                 Button { showsAdd = true } label: {
                     Label("Přidat přítele", systemImage: "person.badge.plus")
+                }
+                NavigationLink {
+                    BetsView()
+                } label: {
+                    LabeledContent {
+                        let waiting = BetsService.shared.waiting.count
+                        if waiting > 0 { Text("\(waiting)").foregroundStyle(Theme.orange) }
+                    } label: {
+                        Label("Sázky", systemImage: "trophy")
+                    }
                 }
                 NavigationLink {
                     DoNotDisturbView()

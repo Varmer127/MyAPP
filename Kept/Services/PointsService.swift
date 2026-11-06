@@ -32,6 +32,8 @@ enum PointsService {
     static func balance(_ tasks: [TaskItem], purchases: [PointsPurchase], diary: [DiaryEntry], now: Date = .now) -> Int {
         var events: [(date: Date, change: Int)] = purchases.map { ($0.date, -$0.cost) }
         events += DiaryService.pointEvents(diary)
+        // Stakes held in bets and what came back from them.
+        events += BetLedger.allEvents()
         for milestone in StreakService.milestones(tasks, now: now) {
             if let reachedOn = milestone.reachedOn {
                 events.append((reachedOn, milestone.bonus))
