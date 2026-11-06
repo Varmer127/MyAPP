@@ -100,3 +100,25 @@ struct ChallengeProgressTests {
         #expect(ChallengeProgress.count(tasks: tasks, challenge: challenge(category: nil)) == 2)
     }
 }
+
+struct ExerciseUsageTests {
+    private func log(_ name: String, daysAgo: Int) -> ExerciseLog {
+        ExerciseLog(name: name, weight: 50, reps: 8, sets: 3, date: Fixture.now.addingDays(-daysAgo))
+    }
+
+    @Test func recentUseOfTheMuscleGroupRanksFirst() {
+        let logs = [
+            log("Bench press na šikmé lavici", daysAgo: 2), log("Bench press na šikmé lavici", daysAgo: 9),
+            log("Bench press", daysAgo: 100), log("Bench press", daysAgo: 110), log("Bench press", daysAgo: 120),
+            log("Tlaky s jednoručkami", daysAgo: 5),
+            log("Shyby podhmatem", daysAgo: 1), log("Shyby podhmatem", daysAgo: 2), log("Shyby podhmatem", daysAgo: 3),
+            log("Bench press na negativní lavici", daysAgo: 30)
+        ]
+        let top = ExerciseUsage.top(3, for: .chest, in: logs, recentDays: 60, now: Fixture.now).map(\.name)
+        #expect(top == ["Bench press na šikmé lavici", "Tlaky s jednoručkami", "Bench press na negativní lavici"])
+    }
+
+    @Test func ownExercisesWithoutAMuscleGroupDoNotRank() {
+        #expect(ExerciseUsage.top(3, for: .chest, in: [log("Můj vlastní cvik", daysAgo: 1)], recentDays: 60, now: Fixture.now).isEmpty)
+    }
+}

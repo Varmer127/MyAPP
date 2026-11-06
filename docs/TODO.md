@@ -152,3 +152,9 @@ Kód používá jen barvy z tématu, ale tyto obrazovky jsme ve světlém režim
 - Migrace `supabase/migrations/20261106150000_phase4_bets.sql` čeká na spuštění; testy `supabase/tests/database/bets.test.sql`.
 
 - E-mail (6. 11.): odesílání přes Brevo (zdarma, ověřená jedna odesílací adresa, bez domény) kvůli zkoušení přátel; po koupi domény přepnout odesílatele na adresu z domény a ověřit doménu v Brevu (SPF, DKIM), jinak mohou e-maily padat do spamu.
+
+## Po vydání: aplikace pro Apple Watch (zadáno 6. 11. 2026)
+- Propojení s telefonem přes Watch Connectivity.
+- První verze: gym pauza (spustit a zastavit, odpočet s vibrací, kolikátá série) se stejným stavem na telefonu i hodinkách; další slib na řadě se „Splnil jsem“ (jen úkoly bez důkazu a bez zápisu tréninku); komplikace se sérií.
+- Odhad 3 až 5 dní. Bez placeného Apple Developer účtu se musí na hodinky nahrávat každých 7 dní.
+- Mezitím ověřit, jestli se živá aktivita gym pauzy sama ukazuje na hodinkách ve Smart Stacku (watchOS 11+).

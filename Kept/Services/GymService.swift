@@ -32,3 +32,21 @@ enum GymService {
         return "Minule \(top.weight.kilogramText) × \(top.reps) → zkus \(top.weight.kilogramText) × \(top.reps + 1)"
     }
 }
+
+/// Which exercises a person uses most for one muscle group: recent use counts first, then all-time use,
+/// then the newest. Only exercises from the catalog have muscle groups, so only they can rank.
+enum ExerciseUsage {
+    static func top(_ count: Int, for muscle: Muscle, in logs: [ExerciseLog], recentDays: Int, now: Date = .now) -> [CatalogExercise] {
+        let since = now.startOfDay.addingDays(-recentDays)
+        let byName = Dictionary(grouping: logs, by: \.name)
+        let ranked: [(exercise: CatalogExercise, recent: Int, total: Int, last: Date)] = byName.compactMap { name, uses in
+            guard let exercise = ExerciseCatalog.named(name), exercise.primary.contains(muscle) else { return nil }
+            return (exercise, uses.filter { $0.date >= since }.count, uses.count, uses.map(\.date).max() ?? .distantPast)
+        }
+        return ranked.sorted {
+            ($0.recent, $0.total, $0.last) > ($1.recent, $1.total, $1.last)
+        }
+        .prefix(count)
+        .map(\.exercise)
+    }
+}

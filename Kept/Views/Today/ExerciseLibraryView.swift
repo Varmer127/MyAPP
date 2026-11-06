@@ -1,3 +1,4 @@
+import SwiftData
 import SwiftUI
 
 /// The exercise library: search, filter by muscle or equipment, add your own.
@@ -10,11 +11,24 @@ struct ExerciseLibraryView: View {
     @State private var muscle: Muscle?
     @State private var equipment: Equipment?
     @State private var detail: CatalogExercise?
+    @Query private var logs: [ExerciseLog]
+
+    private static let favouriteCount = 3
+    private static let recentDays = 60
+
+    /// The user's most used exercises for the chosen muscle group, recent use first; none without a chosen group.
+    private var favourites: [CatalogExercise] {
+        guard let muscle, search.isEmpty else { return [] }
+        return ExerciseUsage.top(Self.favouriteCount, for: muscle, in: logs, recentDays: Self.recentDays)
+            .filter { exercise in equipment.map { exercise.equipment == $0 } ?? true }
+    }
 
     private var matches: [CatalogExercise] {
         let key = search.activityKey
+        let shown = Set(favourites.map(\.name))
         return ExerciseCatalog.all.filter { exercise in
-            (key.isEmpty || exercise.name.activityKey.contains(key))
+            !shown.contains(exercise.name)
+                && (key.isEmpty || exercise.name.activityKey.contains(key))
                 && (muscle.map { exercise.muscles.contains($0) } ?? true)
                 && (equipment.map { exercise.equipment == $0 } ?? true)
         }
@@ -56,31 +70,14 @@ struct ExerciseLibraryView: View {
                     }
                     .listRowBackground(Theme.card)
                 }
-                Section("Knihovna · \(matches.count)") {
-                    ForEach(matches) { exercise in
-                        HStack(spacing: 12) {
-                            Button { pick(exercise.name) } label: {
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(exercise.name)
-                                        .scaledFont(.body, weight: .semibold)
-                                        .foregroundStyle(Theme.textPrimary)
-                                    Text("\(exercise.primary.map(\.title).joined(separator: ", ")) · \(exercise.equipment.title)")
-                                        .scaledFont(.caption)
-                                        .foregroundStyle(Theme.textSecondary)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-                            Button { detail = exercise } label: {
-                                Image(systemName: "info.circle")
-                                    .foregroundStyle(Theme.textSecondary)
-                                    .frame(width: 36, height: 36)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel("Jak na \(exercise.name)")
-                        }
+                if let muscle, !favourites.isEmpty {
+                    Section("Nejčastěji · \(muscle.title)") {
+                        ForEach(favourites) { exercise in catalogRow(exercise) }
                     }
+                    .listRowBackground(Theme.card)
+                }
+                Section("Knihovna · \(matches.count)") {
+                    ForEach(matches) { exercise in catalogRow(exercise) }
                 }
                 .listRowBackground(Theme.card)
             }
@@ -103,6 +100,31 @@ struct ExerciseLibraryView: View {
             }
         }
         .appAppearance()
+    }
+
+    private func catalogRow(_ exercise: CatalogExercise) -> some View {
+        HStack(spacing: 12) {
+            Button { pick(exercise.name) } label: {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(exercise.name)
+                        .scaledFont(.body, weight: .semibold)
+                        .foregroundStyle(Theme.textPrimary)
+                    Text("\(exercise.primary.map(\.title).joined(separator: ", ")) · \(exercise.equipment.title)")
+                        .scaledFont(.caption)
+                        .foregroundStyle(Theme.textSecondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            Button { detail = exercise } label: {
+                Image(systemName: "info.circle")
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(width: 36, height: 36)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Jak na \(exercise.name)")
+        }
     }
 
     private var filters: some View {
