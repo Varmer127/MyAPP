@@ -170,6 +170,10 @@ struct FriendsView: View {
             }
             .listRowBackground(Theme.card)
 
+            if friends.leaderboard.count > 1 {
+                LeaderboardSection()
+            }
+
             if !friends.outgoing.isEmpty {
                 Section("Čeká na odpověď") {
                     ForEach(friends.outgoing) { request in

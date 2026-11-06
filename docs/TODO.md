@@ -125,3 +125,17 @@ Kód používá jen barvy z tématu, ale tyto obrazovky jsme ve světlém režim
 - Potvrzeno 26. 10.: komu je zapnuto Nerušit, toho nejde šťouchnout; zákaz šťouchání pro zneužití se nastavuje z dashboardu (`poke_banned_at`).
 - Neověřeno vizuálně (simulátor není přihlášený); vyzkoušet na telefonu po spuštění migrace.
 - Schránka Upozornění: zvonek vpravo v řádku s názvem každé záložky; na Dnes vedle plamínku, „PŘIDAT ÚKOL“ je pod tím přes celou šířku. Obsah: „Jak dopadl včerejšek“ (shrnutí včerejšího dne, odlišné od ranního přehledu, který mluví o dnešku), týdenní a měsíční příběh, žádosti o přátelství, nová pošťouchnutí.
+
+## Závěrečná fáze: placený týdenní program se slevou za splnění (zadáno 6. 11. 2026)
+- Princip: uživatel si koupí týdenní digitální program za pevnou cenu a dostane prémiové funkce (pokročilé plánování, připomínky, statistiky, analýza pokroku, týdenní report). Splní-li všechny předem stanovené úkoly, má nárok na předem danou slevu (částečné vrácení ceny); nesplní-li, sleva nenáleží. Žádná sázka, žádná volitelná výše rizika.
+- Otevřené otázky před stavbou:
+  - **Apple:** digitální funkce v aplikaci se musí prodávat přes In-App Purchase. Vývojář přes IAP nemůže vracet část ceny podle výsledku (refundy řeší Apple). Sleva se tak dá realizovat jen jinak, třeba levnějším dalším týdnem (nabídkový kód, propagační nabídka předplatného) nebo kreditem, ne vrácením peněz.
+  - **Hazard a spotřebitelské právo:** peníze vázané na výsledek mohou schvalovatelé i úřady posuzovat jako sázku. Nutné právní posouzení (ČR, EU) a jasné podmínky.
+  - Daně, faktury, prodej v EU (DPH řeší Apple jako prodejce).
+- Zařazeno do fáze 6/7, až bude Apple Developer účet a právní texty.
+
+## Fáze 3: sdílení týdne, žebříčky, reakce (6. 11. 2026, v práci)
+- Hotovo v kódu: volba „Co vidí přátelé“ (Nic ve výchozím stavu / Souhrn týdne / Celý plán týdne) a „Být v žebříčcích“ (zapnuto) v Účtu; aplikace posílá čísla týdne sama (po změnách, s odstupem 4 s); týden přítele v jeho detailu; žebříčky Spolehlivost a Odznaky pro tento týden v Přátelích; reakce (Hoříš, Potlesk, Síla, Fandím ti), 1× za týden od každého druhu, druhé klepnutí bere zpět; „Přátelé ti fandí“ ve schránce; kopírování plánu přítele do příštího týdne (jako návrh, dny v minulosti vynechá).
+- Spolehlivost = podíl dodržených slibů týdne; dokud žádný slib není uzavřený, produktivita uzavřených úkolů.
+- Upřímný limit: čísla počítá telefon, server je jen ukládá (obrana proti podvádění přijde s ověřením aplikace ve fázi 6).
+- Migrace `supabase/migrations/20261106120000_phase3_sharing.sql` čeká na spuštění; testy `supabase/tests/database/sharing.test.sql` poběží v CI.

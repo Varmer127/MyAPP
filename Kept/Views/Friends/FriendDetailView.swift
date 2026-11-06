@@ -27,6 +27,8 @@ struct FriendDetailView: View {
                 }
                 .listRowBackground(Theme.card)
 
+                FriendWeekSection(friend: friend)
+
                 Section {
                     Button("Odebrat z přátel") { confirmsRemove = true }
                     Button("Nahlásit") { showsReport = true }

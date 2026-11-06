@@ -7,16 +7,18 @@ import SwiftUI
 struct InboxItems {
     var requests: Int
     var pokes: Int
+    var reactions: Int
     var week: WeekStory?
     var month: MonthStory?
     var yesterday: DayRecap?
 
-    var count: Int { requests + pokes + (week == nil ? 0 : 1) + (month == nil ? 0 : 1) + (yesterday == nil ? 0 : 1) }
+    var count: Int { requests + pokes + reactions + (week == nil ? 0 : 1) + (month == nil ? 0 : 1) + (yesterday == nil ? 0 : 1) }
 
     init(tasks: [TaskItem], diary: [DiaryEntry], seenWeek: Double, seenMonth: Double, seenDay: Double, now: Date = .now) {
         let friends = FriendsService.shared
         requests = friends.incoming.count
         pokes = friends.unreadPokes
+        reactions = friends.unreadReactions.count
         if let start = WeekStory.offeredWeek(now: now), seenWeek != start.timeIntervalSince1970 {
             week = WeekStory.make(tasks: tasks, diary: diary, weekStart: start, now: now)
         }
@@ -120,6 +122,12 @@ struct InboxView: View {
                     }
                     .listRowBackground(Theme.card)
                 }
+                if items.reactions > 0 {
+                    NavigationLink { ReactionsList() } label: {
+                        rowLabel("hands.clap", "Přátelé ti fandí", cheers)
+                    }
+                    .listRowBackground(Theme.card)
+                }
                 if items.pokes > 0 {
                     NavigationLink { FriendsView() } label: {
                         rowLabel("hand.point.right", "Pošťouchnutí", latestPokes)
@@ -158,6 +166,12 @@ struct InboxView: View {
         }
     }
 
+    /// Who cheered, in one line.
+    private var cheers: String {
+        let names = Array(Set(friends.unreadReactions.map(\.senderName))).sorted()
+        return names.prefix(3).joined(separator: ", ")
+    }
+
     /// The newest unread pokes in one line: who and what.
     private var latestPokes: String {
         friends.pokes.filter { !$0.seen }.prefix(2).map { "\($0.senderName): \($0.body)" }.joined(separator: " · ")
@@ -191,4 +205,38 @@ struct InboxView: View {
 private struct InboxWeekBox: Identifiable {
     let story: WeekStory
     var id: Date { story.weekStart }
+}
+
+/// The cheers friends gave to the user's weeks; opening the list marks them as seen.
+struct ReactionsList: View {
+    private let friends = FriendsService.shared
+
+    var body: some View {
+        List {
+            ForEach(friends.reactions) { reaction in
+                HStack(spacing: 12) {
+                    Image(systemName: reaction.kind.symbol)
+                        .foregroundStyle(Theme.orange)
+                        .frame(width: 28)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(reaction.senderName): \(String(localized: reaction.kind.title))")
+                            .scaledFont(.body, weight: reaction.seen ? .regular : .semibold)
+                            .foregroundStyle(Theme.textPrimary)
+                        Text("Týden od \(reaction.weekStart.dayMonthText)")
+                            .scaledFont(.caption)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                }
+            }
+            .listRowBackground(Theme.card)
+        }
+        .scrollContentBackground(.hidden)
+        .screenBackground()
+        .navigationTitle("Fandí ti")
+        .navigationBarTitleDisplayMode(.inline)
+        .task {
+            try? await Task.sleep(for: .seconds(1))
+            await friends.markReactionsSeen()
+        }
+    }
 }

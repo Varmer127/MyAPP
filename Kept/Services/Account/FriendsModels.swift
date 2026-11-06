@@ -143,6 +143,7 @@ extension ServerClient {
             if let date = formatter.date(from: text) { return date }
             formatter.formatOptions = [.withInternetDateTime]
             if let date = formatter.date(from: text) { return date }
+            if let day = DayString.date(text) { return day }
             throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath, debugDescription: "date"))
         }
         return decoder
@@ -218,6 +219,46 @@ extension ServerClient {
         body["p_reason_key"] = reason?.rawValue ?? NSNull()
         body["p_reason_text"] = reason == .custom ? text : NSNull()
         _ = try await rpc("set_dnd", body, token: token)
+    }
+
+    func setSharing(_ level: ShareLevel, leaderboards: Bool, token: String) async throws {
+        _ = try await rpc("set_sharing", ["p_level": level.rawValue, "p_leaderboards": leaderboards], token: token)
+    }
+
+    func pushWeek(_ snapshot: WeekSnapshot, token: String) async throws {
+        let tasks = snapshot.tasks.map {
+            ["day": DayString.string($0.day), "title": $0.title, "category": $0.category, "status": $0.status]
+        }
+        _ = try await rpc("push_week", [
+            "p_week": DayString.string(snapshot.weekStart),
+            "p_reliability": snapshot.reliability.map { $0 as Any } ?? NSNull(),
+            "p_done": snapshot.done, "p_total": snapshot.total, "p_streak": snapshot.streak,
+            "p_badges": snapshot.badges, "p_sealed": snapshot.sealed, "p_tasks": tasks
+        ], token: token)
+    }
+
+    func friendWeek(_ id: UUID, week: Date, token: String) async throws -> FriendWeek {
+        let data = try await rpc("friend_week", ["p_friend": id.uuidString, "p_week": DayString.string(week)], token: token)
+        return try Self.decoder.decode(FriendWeek.self, from: data)
+    }
+
+    func leaderboard(week: Date, token: String) async throws -> [LeaderboardRow] {
+        let data = try await rpc("leaderboard", ["p_week": DayString.string(week)], token: token)
+        return try Self.decoder.decode([LeaderboardRow].self, from: data)
+    }
+
+    /// Returns whether the reaction is on after the tap.
+    func toggleReaction(_ kind: ReactionKind, to id: UUID, week: Date, token: String) async throws -> Bool {
+        let data = try await rpc("toggle_reaction", ["p_to": id.uuidString, "p_week": DayString.string(week), "p_kind": kind.rawValue], token: token)
+        return try Self.decoder.decode(Bool.self, from: data)
+    }
+
+    func reactions(token: String) async throws -> [ReceivedReaction] {
+        try Self.decoder.decode([ReceivedReaction].self, from: try await rpc("my_reactions", token: token))
+    }
+
+    func markReactionsSeen(token: String) async throws {
+        _ = try await rpc("mark_reactions_seen", token: token)
     }
 
     func friends(token: String) async throws -> [Friend] {

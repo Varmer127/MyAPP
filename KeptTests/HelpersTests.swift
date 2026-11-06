@@ -60,3 +60,25 @@ struct DayRecapTests {
         #expect(DayRecap.make(tasks: [Fixture.task(day: -3)], now: Fixture.now) == nil)
     }
 }
+
+@MainActor
+struct WeekSnapshotTests {
+    @Test func countsTheWeekAndSharesThePlanOnlyWhenAsked() {
+        let week = Fixture.now.weekStart
+        let tasks = [Fixture.task("Gym", day: -1, done: true), Fixture.task("Čtení", day: 0), Fixture.task("Minulý týden", day: -9, done: true)]
+        let summary = WeekSnapshot.make(week: week, tasks: tasks, plans: [], streak: 2, badges: 5, includePlan: false, now: Fixture.now)
+        #expect(summary.total == 2)
+        #expect(summary.done == 1)
+        #expect(summary.tasks.isEmpty)
+        #expect(summary.badges == 5)
+        let plan = WeekSnapshot.make(week: week, tasks: tasks, plans: [], streak: 2, badges: 5, includePlan: true, now: Fixture.now)
+        #expect(plan.tasks.map(\.title) == ["Gym", "Čtení"])
+        #expect(plan.tasks.map(\.status) == ["done", "open"])
+    }
+
+    @Test func dayStringsAreLocalDates() {
+        let day = Calendar.app.date(from: DateComponents(year: 2026, month: 11, day: 2))!
+        #expect(DayString.string(day) == "2026-11-02")
+        #expect(DayString.date("2026-11-02") == day)
+    }
+}

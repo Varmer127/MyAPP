@@ -28,6 +28,7 @@ struct KeptApp: App {
             .appAppearance()
             .environment(\.locale, .app)
             .modifier(FriendLinkHandler())
+            .modifier(SocialSync())
             .task { await AccountService.shared.restore() }
         }
         .modelContainer(AppStore.container)

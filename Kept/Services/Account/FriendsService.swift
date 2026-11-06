@@ -11,6 +11,8 @@ final class FriendsService {
     private(set) var blocked: [BlockedPerson] = []
     private(set) var pokes: [ReceivedPoke] = []
     private(set) var cooldowns: [UUID: Date] = [:]
+    private(set) var reactions: [ReceivedReaction] = []
+    private(set) var leaderboard: [LeaderboardRow] = []
     private(set) var isLoading = false
     private(set) var hasLoaded = false
 
@@ -18,12 +20,13 @@ final class FriendsService {
     private let account = AccountService.shared
 
     var unreadPokes: Int { pokes.filter { !$0.seen }.count }
+    var unreadReactions: [ReceivedReaction] { reactions.filter { !$0.seen } }
     var incoming: [FriendRequest] { requests.filter { $0.direction == .incoming } }
     var outgoing: [FriendRequest] { requests.filter { $0.direction == .outgoing } }
 
     func reload() async {
         guard account.isSignedIn else {
-            friends = []; requests = []; blocked = []; pokes = []; cooldowns = [:]; hasLoaded = false
+            friends = []; requests = []; blocked = []; pokes = []; cooldowns = [:]; reactions = []; leaderboard = []; hasLoaded = false
             return
         }
         isLoading = true
@@ -43,6 +46,16 @@ final class FriendsService {
             pokes = result.3
             cooldowns = Dictionary(uniqueKeysWithValues: result.4.map { ($0.recipient, $0.availableAt) })
             hasLoaded = true
+            // Sharing came later; a server without it must not take the friends list down with it.
+            let week = Date.now.weekStart
+            if let extra = try? await account.perform({ token in
+                async let reactions = client.reactions(token: token)
+                async let board = client.leaderboard(week: week, token: token)
+                return try await (reactions, board)
+            }) {
+                reactions = extra.0
+                leaderboard = extra.1
+            }
         } catch {
             // The last known lists stay on screen when the network is away.
         }
@@ -116,6 +129,31 @@ final class FriendsService {
         }
         await account.reload()
         await reload()
+    }
+
+    func week(of friend: Friend, week: Date = Date.now.weekStart) async throws -> FriendWeek {
+        try await account.perform { try await client.friendWeek(friend.id, week: week, token: $0) }
+    }
+
+    @discardableResult
+    func toggle(_ kind: ReactionKind, for friend: Friend, week: Date = Date.now.weekStart) async throws -> Bool {
+        try await account.perform { try await client.toggleReaction(kind, to: friend.id, week: week, token: $0) }
+    }
+
+    func markReactionsSeen() async {
+        guard !unreadReactions.isEmpty else { return }
+        _ = try? await account.perform { try await client.markReactionsSeen(token: $0) }
+        reactions = reactions.map { var r = $0; r.seen = true; return r }
+    }
+
+    func setSharing(_ level: ShareLevel, leaderboards: Bool) async throws {
+        try await account.perform { try await client.setSharing(level, leaderboards: leaderboards, token: $0) }
+        await account.reload()
+        await reload()
+    }
+
+    func push(_ snapshot: WeekSnapshot) async throws {
+        try await account.perform { try await client.pushWeek(snapshot, token: $0) }
     }
 
     func rotateInviteCode() async throws {

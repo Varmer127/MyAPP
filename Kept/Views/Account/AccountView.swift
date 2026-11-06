@@ -8,6 +8,9 @@ struct AccountView: View {
     @State private var confirmsDelete = false
     @State private var confirmsSignOut = false
     @State private var copied = false
+    @State private var shareLevel: ShareLevel = .none
+    @State private var leaderboards = true
+    @State private var sharingLoaded = false
 
     private var profile: AccountProfile? { account.profile }
 
@@ -36,6 +39,26 @@ struct AccountView: View {
                     Text("Takhle tě přátelé najdou. Nikdo tě nenajde jen podle jména, potřebuje celé označení nebo tvůj QR kód.")
                 }
                 .listRowBackground(Theme.card)
+
+                Section {
+                    Picker("Co vidí přátelé", selection: $shareLevel) {
+                        ForEach(ShareLevel.allCases) { Text($0.title).tag($0) }
+                    }
+                    Toggle("Být v žebříčcích", isOn: $leaderboards).tint(Theme.textSecondary)
+                } header: {
+                    Text("Sdílení s přáteli")
+                } footer: {
+                    Text(shareLevel.detail)
+                }
+                .listRowBackground(Theme.card)
+                .onAppear {
+                    guard !sharingLoaded else { return }
+                    sharingLoaded = true
+                    shareLevel = profile.shareLevel
+                    leaderboards = profile.leaderboardsEnabled
+                }
+                .onChange(of: shareLevel) { _, _ in saveSharing() }
+                .onChange(of: leaderboards) { _, _ in saveSharing() }
 
                 Section {
                     NavigationLink {
@@ -104,6 +127,15 @@ struct AccountView: View {
             Button("Nechat", role: .cancel) {}
         } message: {
             Text("Zmizí tvůj profil, přátelé i sázky. Nejde to vrátit.")
+        }
+    }
+
+    private func saveSharing() {
+        guard sharingLoaded, let profile,
+              profile.shareLevel != shareLevel || profile.leaderboardsEnabled != leaderboards else { return }
+        Task {
+            do { try await FriendsService.shared.setSharing(shareLevel, leaderboards: leaderboards) }
+            catch { errorText = "Nastavení sdílení se nepodařilo uložit." }
         }
     }
 
