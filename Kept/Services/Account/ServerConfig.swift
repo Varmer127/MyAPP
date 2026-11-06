@@ -7,8 +7,8 @@ enum ServerConfig {
     static let url = URL(string: "https://fsaefkdsjcecebhoqagq.supabase.co")!
     static let publishableKey = "sb_publishable_PHSzVCcpjgKb4X8qg9xHVw_r-R_2gK9"
 
-    /// E-mail sign-in with a code. Off until the project sends its own e-mails: the built-in sender cannot carry the code.
-    static let emailLoginEnabled = false
+    /// E-mail sign-in with a code. Needs the project's own e-mail sender (SMTP) and templates that carry `{{ .Token }}`.
+    static let emailLoginEnabled = true
 
     static let callbackScheme = "cz.philipstryka.kept"
     static let redirectURL = "\(callbackScheme)://login-callback"

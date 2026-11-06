@@ -63,7 +63,7 @@ Kód používá jen barvy z tématu, ale tyto obrazovky jsme ve světlém režim
 - **Registrace nabízena na čtyřech místech:** onboarding, zamčená záložka Přátelé, karta po prvním zapečetěném týdnu, tlačítko Registrovat se / Odhlásit se v Nastavení. Odznaky získané jen v telefonu jsou pro všechny; zamčené jsou jen ty, co vyžadují přátele. Do žebříčku Odznaky se počítají jen odznaky uživatelů s účtem, ověřené serverem.
 - **Nový telefon:** účet obnoví vše na serveru (profil, přátelé, body, sázky, ověřené odznaky); osobní data (úkoly, grafy, statistiky, deník, váha, zdraví, fotky) přes iCloud synchronizaci (viz Dodělat), ne přes náš server.
 
-## Přihlášení e-mailem (25. 10. 2026)
+## Přihlášení e-mailem (25. 10. 2026; zapnuto 6. 11. přes Brevo SMTP bez vlastní domény)
 - V aplikaci je přihlášení **e-mailem s šestimístným kódem, bez hesla** (vedle Discordu). Heslo se zatím nedělá; kdyby bylo potřeba, vyžaduje obnovu hesla a vlastní odesílač e-mailů.
 - Výchozí e-maily Supabase mají malý limit (asi 2 za hodinu) a posílají se z cizí adresy. Před vydáním: vlastní SMTP z naší domény (fáze 6) a ochrana proti hromadné registraci (CAPTCHA, např. Cloudflare Turnstile).
 - Šablony e-mailů „Confirm signup“ i „Magic Link“ musí obsahovat `{{ .Token }}` (kód), jinak přijde jen odkaz. **Supabase šablony nejde upravit, dokud není nastavený vlastní SMTP** (Authentication → Emails → SMTP Settings). Do té doby je v aplikaci přihlášení e-mailem vypnuté (`ServerConfig.emailLoginEnabled = false`); po nastavení SMTP a úpravě šablon přepnout na `true`.
@@ -150,3 +150,5 @@ Kód používá jen barvy z tématu, ale tyto obrazovky jsme ve světlém režim
 - Migrace `supabase/migrations/20261106180000_phase4_together.sql`, testy `supabase/tests/database/together.test.sql`.
 - Před vydáním rozhodnout, co z fáze 4 zůstane viditelné a co se skryje (domluveno: „ke konci některé funkce omezíme“).
 - Migrace `supabase/migrations/20261106150000_phase4_bets.sql` čeká na spuštění; testy `supabase/tests/database/bets.test.sql`.
+
+- E-mail (6. 11.): odesílání přes Brevo (zdarma, ověřená jedna odesílací adresa, bez domény) kvůli zkoušení přátel; po koupi domény přepnout odesílatele na adresu z domény a ověřit doménu v Brevu (SPF, DKIM), jinak mohou e-maily padat do spamu.
