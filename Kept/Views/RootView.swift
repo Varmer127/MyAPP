@@ -142,7 +142,7 @@ struct RootView: View {
 
     var body: some View {
         TabView(selection: tabSelection) {
-            TodayView(openWeek: { tab = .week })
+            TodayView(openWeek: { tab = .week }, openNextWeek: { weekShowsNext = true; tab = .week })
                 .modifier(TabSlide(offset: slide, opacity: fade))
                 .tabItem { Label("Dnes", systemImage: "sun.max") }
                 .tag(AppTab.today)

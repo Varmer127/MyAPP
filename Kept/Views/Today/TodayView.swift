@@ -89,7 +89,6 @@ struct TodayView: View {
     /// The open task the user picked from the list to be the main one, with its "Splnil jsem" button.
     @State var pinnedNext: UUID?
 
-    @State var showsFriends = false
 
     /// Watched only so the screen is drawn again when a rest day is set or cleared.
     @AppStorage(RestDays.storageKey) var restDaysRaw = ""
@@ -133,6 +132,12 @@ struct TodayView: View {
 
     let openWeek: () -> Void
 
+    /// Opens the Week tab on the coming week, from the "Pro tebe" row.
+    var openNextWeek: () -> Void = {}
+
+    /// A screen opened from a tile of the "Pro tebe" row.
+    @State var forYouSheet: ForYouSheet?
+
     @Environment(\.modelContext) var context
 
     @Environment(\.scenePhase) var scenePhase
@@ -167,12 +172,17 @@ struct TodayView: View {
             // The add button sits in the header row, so the empty navigation bar on top is gone.
             .toolbar(.hidden, for: .navigationBar)
         }
-        .sheet(isPresented: $showsFriends) {
-            NavigationStack {
-                FriendsView()
-                    .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Zavřít") { showsFriends = false } } }
+        .sheet(item: $forYouSheet) { sheet in
+            switch sheet {
+            case .recap(let recap):
+                DayRecapView(recap: recap, streak: ScoreEngine.dayStreak(tasks)) { forYouSheet = nil }
+            default:
+                NavigationStack {
+                    sheet.destination
+                        .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Zavřít") { forYouSheet = nil } } }
+                }
+                .appAppearance()
             }
-            .appAppearance()
         }
         .sheet(item: $editor) {
             TaskEditorView(task: $0.task, defaultDate: $0.date, suggestion: $0.suggestion, isRecovery: $0.isRecovery)
