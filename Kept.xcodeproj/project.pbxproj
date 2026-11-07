@@ -361,6 +361,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Kept-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Kept;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kept čte události z kalendáře, aby tě při plánování upozornil, že se úkol kryje s něčím, co už máš domluvené. Nic nezapisuje ani neukládá.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kept potřebuje fotoaparát, abys mohl vyfotit důkaz splnění úkolu.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Kept zamyká tvůj deník pomocí Face ID.";
@@ -377,6 +378,9 @@
 				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = cz.philipstryka.kept;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -396,6 +400,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Kept-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Kept;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kept čte události z kalendáře, aby tě při plánování upozornil, že se úkol kryje s něčím, co už máš domluvené. Nic nezapisuje ani neukládá.";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Kept potřebuje fotoaparát, abys mohl vyfotit důkaz splnění úkolu.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Kept zamyká tvůj deník pomocí Face ID.";
@@ -412,6 +417,9 @@
 				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = cz.philipstryka.kept;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
