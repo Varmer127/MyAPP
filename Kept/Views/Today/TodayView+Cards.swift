@@ -28,69 +28,7 @@ extension TodayView {
         }
     }
 
-    /// Offered in the first days of a month, once, when the month that ended has something to tell.
-    @ViewBuilder
-    func monthStoryCard(now: Date) -> some View {
-        if let month = MonthStory.offeredMonth(now: now), storySeenMonth != month.timeIntervalSince1970,
-           let offered = MonthStory.make(tasks: tasks, monthStart: month, now: now) {
-            Button {
-                Haptics.light()
-                monthStory = offered
-            } label: {
-                HStack(spacing: 14) {
-                    Image(systemName: "calendar.badge.checkmark")
-                        .scaledFont(.heading)
-                        .foregroundStyle(Theme.onPrimary)
-                        .frame(width: 44, height: 44)
-                        .background(Theme.textPrimary)
-                        .clipShape(Circle())
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("TVŮJ MĚSÍC JE HOTOVÝ").labelStyle(Theme.textPrimary)
-                        Text("\(offered.done) z \(offered.total) slibů. Podívej se, jak to dopadlo.")
-                            .scaledFont(.body)
-                            .foregroundStyle(Theme.textSecondary)
-                            .multilineTextAlignment(.leading)
-                    }
-                    Spacer(minLength: 0)
-                    Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
-                }
-                .card()
-            }
-            .buttonStyle(.plain)
-        }
-    }
 
-    /// Offered once the week is over, once per week, when the week has something to tell.
-    @ViewBuilder
-    func weekStoryCard(now: Date) -> some View {
-        if let week = WeekStory.offeredWeek(now: now), storySeenWeek != week.timeIntervalSince1970,
-           let offered = WeekStory.make(tasks: tasks, diary: diaryEntries, weekStart: week, now: now) {
-            Button {
-                Haptics.light()
-                story = offered
-            } label: {
-                HStack(spacing: 14) {
-                    Image(systemName: "sparkles")
-                        .scaledFont(.heading)
-                        .foregroundStyle(Theme.onPrimary)
-                        .frame(width: 44, height: 44)
-                        .background(Theme.textPrimary)
-                        .clipShape(Circle())
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("TVŮJ TÝDEN JE HOTOVÝ").labelStyle(Theme.textPrimary)
-                        Text("\(offered.done) z \(offered.total) slibů. Podívej se, jak to dopadlo.")
-                            .scaledFont(.body)
-                            .foregroundStyle(Theme.textSecondary)
-                            .multilineTextAlignment(.leading)
-                    }
-                    Spacer(minLength: 0)
-                    Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
-                }
-                .card()
-            }
-            .buttonStyle(.plain)
-        }
-    }
 
     /// The broken streak that is currently offered for buying back, if any.
     func repairOffer(now: Date) -> StreakService.Broken? {
@@ -183,26 +121,6 @@ extension TodayView {
         }
     }
 
-    /// The day after a streak insurance stepped in, so it does not get spent unnoticed.
-    @ViewBuilder
-    func insuranceUsedCard(now: Date) -> some View {
-        let yesterday = now.startOfDay.addingDays(-1)
-        if purchases.contains(where: { $0.kind == .streakInsurance && $0.usedOn == yesterday }) {
-            HStack(spacing: 12) {
-                Image(systemName: ShopItem.streakInsurance.symbol)
-                    .scaledFont(.title)
-                    .foregroundStyle(Theme.orange)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("POJISTKA SÉRIE POUŽITA").labelStyle(Theme.orange)
-                    Text("Včerejšek nevyšel, plamínek ale hoří dál. Zbývá pojistek: \(PointsService.unused(.streakInsurance, in: purchases)).")
-                        .scaledFont(.caption)
-                        .foregroundStyle(Theme.textSecondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-            .card()
-        }
-    }
 
     /// Live countdown to the end of the buy-back offer; turns red in the last hours.
     func streakCountdown(until end: Date, now: Date) -> some View {
@@ -380,25 +298,6 @@ extension TodayView {
         .animation(.easeOut(duration: 0.4), value: balance)
     }
 
-    func reflectionCard(_ pending: ReflectionRequest) -> some View {
-        Button {
-            reflection = pending
-        } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("SEBEREFLEXE TÝDNE \(pending.weekStart.weekNumber)").labelStyle(Theme.textPrimary)
-                    Text("Projdi si týden a zapiš do deníčku, jak jsi se sebou spokojený.")
-                        .scaledFont(.body)
-                        .foregroundStyle(Theme.textSecondary)
-                        .multilineTextAlignment(.leading)
-                }
-                Spacer()
-                Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
-            }
-            .card()
-        }
-        .buttonStyle(.plain)
-    }
 
     var realityCheckCard: some View {
         Button {

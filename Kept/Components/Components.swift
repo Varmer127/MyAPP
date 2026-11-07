@@ -195,3 +195,24 @@ struct SecondaryButtonStyle: ButtonStyle {
             .opacity(configuration.isPressed ? 0.7 : 1)
     }
 }
+
+/// A ring that fills with progress, with any content in the middle.
+struct ProgressRing<Content: View>: View {
+    let value: Double
+    var color: Color = Theme.green
+    var lineWidth: CGFloat = 10
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        ZStack {
+            Circle().stroke(Theme.cardRaised, lineWidth: lineWidth)
+            Circle()
+                .trim(from: 0, to: max(0.001, min(1, value)))
+                .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .animation(.easeOut(duration: 0.4), value: value)
+            content
+        }
+        .accessibilityElement(children: .combine)
+    }
+}

@@ -89,6 +89,8 @@ struct TodayView: View {
     /// The open task the user picked from the list to be the main one, with its "Splnil jsem" button.
     @State var pinnedNext: UUID?
 
+    @State var showsFriends = false
+
     /// Watched only so the screen is drawn again when a rest day is set or cleared.
     @AppStorage(RestDays.storageKey) var restDaysRaw = ""
 
@@ -139,9 +141,6 @@ struct TodayView: View {
 
     static let comebackThreshold = 0.6
 
-    /// Days with something planned before the reliability score is shown at all.
-    static let daysBeforeScore = 7
-
     static let stakeQuestionDays = 7
 
     static let slippingAfterMinutes = 18 * 60
@@ -167,6 +166,13 @@ struct TodayView: View {
             .screenBackground()
             // The add button sits in the header row, so the empty navigation bar on top is gone.
             .toolbar(.hidden, for: .navigationBar)
+        }
+        .sheet(isPresented: $showsFriends) {
+            NavigationStack {
+                FriendsView()
+                    .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Zavřít") { showsFriends = false } } }
+            }
+            .appAppearance()
         }
         .sheet(item: $editor) {
             TaskEditorView(task: $0.task, defaultDate: $0.date, suggestion: $0.suggestion, isRecovery: $0.isRecovery)
@@ -423,8 +429,6 @@ struct TodayView: View {
         return ScrollView {
             VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                 header(now: now, day: day)
-                weekStoryCard(now: now)
-                monthStoryCard(now: now)
                 todaysPromise(day, now: now)
                 FirstWeekCard(tasks: tasks, plans: plans, streak: day.streak,
                               onboardedAt: settingsList.first?.onboardedAt, onOpenWeek: openWeek)
@@ -432,10 +436,6 @@ struct TodayView: View {
                     slippingBanner(day)
                 }
                 streakCard(day, now: now)
-                insuranceUsedCard(now: now)
-                if let pending = ReflectionRequest.pending(tasks: tasks, reflections: reflections, now: now) {
-                    reflectionCard(pending)
-                }
                 comebackCard(day, now: now)
                 stakeCards(now: now)
                 healthWorkoutCard(day)
@@ -454,12 +454,12 @@ struct TodayView: View {
                 if !day.weekIsCommitted {
                     uncommittedCard
                 }
-                statsStrip(day, now: now)
-                FriendsEntryCard()
-                suggestionsSection(now: now)
+                forYouRow(now: now)
                 if !day.closed.isEmpty {
                     section("Uzavřené", tasks: day.closed, now: now)
                 }
+                // What the app recommends adding comes last, on its own.
+                suggestionsSection(now: now)
             }
             .padding(.horizontal, Theme.screenPadding)
             .padding(.bottom, 32)

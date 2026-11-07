@@ -26,7 +26,7 @@ extension TodayView {
         let suggestions = visibleSuggestions(now: now)
         if !suggestions.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: "Návrhy")
+                SectionLabel(text: "Kept doporučuje")
                 ForEach(suggestions) { suggestion in
                     VStack(alignment: .leading, spacing: 12) {
                         VStack(alignment: .leading, spacing: 5) {

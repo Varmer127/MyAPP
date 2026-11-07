@@ -191,71 +191,63 @@ extension TodayView {
             // The user can pick which open task is the main one; otherwise it is the first.
             let next = open.first { $0.uid == pinnedNext } ?? open.first
             let allDone = done == total && broken == 0
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text("DNEŠNÍ SLIB").labelStyle(allDone ? Theme.green : Theme.textSecondary)
-                    Spacer()
-                    if broken > 0 {
-                        Text("porušeno: \(broken)")
-                            .scaledFont(.caption)
-                            .foregroundStyle(Theme.red)
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 16) {
+                    ProgressRing(value: Double(done) / Double(total)) {
+                        VStack(spacing: 0) {
+                            Text("\(done)/\(total)")
+                                .scaledFont(26, weight: .heavy)
+                                .foregroundStyle(allDone ? Theme.green : Theme.textPrimary)
+                                .contentTransition(.numericText())
+                            Text("dodrženo")
+                                .scaledFont(.caption)
+                                .foregroundStyle(Theme.textSecondary)
+                        }
                     }
-                    if day.partialCount > 0 {
-                        Text("částečně: \(day.partialCount)")
-                            .scaledFont(.caption)
-                            .foregroundStyle(Theme.orange)
-                    }
-                }
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text("\(done) / \(total)")
-                        .scaledFont(34, weight: .heavy)
-                        .foregroundStyle(allDone ? Theme.green : Theme.textPrimary)
-                        .contentTransition(.numericText())
-                    Text(allDone ? "Den dodržen." : (done == total ? "Zbytek je splněný." : (total - done == 1 ? "Zbývá poslední." : "Zbývá \(total - done).")))
-                        .scaledFont(.body, weight: .semibold)
-                        .foregroundStyle(Theme.textSecondary)
-                }
-                ThinBar(value: Double(done) / Double(total), color: allDone ? Theme.green : Theme.textPrimary)
-                if let next {
-                    HStack(spacing: 10) {
-                        Image(systemName: next.icon)
-                            .scaledFont(.body)
-                            .foregroundStyle(Theme.textPrimary)
-                            .frame(width: 32, height: 32)
-                            .background(Theme.cardRaised)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                        VStack(alignment: .leading, spacing: 1) {
+                    .frame(width: 104, height: 104)
+                    VStack(alignment: .leading, spacing: 4) {
+                        if let next {
                             Text("NA ŘADĚ").labelStyle()
                             Text(next.title)
-                                .scaledFont(.body, weight: .semibold)
+                                .scaledFont(.heading, weight: .heavy)
                                 .foregroundStyle(Theme.textPrimary)
-                                .lineLimit(1)
+                                .lineLimit(2)
+                            Text(next.deadline.map { "do \($0.timeText) · \(next.plannedMinutes) min" } ?? "\(next.plannedMinutes) min")
+                                .scaledFont(.caption)
+                                .foregroundStyle(Theme.textSecondary)
+                        } else {
+                            Text(allDone ? "DEN DODRŽEN" : "HOTOVO").labelStyle(Theme.green)
+                            Text(allDone ? "Takhle vypadá dodržené slovo." : "Zbytek je splněný.")
+                                .scaledFont(.heading, weight: .heavy)
+                                .foregroundStyle(Theme.textPrimary)
                         }
-                        Spacer(minLength: 8)
-                        if next.activeFocusSession == nil, next.category == .gym || next.usesFocus {
-                            Button(next.category == .gym ? "ZAČÍT" : "FOCUS") {
-                                if next.category == .gym {
-                                    _ = next.startFocusIfNeeded(in: context)
-                                    gymTimerTask = next
-                                } else {
-                                    focusTask = next
+                        if broken > 0 || day.partialCount > 0 {
+                            HStack(spacing: 8) {
+                                if broken > 0 {
+                                    Text("porušeno: \(broken)").scaledFont(.caption).foregroundStyle(Theme.red)
+                                }
+                                if day.partialCount > 0 {
+                                    Text("částečně: \(day.partialCount)").scaledFont(.caption).foregroundStyle(Theme.orange)
                                 }
                             }
-                            .scaledFont(.caption, weight: .heavy)
-                            .foregroundStyle(Theme.onPrimary)
-                            .padding(.horizontal, 14)
-                            .frame(minHeight: 36)
-                            .background(Theme.textPrimary)
-                            .clipShape(Capsule())
-                        } else if !next.requiresProof, next.category != .gym {
-                            Button("SPLNIL JSEM") { confirmDone = next }
-                                .scaledFont(.caption, weight: .heavy)
-                                .foregroundStyle(Color(hex: 0x000000))
-                                .padding(.horizontal, 14)
-                                .frame(minHeight: 36)
-                                .background(Theme.green)
-                                .clipShape(Capsule())
                         }
+                    }
+                    Spacer(minLength: 0)
+                }
+                if let next {
+                    if next.activeFocusSession == nil, next.category == .gym || next.usesFocus {
+                        Button(next.category == .gym ? "ZAČÍT TRÉNINK" : "ZAČÍT FOCUS") {
+                            if next.category == .gym {
+                                _ = next.startFocusIfNeeded(in: context)
+                                gymTimerTask = next
+                            } else {
+                                focusTask = next
+                            }
+                        }
+                        .buttonStyle(PrimaryButtonStyle())
+                    } else if !next.requiresProof, next.category != .gym {
+                        Button("SPLNIL JSEM") { confirmDone = next }
+                            .buttonStyle(PrimaryButtonStyle(color: Theme.green, textColor: Color(hex: 0x000000)))
                     }
                 }
                 let others = open.filter { $0.uid != next?.uid }

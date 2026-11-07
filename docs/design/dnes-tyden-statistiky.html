@@ -80,6 +80,52 @@ p.lead{font-size:14px;color:var(--ps);margin:0 auto 14px;text-align:center;max-w
 .two .card{margin-top:10px}
 .agday{margin-top:14px}
 .agday .hd{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--t2);font-weight:600;padding:4px 2px}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--raised);border-radius:10px;padding:2px;margin-top:14px}
+.seg.s4{grid-template-columns:repeat(4,1fr)}
+.seg button{font:inherit;font-size:12.5px;font-weight:600;border:0;background:transparent;color:var(--t1);padding:7px 0;border-radius:8px;cursor:pointer}
+.seg button.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.tile{background:var(--raised);border-radius:14px;padding:10px;min-height:104px;font-size:11px;color:var(--t2);line-height:1.3}
+.tile i{font-size:18px;color:var(--t1)}
+.tile b{display:block;color:var(--t1);font-size:12.5px;margin:10px 0 2px}
+.hrs{display:flex;align-items:flex-end;gap:4px;height:60px;margin-top:10px}
+.hrs div{flex:1;background:var(--green);border-radius:3px}
+.lseg{position:relative;display:grid;grid-template-columns:repeat(var(--n),1fr);margin-top:14px;padding:3px;border-radius:999px;background:color-mix(in srgb,var(--raised) 80%,transparent);border:1px solid var(--line);-webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6)}
+.lseg .knob{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/var(--n));border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,.08));border:1px solid rgba(255,255,255,.32);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 2px rgba(0,0,0,.25),0 6px 16px rgba(0,0,0,.35);-webkit-backdrop-filter:blur(6px) saturate(1.8);backdrop-filter:blur(6px) saturate(1.8);transition:transform .55s cubic-bezier(.3,1.35,.45,1)}
+.k.l .lseg .knob{background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(255,255,255,.7));border-color:rgba(255,255,255,.9);box-shadow:inset 0 1px 0 #fff,0 4px 14px rgba(0,0,0,.14)}
+.lseg .knob.squish{animation:squish .55s cubic-bezier(.3,1.2,.4,1)}
+@keyframes squish{0%{scale:1 1}35%{scale:1.22 .86}65%{scale:.96 1.05}100%{scale:1 1}}
+.lseg button{position:relative;z-index:1;font:inherit;font-size:12.5px;font-weight:600;border:0;background:transparent;color:var(--t2);padding:8px 0;border-radius:999px;cursor:pointer;transition:color .3s,transform .2s}
+.lseg button.on{color:var(--t1)}
+.lseg button:active{transform:scale(1.08)}
+.anim{animation:rise .45s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.day{cursor:pointer}.day.today b{color:var(--orange)}
+.ib{width:32px;height:30px;display:inline-flex;align-items:center;justify-content:center;color:var(--t2);font-size:17px;cursor:pointer}
+.ib.dis{opacity:.3}
+.dash{border:1px dashed var(--t3);border-radius:12px;padding:12px;margin-top:10px;font-size:13.5px;color:var(--t2);font-weight:600}
+.lrow{display:flex;align-items:center;gap:10px;padding:13px 16px;font-size:13.5px}
+.lrow i{font-size:17px;color:var(--t2)}
+.sticky{position:sticky;bottom:0;padding:14px 0 4px;background:linear-gradient(transparent,var(--bg) 35%)}
+.stack{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;margin-top:12px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:10px;font-size:11.5px;color:var(--t2)}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px}
+.legend b{color:var(--t1)}
+.mgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:10px;font-size:11px;text-align:center}
+.mgrid span{color:var(--t3);font-size:10px}
+.mgrid div{aspect-ratio:1;border-radius:6px;display:flex;align-items:center;justify-content:center;position:relative;background:var(--raised);color:var(--t2);cursor:pointer}
+.mgrid .g{background:var(--green);color:#03210c;font-weight:600}
+.mgrid .x{background:color-mix(in srgb,var(--red) 30%,var(--raised));color:var(--t1)}
+.mgrid .f{background:transparent;border:1px solid var(--line);color:var(--t3)}
+.mgrid .e{background:transparent}
+.mgrid .t{outline:2px solid var(--t1);outline-offset:1px}
+.mgrid div i{position:absolute;bottom:3px;width:4px;height:4px;border-radius:50%;background:currentColor}
+.ygrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.ygrid div{border-radius:10px;padding:8px 6px;font-size:11px;color:var(--t1);text-align:center;cursor:pointer;border:2px solid transparent}
+.ygrid div b{display:block;font-size:12px}
+.ygrid .f{background:transparent;border:1px dashed var(--line);color:var(--t3)}
+.ygrid .sel{border-color:var(--t1)}
+.expand{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);animation:rise .35s ease both}
 </style>
 </head>
 <body>
@@ -91,11 +137,21 @@ p.lead{font-size:14px;color:var(--ps);margin:0 auto 14px;text-align:center;max-w
 <div class="note" id="note"></div>
 <div class="stage"><div class="k" id="k"><div class="ph"><div class="scr" id="scr"></div><div class="tab" id="tab"></div></div></div></div>
 <script>
-var state={screen:0,variant:0,light:false};
+var state={screen:0,variant:0,light:false,week:0,pweek:0,period:1,pperiod:1,day:5,nday:0,sent:false,month:10,ymonth:10};
 function ic(n){return '<i class="ti ti-'+n+'" aria-hidden="true"></i>'}
 function tabbar(active){var t=[['sun','Dnes'],['calendar','Týden'],['chart-bar','Statistiky'],['heart','Zdraví'],['settings','Nastavení']];return t.map(function(x,i){return '<div class="'+(i==active?'on':'')+'">'+ic(x[0])+x[1]+'</div>'}).join('')}
 function head(kicker,title,flame){return '<div class="row"><div><div class="lab">'+kicker+'</div><div class="h1">'+title+'</div></div><div class="sp"></div><div class="bell">'+ic('bell')+'<b>2</b></div>'+(flame?'<div class="flame">'+ic('flame')+'5</div>':'')+'</div>'}
 function task(icon,title,meta,done){return '<div class="task"><div class="ic">'+ic(icon)+'</div><div class="sp'+(done?' done':'')+'">'+title+'<small>'+meta+'</small></div><div class="chk'+(done?' d':'')+'">'+(done?ic('check'):'')+'</div></div>'}
+function lseg(key,labels,cur,prev){return '<div class="lseg" style="--n:'+labels.length+'"><div class="knob" data-from="'+prev+'" data-to="'+cur+'"></div>'+labels.map(function(x,i){return '<button data-'+key+'="'+i+'" class="'+(i==cur?'on':'')+'">'+x+'</button>'}).join('')+'</div>'}
+var MN=['Leden','Únor','Březen','Duben','Květen','Červen','Červenec','Srpen','Září','Říjen','Listopad','Prosinec'],MP=[72,75,70,81,78,74,69,80,91,86,84,null];
+function dayState(m,d){if(m>10||(m==10&&d>7))return 'f';var h=(d*37+m*11)%100;return h<(MP[m]||84)?'g':'x'}
+function monthGrid(m){var first=(new Date(2026,m,1).getDay()+6)%7,len=new Date(2026,m+1,0).getDate(),h='<div class="mgrid">'+['Po','Út','St','Čt','Pá','So','Ne'].map(function(x){return '<span>'+x+'</span>'}).join('');for(var i=0;i<first;i++)h+='<div class="e"></div>';
+ for(var d=1;d<=len;d++){var st=dayState(m,d);h+='<div class="'+st+(m==10&&d==7?' t':'')+'">'+d+((d*13+m)%9==0&&st!='f'?'<i></i>':'')+'</div>'}return h+'</div>'}
+function consistency(P){if(P==1){var w=['g','x','g','g','g','t','f'];return '<div class="stat">4 z 5 dní</div><div class="mgrid" style="margin-top:10px">'+['Po','Út','St','Čt','Pá','So','Ne'].map(function(x){return '<span>'+x+'</span>'}).join('')+w.map(function(s,i){return '<div class="'+(s=='t'?'f t':s)+'">'+(2+i)+'</div>'}).join('')+'</div>'}
+ if(P==2){var m=state.month,len=m==10?7:new Date(2026,m+1,0).getDate(),k=0;for(var d=1;d<=len;d++)if(dayState(m,d)=='g')k++;
+  return '<div class="row" style="margin-top:4px"><span class="ib" data-mstep="-1">'+ic('chevron-left')+'</span><div class="sp" style="text-align:center"><b>'+MN[m]+' 2026</b><div class="cap" style="margin:0">'+k+' z '+len+' dní</div></div><span class="ib'+(m>=10?' dis':'')+'" data-mstep="1">'+ic('chevron-right')+'</span></div>'+monthGrid(m)+'<div class="cap">Klepni na den a uvidíš, co jsi ten den udělal.</div>'}
+ var h='<div class="stat">251 z 311 dní</div><div class="ygrid">'+MN.map(function(n,i){var v=MP[i];return '<div class="'+(i==state.ymonth?'sel ':'')+(v==null?'f':'')+'" data-m="'+i+'" style="'+(v==null?'':'background:color-mix(in srgb,var(--green) '+Math.max(15,(v-55)*2.6)+'%,var(--raised))')+'"><b>'+n.slice(0,3)+'</b>'+(v==null?'–':v+' %')+'</div>'}).join('')+'</div>';
+ if(state.ymonth!=null&&MP[state.ymonth]!=null){h+='<div class="expand"><div class="row"><b class="sp">'+MN[state.ymonth]+'</b><span class="cap" style="margin:0">'+MP[state.ymonth]+' % dní</span></div>'+monthGrid(state.ymonth)+'</div>'}else{h+='<div class="cap" style="margin-top:8px">Klepni na měsíc a rozbalí se jeho dny.</div>'}return h}
 var screens=[
  {name:'Dnes',variants:[
   {name:'A · Jeden fokus',note:'Nahoře kroužek dne a jeden další slib s tlačítkem. Pod tím krátký seznam. Všechny ostatní karty (příběhy, reflexe, návrat, přátelé) jsou v jedné vodorovné řadě „Pro tebe“. Statistický pruh se stěhuje do Statistik.',
@@ -123,13 +179,36 @@ var screens=[
    '<div class="btn s" style="margin-top:14px">'+ic('plus')+'&nbsp;PŘIDAT ÚKOL</div>'}}
  ]},
  {name:'Týden',variants:[
-  {name:'A · Mřížka',note:'Sedm sloupců s tečkami za každý slib (zelená splněno, červená nesplněno, šedá čeká). Klepnutí na den ho rozbalí pod mřížkou. Stav pečeti a cíle týdne jsou nahoře v jedné kartě.',
-   html:function(){var d=['Po','Út','St','Čt','Pá','So','Ne'],n=[2,3,4,5,6,7,8],c=[['g','g'],['g','r','g'],['g','g'],['g','o'],['g','g','g'],['o','o'],['o']];
-   return head('Týden 45','2.–8. 11.',false)+
-   '<div class="card"><div class="row"><div>'+ic('rosette-discount-check')+'</div><div class="sp"><b>Zapečetěno</b><div class="cap">Závazky 14 · ještě 5 otevřených</div></div><div class="stat" style="font-size:22px">71 %</div></div><div class="bar"><div style="width:71%"></div></div></div>'+
-   '<div class="grid7">'+d.map(function(x,i){return '<div class="day'+(i==5?' sel':'')+'">'+x+'<b>'+n[i]+'</b><div class="dots">'+c[i].map(function(t){return '<div class="dot '+t+'"></div>'}).join('')+'</div></div>'}).join('')+'</div>'+
-   '<div class="card"><div class="lab">Sobota 7. 11.</div>'+task('barbell','Gym: záda','do 18:00')+task('book','Čtení','20 min')+'</div>'+
-   '<div class="card"><div class="lab">Cíle týdne</div><div class="cap" style="margin-top:8px">Gym 2 z 4</div><div class="bar"><div style="width:50%"></div></div><div class="cap" style="margin-top:8px">Čtení 3 z 3</div><div class="bar"><div style="width:100%;background:var(--green)"></div></div></div>'}},
+  {name:'A · Mřížka',note:'Klepni na den v mřížce, rozbalí se pod ní (s měsíčkem pro odpočinek, + pro nový úkol a událostmi z kalendáře). Příští týden: nejdřív návrh s dlaždicemi a tlačítkem Odeslat dole, po odeslání karta Plánovač čeká na zapečetění. Klepni na Odeslat a uvidíš oba stavy.',
+   html:function(){var dn=['Po','Út','St','Čt','Pá','So','Ne'],full=['Pondělí','Úterý','Středa','Čtvrtek','Pátek','Sobota','Neděle'];
+   var next=state.week==1,base=next?9:2,sel=next?state.nday:state.day;
+   var T=next?[[['barbell','Gym: nohy','do 19:00','o'],['briefcase','Práce na Kept','2 h','o']],[['book','Čtení','20 min','o']],[['barbell','Gym: záda','do 19:00','o'],['bulb','Nový skill','60 min','o']],[['book','Čtení','20 min','o']],[['barbell','Gym: ruce','do 18:00','o'],['briefcase','Práce na Kept','2 h','o']],[],[['run','Dlouhý běh','90 min','o']]]
+     :[[['run','Ranní běh','splněno 7:10','g'],['book','Čtení','splněno','g']],[['barbell','Gym: nohy','splněno','g'],['bulb','Nový skill','nesplněno · únava','r'],['book','Čtení','splněno','g']],[['briefcase','Práce na Kept','splněno','g'],['book','Čtení','splněno','g']],[['barbell','Gym: záda','splněno','g'],['bulb','Nový skill','do 20:00','o']],[['run','Běh','splněno','g'],['briefcase','Práce na Kept','splněno','g'],['book','Čtení','splněno','g']],[['barbell','Gym: záda','do 18:00','o'],['book','Čtení','20 min','o']],[['run','Dlouhý běh','90 min','o']]];
+   var seg=lseg('w',['Tento týden','Příští týden'],state.week,state.pweek);
+   var grid='<div class="grid7">'+dn.map(function(x,i){return '<div class="day'+(i==sel?' sel':'')+(!next&&i==5?' today':'')+'" data-d="'+i+'">'+x+'<b>'+(base+i)+'</b><div class="dots">'+(T[i].length?T[i].map(function(t){return '<div class="dot '+t[3]+'"></div>'}).join(''):'<span style="font-size:10px;color:var(--t3)">–</span>')+'</div></div>'}).join('')+'</div>';
+   var past=!next&&sel<5;
+   var dayCard='<div class="card"><div class="row"><div class="lab sp">'+full[sel]+' '+(base+sel)+'. 11.'+(!next&&sel==5?' · dnes':'')+'</div>'+(past?'':'<span class="ib">'+ic('moon')+'</span><span class="ib">'+ic('plus')+'</span>')+'</div>'+
+     (sel==2&&!next||sel==0&&next?'<div class="cap" style="margin-top:6px">'+ic('calendar')+' 14:00 Zubař</div>':'')+
+     (T[sel].length?T[sel].map(function(t){return task(t[0],t[1],t[2],t[3]=='g')}).join(''):'<div class="dash">'+ic('plus')+' Přidat úkol na tento den</div>')+'</div>';
+   if(!next){
+    return head('Týden 45','2.–8. 11.',false)+seg+
+    '<div class="card"><div class="row"><div class="sp"><div class="lab" style="color:var(--t1)">'+ic('rosette-discount-check')+' Zapečetěno</div><div class="cap">Závazky: 14 · ne 1. 11. 19:42</div></div><span class="pill">'+ic('share')+' Sdílet</span></div>'+
+    '<div class="row cap" style="margin-top:12px;justify-content:space-between"><span>Dodržené sliby</span><b style="color:var(--t1)">71 %</b></div><div class="bar"><div style="width:71%"></div></div>'+
+    '<div class="row cap" style="margin-top:8px;justify-content:space-between"><span>Věrnost plánu</span><b style="color:var(--t1)">93 %</b></div><div class="bar"><div style="width:93%"></div></div></div>'+
+    grid+dayCard+
+    '<div class="card" style="padding:0"><div class="lrow">'+ic('target')+'<span class="sp">9 / 10 aktivit · cíle 1 / 2</span>'+ic('chevron-down')+'</div><div class="lrow" style="border-top:1px solid var(--line)">'+ic('chart-donut')+'<b class="sp">Přehled týdne</b>'+ic('chevron-right')+'</div></div>'+
+    '<div class="card" style="padding:0"><div class="lrow">'+ic('git-compare')+'<span class="sp">Původní vs. aktuální plán</span><span class="cap" style="margin:0">2 změny</span>'+ic('chevron-right')+'</div></div>'}
+   var top=state.sent?
+     '<div class="card" style="border-color:var(--orange)"><div class="lab" style="color:var(--orange)">'+ic('calendar-time')+' Plánovač čeká na zapečetění</div><div class="row" style="margin-top:10px;gap:14px"><div class="stat" style="font-size:26px">47:12</div><div class="cap" style="margin:0">do zapečetění<br>Závazky 9 · 6 h 30 min · kritické 2</div></div><div class="btn" style="margin-top:12px">'+ic('rosette-discount-check')+'&nbsp;ZAPEČETIT HNED</div><div style="text-align:center;font-size:12px;font-weight:600;color:var(--t2);margin-top:10px" data-send="0">'+ic('arrow-back-up')+' Stáhnout plánovač</div></div>'
+     :'<div class="card"><div class="lab" style="color:var(--orange)">Bez závazku</div><div class="cap">Zatím je to jen návrh. Slibem se stane, až ho odešleš a zapečetí se.</div></div>'+
+      '<div class="card" style="padding:14px"><div class="lab">Naplánuj si týden</div><div class="tiles">'+
+      '<div class="tile">'+ic('bolt')+'<b>Rychlé plánování</b><span>Jedna aktivita na víc dní</span></div>'+
+      '<div class="tile">'+ic('plus')+'<b>Jeden úkol</b><span>Čas, délka i deadline</span></div>'+
+      '<div class="tile">'+ic('copy')+'<b>Jako minule</b><span>Týden 45 znovu</span></div></div>'+
+      '<div style="text-align:center;font-size:12px;font-weight:600;color:var(--red);margin-top:10px">'+ic('rotate')+' Začít plán znovu</div></div>';
+   return head('Týden 46','9.–15. 11.',false)+seg+top+grid+dayCard+
+    '<div class="card" style="padding:0"><div class="lrow">'+ic('target')+'<span class="sp">V plánu 10 / 10 aktivit · cíle 2 / 2</span>'+ic('chevron-down')+'</div></div>'+
+    (state.sent?'':'<div class="sticky"><div class="btn" data-send="1">ZKONTROLOVAT A ODESLAT PLÁNOVAČ</div></div>')}},
   {name:'B · Agenda',note:'Dny pod sebou jako agenda. Minulé dny jsou sbalené do jednoho řádku se skóre, dnešek a budoucí dny rozbalené. Plánovač příštího týdne je jedno velké tlačítko dole.',
    html:function(){return head('Týden 45','2.–8. 11.',false)+
    '<div class="row" style="margin-top:12px;gap:8px"><span class="pill">'+ic('rosette-discount-check')+'Zapečetěno</span><span class="pill">71 %</span><span class="pill">Gym 2/4</span></div>'+
@@ -139,36 +218,65 @@ var screens=[
    '<div class="btn" style="margin-top:14px">NAPLÁNOVAT PŘÍŠTÍ TÝDEN</div>'}}
  ]},
  {name:'Statistiky',variants:[
-  {name:'Nové ukazatele',note:'Návrh ukazatelů podle výzkumu. Pod každým je šedě, proč tam je. Názvy jsou pracovní.',
-   html:function(){var g='';for(var i=0;i<30;i++){g+='<div class="'+([3,9,10,17,25,26].indexOf(i)>=0?'':'g')+'"></div>'}
-   return head('Statistiky','Tvůj pokrok',false)+
-   '<div class="card"><div class="lab">Slovo dodrženo</div><div class="row"><div class="stat">86 %</div><div class="sp"></div><span class="pill" style="color:var(--green)">'+ic('trending-up')+'+6 proti říjnu</span></div><div class="cap">Podíl slibů, které jsi tento měsíc dodržel.</div><div class="why">Zaznamenaný a pravidelně zobrazený pokrok zvyšuje šanci cíl splnit (Harkin et al., 2016).</div></div>'+
-   '<div class="card"><div class="lab">Konzistence · 30 dní</div><div class="stat">24 z 30 dní</div><div class="cgrid">'+g+'</div><div class="cap">Dny, kdy jsi držel slovo. Jedno zaváhání nic nekazí.</div><div class="why">Jedno vynechání tvorbu zvyku téměř neovlivní, škodí až časté vynechávání (Lally et al., 2010). Proto vedle série i „kolik dní z 30“.</div></div>'+
-   '<div class="two"><div class="card"><div class="lab">Návrat</div><div class="stat">1 den</div><div class="cap">Po špatném dni ses vracel průměrně za den.</div></div><div class="card"><div class="lab">Malá vítězství</div><div class="stat">23</div><div class="cap">Splněných slibů tento týden.</div></div></div>'+
-   '<div class="card"><div class="why" style="border:0;margin:0;padding:0">„Návrat“ a „Malá vítězství“: přerušená série demotivuje (Silverman a Barasch, 2023) a drobné pokroky drží motivaci (Amabile a Kramer, 2011). Ukazujeme, jak rychle se vracíš, ne jak dlouho jsi vydržel.</div></div>'+
-   '<div class="card"><div class="lab">Do cíle týdne</div><div class="cap" style="margin-top:8px">Gym: ještě 1×</div><div class="bar"><div style="width:75%"></div></div><div class="cap" style="margin-top:8px">Nový skill: ještě 2×</div><div class="bar"><div style="width:33%"></div></div><div class="why">Čím blíž cíli, tím víc se snažíme (efekt gradientu cíle, Kivetz et al., 2006). Proto „ještě 1×“ místo procent.</div></div>'+
-   '<div class="card"><div class="lab">Cesta ke zvyku · Gym</div><div class="stat">23 opakování</div><div class="bar"><div style="width:35%;background:var(--green)"></div></div><div class="cap">Zvyk se lidem tvoří různě dlouho, typicky kolem 2 měsíců pravidelnosti.</div><div class="why">Medián 66 dní, rozptyl 18 až 254 (Lally et al., 2010). Uvádět jako orientační, ne jako cílovou čáru.</div></div>'+
-   '<div class="two"><div class="card"><div class="lab">Nejsilnější den</div><div class="stat" style="font-size:22px">Úterý</div><div class="cap">94 % dodrženo</div></div><div class="card"><div class="lab">Nejtěžší den</div><div class="stat" style="font-size:22px">Pátek</div><div class="cap">62 % dodrženo</div></div></div>'+
-   '<div class="two"><div class="card"><div class="lab">Plán vs. realita</div><div class="stat" style="font-size:22px">5,5 / 7 h</div><div class="cap">Odpracováno z plánu.</div></div><div class="card"><div class="lab">Co tě brzdí</div><div class="stat" style="font-size:20px">Únava</div><div class="cap">Nejčastější důvod.</div></div></div>'+
-   '<div class="card"><div class="lab">Nový začátek</div><div class="cap" style="margin-top:6px">Pondělí a první den v měsíci: krátké shrnutí a čistý start.</div><div class="why">Lidé se do cílů pouštějí častěji po „časových milnících“, jako je nový týden nebo měsíc (Dai, Milkman a Riis, 2014).</div></div>'}}
+  {name:'Více ukazatelů',note:'Přepínač nahoře je ve stylu liquid glass jako lišta záložek a všechna čísla se podle něj přepočítají. V Roce je konzistence po měsících: klepni na měsíc a rozbalí se jeho dny. V Měsíci se šipkami listuje mezi měsíci. Šedě je, proč tam ukazatel je.',
+   html:function(){var P=state.period;
+   var D=[
+    {k:'dnes',cmp:'proti včerejšku',rel:812,reld:'+4',bars:[60,75,100,null],wd:'+10',out:[3,0,0,0,0],crit:'1/1',focus:'1 h 20 min',fd:'+20 min',gym:'1×',gymd:'4 820 kg',plan:[1.3,2],ret:null,exc:null,best:'Ráno 7–9',cats:[['Gym',100],['Čtení',0],['Práce',50]],rec:[['Dnes zatím','3 sliby'],['Nejdelší focus dnes','52 min']],trend:null},
+    {k:'týden',cmp:'proti týdnu 44',rel:812,reld:'+18',bars:[71,78,93,50],wd:'+6',out:[13,2,1,1,0],crit:'4/5',focus:'6 h 10 min',fd:'+1 h 5 min',gym:'2 z 4',gymd:'9 640 kg',plan:[5.5,7],ret:'1 den',exc:['Únava','2×'],best:'Út a čt večer',cats:[['Gym',50],['Čtení',100],['Práce',67],['Nový skill',33]],rec:[['Nejlepší den','úterý 3/3'],['Série','5 dní']],trend:[80,62,100,70,100,null,null]},
+    {k:'měsíc',cmp:'proti říjnu',rel:812,reld:'+41',bars:[86,82,95,75],wd:'+6',out:[55,7,4,5,1],crit:'17/19',focus:'24 h',fd:'+3 h',gym:'11×',gymd:'48 300 kg',plan:[22,26],ret:'1 den',exc:['Únava','5×'],best:'Úterý, ráno',cats:[['Gym',79],['Čtení',95],['Práce',84],['Nový skill',60]],rec:[['Nejdelší série','9 dní'],['Perfektní dny','6']],trend:[70,82,90,64,88,92,75,80,95,88,70,85,90,100,78,84,91,66,88,93,80,86,90,74,88,95,82,90,86,null]},
+    {k:'rok',cmp:'proti roku 2025',rel:812,reld:'+312',bars:[78,76,90,68],wd:'',out:[470,70,40,90,21],crit:'150/171',focus:'214 h',fd:'',gym:'96×',gymd:'412 t',plan:[190,240],ret:'1,4 dne',exc:['Únava','31×'],best:'Úterý, ráno',cats:[['Gym',74],['Čtení',88],['Práce',80],['Nový skill',55]],rec:[['Nejlepší měsíc','září 91 %'],['Týdny nad 80 %','19']],trend:[72,75,70,81,78,74,69,80,91,86,84,null]}][P];
+   var html=head('Statistiky','Tvůj pokrok',false)+lseg('p',['Dnes','Týden','Měsíc','Rok'],P,state.pperiod);
+   // reliability + the four bars (as today)
+   var bl=['Dodržené sliby','Produktivita','Věrnost plánu','Týdenní cíle'];
+   html+='<div class="card anim"><div class="row"><div><div class="lab">Spolehlivost</div><div class="stat">'+D.rel+'</div></div><div class="sp"></div><span class="pill" style="color:var(--green)">'+ic('trending-up')+D.reld+'</span></div>'+
+    bl.map(function(l,i){var v=D.bars[i];return v==null?'':'<div class="row cap" style="margin-top:8px;justify-content:space-between"><span>'+l+(i==0&&D.wd?' <span style="color:var(--green)">'+D.wd+' p. b.</span>':'')+'</span><b style="color:var(--t1)">'+v+' %</b></div><div class="bar"><div style="width:'+v+'%;'+(i==0?'background:var(--green)':'')+'"></div></div>'}).join('')+
+    '<div class="why">Zaznamenaný a pravidelně zobrazený pokrok zvyšuje šanci cíl splnit (Harkin et al., 2016). Srovnání: '+D.cmp+'.</div></div>';
+   // outcomes in one stacked bar (replaces the six tiles)
+   var on=['Včas','Pozdě','Přeskočeno','Nesplněno','Odstraněno'],oc=['var(--green)','var(--orange)','var(--t2)','var(--red)','#8b1e17'],tot=D.out.reduce(function(a,b){return a+b},0);
+   html+='<div class="card anim"><div class="row"><div class="lab sp">Jak dopadly sliby</div><span class="cap" style="margin:0">kritické '+D.crit+'</span></div><div class="stack">'+D.out.map(function(v,i){return v?'<div style="flex:'+v+';background:'+oc[i]+'"></div>':''}).join('')+'</div><div class="legend">'+on.map(function(n,i){return '<span><i style="background:'+oc[i]+'"></i>'+n+' <b>'+D.out[i]+'</b></span>'}).join('')+'</div></div>';
+   // consistency (merges today's Kalendář and Série)
+   if(P>0){html+='<div class="card anim"><div class="lab">Konzistence</div>'+consistency(P)+'<div class="cap" style="margin-top:8px">Série <b style="color:var(--t1)">5 dní</b> · nejdelší 9 · perfektních dnů 6 · tečka = deník</div><div class="why">Jedno vynechání tvorbu zvyku téměř neovlivní, škodí až časté vynechávání (Lally et al., 2010). Proto „kolik dní“, ne jen série.</div></div>'}
+   if(D.trend){var pts=D.trend.map(function(v,i){return v==null?null:[i/(D.trend.length-1)*290,70-(v-50)*1.3]}).filter(Boolean);
+    html+='<div class="card anim"><div class="lab">Trend produktivity</div><svg viewBox="0 0 290 74" style="width:100%;height:74px;margin-top:10px"><line x1="0" x2="290" y1="31" y2="31" stroke="var(--t3)" stroke-dasharray="4 4"/><polyline fill="none" stroke="var(--t1)" stroke-width="2" stroke-linejoin="round" points="'+pts.map(function(p){return p.join(',')}).join(' ')+'"/></svg><div class="cap">Čárkovaně hranice série 80 %. Rozsah řídí přepínač nahoře, vlastní přepínač 7/30/90 dní odpadá.</div></div>'}
+   if(D.ret){html+='<div class="two anim"><div class="card"><div class="lab">Návrat</div><div class="stat" style="font-size:24px">'+D.ret+'</div><div class="cap">Za jak dlouho ses vrátil po špatném dni.</div></div><div class="card"><div class="lab">Výmluvy</div><div class="stat" style="font-size:20px">'+D.exc[0]+'</div><div class="cap">'+D.exc[1]+' · klepni pro všechny</div></div></div><div class="card"><div class="why" style="border:0;margin:0;padding:0">„Návrat“: přerušená série demotivuje (Silverman a Barasch, 2023). Ukazujeme, jak rychle se vracíš, ne jak dlouho jsi vydržel.</div></div>'}
+   html+='<div class="two anim"><div class="card"><div class="lab">Soustředění</div><div class="stat" style="font-size:22px">'+D.focus+'</div><div class="cap" style="color:var(--green)">'+(D.fd?D.fd+' '+D.cmp:'čistý čas focusu')+'</div></div><div class="card"><div class="lab">Gym</div><div class="stat" style="font-size:22px">'+D.gym+'</div><div class="cap">tréninků · objem '+D.gymd+'</div></div></div>'+
+   '<div class="card anim"><div class="row"><div class="lab sp">Plán vs. skutečnost</div><b>'+String(D.plan[0]).replace('.',',')+' / '+D.plan[1]+' h</b></div><div class="bar"><div style="width:'+Math.round(D.plan[0]/D.plan[1]*100)+'%"></div></div><div class="cap">Odměřeno focus timerem z plánovaného času.</div></div>';
+   var hours=[1,3,2,0,1,2,1,2,3,2,1,0];
+   html+='<div class="card anim"><div class="lab">Kdy ti to jde</div><div class="hrs">'+hours.map(function(h){return '<div style="height:'+(8+h*14)+'px;opacity:'+(.35+h*.22)+'"></div>'}).join('')+'</div><div class="row cap" style="justify-content:space-between;margin-top:4px"><span>6:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div><div class="cap" style="margin-top:6px">Nejvíc dodržíš: <b style="color:var(--t1)">'+D.best+'</b></div>'+
+    '<div class="cap" style="margin-top:10px"><b style="color:var(--t1)">Zjištěné vzorce</b><br>• V pátek porušíš 2× víc slibů než jindy.<br>• Gym po 19:00 splníš jen v polovině případů.</div><div class="why">Konkrétní „kdy a kde“ zvyšuje šanci, že to uděláš (Gollwitzer a Sheeran, 2006).</div></div>'+
+   '<div class="card anim"><div class="lab">Kategorie</div>'+D.cats.map(function(c){return '<div class="row cap" style="margin-top:8px;justify-content:space-between"><span>'+c[0]+'</span><span>'+c[1]+' %</span></div><div class="bar"><div style="width:'+c[1]+'%;'+(c[1]==100?'background:var(--green)':'')+'"></div></div>'}).join('')+'</div>'+
+   '<div class="card anim"><div class="lab">Do cíle týdne</div><div class="cap" style="margin-top:8px">Gym: ještě 2×</div><div class="bar"><div style="width:50%"></div></div><div class="cap" style="margin-top:8px">Nový skill: ještě 2×</div><div class="bar"><div style="width:33%"></div></div><div class="why">Čím blíž cíli, tím víc se snažíme (Kivetz et al., 2006). Proto „ještě 2×“ místo procent.</div></div>'+
+   '<div class="card anim"><div class="lab">Cesta ke zvyku · Gym</div><div class="stat">23 opakování</div><div class="bar"><div style="width:35%;background:var(--green)"></div></div><div class="cap">Zvyk se tvoří různě dlouho, typicky kolem 2 měsíců pravidelnosti.</div><div class="why">Medián 66 dní, rozptyl 18 až 254 (Lally et al., 2010). Orientačně, ne jako cílová čára.</div></div>'+
+   '<div class="card anim" style="padding:0"><div class="lab" style="padding:14px 16px 0">Osobní rekordy</div>'+D.rec.map(function(r){return '<div class="lrow">'+ic('trophy')+'<span class="sp">'+r[0]+'</span><b>'+r[1]+'</b></div>'}).join('')+'</div>'+
+   '<div class="card" style="padding:0">'+[['barbell','Gym – progres'],['calendar-stats','Přehledy týdnů'],['notebook','Sebereflexe týdne'],['users','Přátelé a žebříček']].map(function(l,i){return '<div class="lrow"'+(i?' style="border-top:1px solid var(--line)"':'')+'>'+ic(l[0])+'<b class="sp">'+l[1]+'</b>'+ic('chevron-right')+'</div>'}).join('')+'</div>';
+   return html}}
  ]}
 ];
-function draw(){
- var s=screens[state.screen],v=s.variants[Math.min(state.variant,s.variants.length-1)];
+function draw(keep){
+ var s=screens[state.screen],v=s.variants[Math.min(state.variant,s.variants.length-1)],sc=document.getElementById('scr'),top=sc.scrollTop;
  document.getElementById('screens').innerHTML=screens.map(function(x,i){return '<button class="'+(i==state.screen?'on':'')+'" data-s="'+i+'">'+x.name+'</button>'}).join('');
  document.getElementById('variants').innerHTML=s.variants.map(function(x,i){return '<button class="'+(x==v?'on':'')+'" data-v="'+i+'">'+x.name+'</button>'}).join('');
  document.getElementById('theme').innerHTML=['Tmavý','Světlý'].map(function(x,i){return '<button class="'+((i==1)==state.light?'on':'')+'" data-t="'+i+'">'+x+'</button>'}).join('');
  document.getElementById('note').textContent=v.note;
- document.getElementById('scr').innerHTML=v.html();
- document.getElementById('scr').scrollTop=0;
+ sc.innerHTML=v.html();
+ sc.scrollTop=keep?top:0;
  document.getElementById('tab').innerHTML=tabbar(state.screen);
  document.getElementById('k').className='k'+(state.light?' l':'');
+ // The glass knob starts where it was and slides, stretching on the way, to the new segment.
+ document.querySelectorAll('.lseg .knob').forEach(function(k){var f=+k.dataset.from,t=+k.dataset.to;k.style.transition='none';k.style.transform='translateX('+(f*100)+'%)';void k.offsetWidth;k.style.transition='';k.style.transform='translateX('+(t*100)+'%)';if(f!=t){k.classList.remove('squish');void k.offsetWidth;k.classList.add('squish')}});
+ state.pweek=state.week;state.pperiod=state.period;
 }
-document.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
- if(b.dataset.s!==undefined){state.screen=+b.dataset.s;state.variant=0}
- else if(b.dataset.v!==undefined){state.variant=+b.dataset.v}
+document.addEventListener('click',function(e){var b=e.target.closest('[data-s],[data-v],[data-t],[data-w],[data-p],[data-d],[data-send],[data-m],[data-mstep]');if(!b)return;var keep=true;
+ if(b.dataset.s!==undefined){state.screen=+b.dataset.s;state.variant=0;keep=false}
+ else if(b.dataset.v!==undefined){state.variant=+b.dataset.v;keep=false}
  else if(b.dataset.t!==undefined){state.light=b.dataset.t=='1'}
- draw()});
+ else if(b.dataset.w!==undefined){state.week=+b.dataset.w}
+ else if(b.dataset.p!==undefined){state.period=+b.dataset.p}
+ else if(b.dataset.d!==undefined){if(state.week)state.nday=+b.dataset.d;else state.day=+b.dataset.d}
+ else if(b.dataset.send!==undefined){state.sent=b.dataset.send=='1'}
+ else if(b.dataset.m!==undefined){var m=+b.dataset.m;if(MP[m]!=null)state.ymonth=state.ymonth==m?null:m}
+ else if(b.dataset.mstep!==undefined){state.month=Math.max(0,Math.min(10,state.month+ +b.dataset.mstep))}
+ draw(keep)});
 draw();
 </script>
 </body>
