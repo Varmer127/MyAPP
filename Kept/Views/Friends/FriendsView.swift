@@ -50,6 +50,32 @@ struct FriendsView: View {
 
     private var list: some View {
         List {
+            if !friends.incoming.isEmpty {
+                Section {
+                    ForEach(friends.incoming) { request in
+                        HStack(spacing: 12) {
+                            Avatar(initial: request.initial)
+                            Text(request.displayName)
+                                .scaledFont(.body, weight: .semibold)
+                                .foregroundStyle(Theme.textPrimary)
+                            Spacer()
+                            Button("Přijmout") { respond(request, accept: true) }
+                                .buttonStyle(.borderedProminent)
+                                .tint(Theme.textPrimary)
+                                .foregroundStyle(Theme.onPrimary)
+                            Button("Odmítnout") { respond(request, accept: false) }
+                                .buttonStyle(.bordered)
+                                .tint(Theme.textSecondary)
+                        }
+                        .padding(.vertical, 2)
+                    }
+                } header: {
+                    Label("Chtějí být tvoji přátelé · \(friends.incoming.count)", systemImage: "person.badge.plus")
+                        .foregroundStyle(Theme.orange)
+                }
+                .listRowBackground(Theme.card)
+            }
+
             Section {
                 Button { showsAdd = true } label: {
                     Label("Přidat přítele", systemImage: "person.badge.plus")
@@ -101,29 +127,6 @@ struct FriendsView: View {
                             Button("Smazat", role: .destructive) { Task { try? await friends.delete(poke) } }
                             Button("Nahlásit") { reportingPoke = poke }.tint(Theme.orange)
                         }
-                    }
-                }
-                .listRowBackground(Theme.card)
-            }
-
-            if !friends.incoming.isEmpty {
-                Section("Chtějí být tvoji přátelé") {
-                    ForEach(friends.incoming) { request in
-                        HStack(spacing: 12) {
-                            Avatar(initial: request.initial)
-                            Text(request.displayName)
-                                .scaledFont(.body, weight: .semibold)
-                                .foregroundStyle(Theme.textPrimary)
-                            Spacer()
-                            Button("Přijmout") { respond(request, accept: true) }
-                                .buttonStyle(.borderedProminent)
-                                .tint(Theme.textPrimary)
-                                .foregroundStyle(Theme.onPrimary)
-                            Button("Ne") { respond(request, accept: false) }
-                                .buttonStyle(.bordered)
-                                .tint(Theme.textSecondary)
-                        }
-                        .padding(.vertical, 2)
                     }
                 }
                 .listRowBackground(Theme.card)

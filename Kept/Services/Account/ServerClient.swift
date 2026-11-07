@@ -25,6 +25,7 @@ struct AccountProfile: Codable, Equatable {
     var dndReasonShared: Bool = false
     var dndUntil: Date?
     var shareLevel: ShareLevel = .none
+    var pokesMuted: Bool = false
     var leaderboardsEnabled: Bool = true
 
     /// How friends write it down, for example "Jana#4827".
@@ -156,7 +157,7 @@ struct ServerClient {
     }()
 
     func profile(token: String) async throws -> AccountProfile? {
-        let data = try await request("rest/v1/profiles", query: [URLQueryItem(name: "select", value: "id,display_name,handle_number,name_changed_at,invite_code,dnd_active,dnd_reason_key,dnd_reason_text,dnd_reason_shared,dnd_until,share_level,leaderboards_enabled")],
+        let data = try await request("rest/v1/profiles", query: [URLQueryItem(name: "select", value: "id,display_name,handle_number,name_changed_at,invite_code,dnd_active,dnd_reason_key,dnd_reason_text,dnd_reason_shared,dnd_until,share_level,leaderboards_enabled,pokes_muted")],
                                      token: token)
         return try Self.decoder.decode([AccountProfile].self, from: data).first
     }

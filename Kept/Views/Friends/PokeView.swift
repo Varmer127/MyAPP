@@ -76,7 +76,7 @@ struct PokeView: View {
             }
             .buttonStyle(PrimaryButtonStyle())
             .disabled(!PokeText.isSendable(text) || isBusy)
-            Text("Text je nepovinný, šťouchnutí přijde i bez něj. Jednoho člověka jde šťouchnout jednou za 3 hodiny a co napíšeš, uvidí jen on.")
+            Text("Text je nepovinný, šťouchnutí přijde i bez něj. Jednoho člověka jde šťouchnout jednou za minutu a co napíšeš, uvidí jen on.")
                 .scaledFont(.caption)
                 .foregroundStyle(Theme.textSecondary)
         }

@@ -30,6 +30,25 @@ struct FriendDetailView: View {
                 FriendWeekSection(friend: friend)
 
                 Section {
+                    let current = NotificationsService.shared.mutes[friend.id]
+                    if let current {
+                        Text(current.until.map { String(localized: "Ztlumeno do \($0.formatted(.dateTime.day().month().locale(.app)))") }
+                             ?? String(localized: "Ztlumeno natrvalo"))
+                            .foregroundStyle(Theme.textSecondary)
+                        Button("Zrušit ztlumení") { mute(days: nil) }
+                    } else {
+                        Button("Ztlumit na týden") { mute(days: 7) }
+                        Button("Ztlumit natrvalo") { mute(days: 0) }
+                    }
+                } header: {
+                    Text("Upozornění na šťouchnutí")
+                } footer: {
+                    Text("Ztlumené šťouchnutí dál přijde do seznamu, jen bez upozornění a animace.")
+                }
+                .listRowBackground(Theme.card)
+                .task { await NotificationsService.shared.loadMutes() }
+
+                Section {
                     Button("Odebrat z přátel") { confirmsRemove = true }
                     Button("Nahlásit") { showsReport = true }
                     Button("Zablokovat", role: .destructive) { confirmsBlock = true }
@@ -66,6 +85,10 @@ struct FriendDetailView: View {
             }
         }
         .appAppearance()
+    }
+
+    private func mute(days: Int?) {
+        Task { try? await NotificationsService.shared.mutePokes(from: friend.id, days: days) }
     }
 
     private func run(_ work: @escaping () async throws -> Void) {

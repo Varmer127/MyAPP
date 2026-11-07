@@ -14,6 +14,7 @@ struct AppNotification: Codable, Equatable, Identifiable {
 
     var id: UUID
     var kind: Kind
+    var actorId: UUID?
     var actorName: String?
     var ref: UUID?
     var body: String?
@@ -59,10 +60,29 @@ struct AppNotification: Codable, Equatable, Identifiable {
     var isNews: Bool { [.friendAccepted, .reaction, .betResult, .buddyAccepted, .witnessAnswer].contains(kind) }
 }
 
+struct PokeMute: Codable, Equatable {
+    var muted: UUID
+    /// Nil means for good.
+    var until: Date?
+}
+
 extension ServerClient {
     func notifications(since: Date?, token: String) async throws -> [AppNotification] {
         let since: Any = since.map { ISO8601DateFormatter().string(from: $0) } ?? NSNull()
         return try Self.socialDecoder.decode([AppNotification].self, from: try await rpc("my_notifications", ["p_since": since], token: token))
+    }
+
+    /// `days` 0 mutes for good, nil removes the mute.
+    func mutePokes(from id: UUID, days: Int?, token: String) async throws {
+        _ = try await rpc("mute_pokes", ["p_from": id.uuidString, "p_days": days.map { $0 as Any } ?? NSNull()], token: token)
+    }
+
+    func setPokesMuted(_ muted: Bool, token: String) async throws {
+        _ = try await rpc("set_pokes_muted", ["p_muted": muted], token: token)
+    }
+
+    func pokeMutes(token: String) async throws -> [PokeMute] {
+        try Self.socialDecoder.decode([PokeMute].self, from: try await rpc("my_poke_mutes", token: token))
     }
 
     func markNotificationsSeen(token: String) async throws {
@@ -98,6 +118,24 @@ final class NotificationsService {
         }
         items = loaded
         markAnnounced(loaded.first?.createdAt)
+    }
+
+    private(set) var mutes: [UUID: PokeMute] = [:]
+
+    func loadMutes() async {
+        guard let loaded = try? await account.perform({ try await client.pokeMutes(token: $0) }) else { return }
+        mutes = Dictionary(uniqueKeysWithValues: loaded.map { ($0.muted, $0) })
+    }
+
+    /// `days` 0 mutes for good, nil removes the mute.
+    func mutePokes(from id: UUID, days: Int?) async throws {
+        try await account.perform { try await client.mutePokes(from: id, days: days, token: $0) }
+        await loadMutes()
+    }
+
+    func setAllPokesMuted(_ muted: Bool) async throws {
+        try await account.perform { try await client.setPokesMuted(muted, token: $0) }
+        await account.reload()
     }
 
     func markSeen() async {

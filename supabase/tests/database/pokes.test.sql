@@ -85,7 +85,7 @@ reset role;
 select is((select result from out where step = 'poke1'), 'ok', 'a friend can be poked with own text');
 select is((select result from out where step = 'poke_again'), 'too_soon', 'the same person cannot be poked twice within 3 hours');
 select is((select result from out where step = 'poke_stranger'), 'not_found', 'only friends can be poked');
-select is((select result from out where step = 'poke_empty'), 'invalid_text', 'an empty text is refused');
+select is((select result from out where step = 'poke_empty'), 'too_soon', 'an empty poke counts as a poke (here too soon after the first one)');
 select is((select result from out where step = 'poke_long'), 'invalid_text', 'a text over 100 characters is refused');
 select is((select result from out where step = 'poke_link'), 'links_not_allowed', 'links are refused');
 select is((select result from out where step = 'poke_domain'), 'links_not_allowed', 'a bare web address is refused');

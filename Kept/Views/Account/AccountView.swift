@@ -61,6 +61,16 @@ struct AccountView: View {
                 .onChange(of: leaderboards) { _, _ in saveSharing() }
 
                 Section {
+                    Toggle("Upozornění na šťouchnutí", isOn: Binding(
+                        get: { !profile.pokesMuted },
+                        set: { on in Task { try? await NotificationsService.shared.setAllPokesMuted(!on) } }))
+                        .tint(Theme.textSecondary)
+                } footer: {
+                    Text("Vypnuté: šťouchnutí dál chodí do seznamu, jen bez upozornění a animace. Jednotlivé přátele ztlumíš v jejich detailu.")
+                }
+                .listRowBackground(Theme.card)
+
+                Section {
                     NavigationLink {
                         DoNotDisturbView()
                     } label: {

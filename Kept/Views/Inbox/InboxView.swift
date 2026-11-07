@@ -119,6 +119,27 @@ struct InboxView: View {
                     .padding(.vertical, 6)
                     .listRowBackground(Theme.card)
                 }
+                if !friends.incoming.isEmpty {
+                    Section("Žádosti o přátelství") {
+                        ForEach(friends.incoming) { request in
+                            HStack(spacing: 12) {
+                                Avatar(initial: request.initial)
+                                Text(request.displayName)
+                                    .scaledFont(.body, weight: .semibold)
+                                    .foregroundStyle(Theme.textPrimary)
+                                Spacer()
+                                Button("Přijmout") { Task { try? await friends.respond(to: request, accept: true); Haptics.success() } }
+                                    .buttonStyle(.borderedProminent)
+                                    .tint(Theme.textPrimary)
+                                    .foregroundStyle(Theme.onPrimary)
+                                Button("Odmítnout") { Task { try? await friends.respond(to: request, accept: false) } }
+                                    .buttonStyle(.bordered)
+                                    .tint(Theme.textSecondary)
+                            }
+                        }
+                    }
+                    .listRowBackground(Theme.card)
+                }
                 if let recap = items.yesterday {
                     row("sunrise", "Jak dopadl včerejšek", "Dodrženo \(recap.done) z \(recap.total). Shrnutí včerejšího dne.") {
                         dayRecap = recap
@@ -133,12 +154,6 @@ struct InboxView: View {
                     row("calendar.badge.checkmark", "Tvůj měsíc je hotový", "\(month.done) z \(month.total) slibů. Podívej se, jak to dopadlo.") {
                         monthStory = month
                     }
-                }
-                if items.requests > 0 {
-                    NavigationLink { FriendsView() } label: {
-                        rowLabel("person.badge.plus", "Žádosti o přátelství", "Čeká na tebe: \(items.requests)")
-                    }
-                    .listRowBackground(Theme.card)
                 }
                 if items.bets > 0 {
                     link("trophy", "Sázky čekají na tebe", "Pozvánky a výsledky k potvrzení: \(items.bets)") { BetsView() }
