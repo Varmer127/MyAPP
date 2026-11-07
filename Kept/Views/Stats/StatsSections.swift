@@ -1,57 +1,63 @@
 import SwiftUI
 import Charts
 
-struct StreaksSection: View {
-    let tasks: [TaskItem]
-
-    var body: some View {
-        VStack(spacing: 10) {
-            SectionLabel(text: "Série")
-            TileRow {
-                MetricTile(value: "\(ScoreEngine.dayStreak(tasks))", label: "Dní nad 80 %")
-                MetricTile(value: "\(StatisticsService.perfectDayStreak(tasks))", label: "Perfektní dny")
-                MetricTile(value: "\(StatisticsService.weeklyPromiseStreak(tasks))", label: "Týdny nad 80 %")
-            }
-        }
-    }
-}
-
-/// Daily productivity over the last 7 / 30 / 90 days.
+/// Productivity over the period chosen at the top: the days of the week or of the last 30 days,
+/// or the months of the year.
 struct TrendSection: View {
     let tasks: [TaskItem]
-    @State private var days = 30
+    let period: StatsPeriod
 
-    private static let options = [7, 30, 90]
+    private struct Point: Identifiable {
+        let date: Date
+        let value: Double
+        var id: Date { date }
+    }
 
-    var body: some View {
+    private var points: [Point] {
+        let now = Date.now
+        if period == .year {
+            return StatisticsService.monthlyScores(tasks: tasks, year: Calendar.app.component(.year, from: now), now: now)
+                .compactMap { item in item.value.map { Point(date: item.month, value: $0 * 100) } }
+        }
+        let range = period.range(now: now)
+        let days = max(1, Calendar.app.dateComponents([.day], from: range.lowerBound, to: range.upperBound).day ?? 7)
         // A day that is still running would end the line on a low point only because the evening has not happened yet,
         // so today joins the trend once nothing in it is left open.
-        let todayIsOpen = tasks.contains { !$0.isRemoved && $0.countsInScores && $0.status == .pending && $0.scheduledDate.isSameDay(as: .now) }
-        let scores = StatisticsService.dailyScores(tasks: tasks, from: Date.now.startOfDay.addingDays(-days + 1), days: days)
-            .filter { !(todayIsOpen && $0.day.isSameDay(as: .now)) }
-            .compactMap { score in score.productivity.map { (day: score.day, value: $0 * 100) } }
+        let todayIsOpen = tasks.contains { !$0.isRemoved && $0.countsInScores && $0.status == .pending && $0.scheduledDate.isSameDay(as: now) }
+        return StatisticsService.dailyScores(tasks: tasks, from: range.lowerBound, days: days)
+            .filter { !(todayIsOpen && $0.day.isSameDay(as: now)) }
+            .compactMap { score in score.productivity.map { Point(date: score.day, value: $0 * 100) } }
+    }
+
+    var body: some View {
+        let points = points
         VStack(spacing: 10) {
             SectionLabel(text: "Trend produktivity")
-            VStack(spacing: 14) {
-                Picker("Rozsah", selection: $days) {
-                    ForEach(Self.options, id: \.self) { Text("\($0) dní").tag($0) }
-                }
-                .pickerStyle(.segmented)
-                if scores.count >= 2 {
-                    Chart(scores, id: \.day) { score in
-                        LineMark(x: .value("Den", score.day), y: .value("Produktivita", score.value))
+            VStack(alignment: .leading, spacing: 10) {
+                if points.count >= 2 {
+                    Chart(points) { point in
+                        LineMark(x: .value("Den", point.date), y: .value("Produktivita", point.value))
                             .foregroundStyle(Theme.textPrimary)
                             .interpolationMethod(.monotone)
+                        PointMark(x: .value("Den", point.date), y: .value("Produktivita", point.value))
+                            .foregroundStyle(Theme.textPrimary)
+                            .symbolSize(period == .month ? 0 : 24)
                         RuleMark(y: .value("Cíl", ScoreEngine.Config.streakThreshold * 100))
                             .foregroundStyle(Theme.textTertiary)
                             .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
                     }
                     .chartYScale(domain: 0...100)
                     .chartXAxis {
-                        // Whole-day steps, so a short history doesn't repeat the same date.
-                        AxisMarks(values: .stride(by: .day, count: max(1, days / 4))) {
-                            AxisValueLabel(format: Date.FormatStyle(locale: .app).day().month(.defaultDigits))
-                                .foregroundStyle(Theme.textSecondary)
+                        if period == .year {
+                            AxisMarks(values: .stride(by: .month, count: 2)) {
+                                AxisValueLabel(format: Date.FormatStyle(locale: .app).month(.abbreviated))
+                                    .foregroundStyle(Theme.textSecondary)
+                            }
+                        } else {
+                            AxisMarks(values: .stride(by: .day, count: period == .week ? 1 : 7)) {
+                                AxisValueLabel(format: Date.FormatStyle(locale: .app).day().month(.defaultDigits))
+                                    .foregroundStyle(Theme.textSecondary)
+                            }
                         }
                     }
                     .chartYAxis {
@@ -60,7 +66,10 @@ struct TrendSection: View {
                             AxisValueLabel().foregroundStyle(Theme.textSecondary)
                         }
                     }
-                    .frame(height: 180)
+                    .frame(height: 170)
+                    Text("Čárkovaně je hranice série 80 %.")
+                        .scaledFont(.caption)
+                        .foregroundStyle(Theme.textTertiary)
                 } else {
                     Text("Trend se ukáže, až budeš mít aspoň dva dny s úkoly.")
                         .scaledFont(.caption)
@@ -152,59 +161,6 @@ struct ReviewHistorySection: View {
     }
 }
 
-/// Planned task time against time actually spent in the focus timer.
-struct EffortSection: View {
-    let tasks: [TaskItem]
-    let sessions: [FocusSession]
-
-    private static let weeks = 6
-
-    private static func hours(_ minutes: Int) -> String {
-        "\(minutes / 60) h \(String(format: "%02d", minutes % 60)) min"
-    }
-
-    var body: some View {
-        let effort = StatisticsService.effort(tasks: tasks, sessions: sessions, weeks: Self.weeks)
-        if let current = effort.last, effort.contains(where: { $0.plannedMinutes > 0 }) {
-            let ratio = current.plannedMinutes > 0 ? Double(current.focusedMinutes) / Double(current.plannedMinutes) : nil
-            VStack(spacing: 10) {
-                SectionLabel(text: "Plán vs. skutečnost")
-                VStack(alignment: .leading, spacing: 16) {
-                    TileRow {
-                        MetricTile(value: Self.hours(current.plannedMinutes), label: "Plán tento týden")
-                        MetricTile(value: Self.hours(current.focusedMinutes), label: "Soustředění")
-                    }
-                    PerformanceBar(label: "Odpracováno z plánu", value: ratio.map { min($0, 1) })
-                    Chart(effort) { week in
-                        BarMark(x: .value("Týden", "T\(week.weekStart.weekNumber)"),
-                                y: .value("Hodiny", Double(week.plannedMinutes) / 60))
-                            .foregroundStyle(by: .value("Typ", "Plán"))
-                            .position(by: .value("Typ", "Plán"))
-                        BarMark(x: .value("Týden", "T\(week.weekStart.weekNumber)"),
-                                y: .value("Hodiny", Double(week.focusedMinutes) / 60))
-                            .foregroundStyle(by: .value("Typ", "Soustředění"))
-                            .position(by: .value("Typ", "Soustředění"))
-                    }
-                    .chartForegroundStyleScale(["Plán": Theme.textTertiary, "Soustředění": Theme.textPrimary])
-                    .chartXAxis { AxisMarks { AxisValueLabel().foregroundStyle(Theme.textSecondary) } }
-                    .chartYAxis {
-                        AxisMarks(values: .automatic(desiredCount: 3)) {
-                            AxisGridLine().foregroundStyle(Theme.border)
-                            AxisValueLabel().foregroundStyle(Theme.textSecondary)
-                        }
-                    }
-                    .chartLegend(position: .bottom, alignment: .leading)
-                    .frame(height: 170)
-                    Text("Počítá se jen čas odměřený focus timerem.")
-                        .scaledFont(.caption)
-                        .foregroundStyle(Theme.textTertiary)
-                }
-                .card()
-            }
-        }
-    }
-}
-
 struct RecordsSection: View {
     let tasks: [TaskItem]
     let sessions: [FocusSession]
@@ -239,29 +195,6 @@ struct RecordsSection: View {
                 }
                 .card(padding: 0)
             }
-        }
-    }
-}
-
-/// Entry point to the journal of weekly reflections.
-struct JournalLinkSection: View {
-    let count: Int
-
-    var body: some View {
-        NavigationLink {
-            JournalView()
-        } label: {
-            HStack {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("SEBEREFLEXE TÝDNE").labelStyle(Theme.textPrimary)
-                    Text(count == 0 ? "První zápis vznikne v neděli večer" : "Zápisy: \(count)")
-                        .scaledFont(.caption)
-                        .foregroundStyle(Theme.textSecondary)
-                }
-                Spacer()
-                Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
-            }
-            .card()
         }
     }
 }

@@ -57,6 +57,20 @@ struct WeekView: View {
 
     @State var goalsExpanded = false
 
+    /// The day opened under the grid. Nil means today in this week, or the first day of another week.
+    @State var selectedDay: Date?
+
+    var shownDay: Date {
+        if let selectedDay, days.contains(where: { $0.isSameDay(as: selectedDay) }) { return selectedDay }
+        return days.first { $0.isSameDay(as: .now) } ?? weekStart
+    }
+
+    func tasksOn(_ day: Date) -> [TaskItem] {
+        (plan?.activeTasks ?? [])
+            .filter { $0.scheduledDate.isSameDay(as: day) }
+            .sorted { $0.dueDate == $1.dueDate ? $0.priority.rank > $1.priority.rank : $0.dueDate < $1.dueDate }
+    }
+
     /// Last week's plan, offered as a starting point until the shown week is handed in.
     /// The week can still take tasks copied from the one before.
     var canCopyWeek: Bool {
@@ -108,6 +122,10 @@ struct WeekView: View {
                                       onCopy: { if planToCopy == nil { nothingToCopy = true } else { confirmsCopy = true } },
                                       onReset: resettableTasks.isEmpty ? nil : { confirmsReset = true })
                     }
+                    WeekGrid(days: days, tasks: tasksOn, selected: shownDay) { selectedDay = $0 }
+                    daySection(shownDay)
+                        .id(shownDay)
+                        .transition(.opacity)
                     if foldsSummary {
                         // Sealed: the goals and the review sit together in one card instead of two.
                         VStack(spacing: 0) {
@@ -125,14 +143,6 @@ struct WeekView: View {
                         }
                         if showsReviewLink {
                             reviewLink.card()
-                        }
-                    }
-                    VStack(spacing: 20) {
-                        ForEach(daySegments) { segment in
-                            switch segment {
-                            case .day(let day): daySection(day)
-                            case .quiet(let run): quietRow(run)
-                            }
                         }
                     }
                     if let plan, plan.isCommitted {
@@ -190,6 +200,7 @@ struct WeekView: View {
         }
         .sensoryFeedback(.success, trigger: commitPulse) { _, new in new % 2 == 1 }
         .onAppear { rememberTasks() }
+        .onChange(of: showsNextWeek) { selectedDay = nil }
         .onChange(of: openTaskIDs) { launchFlights() }
         .onChange(of: isPresenting) { _, presenting in
             guard !presenting else { return }
@@ -257,18 +268,6 @@ struct WeekView: View {
             Button("Nechat, jak je", role: .cancel) {}
         } message: {
             Text("Všechny úkoly, které tu ještě čekají, zmizí a můžeš plánovat od nuly. Splněné zůstanou. Plán ještě není odeslaný, takže to nic nestojí.")
-        }
-    }
-
-    enum DaySegment: Identifiable {
-        case day(Date)
-        case quiet([Date])
-
-        var id: Date {
-            switch self {
-            case .day(let day): day
-            case .quiet(let run): run[0]
-            }
         }
     }
 

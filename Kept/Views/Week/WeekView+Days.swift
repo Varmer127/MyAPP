@@ -24,40 +24,6 @@ extension WeekView {
         .buttonStyle(.plain)
     }
 
-    /// Two or more past days in a row with nothing planned fold into one line; every other day keeps its section.
-    var daySegments: [DaySegment] {
-        var result: [DaySegment] = []
-        var run: [Date] = []
-        func flush() {
-            if run.count >= 2 { result.append(.quiet(run)) } else { result += run.map(DaySegment.day) }
-            run = []
-        }
-        for day in days {
-            let isEmpty = !(plan?.activeTasks ?? []).contains { $0.scheduledDate.isSameDay(as: day) }
-            if day.endOfDay <= Date.now && isEmpty {
-                run.append(day)
-            } else {
-                flush()
-                result.append(.day(day))
-            }
-        }
-        flush()
-        return result
-    }
-
-    func quietRow(_ run: [Date]) -> some View {
-        HStack {
-            Text("\(run[0].weekdayShortText.uppercased())–\(run[run.count - 1].weekdayShortText.uppercased())")
-                .labelStyle(Theme.textSecondary)
-            Spacer()
-            Text("Bez závazků")
-                .scaledFont(.body)
-                .foregroundStyle(Theme.textSecondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
-    }
-
     var goalsSummaryRow: some View {
         let met = goals.filter(\.isMet).count
         return Button {
@@ -98,11 +64,8 @@ extension WeekView {
                 Spacer()
                 NotificationBell(circled: true)
             }
-            Picker("Týden", selection: $showsNextWeek) {
-                Text("Tento týden").tag(false)
-                Text("Příští týden").tag(true)
-            }
-            .pickerStyle(.segmented)
+            LiquidSegmented(options: [(false, "Tento týden"), (true, "Příští týden")],
+                            selection: $showsNextWeek, accessibilityLabel: "Týden")
         }
     }
 
@@ -174,15 +137,13 @@ extension WeekView {
     }
 
     func daySection(_ day: Date) -> some View {
-        let tasks = (plan?.activeTasks ?? [])
-            .filter { $0.scheduledDate.isSameDay(as: day) }
-            .sorted { $0.dueDate == $1.dueDate ? $0.priority.rank > $1.priority.rank : $0.dueDate < $1.dueDate }
+        let tasks = tasksOn(day)
         let isPast = day.endOfDay <= Date.now
         let isToday = day.isSameDay(as: .now)
 
         return VStack(spacing: 8) {
             HStack {
-                Text(day.shortDayText.uppercased())
+                Text(day.longDayText.uppercased())
                     .labelStyle(isToday ? Theme.textPrimary : Theme.textSecondary)
                 if RestDays.contains(day) {
                     Label("Odpočinek", systemImage: "moon.zzz.fill")

@@ -52,7 +52,10 @@ extension WeekView {
         let shown = Array(newTasks.prefix(12))
         if !reduceMotion {
             let launched = shown.enumerated().map { index, task -> PlanFlight in
+                // A task on a day that is not open under the grid starts from its day in the grid.
+                let dayIndex = days.firstIndex { $0.isSameDay(as: task.scheduledDate) }
                 let row = flightFrames.frames[task.uid.uuidString]
+                    ?? dayIndex.flatMap { flightFrames.frames[WeekGrid.flightKey($0)] }
                 let start = flightOrigin
                     ?? row.flatMap { screen.intersects($0) ? CGPoint(x: $0.minX + 34, y: $0.midY) : nil }
                     ?? fallback

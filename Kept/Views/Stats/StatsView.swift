@@ -10,31 +10,21 @@ struct StatsView: View {
     @Query private var reflections: [WeekReflection]
     @Query private var diary: [DiaryEntry]
     @Query private var settingsList: [UserSettings]
-    @State private var period: Period = .week
+    @Query private var exerciseLogs: [ExerciseLog]
+    @State private var period: StatsPeriod = .week
 
-    private static let monthDays = 30
     private static let longTermDays = 90
 
-    enum Period: String, CaseIterable, Identifiable {
-        case today = "Dnes", week = "Týden", month = "Měsíc"
-        var id: String { rawValue }
-    }
-
-    private var range: Range<Date> {
-        let now = Date.now
-        switch period {
-        case .today: return now.startOfDay..<now.endOfDay
-        case .week: return now.weekStart..<now.weekStart.addingDays(7)
-        case .month: return now.startOfDay.addingDays(-Self.monthDays + 1)..<now.endOfDay
-        }
-    }
+    private var range: Range<Date> { period.range() }
 
     /// Today is judged as a whole; longer periods only on tasks whose outcome is final.
-    private var scoped: [TaskItem] {
+    private func scoped(in range: Range<Date>) -> [TaskItem] {
         let now = Date.now
         let inRange = tasks.filter { range.contains($0.scheduledDate) && $0.countsInScores }
         return period == .today ? inRange : inRange.filter { $0.isClosed(now) }
     }
+
+    private var scoped: [TaskItem] { scoped(in: range) }
 
     private var integrity: Double? {
         let values = plans.filter { $0.weekEnd > range.lowerBound && $0.weekStart < range.upperBound }
@@ -64,36 +54,32 @@ struct StatsView: View {
                         Spacer()
                         NotificationBell(circled: true)
                     }
-                    Picker("Období", selection: $period) {
-                        ForEach(Period.allCases) { Text($0.rawValue).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
+                    LiquidSegmented(options: StatsPeriod.allCases.map { ($0, $0.title) },
+                                    selection: $period, accessibilityLabel: "Období")
                 }
-                scores
-                FriendsEntryCard()
-                NavigationLink {
-                    GymProgressView()
-                } label: {
-                    HStack {
-                        Label("GYM – PROGRES", systemImage: TaskCategory.gym.symbol).labelStyle(Theme.textPrimary)
-                        Spacer()
-                        Image(systemName: "chevron.right").foregroundStyle(Theme.textTertiary)
+                Group {
+                    scores
+                    counts
+                    if period != .today {
+                        ConsistencySection(tasks: tasks, period: period,
+                                           diaryDays: Set(diary.filter(\.hasWriting).map { $0.day.startOfDay }))
+                        TrendSection(tasks: tasks, period: period)
                     }
-                    .card()
+                    recoveryAndExcuses
+                    focusAndGym
+                    effort
+                    WhenYouKeepCard(tasks: scoped, insights: insights)
+                    CategorySection(tasks: scoped)
+                    GoalsLeftCard(goals: weekGoals)
+                    HabitPathCard(tasks: tasks)
+                    RecordsSection(tasks: tasks, sessions: sessions)
+                    links
+                    FriendsEntryCard()
                 }
-                counts
-                CategorySection(tasks: scoped)
-                StreaksSection(tasks: tasks)
-                TrendSection(tasks: tasks)
-                CalendarSection(tasks: tasks, diaryDays: Set(diary.filter(\.hasWriting).map { $0.day.startOfDay }))
-                EffortSection(tasks: tasks, sessions: sessions)
-                longTerm
-                RecordsSection(tasks: tasks, sessions: sessions)
-                JournalLinkSection(count: reflections.count)
-                ReviewHistorySection(tasks: tasks)
             }
             .padding(.horizontal, Theme.screenPadding)
             .padding(.bottom, 32)
+            .animation(.easeOut(duration: 0.25), value: period)
         }
         .screenBackground()
         .refreshesData()
@@ -134,6 +120,12 @@ struct StatsView: View {
             }
             PerformanceBar(label: "Dodržené sliby", value: ScoreEngine.promisesKept(scoped, now: now),
                            series: weeklySeries(now: now) { ScoreEngine.promisesKept($0, now: now) })
+            if let change = keptChange {
+                Text(change >= 0 ? "O \(change) p. b. víc než \(previousName)" : "O \(-change) p. b. míň než \(previousName)")
+                    .scaledFont(.caption, weight: .semibold)
+                    .foregroundStyle(change >= 0 ? Theme.green : Theme.orange)
+                    .padding(.top, -10)
+            }
             PerformanceBar(label: "Produktivita", value: ScoreEngine.productivity(scoped, now: now),
                            series: weeklySeries(now: now) { ScoreEngine.productivity($0, now: now) })
             PerformanceBar(label: "Věrnost plánu", value: integrity,
@@ -158,31 +150,11 @@ struct StatsView: View {
 
     private var counts: some View {
         let now = Date.now
-        let completed = scoped.filter { $0.status == .completed && !$0.isRemoved }.count
-        let late = scoped.filter { $0.status == .completedLate && !$0.isRemoved }.count
-        let skipped = scoped.filter { $0.status == .skipped && !$0.isRemoved }.count
-        let missed = scoped.filter { ($0.status == .failed || $0.isMissed(now)) && !$0.isRemoved }.count
-        let removed = scoped.filter(\.isRemoved).count
-        let critical = scoped.filter { $0.scoringPriority == .critical }
-
         // Nothing was ever closed: one card instead of tiles of zeros.
         if scoped.allSatisfy({ $0.status == .pending && !$0.isRemoved && !$0.isMissed(now) }) {
             return AnyView(newcomerCard)
         }
-        return AnyView(VStack(spacing: 10) {
-            SectionLabel(text: "Výsledky")
-            TileRow {
-                MetricTile(value: "\(completed)", label: "Včas")
-                MetricTile(value: "\(late)", label: "Pozdě", color: late > 0 ? Theme.orange : Theme.textPrimary)
-                MetricTile(value: "\(skipped)", label: "Přeskočeno", color: skipped > 0 ? Theme.red : Theme.textPrimary)
-            }
-            TileRow {
-                MetricTile(value: "\(missed)", label: "Nesplněno", color: missed > 0 ? Theme.red : Theme.textPrimary)
-                MetricTile(value: "\(removed)", label: "Odstraněno", color: removed > 0 ? Theme.red : Theme.textPrimary)
-                MetricTile(value: critical.isEmpty ? "—" : "\(critical.filter(\.isDone).count) / \(critical.count)",
-                           label: "Kritické splněno")
-            }
-        })
+        return AnyView(OutcomesCard(tasks: scoped))
     }
 
     /// Statistics wake up with the first closed task; until then they say what to do.
@@ -218,26 +190,135 @@ struct StatsView: View {
         }
     }
 
-    /// Excuses and patterns always look at the last 90 days, whatever period is selected.
-    @ViewBuilder
-    private var longTerm: some View {
+    /// Patterns always look at the last 90 days, whatever period is selected: they need enough history.
+    private var insights: [String] {
         let since = Date.now.startOfDay.addingDays(-Self.longTermDays)
-        let recentFailures = failures.filter { $0.taskDate >= since }
-        let insights = PatternDetectionService.insights(
-            tasks: tasks.filter { $0.scheduledDate >= since }, failures: recentFailures,
+        return PatternDetectionService.insights(
+            tasks: tasks.filter { $0.scheduledDate >= since }, failures: failures.filter { $0.taskDate >= since },
             plans: plans.filter { $0.weekEnd > since })
-        if !insights.isEmpty {
+    }
+
+    /// Promises kept now against the period before, in percentage points.
+    private var keptChange: Int? {
+        let now = Date.now
+        guard let current = ScoreEngine.promisesKept(scoped, now: now),
+              let previous = ScoreEngine.promisesKept(scoped(in: period.previousRange(now: now)), now: now) else { return nil }
+        return Int(((current - previous) * 100).rounded())
+    }
+
+    private var previousName: LocalizedStringKey {
+        switch period {
+        case .today: "včera"
+        case .week: "minulý týden"
+        case .month: "předchozích 30 dní"
+        case .year: "loni ve stejnou dobu"
+        }
+    }
+
+    private var weekGoals: [WeeklyGoal] {
+        let settings = settingsList.first
+        return SuggestionService.goals(tasks: tasks, weekStart: Date.now.weekStart) {
+            settings?.weeklyTarget(for: $0) ?? $0.defaultWeeklyTarget
+        }
+    }
+
+    @ViewBuilder
+    private var recoveryAndExcuses: some View {
+        let recovery = StatisticsService.averageRecovery(tasks: tasks, in: range)
+        let counts = StatisticsService.excuseCounts(failures.filter { range.contains($0.taskDate) })
+        if recovery != nil || !counts.isEmpty {
+            HStack(alignment: .top, spacing: 10) {
+                if let recovery {
+                    StatTile(label: "Návrat", value: Self.daysText(recovery),
+                             caption: String(localized: "Tak rychle ses vracel po slabším dni."))
+                }
+                if let top = counts.first {
+                    NavigationLink {
+                        ScrollView {
+                            ExcuseList(counts: counts)
+                                .padding(.horizontal, Theme.screenPadding)
+                                .padding(.vertical, 16)
+                        }
+                        .screenBackground()
+                        .navigationTitle("Výmluvy")
+                        .navigationBarTitleDisplayMode(.inline)
+                    } label: {
+                        StatTile(label: "Výmluvy", value: top.reason.title,
+                                 caption: String(localized: "\(top.count)× · klepni pro všechny"))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private static func daysText(_ days: Double) -> String {
+        days < 1.5 ? String(localized: "1 den")
+            : String(localized: "\(days.formatted(.number.precision(.fractionLength(0...1)).locale(.app))) dne")
+    }
+
+    private static func hoursText(_ seconds: Double) -> String {
+        let minutes = Int(seconds / 60)
+        return minutes < 60 ? String(localized: "\(minutes) min")
+            : String(localized: "\(minutes / 60) h \(minutes % 60) min")
+    }
+
+    @ViewBuilder
+    private var focusAndGym: some View {
+        let focus = StatisticsService.focusSeconds(sessions, in: range)
+        let gym = tasks.filter { range.contains($0.scheduledDate) && $0.category == .gym && $0.isDone }.count
+        let volume = exerciseLogs.filter { range.contains($0.date) }.reduce(0) { $0 + $1.volume }
+        if focus > 0 || gym > 0 {
+            HStack(alignment: .top, spacing: 10) {
+                StatTile(label: "Soustředění", value: Self.hoursText(focus),
+                         caption: String(localized: "čistý čas ve focus timeru"))
+                StatTile(label: "Gym", value: "\(gym)×",
+                         caption: volume > 0
+                            ? String(localized: "tréninků · objem \(volume >= 1000 ? "\((volume / 1000).formatted(.number.precision(.fractionLength(0...1)).locale(.app))) t" : "\(Int(volume)) kg")")
+                            : String(localized: "tréninků"))
+            }
+            .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    /// Planned time of the period against the time measured by the focus timer.
+    @ViewBuilder
+    private var effort: some View {
+        let planned = tasks.filter { range.contains($0.scheduledDate) && !$0.isRemoved }.reduce(0) { $0 + $1.plannedMinutes }
+        let focused = StatisticsService.focusSeconds(sessions, in: range) / 60
+        if planned > 0 && focused > 0 {
             VStack(spacing: 10) {
-                SectionLabel(text: "Zjištěné vzorce")
-                InsightList(insights: insights)
+                SectionLabel(text: "Plán vs. skutečnost")
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack {
+                        Text("\(Self.hoursText(focused * 60)) z \(Self.hoursText(Double(planned) * 60))")
+                            .scaledFont(.heading, weight: .bold)
+                            .foregroundStyle(Theme.textPrimary)
+                        Spacer()
+                        Text(min(focused / Double(planned), 1).percentText)
+                            .scaledFont(.body, weight: .semibold)
+                            .foregroundStyle(Theme.textSecondary)
+                    }
+                    ThinBar(value: min(focused / Double(planned), 1), color: Theme.textPrimary)
+                    Text("Počítá se jen čas odměřený focus timerem.")
+                        .scaledFont(.caption)
+                        .foregroundStyle(Theme.textTertiary)
+                }
+                .card()
             }
         }
-        let counts = StatisticsService.excuseCounts(recentFailures)
-        if !counts.isEmpty {
-            VStack(spacing: 10) {
-                SectionLabel(text: "Výmluvy za \(Self.longTermDays) dní")
-                ExcuseList(counts: counts)
-            }
+    }
+
+    private var links: some View {
+        VStack(spacing: 0) {
+            StatsLinkRow(symbol: TaskCategory.gym.symbol, title: "Gym – progres") { GymProgressView() }
+            Divider().overlay(Theme.border)
+            StatsLinkRow(symbol: "calendar.badge.checkmark", title: "Přehledy týdnů") { ReviewHistoryView(tasks: tasks) }
+            Divider().overlay(Theme.border)
+            StatsLinkRow(symbol: "book.closed", title: "Sebereflexe týdne",
+                         detail: reflections.isEmpty ? "" : String(localized: "Zápisy: \(reflections.count)")) { JournalView() }
         }
+        .card(padding: 0)
     }
 }
