@@ -68,6 +68,7 @@ Založeno 10. 10. 2026. Aplikace se zatím dolaďuje pro osobní použití; tenh
 - [ ] Přihlásit se do App Store Small Business Program (provize 15 % místo 30 %)
 - [ ] Daně v ČR probrat s účetním
 - [ ] Bundle ID `cz.philipstryka.kept` a App Group `group.cz.philipstryka.kept` zaregistrovat pod placeným účtem
+- [ ] **Jen iPhone (rozhodnuto 7. 11. 2026).** V projektu je kategorie Zdraví a fitness, jen iPhone, bez Mac Catalyst a Vision Pro. V App Store Connect ještě: vybrat stejnou kategorii (Zdraví a fitness) a v „Pricing and Availability“ vypnout „Make this app available on Mac“ (iPhone appky se jinak samy nabízejí na Macích s Apple Silicon) i dostupnost na Apple Vision Pro.
 
 ## 3. Kvalita pro platící uživatele
 
