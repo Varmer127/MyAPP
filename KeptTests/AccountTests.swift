@@ -106,7 +106,7 @@ struct FriendLinkTests {
 struct PokeAndDoNotDisturbTests {
     @Test func pokeTextRules() {
         #expect(PokeText.isSendable("Jak jde slib?"))
-        #expect(!PokeText.isSendable("   "))
+        #expect(PokeText.isSendable("   "))
         #expect(!PokeText.isSendable(String(repeating: "x", count: 101)))
         #expect(PokeText.isSendable(String(repeating: "x", count: 100)))
     }

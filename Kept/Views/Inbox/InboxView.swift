@@ -7,22 +7,31 @@ import SwiftUI
 struct InboxItems {
     var requests: Int
     var pokes: Int
-    var reactions: Int
+    var news: Int
     var bets: Int
-    var together: Int
+    var challenges: Int
+    var groups: Int
+    var activities: Int
+    var buddy: Int
+    var witness: Int
     var week: WeekStory?
     var month: MonthStory?
     var yesterday: DayRecap?
 
-    var count: Int { requests + pokes + reactions + bets + together + (week == nil ? 0 : 1) + (month == nil ? 0 : 1) + (yesterday == nil ? 0 : 1) }
+    var count: Int { requests + pokes + news + bets + challenges + groups + activities + buddy + witness + (week == nil ? 0 : 1) + (month == nil ? 0 : 1) + (yesterday == nil ? 0 : 1) }
 
     init(tasks: [TaskItem], diary: [DiaryEntry], seenWeek: Double, seenMonth: Double, seenDay: Double, now: Date = .now) {
         let friends = FriendsService.shared
         requests = friends.incoming.count
         pokes = friends.unreadPokes
-        reactions = friends.unreadReactions.count
+        news = NotificationsService.shared.unseenNews
         bets = BetsService.shared.waiting.count
-        together = TogetherService.shared.waitingCount
+        let together = TogetherService.shared
+        challenges = together.challenges.filter(\.isInvited).count
+        groups = together.groups.filter(\.isInvited).count
+        activities = together.activities.filter(\.isInvited).count
+        buddy = together.incomingBuddy == nil ? 0 : 1
+        witness = together.witnessing.toAnswer.count
         if let start = WeekStory.offeredWeek(now: now), seenWeek != start.timeIntervalSince1970 {
             week = WeekStory.make(tasks: tasks, diary: diary, weekStart: start, now: now)
         }
@@ -132,26 +141,44 @@ struct InboxView: View {
                     .listRowBackground(Theme.card)
                 }
                 if items.bets > 0 {
-                    NavigationLink { BetsView() } label: {
-                        rowLabel("trophy", "Sázky čekají na tebe", "Pozvánky a výsledky k potvrzení: \(items.bets)")
-                    }
-                    .listRowBackground(Theme.card)
+                    link("trophy", "Sázky čekají na tebe", "Pozvánky a výsledky k potvrzení: \(items.bets)") { BetsView() }
                 }
-                if items.together > 0 {
-                    NavigationLink { FriendsView() } label: {
-                        rowLabel("person.2.wave.2", "Pozvánky a potvrzení", "Výzvy, skupiny, aktivity, parťák a svědek: \(items.together)")
-                    }
-                    .listRowBackground(Theme.card)
+                if items.challenges > 0 {
+                    link("flag.2.crossed", "Pozvánka do výzvy", "Čeká na odpověď: \(items.challenges)") { ChallengesView() }
                 }
-                if items.reactions > 0 {
-                    NavigationLink { ReactionsList() } label: {
-                        rowLabel("hands.clap", "Přátelé ti fandí", cheers)
-                    }
-                    .listRowBackground(Theme.card)
+                if items.groups > 0 {
+                    link("person.3", "Pozvánka do skupiny", "Čeká na odpověď: \(items.groups)") { GroupsView() }
+                }
+                if items.activities > 0 {
+                    link("calendar.badge.plus", "Pozvánka na společnou aktivitu", "Čeká na odpověď: \(items.activities)") { ActivitiesView() }
+                }
+                if items.buddy > 0 {
+                    link("figure.2", "Někdo chce být tvůj parťák", TogetherService.shared.incomingBuddy?.name ?? "") { BuddyView() }
+                }
+                if items.witness > 0 {
+                    link("person.badge.shield.checkmark", "Žádost o potvrzení", "Čeká na tebe: \(items.witness)") { WitnessInboxView() }
                 }
                 if items.pokes > 0 {
                     NavigationLink { FriendsView() } label: {
                         rowLabel("hand.point.right", "Pošťouchnutí", latestPokes)
+                    }
+                    .listRowBackground(Theme.card)
+                }
+                if !NotificationsService.shared.news.isEmpty {
+                    Section("Novinky") {
+                        ForEach(NotificationsService.shared.news.prefix(20)) { note in
+                            HStack(alignment: .top, spacing: 10) {
+                                Circle().fill(note.seen ? Color.clear : Theme.orange).frame(width: 8, height: 8).padding(.top, 7)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(note.title).scaledFont(.body, weight: note.seen ? .regular : .semibold).foregroundStyle(Theme.textPrimary)
+                                    if let detail = note.detail {
+                                        Text(detail).scaledFont(.caption).foregroundStyle(Theme.textSecondary)
+                                    }
+                                    Text(note.createdAt.formatted(.relative(presentation: .named).locale(.app)))
+                                        .scaledFont(.caption).foregroundStyle(Theme.textTertiary)
+                                }
+                            }
+                        }
                     }
                     .listRowBackground(Theme.card)
                 }
@@ -162,7 +189,16 @@ struct InboxView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Theme.background, for: .navigationBar)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Zavřít") { dismiss() } } }
-            .refreshable { await friends.reload() }
+            .refreshable {
+                await friends.reload()
+                await NotificationsService.shared.reload()
+            }
+            .task {
+                await NotificationsService.shared.reload()
+                // The news counts as read once the list has been on screen for a moment.
+                try? await Task.sleep(for: .seconds(2))
+                await NotificationsService.shared.markSeen()
+            }
         }
         .appAppearance()
         .fullScreenCover(item: Binding(get: { weekStory.map { InboxWeekBox(story: $0) } }, set: { if $0 == nil { weekStory = nil } })) { box in
@@ -198,6 +234,12 @@ struct InboxView: View {
         friends.pokes.filter { !$0.seen }.prefix(2).map { "\($0.senderName): \($0.body)" }.joined(separator: " · ")
     }
 
+    private func link<Destination: View>(_ symbol: String, _ title: LocalizedStringKey, _ subtitle: String,
+                                         @ViewBuilder destination: @escaping () -> Destination) -> some View {
+        NavigationLink(destination: destination) { rowLabel(symbol, title, subtitle) }
+            .listRowBackground(Theme.card)
+    }
+
     private func row(_ symbol: String, _ title: LocalizedStringKey, _ subtitle: String, action: @escaping () -> Void) -> some View {
         Button(action: action) { rowLabel(symbol, title, subtitle) }
             .buttonStyle(.plain)
@@ -226,38 +268,4 @@ struct InboxView: View {
 private struct InboxWeekBox: Identifiable {
     let story: WeekStory
     var id: Date { story.weekStart }
-}
-
-/// The cheers friends gave to the user's weeks; opening the list marks them as seen.
-struct ReactionsList: View {
-    private let friends = FriendsService.shared
-
-    var body: some View {
-        List {
-            ForEach(friends.reactions) { reaction in
-                HStack(spacing: 12) {
-                    Image(systemName: reaction.kind.symbol)
-                        .foregroundStyle(Theme.orange)
-                        .frame(width: 28)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("\(reaction.senderName): \(String(localized: reaction.kind.title))")
-                            .scaledFont(.body, weight: reaction.seen ? .regular : .semibold)
-                            .foregroundStyle(Theme.textPrimary)
-                        Text("Týden od \(reaction.weekStart.dayMonthText)")
-                            .scaledFont(.caption)
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                }
-            }
-            .listRowBackground(Theme.card)
-        }
-        .scrollContentBackground(.hidden)
-        .screenBackground()
-        .navigationTitle("Fandí ti")
-        .navigationBarTitleDisplayMode(.inline)
-        .task {
-            try? await Task.sleep(for: .seconds(1))
-            await friends.markReactionsSeen()
-        }
-    }
 }

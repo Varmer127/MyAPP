@@ -1,0 +1,131 @@
+import Foundation
+import Observation
+import UserNotifications
+
+/// Something a friend did that the user should hear about.
+struct AppNotification: Codable, Equatable, Identifiable {
+    enum Kind: String, Codable {
+        case friendRequest = "friend_request", friendAccepted = "friend_accepted", poke, reaction
+        case betInvite = "bet_invite", betClaim = "bet_claim", betResult = "bet_result"
+        case challengeInvite = "challenge_invite", groupInvite = "group_invite", activityInvite = "activity_invite"
+        case buddyRequest = "buddy_request", buddyAccepted = "buddy_accepted"
+        case witnessRequest = "witness_request", witnessAnswer = "witness_answer"
+    }
+
+    var id: UUID
+    var kind: Kind
+    var actorName: String?
+    var ref: UUID?
+    var body: String?
+    var createdAt: Date
+    var seen: Bool
+
+    private var who: String { actorName ?? String(localized: "Přítel") }
+
+    /// One line for the bell and for a notification on the lock screen.
+    var title: String {
+        switch kind {
+        case .friendRequest: String(localized: "\(who) tě chce mezi přátele")
+        case .friendAccepted: String(localized: "\(who) přijal(a) tvoji žádost o přátelství")
+        case .poke: String(localized: "\(who) tě šťouchl(a)")
+        case .reaction: String(localized: "\(who) ti fandí")
+        case .betInvite: String(localized: "\(who) tě zve do sázky")
+        case .betClaim: String(localized: "\(who) tvrdí, že splnil(a) sázku")
+        case .betResult: String(localized: "Sázka skončila")
+        case .challengeInvite: String(localized: "\(who) tě zve do výzvy")
+        case .groupInvite: String(localized: "\(who) tě zve do skupiny")
+        case .activityInvite: String(localized: "\(who) tě zve na společnou aktivitu")
+        case .buddyRequest: String(localized: "\(who) chce být tvůj parťák")
+        case .buddyAccepted: String(localized: "\(who) je teď tvůj parťák")
+        case .witnessRequest: String(localized: "\(who) tě žádá o potvrzení")
+        case .witnessAnswer: String(localized: "\(who) odpověděl(a) na tvoji žádost o potvrzení")
+        }
+    }
+
+    /// The second line: the poke's text, the bet's or challenge's name, or the witness's answer.
+    var detail: String? {
+        guard let body, !body.isEmpty else { return nil }
+        switch kind {
+        case .reaction: return ReactionKind(rawValue: body).map { String(localized: $0.title) }
+        case .witnessAnswer:
+            let parts = body.split(separator: ":", maxSplits: 1).map(String.init)
+            guard parts.count == 2 else { return body }
+            return parts[0] == "confirmed" ? String(localized: "Potvrzeno: \(parts[1])") : String(localized: "Nepotvrzeno: \(parts[1])")
+        default: return body
+        }
+    }
+
+    /// Kinds that only tell something; the ones that ask for an answer have their own place in the inbox.
+    var isNews: Bool { [.friendAccepted, .reaction, .betResult, .buddyAccepted, .witnessAnswer].contains(kind) }
+}
+
+extension ServerClient {
+    func notifications(since: Date?, token: String) async throws -> [AppNotification] {
+        let since: Any = since.map { ISO8601DateFormatter().string(from: $0) } ?? NSNull()
+        return try Self.socialDecoder.decode([AppNotification].self, from: try await rpc("my_notifications", ["p_since": since], token: token))
+    }
+
+    func markNotificationsSeen(token: String) async throws {
+        _ = try await rpc("mark_notifications_seen", token: token)
+    }
+}
+
+/// Keeps the notifications fresh while the app is open, shows a poke that arrives right away, and posts
+/// local notifications when iOS lets the app check in the background. Real push comes with the Apple Developer account.
+@MainActor @Observable
+final class NotificationsService {
+    static let shared = NotificationsService()
+
+    private(set) var items: [AppNotification] = []
+    /// A poke that arrived while the app is on screen, for the animation.
+    var incomingPoke: AppNotification?
+
+    private let client = ServerClient()
+    private let account = AccountService.shared
+    private static let lastAnnouncedKey = "lastAnnouncedNotification"
+    static let refreshTaskID = "cz.philipstryka.kept.refresh"
+
+    var news: [AppNotification] { items.filter(\.isNews) }
+    var unseenNews: Int { news.filter { !$0.seen }.count }
+
+    /// Loads the list; new pokes since the last look start the animation.
+    func reload() async {
+        guard account.profile != nil,
+              let loaded = try? await account.perform({ try await client.notifications(since: nil, token: $0) }) else { return }
+        let known = Set(items.map(\.id))
+        if !items.isEmpty, let poke = loaded.first(where: { $0.kind == .poke && !$0.seen && !known.contains($0.id) }) {
+            incomingPoke = poke
+        }
+        items = loaded
+        markAnnounced(loaded.first?.createdAt)
+    }
+
+    func markSeen() async {
+        guard items.contains(where: { !$0.seen }) else { return }
+        _ = try? await account.perform { try await client.markNotificationsSeen(token: $0) }
+        items = items.map { var item = $0; item.seen = true; return item }
+    }
+
+    /// Background check: everything new since the last announcement becomes a local notification.
+    func announceNewInBackground() async {
+        await account.restore()
+        guard account.profile != nil else { return }
+        let since = UserDefaults.standard.object(forKey: Self.lastAnnouncedKey) as? Date ?? .now.addingTimeInterval(-3600)
+        guard let fresh = try? await account.perform({ try await client.notifications(since: since, token: $0) }) else { return }
+        for item in fresh.reversed() where !item.seen {
+            let content = UNMutableNotificationContent()
+            content.title = item.title
+            if let detail = item.detail { content.body = detail }
+            content.sound = .default
+            try? await UNUserNotificationCenter.current().add(
+                UNNotificationRequest(identifier: "social.\(item.id)", content: content, trigger: nil))
+        }
+        markAnnounced(fresh.first?.createdAt)
+    }
+
+    private func markAnnounced(_ date: Date?) {
+        guard let date else { return }
+        let previous = UserDefaults.standard.object(forKey: Self.lastAnnouncedKey) as? Date ?? .distantPast
+        if date > previous { UserDefaults.standard.set(date, forKey: Self.lastAnnouncedKey) }
+    }
+}

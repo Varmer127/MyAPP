@@ -96,9 +96,17 @@ struct CreateBetView: View {
     @State private var isBusy = false
     @State private var errorText: LocalizedStringKey?
 
+    /// Quick picks under the slider.
     private static let lengths: [(days: Int, title: LocalizedStringKey)] = [
-        (7, "1 týden"), (30, "1 měsíc"), (90, "3 měsíce"), (180, "půl roku"), (365, "1 rok")
+        (7, "týden"), (30, "měsíc"), (90, "3 měs."), (365, "rok")
     ]
+
+    private var daysValue: Binding<Double> {
+        Binding(get: { Double(days) }, set: { days = Int($0.rounded()) })
+    }
+
+    private var endDate: Date { Date.now.addingDays(days) }
+
 
     private var balance: Int { PointsService.balance(tasks, purchases: purchases, diary: diary) }
     private var canCreate: Bool {
@@ -118,8 +126,30 @@ struct CreateBetView: View {
                     if kind == .goal {
                         TextField("Cíl, třeba „Bench 100 kg“", text: $title)
                             .onChange(of: title) { _, new in if new.count > 80 { title = String(new.prefix(80)) } }
-                        Picker("Do kdy", selection: $days) {
-                            ForEach(Self.lengths, id: \.days) { Text($0.title).tag($0.days) }
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Text("Do kdy").foregroundStyle(Theme.textPrimary)
+                                Spacer()
+                                Text(endDate.formatted(.dateTime.day().month().year().locale(.app)))
+                                    .scaledFont(.body, weight: .semibold)
+                                    .foregroundStyle(Theme.textPrimary)
+                            }
+                            Slider(value: daysValue, in: 1...365, step: 1)
+                                .tint(Theme.textPrimary)
+                                .accessibilityValue(Text(String.days(days)))
+                            HStack {
+                                Text(String.days(days)).scaledFont(.caption).foregroundStyle(Theme.textSecondary)
+                                Spacer()
+                                ForEach(Self.lengths, id: \.days) { length in
+                                    Button(length.title) { days = length.days }
+                                        .scaledFont(.caption, weight: .semibold)
+                                        .foregroundStyle(days == length.days ? Theme.onPrimary : Theme.textPrimary)
+                                        .padding(.horizontal, 8).padding(.vertical, 4)
+                                        .background(days == length.days ? Theme.textPrimary : Theme.cardRaised)
+                                        .clipShape(Capsule())
+                                        .buttonStyle(.plain)
+                                }
+                            }
                         }
                     }
                 } footer: {
@@ -165,10 +195,12 @@ struct CreateBetView: View {
                 .listRowBackground(Theme.card)
 
                 Section {
-                    Button(isBusy ? "Posílám…" : "Poslat pozvánky") { create() }
+                    Button(isBusy ? "POSÍLÁM…" : "POSLAT POZVÁNKY") { create() }
+                        .buttonStyle(PrimaryButtonStyle())
                         .disabled(!canCreate)
                 }
-                .listRowBackground(Theme.card)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
             }
             .scrollContentBackground(.hidden)
             .screenBackground()

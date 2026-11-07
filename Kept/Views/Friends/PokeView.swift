@@ -8,6 +8,7 @@ struct PokeView: View {
     @State private var text = ""
     @State private var isBusy = false
     @State private var errorText: LocalizedStringKey?
+    @State private var sent = false
     @FocusState private var focused: Bool
 
     private var waitingUntil: Date? {
@@ -23,7 +24,9 @@ struct PokeView: View {
                 Text(friend.displayName)
                     .scaledFont(.title, weight: .heavy)
                     .foregroundStyle(Theme.textPrimary)
-                if let waitingUntil {
+                if sent {
+                    PokeSentBurst(name: friend.displayName)
+                } else if let waitingUntil {
                     waiting(until: waitingUntil)
                 } else {
                     composer
@@ -47,7 +50,7 @@ struct PokeView: View {
     private var composer: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .trailing, spacing: 6) {
-                TextField("Napiš, co mu chceš říct", text: $text, axis: .vertical)
+                TextField("Můžeš něco připsat, nebo nech prázdné", text: $text, axis: .vertical)
                     .lineLimit(2...5)
                     .focused($focused)
                     .scaledFont(.body)
@@ -73,7 +76,7 @@ struct PokeView: View {
             }
             .buttonStyle(PrimaryButtonStyle())
             .disabled(!PokeText.isSendable(text) || isBusy)
-            Text("Jednoho člověka jde šťouchnout jednou za 3 hodiny. Co napíšeš, uvidí jen on.")
+            Text("Text je nepovinný, šťouchnutí přijde i bez něj. Jednoho člověka jde šťouchnout jednou za 3 hodiny a co napíšeš, uvidí jen on.")
                 .scaledFont(.caption)
                 .foregroundStyle(Theme.textSecondary)
         }
@@ -98,7 +101,9 @@ struct PokeView: View {
             defer { isBusy = false }
             do {
                 try await friends.poke(friend, text: text)
-                Haptics.success()
+                focused = false
+                withAnimation(.easeInOut(duration: 0.2)) { sent = true }
+                try? await Task.sleep(for: .milliseconds(1300))
                 dismiss()
             } catch let error as ServerError {
                 switch error.code {

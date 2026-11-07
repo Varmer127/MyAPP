@@ -29,8 +29,13 @@ struct KeptApp: App {
             .environment(\.locale, .app)
             .modifier(FriendLinkHandler())
             .modifier(SocialSync())
+            .modifier(LiveSocial())
             .task { await AccountService.shared.restore() }
         }
         .modelContainer(AppStore.container)
+        .backgroundTask(.appRefresh(NotificationsService.refreshTaskID)) {
+            await NotificationsService.shared.announceNewInBackground()
+            await MainActor.run { LiveSocial.scheduleRefresh() }
+        }
     }
 }

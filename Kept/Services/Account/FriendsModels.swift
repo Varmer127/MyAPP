@@ -76,9 +76,10 @@ enum PokeText {
                    options: [.regularExpression, .caseInsensitive]) != nil
     }
 
+    /// The text is optional: an empty poke is a poke too.
     static func isSendable(_ text: String) -> Bool {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        return !trimmed.isEmpty && trimmed.count <= maxCharacters && !containsLink(trimmed)
+        return trimmed.count <= maxCharacters && !containsLink(trimmed)
     }
 }
 

@@ -31,19 +31,6 @@ struct FriendPicker: View {
     }
 }
 
-/// Accept or decline, for any invitation.
-private struct InvitationButtons: View {
-    let accept: () -> Void
-    let decline: () -> Void
-
-    var body: some View {
-        HStack {
-            Button("Přidat se", action: accept).buttonStyle(.borderedProminent).tint(Theme.textPrimary).foregroundStyle(Theme.onPrimary)
-            Button("Ne", action: decline).buttonStyle(.bordered).tint(Theme.textSecondary)
-        }
-    }
-}
-
 private func togetherScreen<V: View>(_ view: V, title: LocalizedStringKey) -> some View {
     view
         .scrollContentBackground(.hidden)
@@ -53,6 +40,125 @@ private func togetherScreen<V: View>(_ view: V, title: LocalizedStringKey) -> so
         .toolbarBackground(Theme.background, for: .navigationBar)
 }
 
+/// The frame of every "together" screen: a title, a line about what it is for, one clear action, then cards.
+private struct TogetherPage<Content: View>: View {
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
+    var action: (title: LocalizedStringKey, run: () -> Void)?
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(title).scaledFont(.title, weight: .heavy).foregroundStyle(Theme.textPrimary)
+                    Text(subtitle).scaledFont(.body).foregroundStyle(Theme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                if let action {
+                    Button(action: action.run) { Text(action.title) }
+                        .buttonStyle(PrimaryButtonStyle())
+                }
+                content
+            }
+            .padding(.horizontal, Theme.screenPadding)
+            .padding(.vertical, 16)
+        }
+        .screenBackground()
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Theme.background, for: .navigationBar)
+    }
+}
+
+/// Shown when a list is still empty: an icon and one inviting sentence.
+private struct EmptyTogether: View {
+    let symbol: String
+    let text: LocalizedStringKey
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: symbol)
+                .font(.system(size: 34, weight: .semibold))
+                .foregroundStyle(Theme.textSecondary)
+                .frame(width: 72, height: 72)
+                .background(Theme.cardRaised)
+                .clipShape(Circle())
+            Text(text)
+                .scaledFont(.body)
+                .foregroundStyle(Theme.textSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 28)
+    }
+}
+
+/// Accept or decline, for any invitation, as two real buttons.
+private struct InvitationButtons: View {
+    let accept: () -> Void
+    let decline: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Button("Ne, díky", action: decline).buttonStyle(SecondaryButtonStyle())
+            Button("PŘIDAT SE", action: accept).buttonStyle(PrimaryButtonStyle(color: Theme.green, textColor: Color(hex: 0x000000)))
+        }
+    }
+}
+
+/// One person's progress as a bar with the numbers next to it.
+private struct ProgressLine: View {
+    let name: String
+    let value: Int
+    let target: Int
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(name).scaledFont(.body, weight: .semibold).foregroundStyle(Theme.textPrimary)
+                Spacer()
+                Text("\(value) / \(target)").scaledFont(.caption, weight: .semibold).foregroundStyle(Theme.textSecondary).monospacedDigit()
+            }
+            GeometryReader { proxy in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Theme.cardRaised)
+                    Capsule().fill(value >= target ? Theme.green : Theme.textPrimary)
+                        .frame(width: proxy.size.width * min(1, Double(value) / Double(max(target, 1))))
+                }
+            }
+            .frame(height: 8)
+        }
+    }
+}
+
+private struct CardTitle: View {
+    let symbol: String
+    let title: String
+    let meta: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: symbol)
+                .scaledFont(.heading, weight: .semibold)
+                .foregroundStyle(Theme.onPrimary)
+                .frame(width: 44, height: 44)
+                .background(Theme.textPrimary)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).scaledFont(.heading, weight: .bold).foregroundStyle(Theme.textPrimary)
+                Text(meta).scaledFont(.caption).foregroundStyle(Theme.textSecondary)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+private func act(_ work: @escaping () async throws -> Void) {
+    Task {
+        do { try await work(); Haptics.success() } catch { Haptics.warning() }
+    }
+}
+
 // MARK: Challenges
 
 struct ChallengesView: View {
@@ -60,48 +166,227 @@ struct ChallengesView: View {
     @State private var creates = false
 
     var body: some View {
-        togetherScreen(List {
-            Section {
-                Button { creates = true } label: { Label("Nová společná výzva", systemImage: "plus.circle") }
-            } footer: {
-                Text("Třeba „30 tréninků za měsíc“. Do výzvy se počítají splněné úkoly vybrané kategorie a každý vidí, jak jsou na tom ostatní.")
+        TogetherPage(title: "Společné výzvy",
+                     subtitle: "Třeba „30 tréninků za měsíc“. Počítají se splněné úkoly vybrané kategorie a každý vidí, jak jsou na tom ostatní.",
+                     action: ("NOVÁ VÝZVA", { creates = true })) {
+            if together.challenges.isEmpty {
+                EmptyTogether(symbol: "flag.2.crossed", text: "Zatím žádná výzva. Vyzvi kamarády, kdo dá víc.")
             }
-            .listRowBackground(Theme.card)
             ForEach(together.challenges) { challenge in
-                Section {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(challenge.title).scaledFont(.body, weight: .bold).foregroundStyle(Theme.textPrimary)
-                        Text("Cíl \(challenge.target) · do \(challenge.endsOn.formatted(.dateTime.day().month().locale(.app)))")
-                            .scaledFont(.caption).foregroundStyle(Theme.textSecondary)
-                    }
+                VStack(alignment: .leading, spacing: 14) {
+                    CardTitle(symbol: "flag.2.crossed", title: challenge.title,
+                              meta: String(localized: "Cíl \(challenge.target) · do \(challenge.endsOn.formatted(.dateTime.day().month().locale(.app)))"))
                     ForEach(challenge.members.filter(\.isAccepted)) { member in
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text(member.isMe ? "Ty" : member.name).foregroundStyle(Theme.textPrimary)
-                                Spacer()
-                                Text("\(member.progress ?? 0) / \(challenge.target)").monospacedDigit().foregroundStyle(Theme.textSecondary)
-                            }
-                            ProgressView(value: min(Double(member.progress ?? 0), Double(challenge.target)), total: Double(challenge.target))
-                                .tint((member.progress ?? 0) >= challenge.target ? Theme.green : Theme.textPrimary)
-                        }
+                        ProgressLine(name: member.isMe ? String(localized: "Ty") : member.name, value: member.progress ?? 0, target: challenge.target)
                     }
                     if challenge.isInvited {
                         InvitationButtons(accept: { act { try await together.respond(challenge, accept: true) } },
                                           decline: { act { try await together.respond(challenge, accept: false) } })
                     } else {
-                        Button("Opustit výzvu", role: .destructive) { act { try await together.leave(challenge) } }
-                            .foregroundStyle(Theme.red)
+                        Button("Opustit výzvu") { act { try await together.leave(challenge) } }
+                            .buttonStyle(SecondaryButtonStyle(textColor: Theme.red))
                     }
                 }
-                .listRowBackground(Theme.card)
+                .card()
             }
-        }, title: "Společné výzvy")
+        }
         .refreshable { await together.reload() }
         .task { await together.reload() }
         .sheet(isPresented: $creates) { CreateChallengeView() }
     }
+}
 
-    private func act(_ work: @escaping () async throws -> Void) { Task { try? await work() } }
+// MARK: Groups
+
+struct GroupsView: View {
+    private let together = TogetherService.shared
+    @State private var creates = false
+
+    var body: some View {
+        TogetherPage(title: "Skupiny",
+                     subtitle: "Rodina, tým, parta z gymu. Každá skupina má svůj žebříček spolehlivosti tohoto týdne.",
+                     action: ("NOVÁ SKUPINA", { creates = true })) {
+            if together.groups.isEmpty {
+                EmptyTogether(symbol: "person.3", text: "Zatím žádná skupina. Založ ji pro rodinu nebo partu.")
+            }
+            ForEach(together.groups) { group in
+                VStack(alignment: .leading, spacing: 12) {
+                    CardTitle(symbol: "person.3.fill", title: group.name,
+                              meta: String(localized: "Členů: \(group.members.filter(\.isAccepted).count)"))
+                    ForEach(Array(group.members.enumerated()), id: \.element.id) { index, member in
+                        HStack(spacing: 10) {
+                            Text(member.isAccepted ? "\(index + 1)." : "·")
+                                .scaledFont(.body, weight: .bold)
+                                .foregroundStyle(index == 0 && member.isAccepted ? Theme.orange : Theme.textSecondary)
+                                .frame(width: 26, alignment: .leading)
+                            Text(member.isMe ? String(localized: "Ty") : member.name)
+                                .scaledFont(.body, weight: member.isMe ? .bold : .regular)
+                                .foregroundStyle(Theme.textPrimary)
+                            Spacer()
+                            Text(member.isAccepted ? (member.reliability.map { "\($0) %" } ?? "—") : String(localized: "pozván(a)"))
+                                .scaledFont(.body, weight: .semibold)
+                                .foregroundStyle(Theme.textSecondary)
+                                .monospacedDigit()
+                        }
+                    }
+                    if group.isInvited {
+                        InvitationButtons(accept: { act { try await together.respond(group, accept: true) } },
+                                          decline: { act { try await together.respond(group, accept: false) } })
+                    } else {
+                        Button(group.isOwner ? "Zrušit skupinu" : "Opustit skupinu") { act { try await together.leave(group) } }
+                            .buttonStyle(SecondaryButtonStyle(textColor: Theme.red))
+                    }
+                }
+                .card()
+            }
+        }
+        .refreshable { await together.reload() }
+        .task { await together.reload() }
+        .sheet(isPresented: $creates) { CreateGroupView() }
+    }
+}
+
+// MARK: Shared activities
+
+struct ActivitiesView: View {
+    @Environment(\.modelContext) private var context
+    private let together = TogetherService.shared
+    @State private var creates = false
+
+    var body: some View {
+        TogetherPage(title: "Společné aktivity",
+                     subtitle: "Třeba „běh v sobotu v 9“. Kdo pozvánku přijme, tomu se aktivita přidá do plánu.",
+                     action: ("NAPLÁNOVAT S PŘÁTELI", { creates = true })) {
+            if together.activities.isEmpty {
+                EmptyTogether(symbol: "calendar.badge.plus", text: "Nic naplánovaného. Domluv si s někým trénink nebo procházku.")
+            }
+            ForEach(together.activities) { activity in
+                VStack(alignment: .leading, spacing: 12) {
+                    CardTitle(symbol: (TaskCategory(rawValue: activity.category) ?? .other).icon, title: activity.title,
+                              meta: activity.startsAt.formatted(.dateTime.weekday(.wide).day().month().hour().minute().locale(.app)))
+                    HStack(spacing: 8) {
+                        Label("\(activity.minutes) min", systemImage: "clock")
+                        Label("\(activity.members.filter(\.isAccepted).count)", systemImage: "person.2")
+                    }
+                    .scaledFont(.caption, weight: .semibold)
+                    .foregroundStyle(Theme.textSecondary)
+                    Text(activity.members.filter(\.isAccepted).map { $0.isMe ? String(localized: "ty") : $0.name }.joined(separator: ", "))
+                        .scaledFont(.caption)
+                        .foregroundStyle(Theme.textSecondary)
+                    if activity.isInvited {
+                        InvitationButtons(accept: { act { try await together.respond(activity, accept: true, context: context) } },
+                                          decline: { act { try await together.respond(activity, accept: false, context: context) } })
+                    } else if activity.myStatus == "accepted" {
+                        Label("V tvém plánu", systemImage: "checkmark.circle.fill")
+                            .scaledFont(.caption, weight: .semibold)
+                            .foregroundStyle(Theme.green)
+                    }
+                }
+                .card()
+            }
+        }
+        .refreshable { await together.reload() }
+        .task { await together.reload() }
+        .sheet(isPresented: $creates) { CreateActivityView() }
+    }
+}
+
+// MARK: Buddy
+
+struct BuddyView: View {
+    private let together = TogetherService.shared
+    private let friends = FriendsService.shared
+    @State private var errorText: LocalizedStringKey?
+
+    var body: some View {
+        TogetherPage(title: "Parťák",
+                     subtitle: "Jeden přítel, který denně uvidí, kolik slibů máš splněno, a ty jeho. Nic víc.") {
+            if let buddy = together.buddy {
+                VStack(alignment: .leading, spacing: 14) {
+                    CardTitle(symbol: "figure.2", title: buddy.name, meta: String(localized: "Tvůj parťák"))
+                    if let total = buddy.total, let day = buddy.day, day.isSameDay(as: .now) {
+                        ProgressLine(name: String(localized: "Dnes"), value: buddy.done ?? 0, target: max(total, 1))
+                    } else {
+                        Text("Dnes zatím nic nepřišlo.").scaledFont(.body).foregroundStyle(Theme.textSecondary)
+                    }
+                    Button("Ukončit parťáctví") { run { try await together.endBuddy() } }
+                        .buttonStyle(SecondaryButtonStyle(textColor: Theme.red))
+                }
+                .card()
+            } else {
+                if let incoming = together.incomingBuddy {
+                    VStack(alignment: .leading, spacing: 14) {
+                        CardTitle(symbol: "figure.2", title: incoming.name, meta: String(localized: "chce být tvůj parťák"))
+                        InvitationButtons(accept: { run { try await together.respondBuddy(incoming, accept: true) } },
+                                          decline: { run { try await together.respondBuddy(incoming, accept: false) } })
+                    }
+                    .card()
+                }
+                Text("VYBER SI PARŤÁKA").labelStyle()
+                if friends.friends.isEmpty {
+                    EmptyTogether(symbol: "person.badge.plus", text: "Nejdřív si přidej přátele.")
+                }
+                ForEach(friends.friends) { friend in
+                    let asked = together.buddies.contains { $0.id == friend.id && $0.state == .outgoing }
+                    HStack(spacing: 12) {
+                        Avatar(initial: String(friend.displayName.prefix(1)).uppercased())
+                        Text(friend.displayName).scaledFont(.body, weight: .semibold).foregroundStyle(Theme.textPrimary)
+                        Spacer()
+                        Button(asked ? "Čeká" : "Požádat") { run { try await together.askBuddy(friend) } }
+                            .buttonStyle(.borderedProminent)
+                            .tint(asked ? Theme.cardRaised : Theme.textPrimary)
+                            .foregroundStyle(asked ? Theme.textSecondary : Theme.onPrimary)
+                            .disabled(asked)
+                    }
+                    .card(padding: 12)
+                }
+            }
+            if let errorText {
+                Text(errorText).scaledFont(.caption).foregroundStyle(Theme.red)
+            }
+        }
+        .refreshable { await together.reload() }
+        .task { await together.reload() }
+    }
+
+    private func run(_ work: @escaping () async throws -> Void) {
+        errorText = nil
+        Task {
+            do { try await work(); Haptics.success() }
+            catch let error as ServerError where error.code == "already_paired" { errorText = "Jeden z vás už parťáka má." }
+            catch { errorText = "Nepovedlo se to. Zkus to prosím znovu." }
+        }
+    }
+}
+
+// MARK: Witness
+
+struct WitnessInboxView: View {
+    private let together = TogetherService.shared
+
+    var body: some View {
+        TogetherPage(title: "Svědek",
+                     subtitle: "Přátelé tě žádají, abys potvrdil, že úkol opravdu splnili. Potvrď jen to, o čem víš.") {
+            if together.witnessing.toAnswer.isEmpty {
+                EmptyTogether(symbol: "person.badge.shield.checkmark", text: "Nikdo tě teď nežádá o potvrzení.")
+            }
+            ForEach(together.witnessing.toAnswer) { request in
+                VStack(alignment: .leading, spacing: 14) {
+                    CardTitle(symbol: "checkmark.seal", title: request.title,
+                              meta: String(localized: "\(request.ownerName) · \(request.day.longDayText)"))
+                    HStack(spacing: 10) {
+                        Button("Nepotvrzuji") { act { try await together.answer(request, confirm: false) } }
+                            .buttonStyle(SecondaryButtonStyle(textColor: Theme.red))
+                        Button("POTVRZUJI") { act { try await together.answer(request, confirm: true) } }
+                            .buttonStyle(PrimaryButtonStyle(color: Theme.green, textColor: Color(hex: 0x000000)))
+                    }
+                }
+                .card()
+            }
+        }
+        .refreshable { await together.reload() }
+        .task { await together.reload() }
+    }
 }
 
 struct CreateChallengeView: View {
@@ -134,10 +419,12 @@ struct CreateChallengeView: View {
                 }
                 .listRowBackground(Theme.card)
                 Section {
-                    Button("Začít výzvu") { create() }
+                    Button("ZAČÍT VÝZVU") { create() }
+                        .buttonStyle(PrimaryButtonStyle())
                         .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || invited.isEmpty)
                 }
-                .listRowBackground(Theme.card)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
             }, title: "Nová výzva")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Zrušit") { dismiss() } } }
         }
@@ -152,54 +439,6 @@ struct CreateChallengeView: View {
             } catch { errorText = "Výzvu se nepodařilo založit." }
         }
     }
-}
-
-// MARK: Groups
-
-struct GroupsView: View {
-    private let together = TogetherService.shared
-    @State private var creates = false
-
-    var body: some View {
-        togetherScreen(List {
-            Section {
-                Button { creates = true } label: { Label("Nová skupina", systemImage: "plus.circle") }
-            } footer: {
-                Text("Rodina, tým, parta z gymu. Skupina má vlastní žebříček spolehlivosti tohoto týdne.")
-            }
-            .listRowBackground(Theme.card)
-            ForEach(together.groups) { group in
-                Section {
-                    ForEach(Array(group.members.enumerated()), id: \.element.id) { index, member in
-                        HStack {
-                            Text(member.isAccepted ? "\(index + 1)." : "·").foregroundStyle(Theme.textSecondary).frame(width: 26, alignment: .leading)
-                            Text(member.isMe ? "Ty" : member.name).foregroundStyle(Theme.textPrimary)
-                            Spacer()
-                            Text(member.isAccepted ? (member.reliability.map { "\($0) %" } ?? "—") : "pozván")
-                                .foregroundStyle(Theme.textSecondary).monospacedDigit()
-                        }
-                    }
-                    if group.isInvited {
-                        InvitationButtons(accept: { act { try await together.respond(group, accept: true) } },
-                                          decline: { act { try await together.respond(group, accept: false) } })
-                    } else {
-                        Button(group.isOwner ? "Zrušit skupinu" : "Opustit skupinu", role: .destructive) {
-                            act { try await together.leave(group) }
-                        }
-                        .foregroundStyle(Theme.red)
-                    }
-                } header: {
-                    Text(group.name)
-                }
-                .listRowBackground(Theme.card)
-            }
-        }, title: "Skupiny")
-        .refreshable { await together.reload() }
-        .task { await together.reload() }
-        .sheet(isPresented: $creates) { CreateGroupView() }
-    }
-
-    private func act(_ work: @escaping () async throws -> Void) { Task { try? await work() } }
 }
 
 struct CreateGroupView: View {
@@ -218,10 +457,12 @@ struct CreateGroupView: View {
                 }
                 .listRowBackground(Theme.card)
                 Section {
-                    Button("Založit skupinu") { create() }
+                    Button("ZALOŽIT SKUPINU") { create() }
+                        .buttonStyle(PrimaryButtonStyle())
                         .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || invited.isEmpty)
                 }
-                .listRowBackground(Theme.card)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
             }, title: "Nová skupina")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Zrušit") { dismiss() } } }
         }
@@ -234,46 +475,6 @@ struct CreateGroupView: View {
             catch { errorText = "Skupinu se nepodařilo založit." }
         }
     }
-}
-
-// MARK: Shared activities
-
-struct ActivitiesView: View {
-    @Environment(\.modelContext) private var context
-    private let together = TogetherService.shared
-    @State private var creates = false
-
-    var body: some View {
-        togetherScreen(List {
-            Section {
-                Button { creates = true } label: { Label("Naplánovat s přáteli", systemImage: "calendar.badge.plus") }
-            } footer: {
-                Text("Třeba „běh v sobotu v 9“. Komu pozvánku pošleš a kdo ji přijme, tomu se aktivita přidá do jeho plánu.")
-            }
-            .listRowBackground(Theme.card)
-            ForEach(together.activities) { activity in
-                Section {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(activity.title).scaledFont(.body, weight: .bold).foregroundStyle(Theme.textPrimary)
-                        Text("\(activity.startsAt.formatted(.dateTime.weekday(.wide).day().month().hour().minute().locale(.app))) · \(activity.minutes) min")
-                            .scaledFont(.caption).foregroundStyle(Theme.textSecondary)
-                        Text(activity.members.filter(\.isAccepted).map { $0.isMe ? String(localized: "ty") : $0.name }.joined(separator: ", "))
-                            .scaledFont(.caption).foregroundStyle(Theme.textSecondary)
-                    }
-                    if activity.isInvited {
-                        InvitationButtons(accept: { act { try await together.respond(activity, accept: true, context: context) } },
-                                          decline: { act { try await together.respond(activity, accept: false, context: context) } })
-                    }
-                }
-                .listRowBackground(Theme.card)
-            }
-        }, title: "Společné aktivity")
-        .refreshable { await together.reload() }
-        .task { await together.reload() }
-        .sheet(isPresented: $creates) { CreateActivityView() }
-    }
-
-    private func act(_ work: @escaping () async throws -> Void) { Task { try? await work() } }
 }
 
 struct CreateActivityView: View {
@@ -304,10 +505,12 @@ struct CreateActivityView: View {
                 }
                 .listRowBackground(Theme.card)
                 Section {
-                    Button("Poslat pozvánky") { create() }
+                    Button("POSLAT POZVÁNKY") { create() }
+                        .buttonStyle(PrimaryButtonStyle())
                         .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || invited.isEmpty)
                 }
-                .listRowBackground(Theme.card)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
             }, title: "Společná aktivita")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Zrušit") { dismiss() } } }
         }
@@ -323,102 +526,6 @@ struct CreateActivityView: View {
             } catch { errorText = "Aktivitu se nepodařilo založit." }
         }
     }
-}
-
-// MARK: Buddy
-
-struct BuddyView: View {
-    private let together = TogetherService.shared
-    private let friends = FriendsService.shared
-    @State private var errorText: LocalizedStringKey?
-
-    var body: some View {
-        togetherScreen(Form {
-            if let buddy = together.buddy {
-                Section {
-                    Text(buddy.name).scaledFont(.heading, weight: .bold).foregroundStyle(Theme.textPrimary)
-                    if let total = buddy.total, let day = buddy.day, day.isSameDay(as: .now) {
-                        LabeledContent("Dnes", value: "\(buddy.done ?? 0) z \(total) slibů")
-                        ProgressView(value: Double(buddy.done ?? 0), total: Double(max(total, 1))).tint(Theme.green)
-                    } else {
-                        Text("Dnes zatím nic nepřišlo.").foregroundStyle(Theme.textSecondary)
-                    }
-                    Button("Ukončit parťáctví", role: .destructive) { act { try await together.endBuddy() } }
-                        .foregroundStyle(Theme.red)
-                } footer: {
-                    Text("Parťák vidí, kolik slibů máš dnes splněno, a ty vidíš jeho. Nic víc.")
-                }
-                .listRowBackground(Theme.card)
-            } else {
-                if let incoming = together.incomingBuddy {
-                    Section("Chce být tvůj parťák") {
-                        Text(incoming.name).foregroundStyle(Theme.textPrimary)
-                        InvitationButtons(accept: { act { try await together.respondBuddy(incoming, accept: true) } },
-                                          decline: { act { try await together.respondBuddy(incoming, accept: false) } })
-                    }
-                    .listRowBackground(Theme.card)
-                }
-                Section {
-                    ForEach(friends.friends) { friend in
-                        let asked = together.buddies.contains { $0.id == friend.id && $0.state == .outgoing }
-                        Button(asked ? "\(friend.displayName) · čeká na odpověď" : friend.displayName) {
-                            act { try await together.askBuddy(friend) }
-                        }
-                        .disabled(asked)
-                    }
-                } header: {
-                    Text("Vyber si parťáka")
-                } footer: {
-                    Text(errorText ?? "Jeden přítel, který denně uvidí, jak ti jde plnění slibů, a ty jeho. Parťáka máš jen jednoho.")
-                }
-                .listRowBackground(Theme.card)
-            }
-        }, title: "Parťák")
-        .refreshable { await together.reload() }
-        .task { await together.reload() }
-    }
-
-    private func act(_ work: @escaping () async throws -> Void) {
-        errorText = nil
-        Task {
-            do { try await work() }
-            catch let error as ServerError where error.code == "already_paired" { errorText = "Jeden z vás už parťáka má." }
-            catch { errorText = "Nepovedlo se to. Zkus to prosím znovu." }
-        }
-    }
-}
-
-// MARK: Witness
-
-struct WitnessInboxView: View {
-    private let together = TogetherService.shared
-
-    var body: some View {
-        togetherScreen(List {
-            if together.witnessing.toAnswer.isEmpty {
-                Text("Nikdo tě teď nežádá o potvrzení.").foregroundStyle(Theme.textSecondary).listRowBackground(Theme.card)
-            }
-            ForEach(together.witnessing.toAnswer) { request in
-                Section {
-                    Text("\(request.ownerName): \(request.title)").scaledFont(.body, weight: .semibold).foregroundStyle(Theme.textPrimary)
-                    Text(request.day.longDayText).scaledFont(.caption).foregroundStyle(Theme.textSecondary)
-                    HStack {
-                        Button("Potvrzuji") { act { try await together.answer(request, confirm: true) } }
-                            .buttonStyle(.borderedProminent).tint(Theme.green)
-                        Button("Nepotvrzuji") { act { try await together.answer(request, confirm: false) } }
-                            .buttonStyle(.bordered).tint(Theme.red)
-                    }
-                } footer: {
-                    Text("Potvrď jen to, o čem víš, že se opravdu stalo.")
-                }
-                .listRowBackground(Theme.card)
-            }
-        }, title: "Svědek")
-        .refreshable { await together.reload() }
-        .task { await together.reload() }
-    }
-
-    private func act(_ work: @escaping () async throws -> Void) { Task { try? await work() } }
 }
 
 /// On a finished task: ask a friend to confirm it, and show the answer.
