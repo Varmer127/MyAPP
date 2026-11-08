@@ -253,28 +253,39 @@ struct StatsLinkRow<Destination: View>: View {
 
     var body: some View {
         NavigationLink(destination: destination) {
-            HStack(spacing: 12) {
-                Image(systemName: symbol)
-                    .scaledFont(.body, weight: .semibold)
-                    .foregroundStyle(Theme.textSecondary)
-                    .frame(width: 24)
-                Text(title)
-                    .scaledFont(.body, weight: .semibold)
-                    .foregroundStyle(Theme.textPrimary)
-                Spacer()
-                if !detail.isEmpty {
-                    Text(detail)
-                        .scaledFont(.caption)
-                        .foregroundStyle(Theme.textSecondary)
-                }
-                Image(systemName: "chevron.right")
-                    .scaledFont(.caption, weight: .semibold)
-                    .foregroundStyle(Theme.textTertiary)
-            }
-            .padding(.horizontal, 14)
-            .frame(minHeight: 50)
-            .contentShape(Rectangle())
+            StatsRowLabel(symbol: symbol, title: title, detail: detail)
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// The look of a row at the bottom of Stats, for links and for buttons that open a sheet.
+struct StatsRowLabel: View {
+    let symbol: String
+    let title: LocalizedStringKey
+    var detail: String = ""
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: symbol)
+                .scaledFont(.body, weight: .semibold)
+                .foregroundStyle(Theme.textSecondary)
+                .frame(width: 24)
+            Text(title)
+                .scaledFont(.body, weight: .semibold)
+                .foregroundStyle(Theme.textPrimary)
+            Spacer()
+            if !detail.isEmpty {
+                Text(detail)
+                    .scaledFont(.caption)
+                    .foregroundStyle(Theme.textSecondary)
+            }
+            Image(systemName: "chevron.right")
+                .scaledFont(.caption, weight: .semibold)
+                .foregroundStyle(Theme.textTertiary)
+        }
+        .padding(.horizontal, 14)
+        .frame(minHeight: 50)
+        .contentShape(Rectangle())
     }
 }

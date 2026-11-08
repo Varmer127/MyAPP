@@ -103,7 +103,10 @@ extension TodayView {
                     }
                 }
             }
-            addButton
+            HStack(spacing: 10) {
+                addButton
+                pointsButton
+            }
         }
         .padding(.top, 8)
     }
@@ -168,6 +171,33 @@ extension TodayView {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Přidat úkol")
+    }
+
+    /// The balance next to the add button; touching it opens the shop.
+    var pointsButton: some View {
+        let balance = PointsService.balance(tasks, purchases: purchases, diary: diary)
+        return Button {
+            Haptics.light()
+            showsShop = true
+        } label: {
+            Label {
+                Text(balance.formatted(.number.locale(.app)))
+                    .contentTransition(.numericText())
+            } icon: {
+                Image(systemName: "star.fill").foregroundStyle(Theme.orange)
+            }
+            .scaledFont(.caption, weight: .heavy)
+            .foregroundStyle(Theme.textPrimary)
+            .lineLimit(1)
+            .padding(.horizontal, 14)
+            .frame(minHeight: 44)
+            .background(Theme.cardRaised)
+            .clipShape(Capsule())
+            .animation(.easeOut(duration: 0.3), value: balance)
+        }
+        .buttonStyle(.plain)
+        .fixedSize()
+        .accessibilityLabel("Body: \(balance), otevřít obchod")
     }
 
     /// The streak is alive from earlier days, but today is still under the bar and the evening has come.

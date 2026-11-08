@@ -259,46 +259,6 @@ extension TodayView {
         return PlanService.save(draft, to: nil, in: context)
     }
 
-    /// Points towards the next pass. One pass cancels a weekly commitment without penalty.
-    var pointsCard: some View {
-        let balance = PointsService.balance(tasks, purchases: purchases, diary: diary)
-        let passes = balance / PointsService.passCost
-        let towardsNext = balance % PointsService.passCost
-        let isFull = balance >= PointsService.cap
-        return VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                Text("\(balance.formatted(.number.locale(.app)))")
-                    .scaledFont(.body, weight: .semibold)
-                    .foregroundStyle(Theme.textPrimary)
-                    .contentTransition(.numericText())
-                Text("/ \(PointsService.cap.formatted(.number.locale(.app))) BODŮ").labelStyle()
-                Spacer()
-                Button {
-                    showsShop = true
-                } label: {
-                    Label("OBCHOD", systemImage: "bag.fill")
-                        .scaledFont(.caption, weight: .bold)
-                        .tracking(0.6)
-                        .foregroundStyle(Theme.onPrimary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 7)
-                        .background(Theme.textPrimary)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
-            }
-            ThinBar(value: Double(balance) / Double(PointsService.cap),
-                    color: passes > 0 ? Theme.green : Theme.textPrimary)
-            Text(passes == 0 ? "Do propustky chybí \(PointsService.passCost - towardsNext). Co všechno se dá za body pořídit, najdeš v obchodě."
-                 : (isFull ? "Propustky: \(passes) · plná zásoba, další body propadají. Utrať je v obchodě."
-                    : "Propustky: \(passes). Co všechno se dá za body pořídit, najdeš v obchodě."))
-                .scaledFont(.caption)
-                .foregroundStyle(Theme.textTertiary)
-        }
-        .animation(.easeOut(duration: 0.4), value: balance)
-    }
-
-
     var realityCheckCard: some View {
         Button {
             showsRealityCheck = true
@@ -317,6 +277,31 @@ extension TodayView {
             .card()
         }
         .buttonStyle(.plain)
+    }
+
+    /// In the evening of a day that would break the streak, offers the streak insurance from the shop,
+    /// when there is none waiting and the points are there.
+    @ViewBuilder
+    func insuranceOffer(_ day: TodaySnapshot, now: Date) -> some View {
+        let item = ShopItem.streakInsurance
+        let balance = PointsService.balance(tasks, purchases: purchases, diary: diary)
+        if streakAtRisk(day, now: now), PointsService.unused(item, in: purchases) == 0, balance >= item.cost {
+            VStack(alignment: .leading, spacing: 12) {
+                Label("SÉRIE JE V OHROŽENÍ", systemImage: item.symbol)
+                    .labelStyle(Theme.orange)
+                Text("Máš za sebou \(String.days(day.streak)) v řadě a dnešek zatím na 80 % nevypadá. Pojistka za \(item.cost) bodů plamínek podrží, i kdyby to dnes nevyšlo.")
+                    .scaledFont(.body)
+                    .foregroundStyle(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button("POJISTIT SÉRII") { showsShop = true }
+                    .buttonStyle(PrimaryButtonStyle(color: Theme.orange))
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.card)
+            .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
+            .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.orange.opacity(0.5), lineWidth: 1))
+        }
     }
 
     /// An empty day invites the first promise instead of showing numbers that mean nothing yet.

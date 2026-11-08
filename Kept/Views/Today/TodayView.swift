@@ -236,10 +236,11 @@ struct TodayView: View {
         }
         .overlay(alignment: .bottom) {
             if let pointsGain {
-                PointsGainToast(amount: pointsGain.amount, text: pointsGain.text) { self.pointsGain = nil }
-                    .id(pointsGain.id)
-                    .padding(.bottom, 24)
-                    .allowsHitTesting(false)
+                PointsGainToast(amount: pointsGain.amount, text: pointsGain.text, onSpend: { showsShop = true }) {
+                    self.pointsGain = nil
+                }
+                .id(pointsGain.id)
+                .padding(.bottom, 24)
             }
         }
         .sensoryFeedback(.success, trigger: pointsGain?.id) { _, new in new != nil }
@@ -446,6 +447,7 @@ struct TodayView: View {
                     slippingBanner(day)
                 }
                 streakCard(day, now: now)
+                insuranceOffer(day, now: now)
                 comebackCard(day, now: now)
                 stakeCards(now: now)
                 healthWorkoutCard(day)

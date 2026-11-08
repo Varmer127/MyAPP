@@ -11,6 +11,8 @@ struct StatsView: View {
     @Query private var diary: [DiaryEntry]
     @Query private var settingsList: [UserSettings]
     @Query private var exerciseLogs: [ExerciseLog]
+    @Query private var purchases: [PointsPurchase]
+    @State private var showsShop = false
     @State private var period: StatsPeriod = .week
 
     private static let longTermDays = 90
@@ -312,6 +314,12 @@ struct StatsView: View {
 
     private var links: some View {
         VStack(spacing: 0) {
+            Button { showsShop = true } label: {
+                StatsRowLabel(symbol: "star.fill", title: "Body a obchod",
+                              detail: String(localized: "Zůstatek: \(PointsService.balance(tasks, purchases: purchases, diary: diary))"))
+            }
+            .buttonStyle(.plain)
+            Divider().overlay(Theme.border)
             StatsLinkRow(symbol: TaskCategory.gym.symbol, title: "Gym – progres") { GymProgressView() }
             Divider().overlay(Theme.border)
             StatsLinkRow(symbol: "calendar.badge.checkmark", title: "Přehledy týdnů") { ReviewHistoryView(tasks: tasks) }
@@ -320,5 +328,6 @@ struct StatsView: View {
                          detail: reflections.isEmpty ? "" : String(localized: "Zápisy: \(reflections.count)")) { JournalView() }
         }
         .card(padding: 0)
+        .sheet(isPresented: $showsShop) { ShopView() }
     }
 }
