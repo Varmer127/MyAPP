@@ -353,6 +353,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = Kept.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -361,9 +362,10 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Kept-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Kept;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kept čte události z kalendáře, aby tě při plánování upozornil, že se úkol kryje s něčím, co už máš domluvené. Nic nezapisuje ani neukládá.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Kept potřebuje fotoaparát, abys mohl vyfotit důkaz splnění úkolu.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Kept potřebuje fotoaparát, abys mohl vyfotit důkaz splnění úkolu nebo naskenovat QR kód kamaráda.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Kept zamyká tvůj deník pomocí Face ID.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Kept čte tvoje kroky, kilometry, aktivní energii, váhu a tréninky, aby je mohl ukázat v přehledu Zdraví a nemusel je zapisovat ručně. Nic do Zdraví nezapisuje.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Kept potřebuje mikrofon, když si zápis do deníku nadiktuješ.";
@@ -392,6 +394,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CODE_SIGN_ENTITLEMENTS = Kept.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -400,9 +403,10 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Kept-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Kept;
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kept čte události z kalendáře, aby tě při plánování upozornil, že se úkol kryje s něčím, co už máš domluvené. Nic nezapisuje ani neukládá.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "Kept potřebuje fotoaparát, abys mohl vyfotit důkaz splnění úkolu.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Kept potřebuje fotoaparát, abys mohl vyfotit důkaz splnění úkolu nebo naskenovat QR kód kamaráda.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Kept zamyká tvůj deník pomocí Face ID.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Kept čte tvoje kroky, kilometry, aktivní energii, váhu a tréninky, aby je mohl ukázat v přehledu Zdraví a nemusel je zapisovat ručně. Nic do Zdraví nezapisuje.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Kept potřebuje mikrofon, když si zápis do deníku nadiktuješ.";
