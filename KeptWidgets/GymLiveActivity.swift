@@ -19,16 +19,12 @@ struct GymLiveActivity: Widget {
                             .tracking(1)
                             .foregroundStyle(.white.opacity(0.6))
                             .lineLimit(1)
-                        Text(context.state.startDate, style: .timer)
+                        workoutClock(context)
                             .font(.system(size: 34, weight: .heavy))
-                            .monospacedDigit()
-                            .foregroundStyle(.white)
+                            .foregroundStyle(context.state.heldTotal == nil ? .white : .white.opacity(0.6))
                     }
                     Spacer()
-                    HStack(spacing: 8) {
-                        stopButton
-                        restButton(context)
-                    }
+                    controls(context)
                 }
                 restBar(context)
             }
@@ -39,32 +35,30 @@ struct GymLiveActivity: Widget {
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("TRÉNINK").font(.system(size: 10, weight: .bold)).foregroundStyle(.white.opacity(0.6))
-                        Text(context.state.startDate, style: .timer)
+                        Text(context.state.heldTotal == nil ? "TRÉNINK" : "ČAS STOJÍ")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(context.state.heldTotal == nil ? .white.opacity(0.6) : Self.orange)
+                        workoutClock(context)
                             .font(.system(size: 22, weight: .bold))
-                            .monospacedDigit()
                     }
                     .padding(.leading, 4)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    HStack(spacing: 6) {
-                        stopButton
-                        restButton(context)
-                    }
-                    .padding(.trailing, 4)
+                    controls(context)
+                        .padding(.trailing, 4)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     restBar(context)
                 }
             } compactLeading: {
-                Image(systemName: isResting(context) ? "pause.circle.fill" : "dumbbell.fill")
-                    .foregroundStyle(isResting(context) ? Self.orange : .white)
+                Image(systemName: compactSymbol(context))
+                    .foregroundStyle(isResting(context) || context.state.heldTotal != nil ? Self.orange : .white)
             } compactTrailing: {
                 Group {
                     if let start = context.state.restStart, let end = context.state.restEnd, !restIsOver(context) {
                         Text(timerInterval: start...end, countsDown: true)
                     } else {
-                        Text(context.state.startDate, style: .timer)
+                        workoutClock(context)
                     }
                 }
                 .monospacedDigit()
@@ -72,7 +66,7 @@ struct GymLiveActivity: Widget {
                 .multilineTextAlignment(.trailing)
                 .frame(maxWidth: 52)
             } minimal: {
-                Image(systemName: isResting(context) ? "pause.circle.fill" : "dumbbell.fill")
+                Image(systemName: compactSymbol(context))
             }
         }
     }
@@ -115,18 +109,49 @@ struct GymLiveActivity: Widget {
         }
     }
 
-    /// Ends the workout without completing it; what was logged stays.
-    private var stopButton: some View {
-        Button(intent: StopTimerIntent()) {
-            Image(systemName: "stop.fill")
-                .font(.system(size: 13, weight: .heavy))
-                .foregroundStyle(FocusLiveActivity.red)
-                .frame(width: 36, height: 36)
-                .background(FocusLiveActivity.red.opacity(0.18))
-                .clipShape(Circle())
+    private func compactSymbol(_ context: ActivityViewContext<GymActivityAttributes>) -> String {
+        context.state.heldTotal != nil ? "pause.fill" : (isResting(context) ? "pause.circle.fill" : "dumbbell.fill")
+    }
+
+    /// The workout time: ticking while it runs, standing still while the clock is stopped.
+    @ViewBuilder
+    private func workoutClock(_ context: ActivityViewContext<GymActivityAttributes>) -> some View {
+        if let held = context.state.heldTotal {
+            Text(WidgetStyle.clock(held)).monospacedDigit()
+        } else {
+            Text(context.state.startDate, style: .timer).monospacedDigit()
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Zastavit trénink")
+    }
+
+    /// Running: stop the clock, and start or end a rest. Stopped: one button to start it again.
+    @ViewBuilder
+    private func controls(_ context: ActivityViewContext<GymActivityAttributes>) -> some View {
+        if context.state.heldTotal != nil {
+            Button(intent: GymHoldIntent(hold: false)) {
+                Label("SPUSTIT ČAS", systemImage: "play.fill")
+                    .font(.system(size: 13, weight: .heavy))
+                    .foregroundStyle(.black)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 9)
+                    .background(Self.orange)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+        } else {
+            HStack(spacing: 8) {
+                Button(intent: GymHoldIntent(hold: true)) {
+                    Image(systemName: "pause.fill")
+                        .font(.system(size: 13, weight: .heavy))
+                        .foregroundStyle(.white)
+                        .frame(width: 36, height: 36)
+                        .background(.white.opacity(0.18))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Zastavit čas")
+                restButton(context)
+            }
+        }
     }
 
     private func restButton(_ context: ActivityViewContext<GymActivityAttributes>) -> some View {

@@ -13,12 +13,17 @@ enum GymActivityManager {
         guard let session = task.activeFocusSession else { return end() }
         let restEnd = session.pausedSince.map { $0.addingTimeInterval(TimeInterval(rest.seconds)) }
         let workout = task.workoutType.isEmpty ? task.title : task.workoutType
-        WidgetBridge.setGym(WidgetSnapshot.Gym(startDate: session.startedAt, restStart: session.pausedSince,
-                                               restEnd: restEnd, restSeconds: rest.seconds, workout: workout))
+        // The clock outside the app counts up from a start moved by the time it stood still.
+        let total = session.active(at: now) + session.paused(at: now)
+        let startDate = now.addingTimeInterval(-total)
+        let heldTotal = session.isHeld ? total : nil
+        WidgetBridge.setGym(WidgetSnapshot.Gym(startDate: startDate, restStart: session.pausedSince,
+                                               restEnd: restEnd, restSeconds: rest.seconds, workout: workout,
+                                               heldTotal: heldTotal))
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
-        let state = GymActivityAttributes.ContentState(startDate: session.startedAt, restStart: session.pausedSince,
+        let state = GymActivityAttributes.ContentState(startDate: startDate, restStart: session.pausedSince,
                                                        restEnd: restEnd, restName: rest.name,
-                                                       restSeconds: rest.seconds, workout: workout)
+                                                       restSeconds: rest.seconds, workout: workout, heldTotal: heldTotal)
         // Going stale when the rest is over switches the label to "next set".
         let content = ActivityContent(state: state, staleDate: restEnd.flatMap { $0 > now ? $0 : nil })
         if let activity = GymActivity.activities.first {
@@ -49,6 +54,7 @@ enum GymActivityManager {
         guard let task = runningWorkout(in: tasks), let session = task.activeFocusSession else { return end() }
         let rest = currentRest(in: context)
         if start {
+            session.unhold()
             if session.isPaused { session.resume() }
             session.pause()
             await NotificationManager.scheduleRestEnd(in: TimeInterval(rest.seconds))
@@ -59,12 +65,32 @@ enum GymActivityManager {
         sync(task: task, rest: rest)
     }
 
+    /// Stops or restarts the workout's clock. A rest in progress ends when the clock stops.
+    static func setHold(_ hold: Bool, task: TaskItem, rest: RestPreset) {
+        guard let session = task.activeFocusSession, session.isHeld != hold else { return }
+        if hold {
+            session.hold()
+            NotificationManager.cancelRestEnd()
+        } else {
+            session.unhold()
+        }
+        sync(task: task, rest: rest)
+    }
+
+    /// The stop and start button on the lock screen, performed in the app's process.
+    static func setHoldFromWidget(_ hold: Bool) async {
+        let context = AppStore.container.mainContext
+        let tasks = (try? context.fetch(FetchDescriptor<TaskItem>())) ?? []
+        guard let task = runningWorkout(in: tasks) else { return end() }
+        setHold(hold, task: task, rest: currentRest(in: context))
+    }
+
     private static func runningWorkout(in tasks: [TaskItem]) -> TaskItem? {
         tasks.first { $0.category == .gym && $0.status == .pending && !$0.isRemoved && $0.activeFocusSession != nil }
     }
 
     /// The rest length last chosen in the workout, or the default one.
-    private static func currentRest(in context: ModelContext) -> RestPreset {
+    static func currentRest(in context: ModelContext) -> RestPreset {
         let presets = UserSettings.current(in: context).restPresets
         if let state = GymActivity.activities.first?.content.state,
            let preset = presets.first(where: { $0.name == state.restName }) {

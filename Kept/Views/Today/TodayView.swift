@@ -246,13 +246,13 @@ struct TodayView: View {
             }
         }
         .sensoryFeedback(.success, trigger: pointsGain?.id) { _, new in new != nil }
-        .confirmationDialog(stopTask?.category == .gym ? "Zastavit trénink?" : "Zastavit časovač?", isPresented: Binding(get: { stopTask != nil }, set: { if !$0 { stopTask = nil } }),
+        .confirmationDialog(stopTask?.category == .gym ? "Ukončit trénink?" : "Ukončit focus?", isPresented: Binding(get: { stopTask != nil }, set: { if !$0 { stopTask = nil } }),
                             titleVisibility: .visible, presenting: stopTask) { task in
-            Button("Zastavit", role: .destructive) { withAnimation { FocusView.stop(task) } }
+            Button("Ukončit bez splnění", role: .destructive) { withAnimation { FocusView.stop(task) } }
             Button("Nechat běžet", role: .cancel) {}
         } message: { task in
-            Text(task.category == .gym ? "Stopky se zastaví a úkol zůstane otevřený. To, co jsi zapsal, se uloží."
-                                       : "Úkol zůstane otevřený a odpracovaný čas se uloží.")
+            Text(task.category == .gym ? "Trénink skončí a úkol zůstane otevřený. Zapsané cviky zůstanou. Jen na chvíli přerušit můžeš tlačítkem pauzy."
+                                       : "Úkol zůstane otevřený a odpracovaný čas se uloží. Jen na chvíli přerušit můžeš tlačítkem pauzy.")
         }
         // The last open task of the day closes the day: a short, full-screen moment.
         .onChange(of: todayKept) { _, kept in

@@ -294,3 +294,37 @@ enum ExerciseCatalog {
         return []
     }
 }
+
+extension CatalogExercise {
+    /// English names for searching, e.g. "Barbell Squat, Back Squat".
+    var english: String { ExerciseCatalog.englishNames[photo] ?? "" }
+
+    /// The English name that fits a search, for showing next to the Czech one; nil when the Czech name fits.
+    func englishMatch(for query: String) -> String? {
+        guard !ExerciseSearch.matches(query, in: [name]) else { return nil }
+        // The shortest fitting name reads best: "Lat Pulldown" rather than "Wide-Grip Lat Pulldown".
+        return english.components(separatedBy: ", ")
+            .filter { ExerciseSearch.matches(query, in: [$0]) }
+            .min { $0.count < $1.count }
+    }
+}
+
+/// Finding an exercise by any of its words in any order, Czech or English,
+/// ignoring case, diacritics and hyphens: "lat pulldown", "PULLDOWN LAT", "pushups" and "push-ups" all work.
+enum ExerciseSearch {
+    static func normalized(_ text: String) -> String {
+        text.activityKey
+            .map { $0.isLetter || $0.isNumber ? String($0) : " " }
+            .joined()
+            .split(separator: " ")
+            .joined(separator: " ")
+    }
+
+    static func matches(_ query: String, in texts: [String]) -> Bool {
+        let words = normalized(query).split(separator: " ")
+        guard !words.isEmpty else { return true }
+        let haystack = normalized(texts.joined(separator: " "))
+        let squashed = haystack.replacingOccurrences(of: " ", with: "")
+        return words.allSatisfy { haystack.contains($0) || squashed.contains($0) }
+    }
+}

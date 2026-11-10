@@ -12,6 +12,7 @@ struct TaskCard: View {
     var onPartial: () -> Void = {}
     /// Stops the running timer without completing the task.
     var onStop: () -> Void = {}
+    @Environment(\.modelContext) private var context
 
     private static let deadlineWarningWindow: TimeInterval = 3600
 
@@ -177,10 +178,10 @@ struct TaskCard: View {
                     Haptics.medium()
                     onStop()
                 } label: {
-                    timerIcon("stop.fill", color: Theme.red)
+                    timerIcon("xmark", color: Theme.red)
                 }
                 .buttonStyle(PillPressStyle())
-                .accessibilityLabel("Zastavit časovač")
+                .accessibilityLabel("Ukončit focus")
                 Button {
                     FocusView.togglePause(session, title: task.title)
                 } label: {
@@ -205,22 +206,31 @@ struct TaskCard: View {
             let total = session.active(at: timeline.date) + session.paused(at: timeline.date)
             HStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(rest == nil ? "TRÉNINK BĚŽÍ" : "PAUZA")
-                        .labelStyle(rest == nil ? Theme.textSecondary : Theme.orange)
+                    Text(session.isHeld ? "ČAS STOJÍ" : (rest == nil ? "TRÉNINK BĚŽÍ" : "PAUZA"))
+                        .labelStyle(rest == nil && !session.isHeld ? Theme.textSecondary : Theme.orange)
                     Text(FocusView.clock(rest ?? total))
                         .scaledFont(34, weight: .heavy)
                         .monospacedDigit()
-                        .foregroundStyle(Theme.textPrimary)
+                        .foregroundStyle(session.isHeld ? Theme.textSecondary : Theme.textPrimary)
                 }
                 Spacer()
                 Button {
                     Haptics.medium()
                     onStop()
                 } label: {
-                    timerIcon("stop.fill", color: Theme.red)
+                    timerIcon("xmark", color: Theme.red)
                 }
                 .buttonStyle(PillPressStyle())
-                .accessibilityLabel("Zastavit stopky")
+                .accessibilityLabel("Ukončit trénink")
+                Button {
+                    Haptics.medium()
+                    GymActivityManager.setHold(!session.isHeld, task: task, rest: GymActivityManager.currentRest(in: context))
+                } label: {
+                    timerIcon(session.isHeld ? "play.fill" : "pause.fill", color: session.isHeld ? Theme.orange : Theme.textPrimary)
+                        .contentTransition(.symbolEffect(.replace))
+                }
+                .buttonStyle(PillPressStyle())
+                .accessibilityLabel(session.isHeld ? "Spustit čas" : "Zastavit čas")
                 timerIcon("arrow.up.left.and.arrow.down.right")
             }
             .padding(14)

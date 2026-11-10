@@ -51,7 +51,7 @@ struct GymWidgetView: View {
             if let gym {
                 VStack(alignment: .leading, spacing: 1) {
                     Text(restLabel(gym)).font(.caption2)
-                    Text(gym.startDate, style: .timer).font(.title3.weight(.bold)).monospacedDigit()
+                    workoutClock(gym).font(.title3.weight(.bold))
                     Text(gym.workout).font(.caption).lineLimit(1)
                 }
             } else {
@@ -66,9 +66,8 @@ struct GymWidgetView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         WidgetStyle.label("TRÉNINK · \(gym.workout.uppercased())")
                             .lineLimit(1)
-                        Text(gym.startDate, style: .timer)
+                        workoutClock(gym)
                             .font(.system(size: 36, weight: .heavy))
-                            .monospacedDigit()
                             .foregroundStyle(WidgetStyle.text)
                             .minimumScaleFactor(0.5)
                             .lineLimit(1)
@@ -99,10 +98,9 @@ struct GymWidgetView: View {
         default:
             if let gym {
                 VStack(alignment: .leading, spacing: 4) {
-                    WidgetStyle.label("TRÉNINK")
-                    Text(gym.startDate, style: .timer)
+                    WidgetStyle.label(gym.heldTotal == nil ? "TRÉNINK" : "ČAS STOJÍ")
+                    workoutClock(gym)
                         .font(.system(size: 30, weight: .heavy))
-                        .monospacedDigit()
                         .foregroundStyle(WidgetStyle.text)
                         .minimumScaleFactor(0.5)
                         .lineLimit(1)
@@ -161,13 +159,25 @@ struct GymWidgetView: View {
     }
 
     private func restLabel(_ gym: WidgetSnapshot.Gym) -> String {
-        gym.restStart == nil ? "TRÉNINK BĚŽÍ" : (isOver(gym) ? "JDI NA DALŠÍ SÉRII" : "PAUZA")
+        gym.heldTotal != nil ? "ČAS STOJÍ" : (gym.restStart == nil ? "TRÉNINK BĚŽÍ" : (isOver(gym) ? "JDI NA DALŠÍ SÉRII" : "PAUZA"))
+    }
+
+    /// The workout time: ticking while it runs, standing still while the clock is stopped.
+    @ViewBuilder
+    private func workoutClock(_ gym: WidgetSnapshot.Gym) -> some View {
+        if let held = gym.heldTotal {
+            Text(WidgetStyle.clock(held)).monospacedDigit()
+        } else {
+            Text(gym.startDate, style: .timer).monospacedDigit()
+        }
     }
 
     @ViewBuilder
     private func timer(_ gym: WidgetSnapshot.Gym) -> some View {
         if let start = gym.restStart, let end = gym.restEnd, !isOver(gym) {
             Text(timerInterval: start...end, countsDown: true).monospacedDigit()
+        } else if let held = gym.heldTotal {
+            Text(WidgetStyle.clock(held)).monospacedDigit()
         } else {
             Text(gym.startDate, style: .timer).monospacedDigit()
         }
@@ -197,7 +207,24 @@ struct GymWidgetView: View {
         }
     }
 
+    @ViewBuilder
     private func restButton(_ gym: WidgetSnapshot.Gym) -> some View {
+        if gym.heldTotal != nil {
+            Button(intent: GymHoldIntent(hold: false)) {
+                Label("SPUSTIT ČAS", systemImage: "play.fill")
+                    .font(.system(size: 12, weight: .heavy))
+                    .foregroundStyle(Color.black)
+                    .frame(maxWidth: .infinity, minHeight: 36)
+                    .background(WidgetStyle.orange)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+            .buttonStyle(.plain)
+        } else {
+            runningRestButton(gym)
+        }
+    }
+
+    private func runningRestButton(_ gym: WidgetSnapshot.Gym) -> some View {
         let resting = gym.restStart != nil
         return Button(intent: GymRestIntent(start: !resting)) {
             Label(resting ? "DALŠÍ SÉRIE" : "PAUZA", systemImage: resting ? "forward.fill" : "timer")

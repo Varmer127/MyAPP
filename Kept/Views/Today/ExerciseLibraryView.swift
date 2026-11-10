@@ -39,20 +39,18 @@ struct ExerciseLibraryView: View {
     }
 
     private var matches: [CatalogExercise] {
-        let key = search.activityKey
         let shown = Set(favourites.map(\.name))
         return ExerciseCatalog.all.filter { exercise in
             !shown.contains(exercise.name)
-                && (key.isEmpty || exercise.name.activityKey.contains(key))
+                && ExerciseSearch.matches(search, in: [exercise.name, exercise.english])
                 && (muscle.map { exercise.muscles.contains($0) } ?? true)
                 && (equipment.map { exercise.equipment == $0 } ?? true)
         }
     }
 
     private var customMatches: [CustomExercise] {
-        let key = search.activityKey
-        return store.exercises.filter { exercise in
-            (key.isEmpty || exercise.name.activityKey.contains(key))
+        store.exercises.filter { exercise in
+            ExerciseSearch.matches(search, in: [exercise.name])
                 && (muscle.map { exercise.primary.contains($0) } ?? true)
                 && (equipment.map { exercise.equipment == $0 } ?? true)
         }
@@ -60,11 +58,10 @@ struct ExerciseLibraryView: View {
     }
 
     private var ownMatches: [String] {
-        let key = search.activityKey
         // Old own exercises are only a name without a photo: they show up when searched for, not in the list.
-        guard !key.isEmpty else { return [] }
+        guard !ExerciseSearch.normalized(search).isEmpty else { return [] }
         return own.filter { name in
-            ExerciseCatalog.named(name) == nil && store.named(name) == nil && name.activityKey.contains(key)
+            ExerciseCatalog.named(name) == nil && store.named(name) == nil && ExerciseSearch.matches(search, in: [name])
         }
     }
 
@@ -119,7 +116,7 @@ struct ExerciseLibraryView: View {
             }
             .scrollContentBackground(.hidden)
             .screenBackground()
-            .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: "Hledat cvik")
+            .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: "Název cviku")
             .navigationTitle("Přidat cvik")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -155,7 +152,9 @@ struct ExerciseLibraryView: View {
                         Text(name)
                             .scaledFont(.body, weight: .semibold)
                             .foregroundStyle(Theme.textPrimary)
-                        let meta = [info.muscleLine, info.equipment?.title ?? ""].filter { !$0.isEmpty }.joined(separator: " · ")
+                        // Found by its English name: that name is shown, so it is clear why it is in the list.
+                        let english = search.isEmpty ? nil : info.catalog?.englishMatch(for: search)
+                        let meta = [english ?? info.muscleLine, info.equipment?.title ?? ""].filter { !$0.isEmpty }.joined(separator: " · ")
                         if !meta.isEmpty {
                             Text(meta)
                                 .scaledFont(.caption)

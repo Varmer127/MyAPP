@@ -13,6 +13,29 @@ struct GymActivityAttributes: ActivityAttributes {
         var restName: String
         var restSeconds: Int
         var workout: String
+        /// The workout time frozen while the clock is stopped; nil while it runs.
+        var heldTotal: Double?
+    }
+}
+
+/// Stops or restarts the workout's clock from the lock screen or the Dynamic Island,
+/// for a break that is neither training nor rest. Performed in the app's process.
+struct GymHoldIntent: LiveActivityIntent {
+    static var title: LocalizedStringResource = "Zastavit čas tréninku"
+    static var isDiscoverable = false
+
+    @Parameter(title: "Zastavit")
+    var hold: Bool
+
+    init() {}
+
+    init(hold: Bool) {
+        self.hold = hold
+    }
+
+    func perform() async throws -> some IntentResult {
+        await WidgetActions.gymHold?(hold)
+        return .result()
     }
 }
 

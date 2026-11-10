@@ -148,3 +148,45 @@ struct ShakeEffect: GeometryEffect {
         ProjectionTransform(CGAffineTransform(translationX: amount * sin(animatableData * .pi * shakesPerUnit), y: 0))
     }
 }
+
+/// Stops a running clock for a while and starts it again where it was: the workout's time, not the workout itself.
+/// Orange and pulsing while the clock stands, so a stopped workout is never forgotten.
+struct HoldClockButton: View {
+    let isHeld: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button {
+            Haptics.medium()
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) { action() }
+        } label: {
+            ViewThatFits {
+                label(withText: true)
+                label(withText: false)
+            }
+        }
+        .buttonStyle(PillPressStyle())
+        .sensoryFeedback(.impact(weight: .medium), trigger: isHeld)
+        .accessibilityLabel(isHeld ? "Spustit čas" : "Zastavit čas")
+    }
+
+    private func label(withText: Bool) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: isHeld ? "play.fill" : "pause.fill")
+                .contentTransition(.symbolEffect(.replace))
+                .symbolEffect(.pulse, options: .repeating, isActive: isHeld)
+            if withText {
+                Text(isHeld ? "SPUSTIT ČAS" : "ZASTAVIT ČAS")
+                    .tracking(0.5)
+                    .fixedSize()
+            }
+        }
+        .scaledFont(.caption, weight: .heavy)
+        .foregroundStyle(isHeld ? Color(hex: 0x000000) : Theme.textPrimary)
+        .padding(.horizontal, withText ? 14 : 0)
+        .frame(minWidth: 40, minHeight: 40)
+        .background(isHeld ? Theme.orange : Theme.cardRaised, in: Capsule())
+        .overlay(Capsule().stroke(isHeld ? .clear : Theme.border, lineWidth: 1))
+        .contentShape(Capsule())
+    }
+}

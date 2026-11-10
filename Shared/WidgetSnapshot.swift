@@ -22,6 +22,8 @@ struct WidgetSnapshot: Codable {
         var restEnd: Date?
         var restSeconds: Int
         var workout: String
+        /// The workout time frozen while the clock is stopped; nil while it runs.
+        var heldTotal: Double?
     }
 
     /// One day of the current week, Monday first.

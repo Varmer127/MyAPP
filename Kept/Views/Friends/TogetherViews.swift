@@ -220,7 +220,7 @@ struct GroupsView: View {
                                 .scaledFont(.body, weight: member.isMe ? .bold : .regular)
                                 .foregroundStyle(Theme.textPrimary)
                             Spacer()
-                            Text(member.isAccepted ? (member.reliability.map { "\($0) %" } ?? "—") : String(localized: "pozván(a)"))
+                            Text(member.isAccepted ? (member.reliability.map { "\($0) %" } ?? "—") : String(localized: "pozvánka"))
                                 .scaledFont(.body, weight: .semibold)
                                 .foregroundStyle(Theme.textSecondary)
                                 .monospacedDigit()
@@ -628,8 +628,8 @@ struct WitnessRow: View {
     var body: some View {
         if AccountService.shared.profile != nil, task.isDone {
             if let result = together.witnessResult(for: task) {
-                Label(result.status == "confirmed" ? "Potvrdil(a) \(result.witnessName)"
-                      : result.status == "rejected" ? "\(result.witnessName) nepotvrdil(a)" : "Čeká na potvrzení: \(result.witnessName)",
+                Label(result.status == "confirmed" ? "Potvrzeno: \(result.witnessName)"
+                      : result.status == "rejected" ? "Nepotvrzeno: \(result.witnessName)" : "Čeká na potvrzení: \(result.witnessName)",
                       systemImage: result.status == "confirmed" ? "checkmark.seal.fill" : "hourglass")
                     .foregroundStyle(result.status == "confirmed" ? Theme.green : Theme.textSecondary)
             } else {

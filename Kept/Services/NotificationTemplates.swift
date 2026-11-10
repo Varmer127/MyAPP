@@ -31,72 +31,63 @@ enum NotificationTone: String, CaseIterable, Identifiable {
 }
 
 /// All notification copy. Placeholders: {task}, {time}, {why}, {n}, {days}.
+///
+/// How it is written (the reasoning is in docs/NOTIFICATIONS.md):
+/// - The title carries the news, usually the task's name, so the body never has to bend that name into a Czech case
+///   or agree with its gender. Sentence case, no shouting.
+/// - One concrete next step per message, short enough for the two lines of a banner (80 characters).
+/// - Gender-neutral Czech: no past-tense "-l/-la" forms or adjectives about the user.
+/// - Normal and Strict talk about the behaviour and the next step, never shame: kindness after a slip
+///   brings people back more reliably than self-criticism.
+/// - Task reminders can arrive before or after the deadline, so they never claim which side of it they are on.
 /// Savage copy attacks laziness, procrastination and broken promises — never appearance, health or self-worth.
 enum NotificationTemplates {
-    // MARK: Task escalation, by level
+    // MARK: Task escalation, by level. The task's name is the title.
 
     /// Level 0 — preparation, 30 minutes before the task should start.
     static let prep = [
-        "Za 30 minut: {task}.",
-        "{task} začíná za půl hodiny. Připrav se.",
-        "Za 30 minut máš {task}. Dokonči, co děláš.",
-        "Blíží se {task}. Start za 30 minut.",
-        "Půl hodiny do {task}. Ukliď si stůl a zavři ostatní věci.",
-        "Za 30 minut: {task}. Tohle sis naplánoval sám.",
-        "{task} za 30 minut. Žádné překvapení, žádná výmluva.",
-        "Za půl hodiny {task}. Buď připravený začít včas.",
+        "Za 30 minut začínáš. Dodělej, co máš rozdělané.",
+        "Start za půl hodiny. Připrav si všechno, ať pak jen začneš.",
+        "Za 30 minut je to na řadě. Tvůj plán, tvoje slovo.",
+        "Půl hodiny do startu. Zavři, co by tě rozptylovalo.",
+        "Za 30 minut to začíná. Nachystej se, ať se pak dobře rozjíždí.",
+        "Start za půl hodiny. Žádné překvapení, máš to v plánu.",
     ]
 
     /// Level 1 — the task should be starting now.
     static let start = [
-        "{task} měl právě začít.",
-        "Je čas: {task}.",
-        "Teď: {task}. Začni.",
-        "{task} — start. Otevři to a pusť se do toho.",
-        "Je {time}. {task} začíná teď.",
-        "Naplánoval sis {task} na teď. Tak začni.",
-        "{task}. Čas běží od této chvíle.",
-        "Teď je ta chvíle, kterou sis na {task} vyhradil.",
-        "Start: {task}. Prvních pět minut je nejtěžších.",
-        "{task} je na řadě. Nic dalšího teď není důležitější.",
+        "Teď je ta chvíle. Stačí začít, zbytek se rozjede.",
+        "Je {time}, čas začít. Prvních pět minut je nejtěžších.",
+        "Naplánováno na teď. Pusť se do toho.",
+        "Start. Udělej první malý krok, třeba jen otevři, co potřebuješ.",
+        "Tenhle čas je vyhrazený právě na tohle. Jdeš na to?",
+        "Je to na řadě. Na všechno ostatní teď klidně zapomeň.",
     ]
 
-    /// Level 2 — direct.
+    /// Level 2 — direct. May arrive before or after the deadline.
     static let direct = [
-        "Je {time} a {task} pořád není hotový.",
-        "{task} stále čeká. Je {time}.",
-        "Je {time}. {task} jsi ještě nezačal.",
-        "{task} není splněný. Deadline se blíží.",
-        "Pořád nic u {task}. Je {time}.",
-        "{task}: stav nesplněno. Čas {time}.",
-        "Je {time}. Na {task} zbývá čím dál méně času.",
-        "{task} je pořád otevřený. Začni teď.",
-        "Tento závazek zůstává nesplněný: {task}.",
-        "Je {time}. {task} se sám neudělá.",
-        "{task} čeká už příliš dlouho. Otevři ho.",
-        "Dal sis slovo na {task}. Je {time} a hotovo není.",
+        "Je {time} a pořád to čeká. Začni aspoň na pět minut.",
+        "Ještě to není hotové. Jaký je první krok? Udělej jen ten.",
+        "Je {time}. Pořád otevřené, pořád to jde dotáhnout.",
+        "Slovo pořád platí. Pusť se do toho teď.",
+        "Pořád čeká. Začni malým kouskem, rozjede se to.",
+        "Je {time}. Odlož telefon a jdi na to.",
     ]
 
-    /// Level 3 — strict.
+    /// Level 3 — strict. About the behaviour, not the person. May arrive before or after the deadline.
     static let strict = [
-        "Zase to odkládáš. {task}. Začni.",
-        "{task} odkládáš už příliš dlouho. Přestaň hledat důvody.",
-        "Je {time}. Slíbil sis {task}. Kde je?",
-        "Tohle je přesně ten moment, kdy se rozhoduje. {task}. Teď.",
-        "Odkládání není plán. {task} čeká.",
-        "Dal jsi sám sobě slovo. {task} pořád není hotový.",
-        "Každá minuta odkladu je rozhodnutí. {task}.",
-        "Nečekej na náladu. {task} se dělá i bez ní.",
-        "{task}: deadline minul. Dokonči to aspoň pozdě.",
-        "Výmluvu si můžeš napsat později. Teď udělej {task}.",
-        "Je {time} a ty děláš něco jiného než {task}. Proč?",
-        "Tohle sis naplánoval ty, ne nikdo jiný. {task}.",
-        "{task} už měl být hotový. Každá další hodina to zhoršuje.",
-        "Přestaň vyjednávat sám se sebou. {task}.",
-        "Tvoje skóre padá kvůli {task}. Zastav to.",
-        "{task} jsi nesplnil už {n}×. Dnes to může být jinak.",
-        "Disciplína znamená udělat to, i když se ti nechce. {task}.",
-        "Za hodinu budeš litovat, že jsi nezačal teď. {task}.",
+        "Je {time} a hotovo není. Přestaň vyjednávat a začni.",
+        "Odkládání není plán. Začni teď, i bez nálady.",
+        "Tohle je tvůj slib. Drž ho, i když se nechce.",
+        "Každá minuta odkladu je rozhodnutí. Rozhodni se jinak.",
+        "Nečekej na motivaci. Ta přijde, až začneš.",
+        "Výmluvu můžeš sepsat potom. Teď to udělej.",
+        "Je {time}. Cokoli teď děláš, počká. Tohle ne.",
+        "Skóre i série čekají právě na tohle. Dotáhni to.",
+        "Nesplněno už {n}× za poslední dobu. Dnes to zlom.",
+        "Disciplína je udělat to, i když se nechce. Teď.",
+        "Za hodinu ti bude líp, když začneš teď.",
+        "Přestaň to odsouvat. Pět minut a jedeš.",
     ]
 
     /// Level 4 — savage.
@@ -157,10 +148,10 @@ enum NotificationTemplates {
 
     /// Strict copy that quotes the user's own "Why does this matter?".
     static let whyStrict = [
-        "Říkal jsi: „{why}“ A {task} pořád není hotový.",
-        "Tvoje vlastní slova: „{why}“ Tak proč {task} čeká?",
-        "„{why}“ — tohle jsi napsal ty. {task} k tomu vede.",
-        "Na tomhle ti záleželo: „{why}“ Dokaž to. {task}.",
+        "Tvoje slova: „{why}“ Tohle k tomu vede.",
+        "„{why}“ To je tvůj důvod. Dokaž si ho.",
+        "Na tomhle ti záleží: „{why}“ Tak do toho.",
+        "Proč to děláš? „{why}“ Pamatuj na to a začni.",
     ]
 
     /// Savage copy that quotes the user's own "Why does this matter?".
@@ -175,33 +166,34 @@ enum NotificationTemplates {
     // MARK: Sunday planning
 
     /// First reminders are the same for every tone; later ones sharpen.
+    /// None of them counts hours: the first one can come at whatever hour the user chose.
     private static let sundayOpening = [
-        "Je neděle. Naplánuj si týden.",
-        "Pořád nemáš naplánovaný týden.",
-        "Chceš být produktivní, ale ještě jsi ani nerozhodl, co tento týden uděláš.",
-        "Tři hodiny připomínek a pořád nic. Naplánuj si týden.",
+        "Neděle je ideální chvíle na plán. Deset minut a týden máš srovnaný.",
+        "Příští týden zatím nemá plán. Pojď ho poskládat.",
+        "Co chceš příští týden opravdu dotáhnout? Napiš si to.",
+        "Týden s plánem se drží líp. Stačí pár úkolů.",
     ]
 
     private static let sundayLater: [NotificationTone: [String]] = [
         .normal: [
-            "Závazek na příští týden stále chybí.",
-            "Plán týdne není potvrzený. Zabere to deset minut.",
-            "Připomínka: příští týden nemá žádný závazek.",
-            "Naplánuj si týden, dokud je neděle.",
-            "Týden bez plánu se nedá dodržet. Vytvoř ho.",
-            "Stále čeká: závazek na příští týden.",
-            "Neděle končí. Plán týdne pořád není.",
+            "Plán na příští týden pořád chybí. Zabere to deset minut.",
+            "Stačí tři úkoly a týden má směr.",
+            "Ještě je neděle. Naplánuj si týden, ať zítra víš, kam jdeš.",
+            "Plán čeká. Klidně začni jedním úkolem.",
+            "Týden bez plánu se těžko drží. Pojď ho udělat.",
+            "Večer se blíží a plán týdne pořád není.",
+            "Neděle končí. Poslední chvíle naplánovat týden v klidu.",
             "Poslední dnešní připomínka: naplánuj si týden.",
         ],
         .strict: [
-            "Bez plánu nemáš co dodržet. Naplánuj si týden.",
-            "Odkládáš i samotné plánování. Deset minut. Teď.",
-            "Týden začíná zítra a ty nevíš, co v něm uděláš.",
-            "Kdo neplánuje, ten se vymlouvá. Otevři Týden.",
-            "Pět hodin ignorování. Naplánuj si týden.",
-            "Zítra bude pozdě hledat, co je důležité. Plánuj teď.",
-            "Neděle končí a ty nemáš jediný závazek na příští týden.",
-            "Poslední výzva. Bez závazku jdeš do týdne naslepo.",
+            "Bez plánu nemáš co dodržet. Otevři Týden.",
+            "Odkládáš i plánování. Deset minut, teď.",
+            "Zítra začíná týden a nevíš, co v něm uděláš.",
+            "Plán je první slib týdne. Dej ho.",
+            "Pořád nic. Naplánuj si týden, dokud je čas.",
+            "Zítra ráno už nebude klid na plánování. Teď.",
+            "Neděle končí a příští týden je prázdný.",
+            "Poslední výzva. Bez plánu jdeš do týdne naslepo.",
         ],
         .savage: [
             "Ani naplánovat týden se ti nechce? Deset minut. Hned.",
@@ -227,14 +219,14 @@ enum NotificationTemplates {
     /// Aggregated reminders during the day, sharpening from first to last.
     static let dayNudge: [NotificationTone: [String]] = [
         .normal: [
-            "Otevřené závazky dnes: {n}.",
-            "Stále otevřeno: {n}. Naplánuj si zbytek dne.",
-            "Večer se blíží. Otevřené závazky: {n}.",
+            "Na dnes zbývá: {n}. Vyber jeden a pusť se do něj.",
+            "Půlka dne za tebou. Zbývá: {n}. Který dáš teď?",
+            "Večer se blíží. Zbývá: {n}. Pořád je čas to dotáhnout.",
         ],
         .strict: [
-            "Půlka dne je pryč. Otevřené závazky: {n}.",
-            "Stále čeká: {n}. Co z toho uděláš teď?",
-            "Den končí. Nesplněné sliby: {n}.",
+            "Na dnes zbývá: {n}. Začni tím nejtěžším.",
+            "Pořád čeká: {n}. Co z toho uděláš během hodiny?",
+            "Den končí. Nesplněné sliby: {n}. Dotáhni aspoň jeden.",
         ],
         .savage: [
             "Poledne. Otevřené závazky: {n}. A ty ses ještě pořádně nerozjel.",
@@ -244,39 +236,40 @@ enum NotificationTemplates {
     ]
 
     static let morningGood = [
-        "Včera {n} %. Dnes to zopakuj.",
-        "Včera {n} %. Tak vypadá dodržené slovo. Znovu.",
-        "Včera {n} %. Nenech to být výjimka.",
+        "Dnes to zopakuj.",
+        "Tak vypadá dodržené slovo. Znovu.",
+        "Nenech to být výjimkou.",
     ]
 
     static let morningAverage = [
-        "Včera {n} %. Dnes přidej.",
-        "Včera {n} %. Průměr tě nikam neposune.",
-        "Včera {n} %. Chybělo málo. Dnes to dotáhni.",
+        "Chybělo málo, dnes to dotáhni.",
+        "Dnes o jeden úkol víc.",
+        "Dobrý základ, dnes přidej.",
     ]
 
+    /// After a bad day the morning offers a fresh start, not a reproach.
     static let morningBad = [
-        "Včera {n} %. Dnes nemáš co dohánět řečmi. Začni pracovat.",
-        "Včera {n} %. Včerejšek nezměníš. Dnešek ano.",
-        "Včera {n} %. Dnes to naprav.",
+        "Nový den, čistý start.",
+        "Včerejšek nezměníš, dnešek ano.",
+        "Začni tím nejmenším a rozjeď se.",
     ]
 
     static let morningNeutral = [
-        "Nový den. Dodrž, co sis slíbil.",
-        "Dnešní závazky sis vybral sám. Splň je.",
         "Začni tím nejdůležitějším.",
+        "Jeden úkol po druhém. Hezký den.",
+        "Dnešní plán je tvůj. Jdeš na to.",
     ]
 
     static let realityCheck: [NotificationTone: [String]] = [
         .normal: [
-            "Večerní bilance. Dnešní závazky: {n}. Podívej se, jak jsi dopadl.",
-            "Je čas na večerní bilanci. Dnešní závazky: {n}.",
-            "Večerní bilance: zkontroluj dnešek, dokud ho jde opravit.",
+            "Jak dnešek dopadl? Zabere to minutu.",
+            "Čas na večerní bilanci. Co dnes vyšlo?",
+            "Uzavři den, dokud se dá ještě něco dotáhnout.",
         ],
         .strict: [
-            "Večerní bilance. Dnešní závazky: {n}. Kolik z toho je hotovo?",
-            "Čas pravdy. Dnešní závazky: {n}. Otevři večerní bilanci.",
-            "Den končí. Dodržel jsi slovo? Otevři večerní bilanci.",
+            "Den končí. Dodrženo, nebo ne? Otevři bilanci.",
+            "Čas pravdy. Podívej se na dnešek bez výmluv.",
+            "Večerní bilance čeká. Kolik slibů dnes platí?",
         ],
         .savage: [
             "Večerní bilance. Dnešní sliby: {n}. Podívej se, kolik jsi jich zase nedodržel.",
@@ -290,12 +283,12 @@ enum NotificationTemplates {
     /// The evening of a day that is about to break the streak. {days} = its length, e.g. "5 dní".
     static let streakAtRisk: [NotificationTone: [String]] = [
         .normal: [
-            "Série {days} skončí o půlnoci. Dokonči dnešní závazky.",
-            "Dnes ještě můžeš udržet sérii {days}. Zbývá pár hodin.",
+            "Série {days} skončí o půlnoci. Stačí dodělat dnešek.",
+            "Ještě pár hodin a série {days} jede dál. Dotáhni dnešek.",
         ],
         .strict: [
-            "Série {days} je v ohrožení. O půlnoci o ni přijdeš.",
-            "{days} v řadě a dnes to zahodíš? Dokonči dnešní závazky.",
+            "Série {days} je v ohrožení. O půlnoci padne.",
+            "{days} v řadě. Dnes to nezahazuj, dotáhni to.",
         ],
         .savage: [
             "Série {days} dnes umře na tvoji lenost. Zvedni se a dodělej to.",
@@ -306,12 +299,12 @@ enum NotificationTemplates {
     /// The morning after the streak broke.
     static let streakLost: [NotificationTone: [String]] = [
         .normal: [
-            "Série {days} skončila. Dnes můžeš začít novou.",
-            "Včera se série {days} přerušila. Vrať se k tomu dnes.",
+            "Série {days} skončila. Nevadí, dnes začíná nová.",
+            "Série {days} se přerušila. Jeden den nic nemaže, vrať se dnes.",
         ],
         .strict: [
-            "Série {days} je pryč. Včera jsi nedodržel slovo. Dnes začni znovu.",
-            "{days} v řadě a včera konec. Nenech z jednoho výpadku udělat zvyk.",
+            "Série {days} skončila. Dnes začni znovu, hned ráno.",
+            "{days} v řadě a včera pauza. Nenech z toho vzniknout zvyk.",
         ],
         .savage: [
             "Série {days} je v háji. Včera ses na to vykašlal. Dnes to koukej napravit.",
@@ -323,13 +316,13 @@ enum NotificationTemplates {
     static let streakFollowUp: [NotificationTone: [String]] = [
         .normal: [
             "Dní bez série: {n}. Stačí jeden splněný den a plamínek zase hoří.",
-            "Dní bez série: {n}. Kept na tebe čeká.",
-            "Dní bez série: {n}. Naplánuj si jeden malý závazek a splň ho.",
+            "Dní bez série: {n}. Začni jedním malým úkolem na dnes.",
+            "Dní bez série: {n}. Kdykoli se vrátíš, Kept tu je.",
         ],
         .strict: [
-            "Dní bez série: {n}. Jeden výpadek je chyba, dva jsou začátek zvyku.",
-            "Dní bez série: {n}. Přestaň to odkládat a otevři Kept.",
-            "Dní bez série: {n}. Takhle se vzdává potichu. Vrať se.",
+            "Dní bez série: {n}. Jeden výpadek je chyba, dva začátek zvyku.",
+            "Dní bez série: {n}. Přestaň to odkládat a naplánuj si dnešek.",
+            "Dní bez série: {n}. Takhle se to vzdává potichu. Vrať se.",
         ],
         .savage: [
             "Dní bez série: {n}. Plamínek nehoří a ty děláš, že to nevidíš.",
@@ -340,17 +333,17 @@ enum NotificationTemplates {
 
     /// The last one, a week after the break. After it the app stays quiet about the streak.
     static let streakFinal: [NotificationTone: String] = [
-        .normal: "Týden bez série. Tohle je poslední připomínka. Až budeš chtít začít znovu, Kept tu je.",
-        .strict: "Týden bez série. Dál už ti to připomínat nebudu. Rozhodnutí je na tobě.",
+        .normal: "Týden bez série. Víc už psát nebudu. Až budeš chtít začít znovu, Kept tu je.",
+        .strict: "Týden bez série. Dál už to připomínat nebudu. Rozhodnutí je na tobě.",
         .savage: "Týden bez série. Připomínky zjevně nefungují, tak končím. Vrať se, až to budeš myslet vážně.",
     ]
 
-    static let streakRepairHint = "Ještě ji můžeš vykoupit zpět za body."
-    static let streakRepairLastDay = "Dnes naposledy ji můžeš vykoupit zpět za body."
+    static let streakRepairHint = "Starou sérii můžeš ještě vykoupit za body."
+    static let streakRepairLastDay = "Dnes naposledy můžeš starou sérii vykoupit za body."
 
-    static func morningSentence(yesterday: Double?, seed: Int) -> String {
-        guard let yesterday else { return pick(morningNeutral, seed: seed) }
-        let percent = Int((yesterday * 100).rounded())
+    /// Yesterday's result for the title ("včera 67 %") and a short sentence for the end of the body.
+    static func morning(yesterday: Double?, seed: Int) -> (percent: Int?, sentence: String) {
+        guard let yesterday else { return (nil, pick(morningNeutral, seed: seed)) }
         let pool: [String]
         if yesterday >= 0.8 {
             pool = morningGood
@@ -359,12 +352,14 @@ enum NotificationTemplates {
         } else {
             pool = morningBad
         }
-        return pick(pool, seed: seed).replacingOccurrences(of: "{n}", with: "\(percent)")
+        return (Int((yesterday * 100).rounded()), pick(pool, seed: seed))
     }
 
     // MARK: Assembly
 
-    static func taskMessage(level: Int, title: String, time: String, why: String, failures: Int, seed: Int) -> String {
+    /// `namesTask`: the title is not the task's name (the savage headline), so the body has to say which task it is.
+    static func taskMessage(level: Int, title: String, time: String, why: String, failures: Int, seed: Int,
+                            namesTask: Bool = false) -> String {
         var pool: [String]
         switch level {
         case ...0: pool = prep
@@ -381,7 +376,11 @@ enum NotificationTemplates {
         if level >= 3, !why.isEmpty, seed % 3 == 0 {
             pool = level == 3 ? whyStrict : whySavage
         }
-        return pick(pool, seed: seed)
+        var template = pick(pool, seed: seed)
+        if namesTask, !template.contains("{task}") {
+            template = "{task}: " + template
+        }
+        return template
             .replacingOccurrences(of: "{task}", with: title)
             .replacingOccurrences(of: "{time}", with: time)
             .replacingOccurrences(of: "{why}", with: why)
@@ -389,13 +388,24 @@ enum NotificationTemplates {
     }
 
     /// Preparation and start with the user's own "when, then" plan, which says more than a clock time does.
-    static func cueMessage(level: Int, title: String, cue: String) -> String {
-        level <= 0 ? "Za chvíli: \(title). Tvůj plán: \(cue)." : "Teď: \(title). Tvůj plán: \(cue)."
+    /// The task's name is the title, so the body is only the plan.
+    static func cueMessage(level: Int, cue: String) -> String {
+        level <= 0 ? "Za chvíli to začíná. Tvůj plán: \(cue)" : "Je čas. Tvůj plán: \(cue)"
     }
 
     static func pick(_ pool: [String], seed: Int) -> String {
         guard !pool.isEmpty else { return "" }
         return pool[abs(seed) % pool.count]
+    }
+
+    /// Every message of the Normal and Strict tones, for checking length and placeholders.
+    static var gentleAndStrict: [String] {
+        let tones: [NotificationTone] = [.normal, .strict]
+        let shared = prep + start + direct + strict + whyStrict + sundayOpening
+            + morningGood + morningAverage + morningBad + morningNeutral
+        let dictionaries = [sundayLater, dayNudge, realityCheck, streakAtRisk, streakLost, streakFollowUp]
+        return shared + dictionaries.flatMap { dictionary in tones.flatMap { dictionary[$0] ?? [] } }
+            + tones.compactMap { streakFinal[$0] } + [streakRepairHint, streakRepairLastDay]
     }
 
     static var totalCount: Int {

@@ -56,6 +56,8 @@ enum NotificationManager {
     private static let restEndID = "gym.rest"
     private static let reflectionHour = 18
     private static let savageHeadlineLevel = 3
+    /// About what a banner shows in its two lines before cutting the text off.
+    nonisolated static let bannerLength = 80
     private static let streakAtRiskHour = 20
     private static let sealWarningLead: TimeInterval = 10 * 60
     /// Days after the break and the hour at which the streak is brought up again. The last one is the goodbye.
@@ -110,8 +112,8 @@ enum NotificationManager {
 
     static func scheduleFocusEnd(title: String, in seconds: TimeInterval) async {
         let content = UNMutableNotificationContent()
-        content.title = title.uppercased()
-        content.body = "Naplánovaný čas vypršel. Dokonči úkol, nebo pokračuj."
+        content.title = title
+        content.body = "Plánovaný čas je za tebou. Dokonči to, nebo si přidej pár minut."
         content.sound = .default
         content.userInfo = [NotificationRouter.routeKey: AppRoute.today.rawValue]
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(seconds, 1), repeats: false)
@@ -121,8 +123,8 @@ enum NotificationManager {
     /// Tells the user the rest between sets is over, also with the screen locked.
     static func scheduleRestEnd(in seconds: TimeInterval) async {
         let content = UNMutableNotificationContent()
-        content.title = "PAUZA SKONČILA"
-        content.body = "Jdi na další sérii."
+        content.title = "Pauza je u konce"
+        content.body = "Další série čeká. Do toho!"
         content.sound = .default
         content.userInfo = [NotificationRouter.routeKey: AppRoute.today.rawValue]
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(seconds, 1), repeats: false)
@@ -132,8 +134,8 @@ enum NotificationManager {
     /// Health recorded a gym workout that is not logged in the app yet.
     static func notifyWorkoutDetected(minutes: Int) async {
         let content = UNMutableNotificationContent()
-        content.title = "TRÉNINK ZAZNAMENÁN"
-        content.body = "Zdraví eviduje trénink (\(minutes) min). Otevři Kept a zapiš, co jsi jel."
+        content.title = "Trénink ve Zdraví: \(minutes) min"
+        content.body = "Zapiš si cviky a série, ať příště víš, co překonávat."
         content.sound = .default
         content.userInfo = [NotificationRouter.routeKey: AppRoute.today.rawValue]
         try? await center.add(UNNotificationRequest(identifier: "health.workout", content: content, trigger: nil))
@@ -150,12 +152,14 @@ enum NotificationManager {
     /// Fires one sample of the chosen tone a few seconds from now.
     static func sendPreview(tone: NotificationTone) async {
         let content = UNMutableNotificationContent()
+        // A made-up task shows how the tone sounds at its sharpest.
+        let sample = String(localized: "Angličtina")
         content.title = tone == .savage
             ? NotificationTemplates.pick(NotificationTemplates.punchlines, seed: Int.random(in: 0..<1000))
-            : "CLAUDE WORK"
+            : sample
         content.body = NotificationTemplates.taskMessage(
-            level: tone.maxLevel, title: "Claude Work", time: Date.now.timeText, why: "",
-            failures: 0, seed: Int.random(in: 0..<1000))
+            level: tone.maxLevel, title: sample, time: Date.now.timeText, why: "",
+            failures: 0, seed: Int.random(in: 0..<1000), namesTask: tone == .savage)
         content.sound = .default
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)
         try? await center.add(UNNotificationRequest(identifier: "preview", content: content, trigger: trigger))
@@ -178,22 +182,22 @@ enum NotificationManager {
         if weekHasTasks, !reflections.contains(where: { $0.weekStart == now.weekStart }) {
             planned.append(Planned(
                 id: "reflection", date: time(reflectionHour * 60, on: now.weekStart.addingDays(6)),
-                title: "SEBEREFLEXE TÝDNE", body: "Týden končí. Projdi si ho a zapiš do deníčku, jak jsi se sebou spokojený.",
+                title: "Týden končí", body: "Jak se ti dařilo? Pár řádků do deníčku a týden je uzavřený.",
                 route: .today))
         }
         for sealing in plans {
             guard let sealDate = sealing.sealDate else { continue }
             let week = sealing.weekStart.weekNumber
             planned.append(Planned(id: "seal.warning.\(week)", date: sealDate.addingTimeInterval(-sealWarningLead),
-                                   title: "ZA 10 MINUT SE PLÁN ZAPEČETÍ",
-                                   body: "Týden \(week): poslední chvíle na úpravy bez postihu.", route: .planning))
+                                   title: "Za 10 minut se plán zapečetí",
+                                   body: "Týden \(week): poslední chvíle na změny bez postihu.", route: .planning))
             // What is announced has to be what will really happen at that moment.
             let seals = PlanService.willSeal(sealing, minimum: settings.minimumWeeklyTasks)
             planned.append(Planned(
-                id: "seal.\(week)", date: sealDate, title: seals ? "PLÁN ZAPEČETĚN" : "PLÁN SE NEZAPEČETIL",
+                id: "seal.\(week)", date: sealDate, title: seals ? "Plán je zapečetěný" : "Plán se nezapečetil",
                 body: seals
-                    ? "Týden \(week) je závazný. Závazky: \(sealing.pledgeableTasks(sealDate).count). Od teď se každá změna počítá."
-                    : "Týden \(week) nesplnil minimum aktivit, plánovač se ti vrátil jako návrh. Doplň ho a odešli znovu.",
+                    ? "Týden \(week) platí. Závazky: \(sealing.pledgeableTasks(sealDate).count). Teď už jen držet slovo."
+                    : "Týden \(week) nemá dost úkolů na minimum, vrátil se jako návrh. Doplň ho a odešli znovu.",
                 route: .planning))
         }
         if settings.morningBriefEnabled {
@@ -243,7 +247,7 @@ enum NotificationManager {
         if current > 0 {
             let body = NotificationTemplates.pick(NotificationTemplates.streakAtRisk[tone] ?? [], seed: seed)
             planned.append(Planned(id: "streak.risk", date: time(streakAtRiskHour * 60, on: anchor),
-                                   title: "SÉRIE V OHROŽENÍ", body: body.replacingOccurrences(of: "{days}", with: days),
+                                   title: "Série v ohrožení", body: body.replacingOccurrences(of: "{days}", with: days),
                                    route: .today))
         }
         // Buying back is only mentioned while it is really on offer: not turned down and affordable.
@@ -256,15 +260,15 @@ enum NotificationManager {
             if index == 0 {
                 // "Your streak of N days ended" only makes sense when there was one.
                 guard length > 0 else { continue }
-                title = "SÉRIE SKONČILA"
+                title = "Série skončila"
                 body = NotificationTemplates.pick(NotificationTemplates.streakLost[tone] ?? [], seed: seed)
                     .replacingOccurrences(of: "{days}", with: days)
             } else if index == streakFollowUps.count - 1 {
-                title = "POSLEDNÍ PŘIPOMÍNKA"
+                title = "Poslední připomínka"
                 body = NotificationTemplates.streakFinal[tone] ?? ""
             } else {
                 let pool = NotificationTemplates.streakFollowUp[tone] ?? []
-                title = "PLAMÍNEK NEHOŘÍ"
+                title = "Plamínek nehoří"
                 body = (pool.isEmpty ? "" : pool[min(index - 1, pool.count - 1)])
                     .replacingOccurrences(of: "{n}", with: "\(step.day)")
             }
@@ -295,7 +299,7 @@ enum NotificationManager {
               settings.sundayStartHour <= settings.sundayEndHour else { return [] }
 
         return (settings.sundayStartHour...settings.sundayEndHour).enumerated().map { index, hour in
-            Planned(id: "sunday.\(hour)", date: time(hour * 60, on: sunday), title: "PLÁN TÝDNE",
+            Planned(id: "sunday.\(hour)", date: time(hour * 60, on: sunday), title: "Plán na příští týden",
                     body: NotificationTemplates.sunday(tone: settings.tone, index: index), route: .planning)
         }
     }
@@ -306,20 +310,42 @@ enum NotificationManager {
             let open = openTasks(tasks, on: day)
             guard !open.isEmpty else { return nil }
 
-            let critical = open.filter { $0.priority == .critical }
-            let deadlines = open.filter { $0.deadline != nil }.count
-            var lines = ["Dnešní závazky: \(open.count). Kritické: \(critical.count). S deadlinem: \(deadlines)."]
-            if let focus = critical.first {
-                lines.append("Hlavní fokus: \(focus.title).")
+            // What the day holds, by name, the most important first: a count with zeros in it says nothing.
+            let ordered = open.sorted { a, b in
+                if (a.priority == .critical) != (b.priority == .critical) { return a.priority == .critical }
+                return (a.deadline ?? .distantFuture) < (b.deadline ?? .distantFuture)
             }
-            // Only today's brief can honestly refer to how yesterday went.
+            let shown = ordered.prefix(2).map(\.title)
+            let more = ordered.count - shown.count
+            var lines: [String]
+            if more > 0 {
+                lines = [String(localized: "Na dnes: \(shown.joined(separator: ", ")) a další \(more).")]
+            } else if shown.count == 2 {
+                lines = [String(localized: "Na dnes: \(shown[0]) a \(shown[1]).")]
+            } else {
+                lines = [String(localized: "Na dnes: \(shown[0]).")]
+            }
+            if let first = ordered.compactMap({ task in task.deadline.map { (task, $0) } }).min(by: { $0.1 < $1.1 }) {
+                lines.append(shown.contains(first.0.title)
+                             ? String(localized: "První termín v \(first.1.timeText).")
+                             : String(localized: "První termín v \(first.1.timeText): \(first.0.title)."))
+            }
+            // Only today's brief can honestly refer to how yesterday went. Its number goes to the title,
+            // and the sentence only when it still fits the two lines a banner shows.
+            var title = String(localized: "Dobré ráno")
             if offset == 0 {
                 let yesterday = tasks.filter { $0.scheduledDate.isSameDay(as: day.addingDays(-1)) }
-                lines.append(NotificationTemplates.morningSentence(
-                    yesterday: ScoreEngine.productivity(yesterday, now: now), seed: day.daySeed))
+                let morning = NotificationTemplates.morning(
+                    yesterday: ScoreEngine.productivity(yesterday, now: now), seed: day.daySeed)
+                if let percent = morning.percent {
+                    title = String(localized: "Dobré ráno · včera \(percent) %")
+                }
+                if (lines + [morning.sentence]).joined(separator: " ").count <= bannerLength {
+                    lines.append(morning.sentence)
+                }
             }
             return Planned(id: "brief.\(offset)", date: time(settings.morningBriefMinutes, on: day),
-                           title: "RANNÍ PŘEHLED", body: lines.joined(separator: " "), route: .today)
+                           title: title, body: lines.joined(separator: " "), route: .today)
         }
     }
 
@@ -333,15 +359,15 @@ enum NotificationManager {
             let open = all.filter { $0.status == .pending }.count
             let body: String
             if offset == 0, done == all.count {
-                body = "Dnes \(done) / \(all.count). Slovo dodrženo."
+                body = "Všechno hotovo, \(done) z \(all.count). Slovo platí."
             } else if offset == 0 {
-                body = "Dnešní závazky: \(all.count). Hotovo: \(done). Otevřeno: \(open). Otevři večerní bilanci."
+                body = "Hotovo \(done) z \(all.count), zbývá \(open). Ještě je čas to uzavřít."
             } else {
                 body = NotificationTemplates.pick(NotificationTemplates.realityCheck[settings.tone] ?? [], seed: day.daySeed)
                     .replacingOccurrences(of: "{n}", with: "\(all.count)")
             }
             return Planned(id: "reality.\(offset)", date: time(settings.realityCheckMinutes, on: day),
-                           title: "VEČERNÍ BILANCE", body: body, route: .realityCheck)
+                           title: "Večerní bilance", body: body, route: .realityCheck)
         }
     }
 
@@ -364,7 +390,7 @@ enum NotificationManager {
                 let body = pool.isEmpty ? "" : pool[min(level, pool.count - 1)]
                 let title = settings.tone == .savage
                     ? NotificationTemplates.pick(NotificationTemplates.punchlines, seed: day.daySeed &+ minute)
-                    : "KEPT"
+                    : [String(localized: "Dnešní plán"), String(localized: "Odpolední kontrola"), String(localized: "Večer se blíží")][level]
                 return Planned(id: "nudge.\(offset).\(minute)", date: time(minute, on: day), title: title,
                                body: body.replacingOccurrences(of: "{n}", with: "\(open)"), route: .today)
             }
@@ -391,15 +417,17 @@ enum NotificationManager {
                     // Preparation and start stay factual; later steps sharpen with the boosts, capped by the tone.
                     let level = step.level <= 1 ? step.level : min(settings.tone.maxLevel, step.level + boost)
                     // The first two steps use the user's own plan for starting, when there is one.
+                    // The task's name is the title. In the savage tone the escalated steps lead with a punchline
+                    // instead, and the task is named in the body.
+                    let headline = settings.tone == .savage && level >= savageHeadlineLevel
                     let body = !task.cue.isEmpty && level <= 1
-                        ? NotificationTemplates.cueMessage(level: level, title: task.title, cue: task.cue)
+                        ? NotificationTemplates.cueMessage(level: level, cue: task.cue)
                         : NotificationTemplates.taskMessage(
                             level: level, title: task.title, time: step.date.timeText, why: task.why,
-                            failures: failureCount, seed: task.uid.hashValue &+ step.index)
-                    // In the savage tone the escalated steps lead with a punchline; the task is named in the body.
-                    let title = settings.tone == .savage && level >= savageHeadlineLevel
+                            failures: failureCount, seed: task.uid.hashValue &+ step.index, namesTask: headline)
+                    let title = headline
                         ? NotificationTemplates.pick(NotificationTemplates.punchlines, seed: task.uid.hashValue &+ step.index &* 7)
-                        : task.title.uppercased()
+                        : task.title
                     return Planned(id: "task.\(task.uid.uuidString).\(step.index)", date: step.date,
                                    title: title, body: body, route: .today)
                 }

@@ -18,11 +18,11 @@ struct FocusView: View {
         }
         .screenBackground()
         .appAppearance()
-        .confirmationDialog("Zastavit časovač?", isPresented: $confirmsStop, titleVisibility: .visible) {
-            Button("Zastavit", role: .destructive) { end(completing: false) }
+        .confirmationDialog("Ukončit focus?", isPresented: $confirmsStop, titleVisibility: .visible) {
+            Button("Ukončit bez splnění", role: .destructive) { end(completing: false) }
             Button("Pokračovat v práci", role: .cancel) {}
         } message: {
-            Text("Úkol zůstane otevřený a odpracovaný čas se uloží. Dodělat ho můžeš později.")
+            Text("Úkol zůstane otevřený a odpracovaný čas se uloží. Jen na chvíli přerušit můžeš tlačítkem Pauza.")
         }
         .onAppear {
             task.startFocusIfNeeded(in: context)
@@ -90,7 +90,7 @@ struct FocusView: View {
                         Haptics.medium()
                         confirmsStop = true
                     } label: {
-                        Label("STOP", systemImage: "stop.fill")
+                        Label("UKONČIT", systemImage: "xmark")
                     }
                     .buttonStyle(SecondaryButtonStyle(textColor: Theme.red))
                     .frame(maxWidth: 140)

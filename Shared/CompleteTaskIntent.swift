@@ -27,6 +27,8 @@ enum WidgetActions {
     @MainActor static var complete: ((String) async -> Void)?
     /// Starts (true) or ends (false) a rest in the running workout.
     @MainActor static var gymRest: ((Bool) async -> Void)?
+    /// Stops (true) or restarts (false) the running workout's clock.
+    @MainActor static var gymHold: ((Bool) async -> Void)?
     /// Stops whatever timer is running, focus or workout, without completing the task.
     @MainActor static var stopTimer: (() async -> Void)?
     /// Pauses (true) or resumes (false) the running focus timer.

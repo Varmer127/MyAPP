@@ -289,23 +289,36 @@ extension TodayView {
                                 if next.category == .gym { gymTimerTask = next } else { focusTask = next }
                             } label: {
                                 Label(next.category == .gym ? "POKRAČOVAT V TRÉNINKU" : "POKRAČOVAT VE FOCUSU",
-                                      systemImage: "play.fill")
-                                    .symbolEffect(.pulse, options: .repeating)
+                                      systemImage: "arrow.up.left.and.arrow.down.right")
                             }
                             .buttonStyle(PrimaryButtonStyle(color: Theme.green, textColor: Color(hex: 0x000000)))
+                            // Stopping the clock for a while, right here; ending is inside the timer and on the task card.
+                            let held = next.category == .gym
+                                ? next.activeFocusSession?.isHeld == true : next.activeFocusSession?.isPaused == true
                             Button {
                                 Haptics.medium()
-                                stopTask = next
+                                guard let session = next.activeFocusSession else { return }
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+                                    if next.category == .gym {
+                                        GymActivityManager.setHold(!session.isHeld, task: next,
+                                                                   rest: GymActivityManager.currentRest(in: context))
+                                    } else {
+                                        FocusView.togglePause(session, title: next.title)
+                                    }
+                                }
                             } label: {
-                                Image(systemName: "stop.fill")
+                                Image(systemName: held ? "play.fill" : "pause.fill")
+                                    .contentTransition(.symbolEffect(.replace))
                                     .scaledFont(.body, weight: .heavy)
-                                    .foregroundStyle(Theme.red)
+                                    .foregroundStyle(held ? Color(hex: 0x000000) : Theme.textPrimary)
                                     .frame(width: 52, height: 52)
-                                    .background(Theme.red.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                                    .background(held ? Theme.orange : Theme.cardRaised, in: RoundedRectangle(cornerRadius: 12))
                                     .contentShape(RoundedRectangle(cornerRadius: 12))
                             }
                             .buttonStyle(PillPressStyle())
-                            .accessibilityLabel(next.category == .gym ? "Zastavit trénink" : "Zastavit časovač")
+                            .sensoryFeedback(.impact(weight: .medium), trigger: held)
+                            .accessibilityLabel(held ? (next.category == .gym ? "Spustit čas" : "Pokračovat ve focusu")
+                                                     : (next.category == .gym ? "Zastavit čas" : "Pozastavit focus"))
                         }
                     } else if !next.requiresProof, next.category != .gym {
                         Button("SPLNIL JSEM") { confirmDone = next }

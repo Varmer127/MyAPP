@@ -13,6 +13,7 @@ struct GymTimerView: View {
     @State private var record: RecordBanner?
     @State private var savedTemplate = false
     @State private var confirmsStop = false
+    @State private var confirmsClear = false
     @Query private var settingsList: [UserSettings]
     @Query private var tasks: [TaskItem]
     let task: TaskItem
@@ -56,11 +57,17 @@ struct GymTimerView: View {
             }
         }
         .sensoryFeedback(.success, trigger: record) { _, new in new != nil }
-        .confirmationDialog("Zastavit trénink?", isPresented: $confirmsStop, titleVisibility: .visible) {
-            Button("Zastavit", role: .destructive) { end(completing: false) }
+        .confirmationDialog("Smazat všechny cviky?", isPresented: $confirmsClear, titleVisibility: .visible) {
+            Button("Smazat všechny cviky", role: .destructive) { clearExercises() }
+            Button("Nechat", role: .cancel) {}
+        } message: {
+            Text("Z tohoto tréninku zmizí všechny cviky i se sériemi. Stopky běží dál. Vrátit to nejde.")
+        }
+        .confirmationDialog("Ukončit trénink?", isPresented: $confirmsStop, titleVisibility: .visible) {
+            Button("Ukončit bez splnění", role: .destructive) { end(completing: false) }
             Button("Pokračovat v tréninku", role: .cancel) {}
         } message: {
-            Text("Stopky se zastaví a úkol zůstane otevřený. To, co jsi zapsal, se uloží.")
+            Text("Trénink skončí a úkol zůstane otevřený. Zapsané cviky zůstanou. Jen na chvíli přerušit můžeš tlačítkem Zastavit čas.")
         }
         .onAppear {
             task.startFocusIfNeeded(in: context)
@@ -94,6 +101,7 @@ struct GymTimerView: View {
         }
         .onChange(of: selectedName) { syncOutside() }
         .onChange(of: session?.pausedSince) { syncOutside() }
+        .onChange(of: session?.heldSince) { syncOutside() }
         .onChange(of: task.workoutType) { syncOutside() }
     }
 
@@ -135,8 +143,8 @@ struct GymTimerView: View {
             ScrollView {
                 VStack(spacing: 22) {
                     VStack(spacing: 6) {
-                        Text(rest == nil ? "TRÉNINK" : (reached ? "JDI NA DALŠÍ SÉRII" : "PAUZA"))
-                            .labelStyle(rest == nil ? Theme.textSecondary : (reached ? Theme.green : Theme.orange))
+                        Text(isHeld ? "ČAS STOJÍ" : (rest == nil ? "TRÉNINK" : (reached ? "JDI NA DALŠÍ SÉRII" : "PAUZA")))
+                            .labelStyle(isHeld ? Theme.orange : (rest == nil ? Theme.textSecondary : (reached ? Theme.green : Theme.orange)))
                         Text(FocusView.clock(rest ?? total))
                             .scaledFont(76, weight: .heavy)
                             .monospacedDigit()
@@ -155,6 +163,8 @@ struct GymTimerView: View {
                                 .tracking(1)
                                 .foregroundStyle(Theme.textPrimary)
                         }
+                        holdButton
+                            .padding(.top, 6)
                     }
                     .padding(.top, 16)
                     TileRow {
@@ -185,13 +195,24 @@ struct GymTimerView: View {
         }
     }
 
-    /// Stops the stopwatch without completing the workout, after one question. Same in both modes.
+    private var isHeld: Bool { session?.isHeld == true }
+
+    /// Stops the workout's clock for a while, or starts it again.
+    private var holdButton: some View {
+        HoldClockButton(isHeld: isHeld) { setHold(!isHeld) }
+    }
+
+    private func setHold(_ hold: Bool) {
+        GymActivityManager.setHold(hold, task: task, rest: preset)
+    }
+
+    /// Ends the workout without completing it, after one question. Same in both modes.
     private var stopButton: some View {
         Button {
             Haptics.medium()
             confirmsStop = true
         } label: {
-            Label("ZASTAVIT TRÉNINK", systemImage: "stop.fill")
+            Label("UKONČIT BEZ SPLNĚNÍ", systemImage: "xmark")
                 .scaledFont(.body, weight: .heavy)
                 .tracking(0.6)
                 .frame(maxWidth: .infinity, minHeight: 40)
@@ -234,6 +255,17 @@ struct GymTimerView: View {
                         .foregroundStyle(savedTemplate ? Theme.green : Theme.textSecondary)
                         .frame(maxWidth: .infinity, minHeight: 44)
                     }
+                    if !logs.isEmpty {
+                        Button {
+                            Haptics.medium()
+                            confirmsClear = true
+                        } label: {
+                            Label("Smazat všechny cviky", systemImage: "trash")
+                        }
+                        .buttonStyle(PillButtonStyle(kind: .destructive))
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 4)
+                    }
                 }
                 .padding(.horizontal, Theme.screenPadding)
                 .padding(.bottom, 16)
@@ -255,12 +287,15 @@ struct GymTimerView: View {
         return VStack(spacing: 10) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("TRÉNINK").labelStyle()
+                    Text(isHeld ? "ČAS STOJÍ" : "TRÉNINK").labelStyle(isHeld ? Theme.orange : Theme.textSecondary)
                     Text(FocusView.clock(total))
                         .scaledFont(.title, weight: .heavy)
                         .monospacedDigit()
-                        .foregroundStyle(Theme.textPrimary)
+                        .foregroundStyle(isHeld ? Theme.textSecondary : Theme.textPrimary)
+                        .contentTransition(.numericText())
                 }
+                holdButton
+                    .padding(.leading, 6)
                 Spacer()
                 Button("Skrýt") { dismiss() }
                     .scaledFont(.body)
@@ -491,6 +526,18 @@ struct GymTimerView: View {
         Persistence.save(context)
     }
 
+    /// Empties this workout's list: every exercise with its sets. The clock and the rests are untouched.
+    private func clearExercises() {
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+            for log in task.exercises {
+                context.delete(log)
+            }
+        }
+        Haptics.success()
+        savedTemplate = false
+        Persistence.save(context)
+    }
+
     private func remove(_ log: ExerciseLog) {
         withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
             context.delete(log)
@@ -521,6 +568,7 @@ struct GymTimerView: View {
     /// Starting a rest schedules a notification for the target time, so it also works with the screen locked.
     private func startRest() {
         guard let session else { return }
+        session.unhold()
         if session.isPaused { session.resume() }
         session.pause()
         let seconds = target

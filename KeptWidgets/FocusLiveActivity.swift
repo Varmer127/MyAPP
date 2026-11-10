@@ -5,7 +5,7 @@ import WidgetKit
 
 /// The running focus timer on the lock screen and in the Dynamic Island.
 /// The system ticks the timer text itself, so it keeps counting while the app is suspended.
-/// Pause and STOP work right there, without opening the app.
+/// Pause and UKONČIT work right there, without opening the app.
 struct FocusLiveActivity: Widget {
     private static let orange = Color(red: 1.0, green: 0.62, blue: 0.04)
     static let red = Color(red: 1.0, green: 0.27, blue: 0.23)
@@ -68,7 +68,7 @@ struct FocusLiveActivity: Widget {
         }
     }
 
-    /// Pause or resume, and STOP. Stopping keeps the time and leaves the task open.
+    /// Pause or resume, and end. Ending keeps the time and leaves the task open.
     private func controls(_ context: ActivityViewContext<FocusActivityAttributes>) -> some View {
         let paused = context.state.isPaused
         return HStack(spacing: 8) {
@@ -82,7 +82,7 @@ struct FocusLiveActivity: Widget {
             }
             .buttonStyle(.plain)
             Button(intent: StopTimerIntent()) {
-                Label("STOP", systemImage: "stop.fill")
+                Label("UKONČIT", systemImage: "xmark")
                     .font(.system(size: 13, weight: .heavy))
                     .foregroundStyle(Self.red)
                     .frame(minWidth: 96, minHeight: 36)

@@ -15,8 +15,12 @@ final class FocusSession {
     var pauseCount: Int = 0
     /// Set while the timer is running.
     var runningSince: Date?
-    /// Set while the timer is paused.
+    /// Set while the timer is paused. In a workout this is a rest between sets.
     var pausedSince: Date?
+    /// Set while a workout's clock is stopped altogether (a call, a queue for a machine): neither training nor rest.
+    var heldSince: Date?
+    /// Stopped time accumulated up to the last restart. Not part of the workout's time.
+    var heldSeconds: Double = 0
     var task: TaskItem?
 
     init(task: TaskItem, now: Date = .now) {
@@ -28,6 +32,7 @@ final class FocusSession {
 
     var isFinished: Bool { endedAt != nil }
     var isPaused: Bool { pausedSince != nil }
+    var isHeld: Bool { heldSince != nil }
 
     func active(at now: Date = .now) -> TimeInterval {
         activeSeconds + (runningSince.map { now.timeIntervalSince($0) } ?? 0)
@@ -58,7 +63,35 @@ final class FocusSession {
         persist()
     }
 
+    /// Stops the clock without ending the session; a rest in progress ends with it.
+    func hold(at now: Date = .now) {
+        guard heldSince == nil else { return }
+        if let runningSince {
+            activeSeconds += now.timeIntervalSince(runningSince)
+            self.runningSince = nil
+        }
+        if let pausedSince {
+            pauseSeconds += now.timeIntervalSince(pausedSince)
+            self.pausedSince = nil
+        }
+        heldSince = now
+        persist()
+    }
+
+    /// Starts the stopped clock again where it was.
+    func unhold(at now: Date = .now) {
+        guard let heldSince else { return }
+        heldSeconds += now.timeIntervalSince(heldSince)
+        self.heldSince = nil
+        runningSince = now
+        persist()
+    }
+
     func finish(at now: Date = .now) {
+        if let heldSince {
+            heldSeconds += now.timeIntervalSince(heldSince)
+            self.heldSince = nil
+        }
         activeSeconds = active(at: now)
         pauseSeconds = paused(at: now)
         runningSince = nil
