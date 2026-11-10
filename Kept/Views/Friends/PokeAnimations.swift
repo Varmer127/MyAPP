@@ -30,10 +30,10 @@ struct LiveSocial: ViewModifier {
             }
     }
 
-    /// Asks iOS to wake the app in about 20 minutes; iOS decides the real time.
+    /// Asks iOS to wake the app in about 15 minutes (the shortest it accepts); iOS decides the real time.
     static func scheduleRefresh() {
         let request = BGAppRefreshTaskRequest(identifier: NotificationsService.refreshTaskID)
-        request.earliestBeginDate = .now.addingTimeInterval(20 * 60)
+        request.earliestBeginDate = .now.addingTimeInterval(15 * 60)
         try? BGTaskScheduler.shared.submit(request)
     }
 }

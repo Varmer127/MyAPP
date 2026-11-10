@@ -108,16 +108,33 @@ final class NotificationsService {
     var news: [AppNotification] { items.filter(\.isNews) }
     var unseenNews: Int { news.filter { !$0.seen }.count }
 
-    /// Loads the list; new pokes since the last look start the animation.
+    /// Loads the list. A poke that arrives while the app is on screen gets the animation; everything else
+    /// that is new since the last announcement (a friend request, an invitation, an accepted request…)
+    /// comes as a notification banner, so it is not missed while the user looks elsewhere.
     func reload() async {
         guard account.profile != nil,
               let loaded = try? await account.perform({ try await client.notifications(since: nil, token: $0) }) else { return }
         let known = Set(items.map(\.id))
-        if !items.isEmpty, let poke = loaded.first(where: { $0.kind == .poke && !$0.seen && !known.contains($0.id) }) {
-            incomingPoke = poke
-        }
+        let poke = items.isEmpty ? nil : loaded.first { $0.kind == .poke && !$0.seen && !known.contains($0.id) }
+        if let poke { incomingPoke = poke }
+        let lastAnnounced = UserDefaults.standard.object(forKey: Self.lastAnnouncedKey) as? Date ?? .distantPast
+        await post(loaded.filter { !$0.seen && $0.createdAt > lastAnnounced && $0.id != poke?.id })
         items = loaded
         markAnnounced(loaded.first?.createdAt)
+    }
+
+    /// Local notifications for the items, oldest first; tapping one opens the bell.
+    private func post(_ fresh: [AppNotification]) async {
+        for item in fresh.sorted(by: { $0.createdAt < $1.createdAt }) {
+            let content = UNMutableNotificationContent()
+            content.title = item.title
+            if let detail = item.detail { content.body = detail }
+            content.sound = .default
+            content.threadIdentifier = "social"
+            content.userInfo = [NotificationRouter.routeKey: AppRoute.inbox.rawValue]
+            try? await UNUserNotificationCenter.current().add(
+                UNNotificationRequest(identifier: "social.\(item.id)", content: content, trigger: nil))
+        }
     }
 
     private(set) var mutes: [UUID: PokeMute] = [:]
@@ -150,14 +167,7 @@ final class NotificationsService {
         guard account.profile != nil else { return }
         let since = UserDefaults.standard.object(forKey: Self.lastAnnouncedKey) as? Date ?? .now.addingTimeInterval(-3600)
         guard let fresh = try? await account.perform({ try await client.notifications(since: since, token: $0) }) else { return }
-        for item in fresh.reversed() where !item.seen {
-            let content = UNMutableNotificationContent()
-            content.title = item.title
-            if let detail = item.detail { content.body = detail }
-            content.sound = .default
-            try? await UNUserNotificationCenter.current().add(
-                UNNotificationRequest(identifier: "social.\(item.id)", content: content, trigger: nil))
-        }
+        await post(fresh.filter { !$0.seen && $0.createdAt > since })
         markAnnounced(fresh.first?.createdAt)
     }
 

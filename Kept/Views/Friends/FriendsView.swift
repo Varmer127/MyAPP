@@ -59,15 +59,16 @@ struct FriendsView: View {
                                 .scaledFont(.body, weight: .semibold)
                                 .foregroundStyle(Theme.textPrimary)
                             Spacer()
-                            Button("Přijmout") { respond(request, accept: true) }
-                                .buttonStyle(.borderedProminent)
-                                .tint(Theme.textPrimary)
-                                .foregroundStyle(Theme.onPrimary)
-                            Button("Odmítnout") { respond(request, accept: false) }
-                                .buttonStyle(.bordered)
-                                .tint(Theme.textSecondary)
+                            ActionButton(title: "Odmítnout", look: .pill(.secondary)) {
+                                try await friends.respond(to: request, accept: false)
+                            }
+                            ActionButton(title: "Přijmout", symbol: "person.fill.checkmark", look: .pill(.positive)) {
+                                try await friends.respond(to: request, accept: true)
+                            }
                         }
                         .padding(.vertical, 2)
+                        .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity),
+                                                removal: .scale(scale: 0.9).combined(with: .opacity)))
                     }
                 } header: {
                     Label("Chtějí být tvoji přátelé · \(friends.incoming.count)", systemImage: "person.badge.plus")
@@ -98,7 +99,7 @@ struct FriendsView: View {
                 togetherRow("Společné výzvy", "flag.2.crossed", TogetherService.shared.challenges.filter(\.isInvited).count) { ChallengesView() }
                 togetherRow("Skupiny", "person.3", TogetherService.shared.groups.filter(\.isInvited).count) { GroupsView() }
                 togetherRow("Společné aktivity", "calendar.badge.plus", TogetherService.shared.activities.filter(\.isInvited).count) { ActivitiesView() }
-                togetherRow("Parťák", "figure.2", TogetherService.shared.incomingBuddy == nil ? 0 : 1) { BuddyView() }
+                togetherRow("Parťáci", "figure.2", TogetherService.shared.incomingBuddies.count) { BuddyView() }
                 togetherRow("Svědek", "person.badge.shield.checkmark", TogetherService.shared.witnessing.toAnswer.count) { WitnessInboxView() }
             }
             .listRowBackground(Theme.card)
@@ -168,15 +169,14 @@ struct FriendsView: View {
                                 .foregroundStyle(Theme.textSecondary)
                                 .lineLimit(1)
                         } else {
-                            Button { poking = friend } label: {
-                                Label(waiting(for: friend) ? "Počkej" : "Šťouchnout", systemImage: "hand.point.right")
-                                    .scaledFont(.caption, weight: .semibold)
-                                    .foregroundStyle(Theme.textPrimary)
-                                    .padding(.horizontal, 10).padding(.vertical, 6)
-                                    .background(Theme.cardRaised)
-                                    .clipShape(Capsule())
+                            Button {
+                                Haptics.light()
+                                poking = friend
+                            } label: {
+                                Label(waiting(for: friend) ? "Počkej" : "Šťouchnout", systemImage: "hand.point.right.fill")
+                                    .symbolEffect(.wiggle, options: .nonRepeating, value: poking?.id == friend.id)
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(PillButtonStyle(kind: waiting(for: friend) ? .secondary : .primary))
                         }
                     }
                 }
@@ -198,10 +198,7 @@ struct FriendsView: View {
                                 .scaledFont(.body)
                                 .foregroundStyle(Theme.textPrimary)
                             Spacer()
-                            Button("Zrušit") { cancel(request) }
-                                .scaledFont(.caption, weight: .semibold)
-                                .foregroundStyle(Theme.textSecondary)
-                                .buttonStyle(.plain)
+                            ActionButton(title: "Zrušit", look: .pill(.secondary)) { try await friends.cancel(request) }
                         }
                     }
                 }
@@ -214,10 +211,7 @@ struct FriendsView: View {
                         HStack {
                             Text(person.displayName).foregroundStyle(Theme.textPrimary)
                             Spacer()
-                            Button("Odblokovat") { unblock(person) }
-                                .scaledFont(.caption, weight: .semibold)
-                                .foregroundStyle(Theme.textSecondary)
-                                .buttonStyle(.plain)
+                            ActionButton(title: "Odblokovat", look: .pill(.secondary)) { try await friends.unblock(person.id) }
                         }
                     }
                 } header: {
@@ -235,6 +229,9 @@ struct FriendsView: View {
         }
         .scrollContentBackground(.hidden)
         .refreshable { await friends.reload() }
+        .animation(.spring(response: 0.45, dampingFraction: 0.8), value: friends.incoming.map(\.id))
+        .animation(.spring(response: 0.45, dampingFraction: 0.8), value: friends.friends.map(\.id))
+        .animation(.spring(response: 0.45, dampingFraction: 0.8), value: friends.outgoing.map(\.id))
     }
 
     private var unavailable: some View {
@@ -334,23 +331,6 @@ struct FriendsView: View {
         }
     }
 
-    // MARK: Actions
-
-    private func respond(_ request: FriendRequest, accept: Bool) {
-        errorText = nil
-        Task {
-            do { try await friends.respond(to: request, accept: accept); if accept { Haptics.success() } }
-            catch { errorText = "Žádost se nepodařilo vyřídit. Zkus to prosím znovu." }
-        }
-    }
-
-    private func cancel(_ request: FriendRequest) {
-        Task { try? await friends.cancel(request) }
-    }
-
-    private func unblock(_ person: BlockedPerson) {
-        Task { try? await friends.unblock(person.id) }
-    }
 }
 
 /// A round badge with the first letter of a name.

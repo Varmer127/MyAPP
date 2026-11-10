@@ -30,7 +30,7 @@ struct InboxItems {
         challenges = together.challenges.filter(\.isInvited).count
         groups = together.groups.filter(\.isInvited).count
         activities = together.activities.filter(\.isInvited).count
-        buddy = together.incomingBuddy == nil ? 0 : 1
+        buddy = together.incomingBuddies.count
         witness = together.witnessing.toAnswer.count
         if let start = WeekStory.offeredWeek(now: now), seenWeek != start.timeIntervalSince1970 {
             week = WeekStory.make(tasks: tasks, diary: diary, weekStart: start, now: now)
@@ -128,13 +128,12 @@ struct InboxView: View {
                                     .scaledFont(.body, weight: .semibold)
                                     .foregroundStyle(Theme.textPrimary)
                                 Spacer()
-                                Button("Přijmout") { Task { try? await friends.respond(to: request, accept: true); Haptics.success() } }
-                                    .buttonStyle(.borderedProminent)
-                                    .tint(Theme.textPrimary)
-                                    .foregroundStyle(Theme.onPrimary)
-                                Button("Odmítnout") { Task { try? await friends.respond(to: request, accept: false) } }
-                                    .buttonStyle(.bordered)
-                                    .tint(Theme.textSecondary)
+                                ActionButton(title: "Odmítnout", look: .pill(.secondary)) {
+                                    try await friends.respond(to: request, accept: false)
+                                }
+                                ActionButton(title: "Přijmout", symbol: "person.fill.checkmark", look: .pill(.positive)) {
+                                    try await friends.respond(to: request, accept: true)
+                                }
                             }
                         }
                     }
@@ -168,7 +167,7 @@ struct InboxView: View {
                     link("calendar.badge.plus", "Pozvánka na společnou aktivitu", "Čeká na odpověď: \(items.activities)") { ActivitiesView() }
                 }
                 if items.buddy > 0 {
-                    link("figure.2", "Někdo chce být tvůj parťák", TogetherService.shared.incomingBuddy?.name ?? "") { BuddyView() }
+                    link("figure.2", "Chtějí být tvoji parťáci", TogetherService.shared.incomingBuddies.map(\.name).joined(separator: ", ")) { BuddyView() }
                 }
                 if items.witness > 0 {
                     link("person.badge.shield.checkmark", "Žádost o potvrzení", "Čeká na tebe: \(items.witness)") { WitnessInboxView() }
@@ -199,6 +198,7 @@ struct InboxView: View {
                 }
             }
             .scrollContentBackground(.hidden)
+            .animation(.spring(response: 0.45, dampingFraction: 0.8), value: friends.incoming.map(\.id))
             .screenBackground()
             .navigationTitle("Upozornění")
             .navigationBarTitleDisplayMode(.inline)
@@ -246,7 +246,9 @@ struct InboxView: View {
 
     /// The newest unread pokes in one line: who and what.
     private var latestPokes: String {
-        friends.pokes.filter { !$0.seen }.prefix(2).map { "\($0.senderName): \($0.body)" }.joined(separator: " · ")
+        friends.pokes.filter { !$0.seen }.prefix(2)
+            .map { $0.body.isEmpty ? $0.senderName : "\($0.senderName): \($0.body)" }
+            .joined(separator: " · ")
     }
 
     private func link<Destination: View>(_ symbol: String, _ title: LocalizedStringKey, _ subtitle: String,

@@ -21,6 +21,8 @@ struct RootView: View {
     @State private var tab: AppTab = .today
     @State private var weekShowsNext = false
     @State private var showsRealityCheck = false
+    /// Opened by a tapped notification from a friend.
+    @State private var showsInbox = false
     @State private var showsSealStamp = false
     /// Bumped when the day or time zone changes, so what is computed from "now" is computed again.
     @State private var clockTick = 0
@@ -236,6 +238,7 @@ struct RootView: View {
             }
         }
         .fullScreenCover(isPresented: $showsRealityCheck) { RealityCheckView() }
+        .sheet(isPresented: $showsInbox) { InboxView() }
         .fullScreenCover(isPresented: Binding(
             get: { onboardingMigrated && settings != nil && settings?.onboardedAt == nil },
             set: { _ in })) {
@@ -322,6 +325,8 @@ struct RootView: View {
         case .realityCheck:
             tab = .today
             showsRealityCheck = true
+        case .inbox:
+            showsInbox = true
         }
     }
 }

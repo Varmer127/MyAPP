@@ -4,7 +4,7 @@ import UserNotifications
 import os
 
 enum AppRoute: String {
-    case today, planning, realityCheck
+    case today, planning, realityCheck, inbox
 }
 
 /// Receives notification taps and tells the UI where to go.

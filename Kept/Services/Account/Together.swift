@@ -101,11 +101,15 @@ final class TogetherService {
     private let client = ServerClient()
     private let account = AccountService.shared
 
-    var buddy: Buddy? { buddies.first { $0.state == .paired } }
+    /// How many buddies one person can have at once; the server keeps the same limit.
+    static let maxBuddies = 5
+
+    var pairedBuddies: [Buddy] { buddies.filter { $0.state == .paired } }
     var incomingBuddy: Buddy? { buddies.first { $0.state == .incoming } }
+    var incomingBuddies: [Buddy] { buddies.filter { $0.state == .incoming } }
     /// Everything that waits for an answer from the user.
     var waitingCount: Int {
-        witnessing.toAnswer.count + (incomingBuddy == nil ? 0 : 1) + challenges.filter(\.isInvited).count
+        witnessing.toAnswer.count + incomingBuddies.count + challenges.filter(\.isInvited).count
             + groups.filter(\.isInvited).count + activities.filter(\.isInvited).count
     }
 
@@ -150,7 +154,7 @@ final class TogetherService {
     func respondBuddy(_ buddy: Buddy, accept: Bool) async throws {
         try await run("respond_buddy", ["p_from": buddy.id.uuidString, "p_accept": accept])
     }
-    func endBuddy() async throws { try await run("end_buddy", [:]) }
+    func endBuddy(_ buddy: Buddy) async throws { try await run("end_buddy", ["p_friend": buddy.id.uuidString]) }
 
     // MARK: Challenges, groups, activities
 
@@ -195,7 +199,7 @@ final class TogetherService {
 
     /// Today's numbers for the buddy and each accepted challenge's progress, computed from the phone's tasks.
     func push(tasks: [TaskItem], now: Date = .now) async {
-        if buddy != nil {
+        if !pairedBuddies.isEmpty {
             let today = tasks.filter { !$0.isRemoved && $0.countsInScores && $0.scheduledDate.isSameDay(as: now) }
             _ = try? await account.perform { try await client.rpc("push_day", ["p_day": DayString.string(now),
                 "p_done": today.filter(\.isDone).count, "p_total": today.count], token: $0) }

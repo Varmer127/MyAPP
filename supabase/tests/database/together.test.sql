@@ -1,6 +1,6 @@
 -- Witness, buddy, challenges, groups and shared activities. Runs in CI against a local copy of the database.
 begin;
-select plan(12);
+select plan(13);
 
 create temp table out(step text primary key, result text);
 grant all on out to authenticated;
@@ -40,6 +40,11 @@ begin
  perform set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}',true);
  insert into out select 'buddy_day', (public.my_buddy() -> 0 ->> 'state') || '/' || (public.my_buddy() -> 0 ->> 'done');
  begin perform public.request_buddy('00000000-0000-0000-0000-0000000000b2'); insert into out values ('buddy_second','ok'); exception when others then insert into out values ('buddy_second',sqlerrm); end;
+ perform public.send_friend_request('00000000-0000-0000-0000-0000000000c3');
+ perform set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-0000000000c3","role":"authenticated"}',true);
+ perform public.respond_friend_request('00000000-0000-0000-0000-0000000000a1', true);
+ perform set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}',true);
+ insert into out select 'buddy_another', public.request_buddy('00000000-0000-0000-0000-0000000000c3');
 
 
  ch := public.create_challenge('30 tréninků', 'gym', 30, 30, array['00000000-0000-0000-0000-0000000000b2']::uuid[]);
@@ -70,14 +75,16 @@ begin
  perform public.remove_friend('00000000-0000-0000-0000-0000000000b2');
 end $$;
 reset role;
-insert into out select 'after_removal', (select count(*) from public.witness_requests) || '/' || (select count(*) from public.buddies);
+insert into out select 'after_removal', (select count(*) from public.witness_requests) || '/'
+    || (select count(*) from public.buddies where '00000000-0000-0000-0000-0000000000b2' in (user_a, user_b));
 
 select is((select result from out where step = 'witness_stranger'), 'not_found', 'only a friend can be a witness');
 select is((select result from out where step = 'witness_inbox'), 'Gym', 'the witness sees what to confirm');
 select is((select result from out where step = 'witness_result'), 'confirmed', 'the owner sees the confirmation');
 select is((select result from out where step = 'buddy_request'), 'requested', 'a buddy can be asked');
 select is((select result from out where step = 'buddy_day'), 'paired/2', 'buddies see each other''s day');
-select is((select result from out where step = 'buddy_second'), 'already_paired', 'one buddy per person');
+select is((select result from out where step = 'buddy_second'), 'already_paired', 'the same two people pair only once');
+select is((select result from out where step = 'buddy_another'), 'requested', 'a person can have more than one buddy');
 select is((select result from out where step = 'challenge'), 'Petr:12,Jana:0', 'challenge members see each other''s progress');
 select is((select result from out where step = 'group_invited'), 'invited', 'an invited friend sees the group');
 select is((select result from out where step = 'group_ended'), '0', 'the group ends when the owner leaves');

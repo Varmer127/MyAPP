@@ -15,6 +15,7 @@ struct AddFriendView: View {
     @State private var messageIsError = false
     @State private var isBusy = false
     @State private var confirmsRotate = false
+    @State private var showsScanner = false
 
     private enum Mode: String, CaseIterable, Identifiable {
         case add, mine
@@ -55,6 +56,21 @@ struct AddFriendView: View {
             }
         }
         .appAppearance()
+        .fullScreenCover(isPresented: $showsScanner) {
+            QRScannerView { code in
+                mode = .add
+                Task { await search(code) }
+            }
+        }
+    }
+
+    private var scanButton: some View {
+        Button {
+            Haptics.light()
+            showsScanner = true
+        } label: {
+            Label("NASKENOVAT QR KÓD", systemImage: "qrcode.viewfinder")
+        }
     }
 
     // MARK: My code
@@ -72,11 +88,13 @@ struct AddFriendView: View {
                         .background(Color.white)
                         .clipShape(RoundedRectangle(cornerRadius: 18))
                         .accessibilityLabel("Tvůj QR kód")
-                    Text("Kamarád ho naskenuje foťákem v iPhonu a otevře se Kept.")
+                    Text("Kamarád ho naskenuje v Kept tlačítkem níže, nebo foťákem v iPhonu.")
                         .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary)
                         .multilineTextAlignment(.center)
                 }
+                scanButton
+                    .buttonStyle(PrimaryButtonStyle())
                 VStack(spacing: 4) {
                     Text("Tvoje označení").labelStyle()
                     Text(profile.handle)
@@ -115,7 +133,9 @@ struct AddFriendView: View {
 
     private var add: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Napiš celé označení kamaráda, třeba Jana#4827, nebo naskenuj jeho QR kód foťákem v iPhonu. Podle samotného jména nikoho nenajdeš.")
+            scanButton
+                .buttonStyle(PrimaryButtonStyle())
+            Text("Nebo napiš celé označení kamaráda, třeba Jana#4827. Podle samotného jména nikoho nenajdeš.")
                 .scaledFont(.body)
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)

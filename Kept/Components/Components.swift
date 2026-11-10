@@ -172,7 +172,8 @@ struct PrimaryButtonStyle: ButtonStyle {
             .padding(.horizontal, 6)
             .background(color)
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .opacity(isEnabled ? (configuration.isPressed ? 0.8 : 1) : 0.3)
+            .opacity(isEnabled ? 1 : 0.3)
+            .modifier(PressBounce(isPressed: configuration.isPressed))
     }
 }
 
@@ -192,7 +193,7 @@ struct SecondaryButtonStyle: ButtonStyle {
             .background(Theme.cardRaised)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.border, lineWidth: 1))
-            .opacity(configuration.isPressed ? 0.7 : 1)
+            .modifier(PressBounce(isPressed: configuration.isPressed))
     }
 }
 
