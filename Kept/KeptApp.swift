@@ -11,6 +11,8 @@ struct KeptApp: App {
         UNUserNotificationCenter.current().delegate = NotificationRouter.shared
         WidgetActions.complete = { await AppStore.completeFromWidget($0) }
         WidgetActions.gymRest = { await GymActivityManager.toggleRest(start: $0) }
+        WidgetActions.stopTimer = { await AppStore.stopTimerFromWidget() }
+        WidgetActions.focusPause = { await AppStore.pauseFocusFromWidget($0) }
     }
 
     var body: some Scene {

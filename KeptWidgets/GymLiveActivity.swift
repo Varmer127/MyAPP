@@ -25,7 +25,10 @@ struct GymLiveActivity: Widget {
                             .foregroundStyle(.white)
                     }
                     Spacer()
-                    restButton(context)
+                    HStack(spacing: 8) {
+                        stopButton
+                        restButton(context)
+                    }
                 }
                 restBar(context)
             }
@@ -44,7 +47,11 @@ struct GymLiveActivity: Widget {
                     .padding(.leading, 4)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    restButton(context).padding(.trailing, 4)
+                    HStack(spacing: 6) {
+                        stopButton
+                        restButton(context)
+                    }
+                    .padding(.trailing, 4)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     restBar(context)
@@ -106,6 +113,20 @@ struct GymLiveActivity: Widget {
                 .font(.system(size: 13))
                 .foregroundStyle(.white.opacity(0.6))
         }
+    }
+
+    /// Ends the workout without completing it; what was logged stays.
+    private var stopButton: some View {
+        Button(intent: StopTimerIntent()) {
+            Image(systemName: "stop.fill")
+                .font(.system(size: 13, weight: .heavy))
+                .foregroundStyle(FocusLiveActivity.red)
+                .frame(width: 36, height: 36)
+                .background(FocusLiveActivity.red.opacity(0.18))
+                .clipShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Zastavit trénink")
     }
 
     private func restButton(_ context: ActivityViewContext<GymActivityAttributes>) -> some View {

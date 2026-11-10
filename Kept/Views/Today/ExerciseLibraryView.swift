@@ -1,17 +1,20 @@
 import SwiftData
 import SwiftUI
 
-/// The exercise library: search, filter by muscle or equipment, add your own.
+/// The exercise library: search, filter by muscle or equipment, last workout's exercises, own exercises with photos.
+/// Every row has a small picture and an (i) with the technique.
 struct ExerciseLibraryView: View {
     @Environment(\.dismiss) private var dismiss
-    /// The user's own exercise names, shown with the built-in ones.
+    /// Older own exercises that are only a name (from before own exercises had details).
     let own: [String]
     let onPick: (String) -> Void
     @State private var search = ""
     @State private var muscle: Muscle?
     @State private var equipment: Equipment?
-    @State private var detail: CatalogExercise?
+    @State private var detail: String?
+    @State private var creating: String?
     @Query private var logs: [ExerciseLog]
+    private let store = CustomExerciseStore.shared
 
     private static let favouriteCount = 3
     private static let recentDays = 60
@@ -21,6 +24,18 @@ struct ExerciseLibraryView: View {
         guard let muscle, search.isEmpty else { return [] }
         return ExerciseUsage.top(Self.favouriteCount, for: muscle, in: logs, recentDays: Self.recentDays)
             .filter { exercise in equipment.map { exercise.equipment == $0 } ?? true }
+    }
+
+    /// The exercises of the last workout before today, in the order they were done.
+    private var lastWorkout: (title: String, names: [String])? {
+        let today = Date.now.startOfDay
+        guard let latest = logs.filter({ $0.date < today && $0.task != nil }).max(by: { $0.date < $1.date }),
+              let task = latest.task else { return nil }
+        var seen = Set<String>()
+        let names = task.exercises.sorted { $0.date < $1.date }.map(\.name).filter { seen.insert($0.activityKey).inserted }
+        guard !names.isEmpty else { return nil }
+        let type = task.workoutType.isEmpty ? String(localized: "Trénink") : task.workoutType
+        return ("\(type) · \(latest.date.dayMonthText)", names)
     }
 
     private var matches: [CatalogExercise] {
@@ -34,9 +49,23 @@ struct ExerciseLibraryView: View {
         }
     }
 
+    private var customMatches: [CustomExercise] {
+        let key = search.activityKey
+        return store.exercises.filter { exercise in
+            (key.isEmpty || exercise.name.activityKey.contains(key))
+                && (muscle.map { exercise.primary.contains($0) } ?? true)
+                && (equipment.map { exercise.equipment == $0 } ?? true)
+        }
+        .sorted { $0.name < $1.name }
+    }
+
     private var ownMatches: [String] {
         let key = search.activityKey
-        return own.filter { name in ExerciseCatalog.named(name) == nil && (key.isEmpty || name.activityKey.contains(key)) }
+        // Old own exercises are only a name without a photo: they show up when searched for, not in the list.
+        guard !key.isEmpty else { return [] }
+        return own.filter { name in
+            ExerciseCatalog.named(name) == nil && store.named(name) == nil && name.activityKey.contains(key)
+        }
     }
 
     private var typed: String { search.trimmingCharacters(in: .whitespacesAndNewlines) }
@@ -49,35 +78,42 @@ struct ExerciseLibraryView: View {
                 }
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                if !typed.isEmpty, ExerciseCatalog.named(typed) == nil, !own.contains(where: { $0.activityKey == typed.activityKey }) {
+                Section {
+                    Button {
+                        Haptics.light()
+                        creating = typed
+                    } label: {
+                        Label(typed.isEmpty || ExerciseCatalog.named(typed) != nil || store.named(typed) != nil
+                              ? "Vytvořit vlastní cvik s fotkou" : "Vytvořit vlastní cvik „\(typed)“",
+                              systemImage: "plus.circle.fill")
+                            .scaledFont(.body, weight: .semibold)
+                            .foregroundStyle(Theme.textPrimary)
+                    }
+                }
+                .listRowBackground(Theme.card)
+                if search.isEmpty, muscle == nil, equipment == nil, let lastWorkout {
                     Section {
-                        Button {
-                            pick(typed)
-                        } label: {
-                            Label("Přidat vlastní cvik „\(typed)“", systemImage: "plus.circle.fill")
-                                .foregroundStyle(Theme.textPrimary)
-                        }
+                        ForEach(Array(lastWorkout.names.enumerated()), id: \.offset) { _, name in row(name) }
+                    } header: {
+                        Label("Z minulého tréninku · \(lastWorkout.title)", systemImage: "clock.arrow.circlepath")
                     }
                     .listRowBackground(Theme.card)
                 }
-                if muscle == nil, equipment == nil, !ownMatches.isEmpty {
+                if !customMatches.isEmpty || !ownMatches.isEmpty {
                     Section("Vlastní") {
-                        ForEach(ownMatches, id: \.self) { name in
-                            Button { pick(name) } label: {
-                                Text(name).foregroundStyle(Theme.textPrimary)
-                            }
-                        }
+                        ForEach(customMatches) { exercise in row(exercise.name) }
+                        ForEach(ownMatches, id: \.self) { name in row(name) }
                     }
                     .listRowBackground(Theme.card)
                 }
                 if let muscle, !favourites.isEmpty {
                     Section("Nejčastěji · \(muscle.title)") {
-                        ForEach(favourites) { exercise in catalogRow(exercise) }
+                        ForEach(favourites) { exercise in row(exercise.name) }
                     }
                     .listRowBackground(Theme.card)
                 }
                 Section("Knihovna · \(matches.count)") {
-                    ForEach(matches) { exercise in catalogRow(exercise) }
+                    ForEach(matches) { exercise in row(exercise.name) }
                 }
                 .listRowBackground(Theme.card)
             }
@@ -91,39 +127,59 @@ struct ExerciseLibraryView: View {
                     Button("Zavřít") { dismiss() }
                 }
             }
-            .sheet(item: $detail) { exercise in
-                ExerciseDetailView(exercise: exercise) {
+            .sheet(item: Binding(get: { detail.map(NameBox.init) }, set: { detail = $0?.name })) { box in
+                ExerciseDetailView(name: box.name) {
                     detail = nil
-                    pick(exercise.name)
+                    pick(box.name)
                 }
                 .presentationDetents([.medium, .large])
+            }
+            .sheet(item: Binding(get: { creating.map(NameBox.init) }, set: { creating = $0?.name })) { box in
+                CustomExerciseEditor(name: box.name) { name in
+                    creating = nil
+                    pick(name)
+                }
             }
         }
         .appAppearance()
     }
 
-    private func catalogRow(_ exercise: CatalogExercise) -> some View {
-        HStack(spacing: 12) {
-            Button { pick(exercise.name) } label: {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(exercise.name)
-                        .scaledFont(.body, weight: .semibold)
-                        .foregroundStyle(Theme.textPrimary)
-                    Text("\(exercise.primary.map(\.title).joined(separator: ", ")) · \(exercise.equipment.title)")
-                        .scaledFont(.caption)
-                        .foregroundStyle(Theme.textSecondary)
+    /// One exercise: small picture, name and muscles; touching it adds it, the (i) shows how to do it.
+    private func row(_ name: String) -> some View {
+        let info = ExerciseInfo(name)
+        return HStack(spacing: 12) {
+            Button { pick(name) } label: {
+                HStack(spacing: 12) {
+                    ExerciseThumb(name: name, size: 40)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(name)
+                            .scaledFont(.body, weight: .semibold)
+                            .foregroundStyle(Theme.textPrimary)
+                        let meta = [info.muscleLine, info.equipment?.title ?? ""].filter { !$0.isEmpty }.joined(separator: " · ")
+                        if !meta.isEmpty {
+                            Text(meta)
+                                .scaledFont(.caption)
+                                .foregroundStyle(Theme.textSecondary)
+                                .lineLimit(1)
+                        }
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
-            Button { detail = exercise } label: {
+            .buttonStyle(PillPressStyle())
+            Button {
+                Haptics.light()
+                detail = name
+            } label: {
                 Image(systemName: "info.circle")
+                    .scaledFont(.body, weight: .semibold)
                     .foregroundStyle(Theme.textSecondary)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 40, height: 40)
+                    .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Jak na \(exercise.name)")
+            .buttonStyle(PillPressStyle())
+            .accessibilityLabel("Jak na \(name)")
         }
     }
 
@@ -166,47 +222,13 @@ struct ExerciseLibraryView: View {
     }
 
     private func pick(_ name: String) {
+        Haptics.success()
         onPick(name)
         dismiss()
     }
 }
 
-/// How to do an exercise and what it works, with the muscles lit on the body map.
-struct ExerciseDetailView: View {
-    let exercise: CatalogExercise
-    let onAdd: () -> Void
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text(exercise.name)
-                    .scaledFont(.title, weight: .bold)
-                    .foregroundStyle(Theme.textPrimary)
-                Text(exercise.equipment.title.uppercased()).labelStyle()
-                MuscleMapView(intensity: Dictionary(uniqueKeysWithValues:
-                    exercise.primary.map { ($0, 1.0) } + exercise.secondary.filter { !exercise.primary.contains($0) }.map { ($0, 0.45) }))
-                    .frame(height: 230)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("HLAVNĚ: \(exercise.primary.map(\.title).joined(separator: ", "))")
-                        .scaledFont(.caption, weight: .semibold)
-                        .foregroundStyle(Theme.textPrimary)
-                    if !exercise.secondary.isEmpty {
-                        Text("POMÁHAJÍ: \(exercise.secondary.map(\.title).joined(separator: ", "))")
-                            .scaledFont(.caption)
-                            .foregroundStyle(Theme.textSecondary)
-                    }
-                }
-                Text(exercise.tip)
-                    .scaledFont(.body)
-                    .foregroundStyle(Theme.textPrimary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Button("PŘIDAT DO TRÉNINKU", action: onAdd)
-                    .buttonStyle(PrimaryButtonStyle())
-            }
-            .padding(Theme.screenPadding)
-            .padding(.top, 8)
-        }
-        .screenBackground()
-        .appAppearance()
-    }
+private struct NameBox: Identifiable {
+    let name: String
+    var id: String { name }
 }

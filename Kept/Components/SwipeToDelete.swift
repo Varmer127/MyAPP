@@ -1,5 +1,22 @@
 import SwiftUI
 
+/// Lets swipe rows inside another swipe row (sets inside an exercise card) win: while an inner row is being
+/// swiped, the outer one stays put.
+final class SwipeNest {
+    var innerDragging = false
+}
+
+private struct SwipeNestKey: EnvironmentKey {
+    static let defaultValue: SwipeNest? = nil
+}
+
+private extension EnvironmentValues {
+    var swipeNest: SwipeNest? {
+        get { self[SwipeNestKey.self] }
+        set { self[SwipeNestKey.self] = newValue }
+    }
+}
+
 /// Swiping a row to the left uncovers a red delete button; a long swipe deletes straight away.
 /// For rows outside a `List`, where the system swipe actions are not available.
 private struct SwipeToDelete: ViewModifier {
@@ -12,6 +29,10 @@ private struct SwipeToDelete: ViewModifier {
     @State private var offset: CGFloat = 0
     /// Where the row sat when the current swipe began.
     @State private var dragStart: CGFloat?
+    /// Told by swipe rows inside this one when they are being swiped.
+    @State private var nest = SwipeNest()
+    /// The swipe row this one sits in, if any.
+    @Environment(\.swipeNest) private var parent
 
     private static let revealWidth: CGFloat = 84
 
@@ -34,6 +55,7 @@ private struct SwipeToDelete: ViewModifier {
                 .accessibilityLabel(label)
             }
             content
+                .environment(\.swipeNest, nest)
                 .background(background)
                 .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
                 .offset(x: offset)
@@ -43,12 +65,24 @@ private struct SwipeToDelete: ViewModifier {
             DragGesture(minimumDistance: 20)
                 .onChanged { value in
                     guard isEnabled, abs(value.translation.width) > abs(value.translation.height) else { return }
+                    parent?.innerDragging = true
+                    // An inner row is being swiped: this one does not move.
+                    if nest.innerDragging {
+                        if offset != 0 { withAnimation(.spring(duration: 0.2)) { offset = 0 } }
+                        dragStart = nil
+                        return
+                    }
                     let start = dragStart ?? offset
                     dragStart = start
                     offset = min(0, max(-Self.revealWidth * 1.5, start + value.translation.width))
                 }
                 .onEnded { value in
                     dragStart = nil
+                    parent?.innerDragging = false
+                    if nest.innerDragging {
+                        nest.innerDragging = false
+                        return
+                    }
                     guard isEnabled, abs(value.translation.width) > abs(value.translation.height) else { return }
                     withAnimation(.spring(duration: 0.25)) {
                         if offset < -Self.revealWidth * 1.3 {

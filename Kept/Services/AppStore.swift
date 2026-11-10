@@ -95,4 +95,31 @@ enum AppStore {
         WidgetBridge.update(tasks: tasks, plans: plans, targets: UserSettings.current(in: context).weeklyTargets)
         await NotificationManager.reschedule(context: context)
     }
+
+    /// The task whose timer is running: the focus or the workout shown on the lock screen.
+    private static func timedTask(in context: ModelContext) -> TaskItem? {
+        let tasks = (try? context.fetch(FetchDescriptor<TaskItem>())) ?? []
+        return tasks.first { $0.status == .pending && !$0.isRemoved && $0.activeFocusSession != nil }
+    }
+
+    /// STOP on the lock screen: the timer stops, the time is kept and the task stays open.
+    static func stopTimerFromWidget() async {
+        let context = container.mainContext
+        if let task = timedTask(in: context) {
+            FocusView.stop(task)
+            Persistence.save(context)
+        } else {
+            FocusActivityManager.end()
+            GymActivityManager.end()
+        }
+    }
+
+    /// Pause and resume of the focus timer on the lock screen.
+    static func pauseFocusFromWidget(_ pause: Bool) async {
+        let context = container.mainContext
+        guard let task = timedTask(in: context), task.category != .gym,
+              let session = task.activeFocusSession else { return FocusActivityManager.end() }
+        guard session.isPaused != pause else { return FocusActivityManager.sync(session, title: task.title) }
+        FocusView.togglePause(session, title: task.title)
+    }
 }

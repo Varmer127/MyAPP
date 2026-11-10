@@ -85,15 +85,10 @@ extension TodayView {
         let streak = day.streak
         let atRisk = streakAtRisk(day, now: now)
         // The date shares a row with the bell and the flame; the add button sits under them, across the width.
-        // At very large text the date takes its own row.
+        // With larger text the date wraps or shrinks a little instead of pushing the bell and the flame to a row
+        // of their own; only at the accessibility sizes do they stack.
         return VStack(alignment: .leading, spacing: 14) {
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .center, spacing: 12) {
-                    dateBlock(now: now, atRisk: atRisk, streak: streak)
-                    Spacer(minLength: 8)
-                    NotificationBell()
-                    flame(streak: streak, atRisk: atRisk)
-                }
+            if typeSize >= .accessibility1 {
                 VStack(alignment: .leading, spacing: 12) {
                     dateBlock(now: now, atRisk: atRisk, streak: streak)
                     HStack(spacing: 12) {
@@ -101,6 +96,16 @@ extension TodayView {
                         NotificationBell()
                         flame(streak: streak, atRisk: atRisk)
                     }
+                }
+            } else {
+                HStack(alignment: .top, spacing: 12) {
+                    dateBlock(now: now, atRisk: atRisk, streak: streak)
+                        .layoutPriority(1)
+                    Spacer(minLength: 0)
+                    NotificationBell()
+                        .fixedSize()
+                    flame(streak: streak, atRisk: atRisk)
+                        .fixedSize()
                 }
             }
             HStack(spacing: 10) {
@@ -115,11 +120,12 @@ extension TodayView {
         VStack(alignment: .leading, spacing: 4) {
             Text("DNES").labelStyle()
             Text(now.longDayText)
-                // Smaller than the title size so the date, the add button and the flame fit in one row.
+                // Smaller than the title size so the date, the bell and the flame fit in one row.
                 .scaledFont(24, weight: .bold)
                 .foregroundStyle(Theme.textPrimary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+                .fixedSize(horizontal: false, vertical: true)
             if atRisk {
                 Text("Série zhasne o půlnoci")
                     .scaledFont(.caption, weight: .semibold)
@@ -275,6 +281,32 @@ extension TodayView {
                             }
                         }
                         .buttonStyle(PrimaryButtonStyle())
+                    } else if next.activeFocusSession != nil, next.category == .gym || next.usesFocus {
+                        // A workout or focus left running in the background is one tap away, and so is stopping it.
+                        HStack(spacing: 8) {
+                            Button {
+                                Haptics.light()
+                                if next.category == .gym { gymTimerTask = next } else { focusTask = next }
+                            } label: {
+                                Label(next.category == .gym ? "POKRAČOVAT V TRÉNINKU" : "POKRAČOVAT VE FOCUSU",
+                                      systemImage: "play.fill")
+                                    .symbolEffect(.pulse, options: .repeating)
+                            }
+                            .buttonStyle(PrimaryButtonStyle(color: Theme.green, textColor: Color(hex: 0x000000)))
+                            Button {
+                                Haptics.medium()
+                                stopTask = next
+                            } label: {
+                                Image(systemName: "stop.fill")
+                                    .scaledFont(.body, weight: .heavy)
+                                    .foregroundStyle(Theme.red)
+                                    .frame(width: 52, height: 52)
+                                    .background(Theme.red.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                                    .contentShape(RoundedRectangle(cornerRadius: 12))
+                            }
+                            .buttonStyle(PillPressStyle())
+                            .accessibilityLabel(next.category == .gym ? "Zastavit trénink" : "Zastavit časovač")
+                        }
                     } else if !next.requiresProof, next.category != .gym {
                         Button("SPLNIL JSEM") { confirmDone = next }
                             .buttonStyle(PrimaryButtonStyle(color: Theme.green, textColor: Color(hex: 0x000000)))

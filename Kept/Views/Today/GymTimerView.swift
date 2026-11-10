@@ -64,8 +64,9 @@ struct GymTimerView: View {
         }
         .onAppear {
             task.startFocusIfNeeded(in: context)
+            // The workout starts empty; the template is one tap away, never filled in on its own.
             if task.workoutType.isEmpty, let first = settings?.workoutPresets.first {
-                pickWorkout(first, loadTemplate: logs.isEmpty && !isSimple)
+                pickWorkout(first, loadTemplate: false)
             }
             // Coming back to a workout keeps the rest length it had on the lock screen.
             if selectedName.isEmpty, let seconds = WidgetSnapshot.load()?.gym?.restSeconds,
@@ -178,17 +179,24 @@ struct GymTimerView: View {
                 .buttonStyle(PrimaryButtonStyle(color: rest == nil ? Theme.textPrimary : (reached ? Theme.green : Theme.orange)))
                 Button("DOKONČIT TRÉNINK") { end(completing: true) }
                     .buttonStyle(SecondaryButtonStyle())
-                Button { confirmsStop = true } label: {
-                    Label("STOP", systemImage: "stop.fill")
-                        .scaledFont(.body, weight: .heavy)
-                        .tracking(0.6)
-                        .foregroundStyle(Theme.red)
-                        .frame(maxWidth: .infinity, minHeight: 40)
-                }
-                .buttonStyle(.plain)
+                stopButton
             }
             .padding(Theme.screenPadding)
         }
+    }
+
+    /// Stops the stopwatch without completing the workout, after one question. Same in both modes.
+    private var stopButton: some View {
+        Button {
+            Haptics.medium()
+            confirmsStop = true
+        } label: {
+            Label("ZASTAVIT TRÉNINK", systemImage: "stop.fill")
+                .scaledFont(.body, weight: .heavy)
+                .tracking(0.6)
+                .frame(maxWidth: .infinity, minHeight: 40)
+        }
+        .buttonStyle(PillButtonStyle(kind: .destructive))
     }
 
     /// Advanced mode: exercises set by set under a fixed header with the rest bar.
@@ -198,16 +206,24 @@ struct GymTimerView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     workoutPicker
+                    if logs.isEmpty {
+                        emptyWorkout
+                    }
                     ForEach(logs) { log in
                         ExerciseCard(log: log, history: history, onTick: { set in tick(set, of: log) },
                                      onRemove: { remove(log) })
+                            .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity),
+                                                    removal: .move(edge: .leading).combined(with: .opacity)))
                     }
-                    Button {
-                        showsLibrary = true
-                    } label: {
-                        Label("PŘIDAT CVIK", systemImage: "plus")
+                    if !logs.isEmpty {
+                        Button {
+                            Haptics.light()
+                            showsLibrary = true
+                        } label: {
+                            Label("PŘIDAT CVIK", systemImage: "plus")
+                        }
+                        .buttonStyle(SecondaryButtonStyle())
                     }
-                    .buttonStyle(SecondaryButtonStyle())
                     if !logs.isEmpty, !task.workoutType.isEmpty {
                         Button(savedTemplate ? "Uloženo jako šablona „\(task.workoutType)“" : "Uložit cviky jako šablonu „\(task.workoutType)“") {
                             settings?.setTemplate(logs.map(\.name), for: task.workoutType)
@@ -221,15 +237,13 @@ struct GymTimerView: View {
                 }
                 .padding(.horizontal, Theme.screenPadding)
                 .padding(.bottom, 16)
+                .animation(.spring(response: 0.45, dampingFraction: 0.82), value: logs.map(\.persistentModelID))
             }
             .scrollDismissesKeyboard(.interactively)
             VStack(spacing: 8) {
                 Button("DOKONČIT TRÉNINK") { end(completing: true) }
                     .buttonStyle(PrimaryButtonStyle())
-                Button("Ukončit bez splnění") { end(completing: false) }
-                    .scaledFont(.body)
-                    .foregroundStyle(Theme.textSecondary)
-                    .frame(minHeight: 36)
+                stopButton
             }
             .padding(.horizontal, Theme.screenPadding)
             .padding(.vertical, 10)
@@ -320,7 +334,10 @@ struct GymTimerView: View {
                 HStack(spacing: 8) {
                     ForEach(settings?.workoutPresets ?? [], id: \.self) { name in
                         let isOn = task.workoutType == name
-                        Button { pickWorkout(name, loadTemplate: !isSimple && logs.allSatisfy { log in !log.setLogs.contains(where: \.isDone) }) } label: {
+                        Button {
+                            Haptics.light()
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) { pickWorkout(name, loadTemplate: false) }
+                        } label: {
                             Text(name)
                                 .scaledFont(.body, weight: .semibold)
                                 .padding(.horizontal, 14)
@@ -330,7 +347,7 @@ struct GymTimerView: View {
                                 .clipShape(Capsule())
                                 .overlay(Capsule().stroke(Theme.border, lineWidth: 1))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(PillPressStyle())
                     }
                 }
             }
@@ -404,6 +421,44 @@ struct GymTimerView: View {
         .shadow(color: Theme.green.opacity(0.35), radius: 12, y: 4)
     }
 
+    /// A fresh workout: one big way to add the first exercise, and the saved template a tap away.
+    private var emptyWorkout: some View {
+        let template = task.workoutType.isEmpty ? [] : (settings?.template(for: task.workoutType) ?? [])
+        return VStack(spacing: 12) {
+            Image(systemName: "dumbbell.fill")
+                .font(.system(size: 34, weight: .semibold))
+                .foregroundStyle(Theme.textSecondary)
+                .symbolEffect(.bounce, options: .nonRepeating, value: task.workoutType)
+                .frame(width: 72, height: 72)
+                .background(Theme.cardRaised, in: Circle())
+            Text("Začni prvním cvikem")
+                .scaledFont(.heading, weight: .bold)
+                .foregroundStyle(Theme.textPrimary)
+            Button {
+                Haptics.light()
+                showsLibrary = true
+            } label: {
+                Label("PŘIDAT CVIK", systemImage: "plus")
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            if !template.isEmpty {
+                Button {
+                    Haptics.medium()
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) {
+                        for exercise in template { add(exercise) }
+                    }
+                } label: {
+                    Label("Načíst šablonu „\(task.workoutType)“ · \(template.count) cviků", systemImage: "square.stack.3d.down.right")
+                }
+                .buttonStyle(SecondaryButtonStyle())
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .card()
+        .transition(.opacity.combined(with: .scale(scale: 0.96)))
+    }
+
     // MARK: Actions
 
     /// Chooses what is trained today. With nothing done yet, the workout's exercises are loaded straight away.
@@ -421,8 +476,8 @@ struct GymTimerView: View {
     }
 
     /// Adds an exercise with last time's working sets ready to tick off, or three empty sets.
+    /// The same exercise can go in twice, for example bench press at the start and again at the end.
     private func add(_ name: String) {
-        guard !task.exercises.contains(where: { $0.name.activityKey == name.activityKey }) else { return }
         let log = ExerciseLog(name: name, weight: 0, reps: 0, sets: 0)
         log.task = task
         context.insert(log)
@@ -437,7 +492,10 @@ struct GymTimerView: View {
     }
 
     private func remove(_ log: ExerciseLog) {
-        context.delete(log)
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+            context.delete(log)
+        }
+        Haptics.medium()
         Persistence.save(context)
     }
 
@@ -505,26 +563,27 @@ private struct ExerciseCard: View {
     let onRemove: () -> Void
     @State private var confirmsRemove = false
 
-    private var catalog: CatalogExercise? { ExerciseCatalog.named(log.name) }
-
     var body: some View {
         let sets = log.orderedSets
         let last = GymService.last(log.name, in: history)
         VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .top) {
+            HStack(alignment: .center, spacing: 10) {
+                ExerciseThumb(name: log.name, size: 40)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(log.name)
                         .scaledFont(.heading, weight: .bold)
                         .foregroundStyle(Theme.textPrimary)
-                    if let catalog {
-                        Text(catalog.primary.map(\.title).joined(separator: ", "))
+                    let muscles = ExerciseInfo(log.name).muscleLine
+                    if !muscles.isEmpty {
+                        Text(muscles)
                             .scaledFont(.caption)
                             .foregroundStyle(Theme.textSecondary)
                     }
                 }
                 Spacer()
+                ExerciseInfoButton(name: log.name)
                 Menu {
-                    Button("Odebrat cvik", role: .destructive) { confirmsRemove = true }
+                    Button("Odebrat cvik", systemImage: "trash", role: .destructive) { requestRemove() }
                 } label: {
                     Image(systemName: "ellipsis")
                         .foregroundStyle(Theme.textSecondary)
@@ -534,7 +593,6 @@ private struct ExerciseCard: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
-            .swipeToDelete("Odebrat cvik", cornerRadius: 8) { confirmsRemove = true }
             if let hint = GymService.suggestion(for: log.name, in: history) {
                 Label(hint, systemImage: "arrow.up.right")
                     .scaledFont(.caption, weight: .semibold)
@@ -563,18 +621,19 @@ private struct ExerciseCard: View {
             .scaledFont(.body, weight: .semibold)
             .foregroundStyle(Theme.textPrimary)
             .frame(minHeight: 36)
-            if let tip = catalog?.tip {
-                Text(tip)
-                    .scaledFont(.caption)
-                    .foregroundStyle(Theme.textTertiary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
         }
         .card()
+        // Swiping the whole card to the left removes the exercise; a set inside is still swiped away on its own.
+        .swipeToDelete("Odebrat cvik", cornerRadius: Theme.radius) { requestRemove() }
         .alert("Odebrat \(log.name)?", isPresented: $confirmsRemove) {
             Button("Odebrat", role: .destructive, action: onRemove)
             Button("Zrušit", role: .cancel) {}
         }
+    }
+
+    /// An exercise with nothing done yet goes straight away; one with done sets asks first.
+    private func requestRemove() {
+        if log.setLogs.contains(where: \.isDone) { confirmsRemove = true } else { onRemove() }
     }
 
     private func delete(_ set: SetLog) {

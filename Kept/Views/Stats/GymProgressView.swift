@@ -10,6 +10,7 @@ struct GymProgressView: View {
     @State private var healthWeights: [(date: Date, kilograms: Double)] = []
     @State private var selectedLift = ""
     @State private var liftMetric: LiftMetric = .weight
+    @State private var showsEarlierSplits = false
 
     private static let recentDays = 30
     private static let neglectDays = 10
@@ -138,22 +139,23 @@ struct GymProgressView: View {
 
     // MARK: What gets trained
 
+    /// Only the splits set up now are listed with their gaps. Splits that were renamed or removed in the gym
+    /// settings fold into one quiet line, so a changed plan does not keep warning about workouts no longer in it.
     @ViewBuilder
     private var bodyParts: some View {
         let presets = settingsList.first?.workoutPresets ?? UserSettings.defaultWorkoutPresets
         let logged = recent.filter { !$0.workoutType.isEmpty }
         let counts = Dictionary(grouping: logged, by: \.workoutType).mapValues(\.count)
-        // Presets are listed even with zero sessions: the gaps are the point.
-        let names = presets + counts.keys.filter { !presets.contains($0) }.sorted()
-        let maximum = max(counts.values.max() ?? 0, 1)
+        let earlier = counts.keys.filter { !presets.contains($0) }.sorted()
+        let maximum = max(presets.map { counts[$0] ?? 0 }.max() ?? 0, 1)
         let lastTrained = Dictionary(grouping: workouts.filter { !$0.workoutType.isEmpty }, by: \.workoutType)
             .mapValues { $0.map(Self.date(of:)).max() ?? .distantPast }
 
-        if !names.isEmpty {
+        if !presets.isEmpty {
             VStack(spacing: 10) {
                 SectionLabel(text: "Co jsi jel za \(Self.recentDays) dní")
                 VStack(spacing: 14) {
-                    ForEach(names, id: \.self) { name in
+                    ForEach(presets, id: \.self) { name in
                         let count = counts[name] ?? 0
                         VStack(spacing: 6) {
                             HStack {
@@ -163,14 +165,51 @@ struct GymProgressView: View {
                                 Spacer()
                                 Text("\(count)×")
                                     .scaledFont(.body, weight: .semibold)
-                                    .foregroundStyle(count == 0 ? Theme.orange : Theme.textPrimary)
+                                    .foregroundStyle(Theme.textPrimary)
+                                    .contentTransition(.numericText())
                             }
                             ThinBar(value: Double(count) / Double(maximum))
-                            if let warning = neglectWarning(name, last: lastTrained[name], isPreset: presets.contains(name)) {
-                                Text(warning)
+                            if let note = splitNote(last: lastTrained[name]) {
+                                Text(note.text)
                                     .scaledFont(.caption)
-                                    .foregroundStyle(Theme.orange)
+                                    .foregroundStyle(note.isWarning ? Theme.orange : Theme.textTertiary)
                                     .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
+                    }
+                    if !earlier.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Button {
+                                Haptics.light()
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { showsEarlierSplits.toggle() }
+                            } label: {
+                                HStack {
+                                    Text("Dřívější rozdělení · \(earlier.count)")
+                                        .scaledFont(.caption, weight: .semibold)
+                                    Spacer()
+                                    Image(systemName: "chevron.down")
+                                        .scaledFont(.caption, weight: .bold)
+                                        .rotationEffect(.degrees(showsEarlierSplits ? 180 : 0))
+                                }
+                                .foregroundStyle(Theme.textSecondary)
+                                .frame(minHeight: 32)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            if showsEarlierSplits {
+                                ForEach(earlier, id: \.self) { name in
+                                    HStack {
+                                        Text(name)
+                                        Spacer()
+                                        Text("\(counts[name] ?? 0)×")
+                                    }
+                                    .scaledFont(.caption)
+                                    .foregroundStyle(Theme.textTertiary)
+                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                                }
+                                Text("Už nejsou v nastavení gymu. Z přehledu samy zmizí, až budou starší než \(Self.recentDays) dní.")
+                                    .scaledFont(.caption)
+                                    .foregroundStyle(Theme.textTertiary)
                             }
                         }
                     }
@@ -190,11 +229,13 @@ struct GymProgressView: View {
         }
     }
 
-    private func neglectWarning(_ name: String, last: Date?, isPreset: Bool) -> String? {
-        guard isPreset, !workouts.isEmpty else { return nil }
-        guard let last else { return "Tohle jsi ještě nikdy nejel." }
+    /// A split never trained is simply not started yet (it may have just been added); only a split that was
+    /// trained and then left for a long time gets the orange warning.
+    private func splitNote(last: Date?) -> (text: String, isWarning: Bool)? {
+        guard !workouts.isEmpty else { return nil }
+        guard let last else { return (String(localized: "Zatím ani jednou"), false) }
         let days = Calendar.app.dateComponents([.day], from: last.startOfDay, to: Date.now.startOfDay).day ?? 0
-        return days >= Self.neglectDays ? "Naposledy před \(days) dny. Vynecháváš to." : nil
+        return days >= Self.neglectDays ? (String(localized: "Naposledy před \(days) dny. Vynecháváš to."), true) : nil
     }
 
     // MARK: Strength

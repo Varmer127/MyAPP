@@ -1,31 +1,37 @@
 import ActivityKit
+import AppIntents
 import SwiftUI
 import WidgetKit
 
 /// The running focus timer on the lock screen and in the Dynamic Island.
 /// The system ticks the timer text itself, so it keeps counting while the app is suspended.
+/// Pause and STOP work right there, without opening the app.
 struct FocusLiveActivity: Widget {
     private static let orange = Color(red: 1.0, green: 0.62, blue: 0.04)
+    static let red = Color(red: 1.0, green: 0.27, blue: 0.23)
 
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: FocusActivityAttributes.self) { context in
-            HStack(alignment: .center, spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    statusLabel(context)
-                    Text(context.attributes.title)
-                        .font(.system(size: 17, weight: .semibold))
+            VStack(spacing: 12) {
+                HStack(alignment: .center, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        statusLabel(context)
+                        Text(context.attributes.title)
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .lineLimit(1)
+                        Text("Plán \(context.attributes.plannedMinutes) min")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.white.opacity(0.6))
+                    }
+                    Spacer()
+                    timerText(context)
+                        .font(.system(size: 38, weight: .heavy))
                         .foregroundStyle(.white)
-                        .lineLimit(1)
-                    Text("Plán \(context.attributes.plannedMinutes) min")
-                        .font(.system(size: 13))
-                        .foregroundStyle(.white.opacity(0.6))
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: 150, alignment: .trailing)
                 }
-                Spacer()
-                timerText(context)
-                    .font(.system(size: 38, weight: .heavy))
-                    .foregroundStyle(.white)
-                    .multilineTextAlignment(.trailing)
-                    .frame(maxWidth: 150, alignment: .trailing)
+                controls(context)
             }
             .padding(16)
             .activityBackgroundTint(Color.black.opacity(0.85))
@@ -42,9 +48,12 @@ struct FocusLiveActivity: Widget {
                         .frame(maxWidth: 90, alignment: .trailing)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    Text(context.attributes.title)
-                        .font(.system(size: 15, weight: .semibold))
-                        .lineLimit(1)
+                    VStack(spacing: 10) {
+                        Text(context.attributes.title)
+                            .font(.system(size: 15, weight: .semibold))
+                            .lineLimit(1)
+                        controls(context)
+                    }
                 }
             } compactLeading: {
                 Image(systemName: context.state.isPaused ? "pause.fill" : "timer")
@@ -56,6 +65,31 @@ struct FocusLiveActivity: Widget {
             } minimal: {
                 Image(systemName: context.state.isPaused ? "pause.fill" : "timer")
             }
+        }
+    }
+
+    /// Pause or resume, and STOP. Stopping keeps the time and leaves the task open.
+    private func controls(_ context: ActivityViewContext<FocusActivityAttributes>) -> some View {
+        let paused = context.state.isPaused
+        return HStack(spacing: 8) {
+            Button(intent: FocusPauseIntent(pause: !paused)) {
+                Label(paused ? "POKRAČOVAT" : "PAUZA", systemImage: paused ? "play.fill" : "pause.fill")
+                    .font(.system(size: 13, weight: .heavy))
+                    .foregroundStyle(.black)
+                    .frame(maxWidth: .infinity, minHeight: 36)
+                    .background(paused ? Self.orange : .white)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            Button(intent: StopTimerIntent()) {
+                Label("STOP", systemImage: "stop.fill")
+                    .font(.system(size: 13, weight: .heavy))
+                    .foregroundStyle(Self.red)
+                    .frame(minWidth: 96, minHeight: 36)
+                    .background(Self.red.opacity(0.18))
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
         }
     }
 

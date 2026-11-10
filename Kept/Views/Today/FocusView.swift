@@ -86,7 +86,10 @@ struct FocusView: View {
                 HStack(spacing: 10) {
                     Button(session?.isPaused == true ? "POKRAČOVAT" : "PAUZA", action: togglePause)
                         .buttonStyle(SecondaryButtonStyle())
-                    Button { confirmsStop = true } label: {
+                    Button {
+                        Haptics.medium()
+                        confirmsStop = true
+                    } label: {
                         Label("STOP", systemImage: "stop.fill")
                     }
                     .buttonStyle(SecondaryButtonStyle(textColor: Theme.red))

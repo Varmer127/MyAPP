@@ -173,10 +173,13 @@ struct TaskCard: View {
                         .foregroundStyle(Theme.textPrimary)
                 }
                 Spacer()
-                Button(action: onStop) {
+                Button {
+                    Haptics.medium()
+                    onStop()
+                } label: {
                     timerIcon("stop.fill", color: Theme.red)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(PillPressStyle())
                 .accessibilityLabel("Zastavit časovač")
                 Button {
                     FocusView.togglePause(session, title: task.title)
@@ -210,10 +213,13 @@ struct TaskCard: View {
                         .foregroundStyle(Theme.textPrimary)
                 }
                 Spacer()
-                Button(action: onStop) {
+                Button {
+                    Haptics.medium()
+                    onStop()
+                } label: {
                     timerIcon("stop.fill", color: Theme.red)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(PillPressStyle())
                 .accessibilityLabel("Zastavit stopky")
                 timerIcon("arrow.up.left.and.arrow.down.right")
             }

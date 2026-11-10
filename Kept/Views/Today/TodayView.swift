@@ -142,6 +142,8 @@ struct TodayView: View {
 
     @Environment(\.scenePhase) var scenePhase
 
+    @Environment(\.dynamicTypeSize) var typeSize
+
     static let refreshInterval: TimeInterval = 60
 
     static let comebackThreshold = 0.6
@@ -244,12 +246,13 @@ struct TodayView: View {
             }
         }
         .sensoryFeedback(.success, trigger: pointsGain?.id) { _, new in new != nil }
-        .confirmationDialog("Zastavit časovač?", isPresented: Binding(get: { stopTask != nil }, set: { if !$0 { stopTask = nil } }),
+        .confirmationDialog(stopTask?.category == .gym ? "Zastavit trénink?" : "Zastavit časovač?", isPresented: Binding(get: { stopTask != nil }, set: { if !$0 { stopTask = nil } }),
                             titleVisibility: .visible, presenting: stopTask) { task in
             Button("Zastavit", role: .destructive) { withAnimation { FocusView.stop(task) } }
             Button("Nechat běžet", role: .cancel) {}
-        } message: { _ in
-            Text("Úkol zůstane otevřený a odpracovaný čas se uloží.")
+        } message: { task in
+            Text(task.category == .gym ? "Stopky se zastaví a úkol zůstane otevřený. To, co jsi zapsal, se uloží."
+                                       : "Úkol zůstane otevřený a odpracovaný čas se uloží.")
         }
         // The last open task of the day closes the day: a short, full-screen moment.
         .onChange(of: todayKept) { _, kept in
