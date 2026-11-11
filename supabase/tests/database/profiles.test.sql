@@ -1,7 +1,7 @@
 -- Access rules and age gate of the account tables. Runs in CI against a local copy of the database.
 -- The work is done as a signed-in user and recorded in a temp table; the assertions are made as the owner.
 begin;
-select plan(18);
+select plan(17);
 
 insert into auth.users (id, instance_id, aud, role, email) values
     ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'a@test.invalid'),
