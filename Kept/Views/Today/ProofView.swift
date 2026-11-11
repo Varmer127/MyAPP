@@ -38,6 +38,7 @@ struct ProofInput: View {
                     .frame(height: 180)
                     .frame(maxWidth: .infinity)
                     .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
+                    .accessibilityLabel("Fotka jako důkaz splnění")
                 Button("Odebrat fotku") {
                     draft.photo = nil
                 }

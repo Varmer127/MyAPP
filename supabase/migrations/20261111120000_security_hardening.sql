@@ -73,13 +73,25 @@ $$;
 -- Characters nobody sees but that change what is shown: control characters (new lines included),
 -- zero-width spaces and the marks that turn the direction of the text around. The joiner inside
 -- emoji (family, flags) is left alone.
+-- The pattern is put together from character numbers on purpose: the characters themselves are invisible,
+-- and a copy of this file through a clipboard once turned them into something else.
+create function public.hidden_characters_pattern()
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+    select '[' || chr(1) || '-' || chr(31) || chr(127) || '-' || chr(159) || chr(1564) || chr(8203) || chr(8204) || chr(8206) || chr(8207)
+               || chr(8234) || '-' || chr(8238) || chr(8288) || chr(8294) || '-' || chr(8297) || chr(65279) || ']';
+$$;
+
 create function public.has_hidden_characters(p_text text)
 returns boolean
 language sql
 immutable
 set search_path = ''
 as $$
-    select coalesce(p_text ~ '[\u0001-\u001F\u007F-\u009F؜​‌‎‏‪-‮⁠⁦-⁩﻿]', false);
+    select coalesce(p_text ~ public.hidden_characters_pattern(), false);
 $$;
 
 create function public.has_link(p_text text)
@@ -97,7 +109,7 @@ language sql
 immutable
 set search_path = ''
 as $$
-    select btrim(regexp_replace(p_text, '[\u0001-\u001F\u007F-\u009F؜​‌‎‏‪-‮⁠⁦-⁩﻿]', '', 'g'));
+    select btrim(regexp_replace(p_text, public.hidden_characters_pattern(), '', 'g'));
 $$;
 
 -- A name is the one text a stranger sees (in a friend request), so it is refused, not quietly repaired.
@@ -162,7 +174,7 @@ create trigger reports_plain_text before insert or update of note on public.repo
 do $$
 declare f text;
 begin
-    foreach f in array array['has_hidden_characters(text)', 'has_link(text)', 'plain_text(text)',
+    foreach f in array array['hidden_characters_pattern()', 'has_hidden_characters(text)', 'has_link(text)', 'plain_text(text)',
                              'guard_display_name()', 'strip_hidden_characters()'] loop
         execute format('revoke all on function public.%s from public, anon, authenticated', f);
     end loop;

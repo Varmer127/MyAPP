@@ -481,6 +481,7 @@ extension OnboardingView {
                     .resizable()
                     .frame(width: 38, height: 38)
                     .clipShape(RoundedRectangle(cornerRadius: 9))
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     HStack {
                         Text(sample.title).scaledFont(.body, weight: .bold)

@@ -16,15 +16,16 @@ enum Theme {
     static let textPrimary = Color(dark: 0xFFFFFF, light: 0x0A0A0A)
     /// Text or icon placed on a `textPrimary` or accent-coloured fill.
     static let onPrimary = Color(dark: 0x000000, light: 0xFFFFFF)
-    static let textSecondary = Color(dark: 0x8E8E93, light: 0x6A6A70)
+    static let textSecondary = Color(dark: 0x8E8E93, light: 0x68686E)
     /// Meant for icons and thin lines. Text in this colour was under 3 : 1 against the cards, so it now sits at about 5 : 1,
     /// right next to `textSecondary`: there are two readable text levels, not three.
-    static let textTertiary = Color(dark: 0x8A8A90, light: 0x6F6F76)
+    static let textTertiary = Color(dark: 0x8A8A90, light: 0x68686F)
 
-    // Deeper on a light background so they reach 4.5 : 1 as text on both the cards and the page.
-    static let green = Color(dark: 0x30D158, light: 0x16803A)
-    static let orange = Color(dark: 0xFF9F0A, light: 0xA35B00)
-    static let red = Color(dark: 0xFF453A, light: 0xD92D20)
+    // Deeper on a light background so they reach 4.5 : 1 as text on the cards, the page and the raised grey fill
+    // (`cardRaised`), which is the darkest surface text sits on in the light appearance.
+    static let green = Color(dark: 0x30D158, light: 0x157836)
+    static let orange = Color(dark: 0xFF9F0A, light: 0x9C5700)
+    static let red = Color(dark: 0xFF453A, light: 0xC8291E)
 
     static let radius: CGFloat = 14
     static let screenPadding: CGFloat = 20

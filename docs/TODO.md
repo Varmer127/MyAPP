@@ -116,7 +116,7 @@ Kód používá jen barvy z tématu, ale tyto obrazovky jsme ve světlém režim
 - Přihlášení e-mailem (SMTP) a vlastní doména přihlášení: fáze 6.
 - Ranní přehled: Philip ověří a ozve se.
 - Chyba přihlášení Discordem (stav se nezměnil): příčinou byl dotaz na sloupec `invite_code`, který vznikne až migrací fáze 1. Opraveno i tím, že se chyba ukáže a nabídne „Zkusit znovu“.
-- Věková brána podle vzoru Instagramu a Facebooku (26. 10.): jen zadání data narození, bez zaškrtávátka věku; souhlas s pravidly je jedna věta pod tlačítkem „Vytvořit účet“; hláška o 16 letech až po zamítnutí. Zbývá právní ověření (v ČR je věk souhlasu se zpracováním osobních údajů 15 let) a odkaz na pravidla, až budou na webu (fáze 6).
+- Věková brána podle vzoru Instagramu a Facebooku (26. 10.): jen zadání data narození, bez zaškrtávátka věku; souhlas s pravidly je jedna věta pod tlačítkem „Vytvořit účet“; hláška o věkové hranici až po zamítnutí. Hranice snížena na zákonných 15 let (11. 11. 2026); server ukládá i verzi přijatých podmínek. Zbývá odkaz na pravidla, až budou na webu (fáze 6).
 
 ## Fáze 2: pošťouchnutí a Nerušit (26. 10. 2026, v práci)
 - Hotovo v kódu: pošťouchnutí jen vlastním textem (1 až 100 znaků, bez odkazů, jednomu člověku 1× za 3 h, bez denního limitu, ochranný strop 120 za hodinu), příchozí pošťouchnutí v seznamu přátel, smazání a nahlášení (nahlášený text zmizí a jde s nahlášením moderátorovi), zrušením přátelství se pošťouchnutí mezi nimi smažou; režim Nerušit (důvod ze seznamu nebo vlastní do 6 slov, volitelně ukázat přátelům, volitelný automatický konec, dokud je zapnuté, nejde šťouchnout).
@@ -164,3 +164,38 @@ Kód používá jen barvy z tématu, ale tyto obrazovky jsme ve světlém režim
 - Bezpečnostní kontrola Supabase: jen očekávaná upozornění (tabulky bez pravidel jsou záměrně zavřené, funkce pro přihlášené jsou API aplikace a každá si kontroluje uživatele). Ochrana proti uniklým heslům se nás netýká (hesla nepoužíváme).
 - Migrace `supabase/migrations/20261106200000_phase5_hardening.sql` čeká na spuštění; testy `supabase/tests/database/hardening.test.sql`.
 - Zbývá: projít aplikaci na dvou účtech, výkon na telefonu, světlý režim nových obrazovek, na úplný konec vývojářská tlačítka a `ci-checks.sh` z varování na chybu.
+
+## Právní věci (11. 11. 2026)
+Rámec a „ústava“ (co se musí vyřešit, než se nějaká oblast spustí) jsou v `docs/LEGAL.md`.
+
+### Hotovo teď
+- Zásady ochrany soukromí a Podmínky používání, česky a anglicky (anglická verze má přednost), v Nastavení → Dokumenty.
+- Zaškrtávací souhlas v registraci s odkazy na oba dokumenty.
+- Seznam zpracovatelů v Zásadách (část 7) a v `docs/LEGAL.md`, včetně plánovaných; doporučené volby schváleny.
+- Věk účtu 15 let, server ukládá verzi přijatých podmínek, DSA posouzeno (mikropodnik, povinnosti v `docs/LEGAL.md`).
+- Kontrast barev ve světlém režimu, popisky pro VoiceOver u fotek a tlačítek bez textu.
+- Ověřené licence (fotky cviků) a oprava tvrzení „Data jen v tomto zařízení“ v Nastavení.
+
+### Až přijdou platby (fáze 6/7, spolu se StoreKit)
+- Pravidla vrácení peněz.
+- Zrušení předplatného snadno a odkaz na správu předplatného.
+- Oznámení automatického obnovení před nákupem (cena, období, další platba).
+- Žádné skryté poplatky, ceny včetně DPH, obnovení nákupů.
+- Doplnit Podmínky (část 3) a Zásady.
+
+### Fáze 6 (účet vývojáře, doména, produkce)
+- Doplnit do dokumentů provozovatele, kontakt a datum účinnosti (`[DOPLNIT]`); rozhodnout o s.r.o.
+- Zpracovatelské smlouvy se Supabase a Brevem (uzavírá Philip jako majitel účtů).
+- Produkční databáze: Frankfurt odložen, možná zůstane Londýn (Philip 11. 11. 2026).
+- Web se Zásadami, Podmínkami a kontaktem na veřejné adrese (App Store ji vyžaduje).
+- Zapnout schválené služby z `docs/LEGAL.md` (Turnstile, Cloudflare Pages, Seznam Email Profi), každou se smlouvou a zápisem do Zásad.
+- Šablona odůvodnění zásahu proti účtu podle DSA (čl. 17) a odpověď oznamovateli (čl. 16).
+- Aktualizovat Zásady před zapnutím push upozornění, přihlášení přes Apple a iCloud synchronizace.
+- App Privacy v App Store Connect podle Zásad.
+
+### Před TestFlightem
+- Projít aplikaci s VoiceOverem na telefonu, hlavně kartu úkolu (klepnutí na celou kartu vedle vlastních tlačítek).
+- V `ci-checks.sh` přepnout upozornění na nedoplněná místa v dokumentech na chybu.
+
+### Později, jen když na to dojde (viz ústava)
+- Cookie lišta (web s měřením), newsletter a odhlášení, analytika, AI funkce, nahrávání souborů, propagační tvrzení, trh mimo EU.

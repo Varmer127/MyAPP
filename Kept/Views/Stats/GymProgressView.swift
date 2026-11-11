@@ -337,6 +337,8 @@ struct GymProgressView: View {
                         .padding(.vertical, 11)
                         .contentShape(Rectangle())
                         .onTapGesture { selectedLift = name }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityAddTraits(.isButton)
                     }
                 }
                 .card(padding: 0)

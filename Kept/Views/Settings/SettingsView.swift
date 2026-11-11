@@ -73,9 +73,12 @@ struct SettingsView: View {
                 DeveloperSection()
                 #endif
 
+                LegalSection()
+
                 Section("O aplikaci") {
                     LabeledContent("Verze", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—")
-                    LabeledContent("Data", value: "Jen v tomto zařízení")
+                    // With an account the profile and the shared features live on the server, so this names what really stays here.
+                    LabeledContent("Úkoly, deník a zdraví", value: "Jen v tomto zařízení")
                     LabeledContent("Šablony notifikací", value: "\(NotificationTemplates.totalCount)")
                 }
                 .listRowBackground(Theme.card)

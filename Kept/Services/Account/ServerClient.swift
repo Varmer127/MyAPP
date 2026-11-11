@@ -175,7 +175,7 @@ struct ServerClient {
     func createProfile(name: String, birthYear: Int, birthMonth: Int, token: String) async throws -> AccountProfile {
         let data = try await request("rest/v1/rpc/create_profile", method: "POST",
                                      body: ["p_display_name": name, "p_birth_year": birthYear,
-                                            "p_birth_month": birthMonth, "p_terms_accepted": true], token: token)
+                                            "p_birth_month": birthMonth, "p_terms_version": LegalDocument.termsVersion], token: token)
         return try Self.decoder.decode(AccountProfile.self, from: data)
     }
 

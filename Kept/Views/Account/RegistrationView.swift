@@ -18,6 +18,8 @@ struct RegistrationView: View {
     @FocusState private var focus: Field?
     private enum Field { case email, code }
     @State private var errorText: LocalizedStringKey?
+    /// The tick under the form: without it no account is created.
+    @State private var acceptsTerms = false
     private static let nameLimit = 24
 
     private var years: [Int] {
@@ -26,7 +28,8 @@ struct RegistrationView: View {
     }
 
     private var canCreate: Bool {
-        !name.trimmingCharacters(in: .whitespaces).isEmpty && birthMonth != nil && birthYear != nil && !account.isWorking
+        !name.trimmingCharacters(in: .whitespaces).isEmpty && birthMonth != nil && birthYear != nil
+            && acceptsTerms && !account.isWorking
     }
 
     var body: some View {
@@ -211,12 +214,13 @@ struct RegistrationView: View {
                     .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
+            LegalConsent(isAccepted: $acceptsTerms)
             Button { create() } label: {
                 Text(account.isWorking ? "VYTVÁŘÍM…" : "VYTVOŘIT ÚČET")
             }
             .buttonStyle(PrimaryButtonStyle())
             .disabled(!canCreate)
-            Text("Vytvořením účtu souhlasíš s pravidly Kept: žádné urážky ani výhrůžky, žádné cizí údaje a fotky. Nahlášený obsah může být smazán a účet zablokován.")
+            Text("Pravidla ve zkratce: žádné urážky ani výhrůžky, žádné cizí údaje a fotky. Nahlášený obsah může být smazán a účet zablokován.")
                 .scaledFont(.caption)
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -341,7 +345,7 @@ struct RegistrationView: View {
     }
 
     private func create() {
-        guard let birthMonth, let birthYear else { return }
+        guard let birthMonth, let birthYear, acceptsTerms else { return }
         errorText = nil
         Task {
             do {
@@ -351,7 +355,7 @@ struct RegistrationView: View {
             } catch let error as ServerError {
                 switch error.code {
                 case "too_young":
-                    errorText = "Přátelé jsou od 16 let. Zkontroluj datum narození. Zbytek Kept funguje bez omezení."
+                    errorText = "Přátelé jsou od 15 let. Zkontroluj datum narození. Zbytek Kept funguje bez omezení."
                 case "invalid_name": errorText = "Jméno má mít 1 až 24 znaků a nesmí v něm být odkaz."
                 case "invalid_birth_date": errorText = "Zkontroluj datum narození."
                 case "profile_exists": await account.reload()

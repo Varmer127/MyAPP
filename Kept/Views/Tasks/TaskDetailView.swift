@@ -81,6 +81,7 @@ struct TaskDetailView: View {
                                     .resizable()
                                     .scaledToFit()
                                     .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
+                                    .accessibilityLabel("Fotka jako důkaz splnění")
                             }
                             if !task.proofNote.isEmpty { quote(task.proofNote) }
                         }

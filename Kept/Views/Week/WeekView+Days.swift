@@ -160,6 +160,7 @@ extension WeekView {
                             .scaledFont(.body, weight: .semibold)
                             .foregroundStyle(Theme.textSecondary)
                             .frame(width: 32, height: 24)
+                            .accessibilityLabel("Přidat úkol na \(day.longDayText)")
                     }
                 }
             }

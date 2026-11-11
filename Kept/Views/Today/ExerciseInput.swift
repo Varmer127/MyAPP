@@ -104,6 +104,7 @@ struct ExerciseInput: View {
                     Image(systemName: "xmark")
                         .scaledFont(.caption, weight: .bold)
                         .foregroundStyle(Theme.textSecondary)
+                        .accessibilityLabel("Odebrat cvik \(draft.wrappedValue.name)")
                         .frame(width: 28, height: 28)
                 }
                 .buttonStyle(.plain)

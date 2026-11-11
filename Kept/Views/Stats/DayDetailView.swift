@@ -94,6 +94,8 @@ struct DayDetailView: View {
         .card()
         .contentShape(Rectangle())
         .onTapGesture { detailTask = task }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
     }
 
     private func diaryCard(_ entry: DiaryEntry) -> some View {

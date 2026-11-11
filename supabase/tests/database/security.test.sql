@@ -49,14 +49,14 @@ set local role authenticated;
 do $$
 begin
  perform set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}',true);
- begin perform public.create_profile('bit.ly/vyhra', 2000, 1, true); insert into out values ('name_link','ok'); exception when others then insert into out values ('name_link',sqlerrm); end;
- begin perform public.create_profile('Ja' || chr(8203) || 'na', 2000, 1, true); insert into out values ('name_zero_width','ok'); exception when others then insert into out values ('name_zero_width',sqlerrm); end;
- begin perform public.create_profile('Jana' || chr(8238) || 'x', 2000, 1, true); insert into out values ('name_turned','ok'); exception when others then insert into out values ('name_turned',sqlerrm); end;
- begin perform public.create_profile('Žaneta 👨‍👩‍👧', 2000, 1, true); insert into out values ('name_fine','ok'); exception when others then insert into out values ('name_fine',sqlerrm); end;
+ begin perform public.create_profile('bit.ly/vyhra', 2000, 1, '0.1'); insert into out values ('name_link','ok'); exception when others then insert into out values ('name_link',sqlerrm); end;
+ begin perform public.create_profile('Ja' || chr(8203) || 'na', 2000, 1, '0.1'); insert into out values ('name_zero_width','ok'); exception when others then insert into out values ('name_zero_width',sqlerrm); end;
+ begin perform public.create_profile('Jana' || chr(8238) || 'x', 2000, 1, '0.1'); insert into out values ('name_turned','ok'); exception when others then insert into out values ('name_turned',sqlerrm); end;
+ begin perform public.create_profile('Žaneta 👨‍👩‍👧', 2000, 1, '0.1'); insert into out values ('name_fine','ok'); exception when others then insert into out values ('name_fine',sqlerrm); end;
  begin perform public.rename_profile('www.spam.cz'); insert into out values ('rename_link','ok'); exception when others then insert into out values ('rename_link',sqlerrm); end;
 
  perform set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-0000000000b2","role":"authenticated"}',true);
- perform public.create_profile('Petr', 1999, 5, true);
+ perform public.create_profile('Petr', 1999, 5, '0.1');
  perform public.send_friend_request('00000000-0000-0000-0000-0000000000a1');
  perform set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}',true);
  perform public.respond_friend_request('00000000-0000-0000-0000-0000000000b2', true);

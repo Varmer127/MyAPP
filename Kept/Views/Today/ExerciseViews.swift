@@ -13,9 +13,11 @@ struct ExerciseThumb: View {
             ?? info.custom.flatMap { CustomExerciseStore.shared.photo(of: $0) }
         ZStack {
             if let photo {
+                // The name stands right next to the small picture, so the picture itself is not read out.
                 Image(uiImage: photo)
                     .resizable()
                     .scaledToFill()
+                    .accessibilityHidden(true)
             } else {
                 Self.tint(info.primary.first).opacity(0.18)
                 Image(systemName: Self.symbol(info.equipment))
@@ -184,6 +186,7 @@ struct ExerciseDetailView: View {
                         .scaledToFill()
                         .frame(maxWidth: .infinity, maxHeight: 260)
                         .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
+                        .accessibilityLabel("Fotka vlastního cviku")
                 }
                 if !info.primary.isEmpty || info.catalog != nil {
                     MuscleMapView(intensity: muscleIntensity(info))
@@ -428,6 +431,7 @@ struct CustomExerciseEditor: View {
                         .resizable()
                         .scaledToFill()
                         .transition(.scale(scale: 0.9).combined(with: .opacity))
+                        .accessibilityLabel("Fotka vlastního cviku")
                 } else {
                     VStack(spacing: 8) {
                         Image(systemName: "camera.fill")

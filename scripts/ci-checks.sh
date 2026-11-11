@@ -53,4 +53,8 @@ fi
 # 6. Reminder only (not a failure yet): developer leftovers to remove before TestFlight.
 echo "Developer keys still present: $(grep -rn --include='*.swift' -c 'devShow\|devHealthDemo' Kept | awk -F: '{s+=$2} END {print s+0}')"
 
+
+# 7. Reminder only (not a failure yet): places in the legal documents that still wait for real details.
+echo "Legal documents: places still to fill in: $(grep -c -E '\[(DOPLNIT|OVĚŘIT|TO BE COMPLETED|TO BE VERIFIED)' Kept/Resources/Legal/*.md | awk -F: '{s+=$2} END {print s+0}')"
+
 exit $failed

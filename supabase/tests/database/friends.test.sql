@@ -10,11 +10,11 @@ insert into auth.users (id, instance_id, aud, role, email) values
  ('00000000-0000-0000-0000-0000000000c3','00000000-0000-0000-0000-000000000000','authenticated','authenticated','c@test.invalid');
 set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}',true);
-select public.create_profile('Jana', 2000, 1, true);
+select public.create_profile('Jana', 2000, 1, '0.1');
 select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-0000000000b2","role":"authenticated"}',true);
-select public.create_profile('Petr', 1999, 5, true);
+select public.create_profile('Petr', 1999, 5, '0.1');
 select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-0000000000c3","role":"authenticated"}',true);
-select public.create_profile('Eva', 1998, 7, true);
+select public.create_profile('Eva', 1998, 7, '0.1');
 do $$
 declare ja record; pe record; ev record; code text; r text;
 begin

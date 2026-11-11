@@ -7,10 +7,10 @@ enum WidgetStyle {
     static let card = dynamic(dark: 0x1C1C1E, light: 0xFFFFFF)
     static let text = dynamic(dark: 0xFFFFFF, light: 0x0A0A0A)
     static let onText = dynamic(dark: 0x000000, light: 0xFFFFFF)
-    static let secondary = dynamic(dark: 0x8E8E93, light: 0x6A6A70)
+    static let secondary = dynamic(dark: 0x8E8E93, light: 0x68686E)
     static let track = dynamic(dark: 0x333336, light: 0xDCDCE2)
-    static let green = dynamic(dark: 0x30D158, light: 0x16803A)
-    static let orange = dynamic(dark: 0xFF9F0A, light: 0xA35B00)
+    static let green = dynamic(dark: 0x30D158, light: 0x157836)
+    static let orange = dynamic(dark: 0xFF9F0A, light: 0x9C5700)
 
     private static func dynamic(dark: UInt32, light: UInt32) -> Color {
         Color(UIColor { $0.userInterfaceStyle == .dark ? color(dark) : color(light) })

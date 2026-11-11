@@ -56,7 +56,7 @@ Založeno 10. 10. 2026. Aplikace se zatím dolaďuje pro osobní použití; tenh
 - [x] **Údaje o soukromí v aplikaci** (`PrivacyInfo.xcprivacy`): e-mail, jméno, identifikátor uživatele, obsah od uživatele (pošťouchnutí, názvy sdílených úkolů, domluvy sázek, nahlášení), údaje o používání (čísla týdne). Vše propojené s účtem, jen pro funkce aplikace, žádné sledování. Datum narození se neukládá, proto se neuvádí.
 - [ ] **App Privacy v App Store Connect:** vyplnit stejně jako `PrivacyInfo.xcprivacy`, navíc zdraví, kalendář a fotky (ty zůstávají v telefonu, tedy „nesbírá se“).
 - [x] **Šifrování:** `ITSAppUsesNonExemptEncryption = NO` (jen HTTPS a systémové šifrování).
-- [ ] **Věkové hodnocení:** obsah od uživatelů, sociální funkce, sázky o body (bez peněz) a vulgarity drsného tónu. Účty od 16 let.
+- [ ] **Věkové hodnocení:** obsah od uživatelů, sociální funkce, sázky o body (bez peněz) a vulgarity drsného tónu. Účty od 15 let.
 - [ ] **Sázky o body:** v popisu i v aplikaci jasně, že body nemají peněžní hodnotu a nejdou koupit ani vyměnit (pravidlo 5.3).
 - [ ] **E-mail z vlastní domény** a ověření domény v Brevu (SPF, DKIM), jinak kódy padají do spamu.
 - [x] **Úklid starých dat** na serveru každou noc (`purge_old_social_data`, pg_cron).
