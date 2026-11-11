@@ -31,7 +31,26 @@ for manifest in Kept/PrivacyInfo.xcprivacy KeptWidgets/PrivacyInfo.xcprivacy; do
   [ -f "$manifest" ] || { echo "::error::missing $manifest"; failed=1; }
 done
 
-# 5. Reminder only (not a failure yet): developer leftovers to remove before TestFlight.
+# 5. No secret keys in the repository (it is public), and no door left open in the network settings.
+#    The publishable key in ServerConfig.swift is meant to be public; everything below never is.
+if git grep -n -I -E 'sb_secret_[A-Za-z0-9_-]{8,}|service_role[^a-z_]*[:=]|eyJ[A-Za-z0-9_-]{30,}\.[A-Za-z0-9_-]{20,}|BEGIN [A-Z ]*PRIVATE KEY|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,}|sk_(live|test)_[A-Za-z0-9]{10,}' -- . ':!scripts/ci-checks.sh'; then
+  echo "::error::something that looks like a secret key is in the repository"
+  failed=1
+fi
+if git ls-files | grep -n -i -E '(^|/)\.env($|\.)|\.p8$|\.p12$|\.pem$|\.mobileprovision$'; then
+  echo "::error::a key or environment file is tracked by Git"
+  failed=1
+fi
+if grep -rn 'NSAllowsArbitraryLoads' --include='*.plist' . ; then
+  echo "::error::App Transport Security must stay on (no NSAllowsArbitraryLoads)"
+  failed=1
+fi
+if grep -rn --include='*.swift' -E '"http://' Kept KeptWidgets Shared; then
+  echo "::error::plain http:// address found: the app talks over https only"
+  failed=1
+fi
+
+# 6. Reminder only (not a failure yet): developer leftovers to remove before TestFlight.
 echo "Developer keys still present: $(grep -rn --include='*.swift' -c 'devShow\|devHealthDemo' Kept | awk -F: '{s+=$2} END {print s+0}')"
 
 exit $failed

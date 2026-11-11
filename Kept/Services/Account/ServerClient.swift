@@ -54,7 +54,17 @@ enum EmailAddress {
 /// A small client for the three things the app needs: sign-in tokens, database functions and one table.
 /// Written by hand on URLSession to keep the app free of a large third-party package.
 struct ServerClient {
-    var session: URLSession = .shared
+    /// Keeps nothing on disk: no cached answers (the profile, friends' names) and no cookies.
+    private static let privateSession: URLSession = {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.urlCache = nil
+        configuration.httpCookieStorage = nil
+        configuration.httpShouldSetCookies = false
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration: configuration)
+    }()
+
+    var session: URLSession = ServerClient.privateSession
 
     func request(_ path: String, method: String = "GET", query: [URLQueryItem] = [],
                          body: [String: Any]? = nil, token: String? = nil) async throws -> Data {

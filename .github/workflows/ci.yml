@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
 
+# The jobs only read the code: a compromised step cannot push, tag or publish anything.
+permissions:
+  contents: read
+
 # A newer push to the same branch cancels the older run.
 concurrency:
   group: ci-${{ github.ref }}
@@ -15,7 +19,7 @@ jobs:
     runs-on: macos-26
     timeout-minutes: 40
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Use the newest Xcode on the runner
         run: |
@@ -46,7 +50,7 @@ jobs:
 
       - name: Upload the test results when something failed
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: TestResults
           path: TestResults.xcresult
@@ -66,9 +70,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: supabase/setup-cli@v1
+      - uses: supabase/setup-cli@v3
         with:
           version: latest
 

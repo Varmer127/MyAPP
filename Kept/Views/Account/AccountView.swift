@@ -159,7 +159,7 @@ struct AccountView: View {
             } catch let error as ServerError {
                 switch error.code {
                 case "renamed_too_recently": errorText = "Jméno jsi měnil/a nedávno. Zkus to později."
-                case "invalid_name": errorText = "Jméno má mít 1 až 24 znaků."
+                case "invalid_name": errorText = "Jméno má mít 1 až 24 znaků a nesmí v něm být odkaz."
                 default: errorText = "Jméno se nepodařilo změnit. Zkus to prosím znovu."
                 }
             } catch {

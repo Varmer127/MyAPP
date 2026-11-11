@@ -352,7 +352,7 @@ struct RegistrationView: View {
                 switch error.code {
                 case "too_young":
                     errorText = "Přátelé jsou od 16 let. Zkontroluj datum narození. Zbytek Kept funguje bez omezení."
-                case "invalid_name": errorText = "Jméno má mít 1 až 24 znaků."
+                case "invalid_name": errorText = "Jméno má mít 1 až 24 znaků a nesmí v něm být odkaz."
                 case "invalid_birth_date": errorText = "Zkontroluj datum narození."
                 case "profile_exists": await account.reload()
                 default: errorText = "Účet se nepodařilo vytvořit. Zkus to prosím znovu."
