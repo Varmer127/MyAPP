@@ -57,4 +57,13 @@ echo "Developer keys still present: $(grep -rn --include='*.swift' -c 'devShow\|
 # 7. Reminder only (not a failure yet): places in the legal documents that still wait for real details.
 echo "Legal documents: places still to fill in: $(grep -c -E '\[(DOPLNIT|OVĚŘIT|TO BE COMPLETED|TO BE VERIFIED)' Kept/Resources/Legal/*.md | awk -F: '{s+=$2} END {print s+0}')"
 
+# 8. Warning only: something changed that the legal documents may have to mention (see docs/LEGAL.md, "Hlídač").
+legal_diff=$(scripts/legal-baseline.sh | diff docs/legal-baseline.txt - | grep -E '^[<>]' || true)
+if [ -n "$legal_diff" ]; then
+  echo "::warning::Legal review needed: check Privacy Policy and Terms, then run scripts/legal-baseline.sh > docs/legal-baseline.txt"
+  echo "$legal_diff" | sed -e 's/^>/  new:/' -e 's/^</  gone:/'
+else
+  echo "Legal baseline: no change"
+fi
+
 exit $failed

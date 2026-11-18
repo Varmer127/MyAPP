@@ -53,6 +53,21 @@ Před nabídnutím aplikace v USA nebo jinde projít tamní pravidla (děti, sou
 Nová verze a datum v dokumentu, řádek v tabulce verzí níže, oznámení v aplikaci aspoň 14 dní předem;
 u podstatné změny Podmínek nový souhlas.
 
+## Hlídač a pravidelná kontrola
+
+**Hlídač (zdarma, při každém pushi).** `scripts/legal-baseline.sh` vypíše, co mění obsah dokumentů: oprávnění v iPhonu,
+entitlementy, frameworky Applu, cizí balíčky, servery, se kterými appka mluví, tabulky, sloupce a funkce databáze
+a manifesty soukromí. `scripts/ci-checks.sh` ho porovná s `docs/legal-baseline.txt` a při rozdílu vypíše v GitHubu
+žluté varování se seznamem změn. Nic neblokuje. Po kontrole Zásad a Podmínek se nový stav přijme příkazem
+`scripts/legal-baseline.sh > docs/legal-baseline.txt` a commitne.
+
+**Kontrola od Clauda jednou za čtvrt roku** (Philip 18. 11. 2026: ne častěji kvůli kreditům). Při první práci
+v únoru, květnu, srpnu a listopadu: projít změny od poslední kontroly proti ústavě a dokumentům, výsledek zapsat sem.
+
+| Datum | Do commitu | Výsledek |
+|---|---|---|
+| 11. 11. 2026 | `d69006a` | první znění dokumentů, DSA posouzeno |
+
 ## Zpracovatelé a příjemci
 
 **Dnes**
@@ -113,7 +128,6 @@ mikro- či malým podnikem (výjimka doběhne 12 měsíců poté).
 - Diktování deníku používá rozpoznávání řeči od Applu a zvuk může odejít na jeho servery. V Zásadách je to uvedeno; zvážit vynucení zpracování jen v zařízení, pokud ho čeština podporuje.
 - Nový souhlas po podstatné změně Podmínek (článek 11): server zatím umí jen první souhlas při registraci; funkce pro opětovné přijetí nové verze přijde s první takovou změnou.
 - Sázky o body: formulace v Podmínkách (část 7) a v popisu pro App Store.
-- Ikona a logo navrhl Claude (AI od Anthropicu) na Philipův pokyn; podle podmínek Anthropicu patří výstupy uživateli. Dílo bez lidského autora nemusí být chráněné autorským právem, ochranu názvu a loga dá spíš ochranná známka (zvážit před vydáním).
 - Fotky cviků: zdroj uvádí volné dílo (The Unlicense, ověřeno 11. 11. 2026); původ jednotlivých fotek se opírá o prohlášení zdroje.
 
 ## Verze dokumentů

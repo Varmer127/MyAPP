@@ -15,7 +15,7 @@ pod licencí The Unlicense. Použití i v placené aplikaci je povolené bez dal
 
 ## Ikona a logo
 
-Ikona aplikace a logo (`Assets.xcassets`) navrhl Claude (AI od Anthropicu) na Philipův pokyn: bílá fajfka nad zelenou linkou, stejný tvar kreslí kód úvodní animace. Žádná převzatá grafika, výstupy patří Philipovi (potvrzeno 11. 11. 2026, viz `docs/LEGAL.md`).
+Ikona aplikace a logo (`Assets.xcassets`) jsou autorské dílo Philipa Stryky: bílá fajfka nad zelenou linkou, stejný tvar kreslí kód úvodní animace. Žádná převzatá grafika (potvrzeno 18. 11. 2026).
 
 ## Písma, symboly a zvuky
 
