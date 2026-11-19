@@ -32,7 +32,7 @@ struct TrendSection: View {
     var body: some View {
         let points = points
         VStack(spacing: 10) {
-            SectionLabel(text: String(localized: "Trend produktivity", bundle: .kept))
+            SectionLabel(text: String(localized: "Trend produktivity", bundle: .kept, locale: .kept))
             VStack(alignment: .leading, spacing: 10) {
                 if points.count >= 2 {
                     Chart(points) { point in
@@ -89,7 +89,7 @@ struct CategorySection: View {
         let rates = StatisticsService.categoryPerformance(tasks)
         if !rates.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: String(localized: "Kategorie", bundle: .kept))
+                SectionLabel(text: String(localized: "Kategorie", bundle: .kept, locale: .kept))
                 VStack(spacing: 14) {
                     ForEach(rates) { item in
                         VStack(spacing: 6) {
@@ -124,7 +124,7 @@ struct ReviewHistorySection: View {
         let weeks = Set(tasks.map { $0.scheduledDate.weekStart }).filter { $0 <= now }.sorted(by: >)
         if !weeks.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: String(localized: "Přehledy týdnů", bundle: .kept))
+                SectionLabel(text: String(localized: "Přehledy týdnů", bundle: .kept, locale: .kept))
                 VStack(spacing: 0) {
                     ForEach(Array(weeks.enumerated()), id: \.element) { index, week in
                         if index > 0 {
@@ -169,7 +169,7 @@ struct RecordsSection: View {
         let records = StatisticsService.records(tasks: tasks, sessions: sessions)
         if !records.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: String(localized: "Osobní rekordy", bundle: .kept))
+                SectionLabel(text: String(localized: "Osobní rekordy", bundle: .kept, locale: .kept))
                 VStack(spacing: 0) {
                     ForEach(Array(records.enumerated()), id: \.element.id) { index, record in
                         if index > 0 {

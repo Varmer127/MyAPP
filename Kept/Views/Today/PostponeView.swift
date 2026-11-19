@@ -25,8 +25,8 @@ struct PostponeView: View {
                             .foregroundStyle(Theme.textSecondary)
                     }
                     HStack(spacing: 10) {
-                        quickDay(String(localized: "Zítra", bundle: .kept), offset: 1)
-                        quickDay(String(localized: "Pozítří", bundle: .kept), offset: 2)
+                        quickDay(String(localized: "Zítra", bundle: .kept, locale: .kept), offset: 1)
+                        quickDay(String(localized: "Pozítří", bundle: .kept, locale: .kept), offset: 2)
                     }
                     DatePicker("Jiný den", selection: $day, in: Date.now.startOfDay.addingDays(1)..., displayedComponents: .date)
                         .card()

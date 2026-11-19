@@ -116,7 +116,7 @@ struct DiaryArchiveView: View {
                     .scaledFont(.caption, weight: .semibold)
                     .foregroundStyle(Theme.textSecondary)
             }
-            DiaryQuote(label: String(localized: "Jak jsem se sebou spokojený", bundle: .kept), text: reflection.text)
+            DiaryQuote(label: String(localized: "Jak jsem se sebou spokojený", bundle: .kept, locale: .kept), text: reflection.text)
         }
         .card()
     }
@@ -159,8 +159,8 @@ struct DiaryEntryCard: View {
     let entry: DiaryEntry
 
     static func lines(of entry: DiaryEntry) -> [(label: String, text: String)] {
-        [(entry.question, entry.answer), (String(localized: "Povedlo se", bundle: .kept), entry.wentWell), (String(localized: "Nepovedlo se", bundle: .kept), entry.wentBadly),
-         (String(localized: "Zítra jinak", bundle: .kept), entry.doDifferently), (String(localized: "Vděčnost", bundle: .kept), entry.gratitude)]
+        [(entry.question, entry.answer), (String(localized: "Povedlo se", bundle: .kept, locale: .kept), entry.wentWell), (String(localized: "Nepovedlo se", bundle: .kept, locale: .kept), entry.wentBadly),
+         (String(localized: "Zítra jinak", bundle: .kept, locale: .kept), entry.doDifferently), (String(localized: "Vděčnost", bundle: .kept, locale: .kept), entry.gratitude)]
             .filter { !$0.1.isEmpty }
             .map { (label: $0.0, text: $0.1) }
     }
@@ -174,8 +174,8 @@ struct DiaryEntryCard: View {
             HStack {
                 Text(entry.day.longDayText.uppercased()).labelStyle()
                 Spacer()
-                if entry.mood > 0 { Badge(text: String(localized: "Nálada \(entry.mood)", bundle: .kept), color: Self.levelColor(entry.mood)) }
-                if entry.energy > 0 { Badge(text: String(localized: "Energie \(entry.energy)", bundle: .kept), color: Self.levelColor(entry.energy)) }
+                if entry.mood > 0 { Badge(text: String(localized: "Nálada \(entry.mood)", bundle: .kept, locale: .kept), color: Self.levelColor(entry.mood)) }
+                if entry.energy > 0 { Badge(text: String(localized: "Energie \(entry.energy)", bundle: .kept, locale: .kept), color: Self.levelColor(entry.energy)) }
             }
             ForEach(Self.lines(of: entry), id: \.label) { line in
                 DiaryQuote(label: line.label, text: line.text)
@@ -198,7 +198,7 @@ struct FailureNoteCard: View {
                 .foregroundStyle(Theme.textPrimary)
             DiaryQuote(label: record.reason.title, text: record.critique)
             if !record.prevention.isEmpty {
-                DiaryQuote(label: String(localized: "Příště", bundle: .kept), text: record.prevention)
+                DiaryQuote(label: String(localized: "Příště", bundle: .kept, locale: .kept), text: record.prevention)
             }
         }
         .card()

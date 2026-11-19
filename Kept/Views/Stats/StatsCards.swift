@@ -51,7 +51,7 @@ struct OutcomesCard: View {
         ]
         let critical = tasks.filter { $0.scoringPriority == .critical }
         VStack(spacing: 10) {
-            SectionLabel(text: String(localized: "Jak dopadly sliby", bundle: .kept))
+            SectionLabel(text: String(localized: "Jak dopadly sliby", bundle: .kept, locale: .kept))
             VStack(alignment: .leading, spacing: 12) {
                 GeometryReader { proxy in
                     let total = max(parts.reduce(0) { $0 + $1.count }, 1)
@@ -103,7 +103,7 @@ struct WhenYouKeepCard: View {
         let peak = slots.max() ?? 0
         if peak > 0 || !insights.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: String(localized: "Kdy ti to jde", bundle: .kept))
+                SectionLabel(text: String(localized: "Kdy ti to jde", bundle: .kept, locale: .kept))
                 VStack(alignment: .leading, spacing: 12) {
                     if peak > 0 {
                         HStack(alignment: .bottom, spacing: 4) {
@@ -174,7 +174,7 @@ struct GoalsLeftCard: View {
         let open = goals.filter { !$0.isMet }
         if !open.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: String(localized: "Do cíle týdne", bundle: .kept))
+                SectionLabel(text: String(localized: "Do cíle týdne", bundle: .kept, locale: .kept))
                 VStack(alignment: .leading, spacing: 12) {
                     ForEach(open) { goal in
                         VStack(alignment: .leading, spacing: 6) {
@@ -207,7 +207,7 @@ struct HabitPathCard: View {
     var body: some View {
         if let habit = StatisticsService.habitInProgress(tasks) {
             VStack(spacing: 10) {
-                SectionLabel(text: String(localized: "Cesta ke zvyku", bundle: .kept))
+                SectionLabel(text: String(localized: "Cesta ke zvyku", bundle: .kept, locale: .kept))
                 VStack(alignment: .leading, spacing: 10) {
                     Label(habit.category.title, systemImage: habit.category.icon)
                         .scaledFont(.body, weight: .semibold)

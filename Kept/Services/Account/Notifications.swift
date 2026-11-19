@@ -21,25 +21,25 @@ struct AppNotification: Codable, Equatable, Identifiable {
     var createdAt: Date
     var seen: Bool
 
-    private var who: String { actorName ?? String(localized: "Přítel", bundle: .kept) }
+    private var who: String { actorName ?? String(localized: "Přítel", bundle: .kept, locale: .kept) }
 
     /// One line for the bell and for a notification on the lock screen.
     var title: String {
         switch kind {
-        case .friendRequest: String(localized: "\(who) tě chce mezi přátele", bundle: .kept)
-        case .friendAccepted: String(localized: "\(who) a ty jste teď přátelé", bundle: .kept)
-        case .poke: String(localized: "\(who) ti posílá šťouchnutí", bundle: .kept)
-        case .reaction: String(localized: "\(who) ti fandí", bundle: .kept)
-        case .betInvite: String(localized: "\(who) tě zve do sázky", bundle: .kept)
-        case .betClaim: String(localized: "\(who) hlásí splněnou sázku", bundle: .kept)
-        case .betResult: String(localized: "Sázka je vyhodnocená", bundle: .kept)
-        case .challengeInvite: String(localized: "\(who) tě zve do výzvy", bundle: .kept)
-        case .groupInvite: String(localized: "\(who) tě zve do skupiny", bundle: .kept)
-        case .activityInvite: String(localized: "\(who) tě zve na společnou aktivitu", bundle: .kept)
-        case .buddyRequest: String(localized: "\(who) ti nabízí parťáctví", bundle: .kept)
-        case .buddyAccepted: String(localized: "\(who) a ty jste teď parťáci", bundle: .kept)
-        case .witnessRequest: String(localized: "\(who) tě prosí o potvrzení", bundle: .kept)
-        case .witnessAnswer: String(localized: "\(who) má pro tebe verdikt", bundle: .kept)
+        case .friendRequest: String(localized: "\(who) tě chce mezi přátele", bundle: .kept, locale: .kept)
+        case .friendAccepted: String(localized: "\(who) a ty jste teď přátelé", bundle: .kept, locale: .kept)
+        case .poke: String(localized: "\(who) ti posílá šťouchnutí", bundle: .kept, locale: .kept)
+        case .reaction: String(localized: "\(who) ti fandí", bundle: .kept, locale: .kept)
+        case .betInvite: String(localized: "\(who) tě zve do sázky", bundle: .kept, locale: .kept)
+        case .betClaim: String(localized: "\(who) hlásí splněnou sázku", bundle: .kept, locale: .kept)
+        case .betResult: String(localized: "Sázka je vyhodnocená", bundle: .kept, locale: .kept)
+        case .challengeInvite: String(localized: "\(who) tě zve do výzvy", bundle: .kept, locale: .kept)
+        case .groupInvite: String(localized: "\(who) tě zve do skupiny", bundle: .kept, locale: .kept)
+        case .activityInvite: String(localized: "\(who) tě zve na společnou aktivitu", bundle: .kept, locale: .kept)
+        case .buddyRequest: String(localized: "\(who) ti nabízí parťáctví", bundle: .kept, locale: .kept)
+        case .buddyAccepted: String(localized: "\(who) a ty jste teď parťáci", bundle: .kept, locale: .kept)
+        case .witnessRequest: String(localized: "\(who) tě prosí o potvrzení", bundle: .kept, locale: .kept)
+        case .witnessAnswer: String(localized: "\(who) má pro tebe verdikt", bundle: .kept, locale: .kept)
         }
     }
 
@@ -51,7 +51,7 @@ struct AppNotification: Codable, Equatable, Identifiable {
         case .witnessAnswer:
             let parts = body.split(separator: ":", maxSplits: 1).map(String.init)
             guard parts.count == 2 else { return body }
-            return parts[0] == "confirmed" ? String(localized: "Potvrzeno: \(parts[1])", bundle: .kept) : String(localized: "Nepotvrzeno: \(parts[1])", bundle: .kept)
+            return parts[0] == "confirmed" ? String(localized: "Potvrzeno: \(parts[1])", bundle: .kept, locale: .kept) : String(localized: "Nepotvrzeno: \(parts[1])", bundle: .kept, locale: .kept)
         default: return body
         }
     }

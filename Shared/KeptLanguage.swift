@@ -67,6 +67,22 @@ final class LanguageBundle: Bundle, @unchecked Sendable {
     }
 }
 
+extension Locale {
+    private static let czech = Locale(identifier: "cs_CZ")
+    /// English keeps the phone's region, so dates read the British or the American way as the user is used to.
+    private static let english = Locale(identifier: "en_\(Locale.current.region?.identifier ?? "GB")")
+
+    /// The chosen language's locale. Texts pass it with `bundle: .kept`, so plural forms ("3 dny" / "5 dní")
+    /// and numbers follow the language picked in the app, not the phone's.
+    static var kept: Locale {
+        switch LanguageBundle.code {
+        case "cs": czech
+        case "en": english
+        default: .current
+        }
+    }
+}
+
 extension Bundle {
     /// Where texts put together in code with `String(localized:)` are looked up: the chosen language.
     static var kept: Bundle { LanguageBundle.translations ?? .main }

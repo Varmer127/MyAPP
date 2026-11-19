@@ -120,7 +120,7 @@ struct WorkoutLogView: View {
                 weightText = kilograms.formatted(.number.precision(.fractionLength(0...1)).locale(.app))
             }
             if task.requiresProof, proof.note.isEmpty, let minutes = await HealthService.gymMinutesToday() {
-                proof.note = String(localized: "Apple Health: trénink \(minutes) min", bundle: .kept)
+                proof.note = String(localized: "Apple Health: trénink \(minutes) min", bundle: .kept, locale: .kept)
             }
         }
     }

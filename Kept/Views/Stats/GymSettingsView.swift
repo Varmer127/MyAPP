@@ -39,22 +39,22 @@ struct GymSettingsView: View {
                 } header: {
                     Text("Trénink")
                 } footer: {
-                    Text(String(localized: "Orientační: jeden týden 3×, druhý 6× je v pořádku, žádný postih. Jak cíl plníš, se z 10 % promítá do spolehlivosti a podle něj ti Kept gym navrhuje. ", bundle: .kept)
+                    Text(String(localized: "Orientační: jeden týden 3×, druhý 6× je v pořádku, žádný postih. Jak cíl plníš, se z 10 % promítá do spolehlivosti a podle něj ti Kept gym navrhuje. ", bundle: .kept, locale: .kept)
                          + (settings.healthEnabled
-                            ? String(localized: "Když Apple Health zaznamená silový trénink, pošle ti Kept upozornění, ze kterého ho rovnou zapíšeš.", bundle: .kept)
-                            : String(localized: "Po propojení s Apple Health (Nastavení → Zdraví) ti Kept pošle upozornění, když Health zaznamená silový trénink.", bundle: .kept)))
+                            ? String(localized: "Když Apple Health zaznamená silový trénink, pošle ti Kept upozornění, ze kterého ho rovnou zapíšeš.", bundle: .kept, locale: .kept)
+                            : String(localized: "Po propojení s Apple Health (Nastavení → Zdraví) ti Kept pošle upozornění, když Health zaznamená silový trénink.", bundle: .kept, locale: .kept)))
                 }
                 .listRowBackground(Theme.card)
 
                 restSection(settings)
-                presetList(title: String(localized: "Co jsem jel", bundle: .kept), addLabel: String(localized: "Přidat partii", bundle: .kept), placeholder: String(localized: "Název partie", bundle: .kept),
+                presetList(title: String(localized: "Co jsem jel", bundle: .kept, locale: .kept), addLabel: String(localized: "Přidat partii", bundle: .kept, locale: .kept), placeholder: String(localized: "Název partie", bundle: .kept, locale: .kept),
                            text: $newPreset, isAdding: $isAddingPreset,
-                           footer: String(localized: "Nabízí se při zápisu tréninku. Břicho se zaškrtává zvlášť ke každému tréninku.", bundle: .kept),
+                           footer: String(localized: "Nabízí se při zápisu tréninku. Břicho se zaškrtává zvlášť ke každému tréninku.", bundle: .kept, locale: .kept),
                            items: Bindable(settings).workoutPresets)
                 if settings.gymMode == .advanced {
-                    presetList(title: String(localized: "Cviky", bundle: .kept), addLabel: String(localized: "Přidat cvik", bundle: .kept), placeholder: String(localized: "Název cviku", bundle: .kept),
+                    presetList(title: String(localized: "Cviky", bundle: .kept, locale: .kept), addLabel: String(localized: "Přidat cvik", bundle: .kept, locale: .kept), placeholder: String(localized: "Název cviku", bundle: .kept, locale: .kept),
                                text: $newExercise, isAdding: $isAddingExercise,
-                               footer: String(localized: "Odebrání cviku ze seznamu nesmaže jeho historii ve statistikách.", bundle: .kept),
+                               footer: String(localized: "Odebrání cviku ze seznamu nesmaže jeho historii ve statistikách.", bundle: .kept, locale: .kept),
                                items: Bindable(settings).exercisePresets)
                 }
             }
@@ -71,7 +71,7 @@ struct GymSettingsView: View {
         Button {
             withAnimation { isAdding.wrappedValue.toggle() }
         } label: {
-            Label(isAdding.wrappedValue ? String(localized: "Zrušit", bundle: .kept) : label, systemImage: isAdding.wrappedValue ? "xmark" : "plus")
+            Label(isAdding.wrappedValue ? String(localized: "Zrušit", bundle: .kept, locale: .kept) : label, systemImage: isAdding.wrappedValue ? "xmark" : "plus")
                 .scaledFont(.body, weight: .semibold)
                 .foregroundStyle(Theme.textPrimary)
         }
@@ -116,10 +116,10 @@ struct GymSettingsView: View {
                 reordered.move(fromOffsets: from, toOffset: to)
                 settings.restPresets = reordered
             }
-            addRow(String(localized: "Přidat vlastní pauzu", bundle: .kept), isAdding: $isAddingRest)
+            addRow(String(localized: "Přidat vlastní pauzu", bundle: .kept, locale: .kept), isAdding: $isAddingRest)
             if isAddingRest {
                 TextField("Název pauzy", text: $newRestName)
-                Stepper(String(localized: "Délka: \(FocusView.clock(TimeInterval(newRestSeconds)))", bundle: .kept), value: $newRestSeconds,
+                Stepper(String(localized: "Délka: \(FocusView.clock(TimeInterval(newRestSeconds)))", bundle: .kept, locale: .kept), value: $newRestSeconds,
                         in: RestPreset.secondsRange, step: RestPreset.secondsStep)
                 Button("ULOŽIT PAUZU") {
                     settings.restPresets = presets + [RestPreset(name: name, seconds: newRestSeconds)]

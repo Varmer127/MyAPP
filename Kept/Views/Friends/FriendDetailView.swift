@@ -32,8 +32,8 @@ struct FriendDetailView: View {
                 Section {
                     let current = NotificationsService.shared.mutes[friend.id]
                     if let current {
-                        Text(current.until.map { String(localized: "Ztlumeno do \($0.formatted(.dateTime.day().month().locale(.app)))", bundle: .kept) }
-                             ?? String(localized: "Ztlumeno natrvalo", bundle: .kept))
+                        Text(current.until.map { String(localized: "Ztlumeno do \($0.formatted(.dateTime.day().month().locale(.app)))", bundle: .kept, locale: .kept) }
+                             ?? String(localized: "Ztlumeno natrvalo", bundle: .kept, locale: .kept))
                             .foregroundStyle(Theme.textSecondary)
                         Button("Zrušit ztlumení") { mute(days: nil) }
                     } else {

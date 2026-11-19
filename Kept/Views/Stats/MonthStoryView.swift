@@ -142,7 +142,7 @@ struct MonthStoryView: View {
                 Text("slibů z \(story.total) jsi dodržel.")
                     .scaledFont(.title, weight: .heavy)
                     .foregroundStyle(Theme.textPrimary)
-                Text(story.delta.map { $0 >= 0 ? String(localized: "\(story.percent) %, o \($0) % víc než měsíc předtím", bundle: .kept) : String(localized: "\(story.percent) %, o \(-$0) % méně než měsíc předtím", bundle: .kept) } ?? "\(story.percent) %")
+                Text(story.delta.map { $0 >= 0 ? String(localized: "\(story.percent) %, o \($0) % víc než měsíc předtím", bundle: .kept, locale: .kept) : String(localized: "\(story.percent) %, o \(-$0) % méně než měsíc předtím", bundle: .kept, locale: .kept) } ?? "\(story.percent) %")
                     .scaledFont(.body, weight: .bold)
                     .foregroundStyle((story.delta ?? 0) >= 0 ? Theme.green : Theme.orange)
             }
@@ -152,7 +152,7 @@ struct MonthStoryView: View {
                 Text("Týden \(story.bestWeek?.number ?? 0)")
                     .scaledFont(.hero, weight: .black)
                     .foregroundStyle(Theme.textPrimary)
-                Text(String(localized: "\(story.bestWeek?.percent ?? 0) % splněno.", bundle: .kept))
+                Text(String(localized: "\(story.bestWeek?.percent ?? 0) % splněno.", bundle: .kept, locale: .kept))
                     .scaledFont(.heading)
                     .foregroundStyle(Theme.textSecondary)
             }

@@ -35,7 +35,7 @@ struct PartialView: View {
                             .tint(Theme.textPrimary)
                             .padding(.top, 8)
                     }
-                    Text(String(localized: "Úkol se započítá jen z \(Int(percent)) %: do produktivity, dodržených slibů i spolehlivosti. Zbylých \(100 - Int(percent)) % je nedodržený slib.", bundle: .kept))
+                    Text(String(localized: "Úkol se započítá jen z \(Int(percent)) %: do produktivity, dodržených slibů i spolehlivosti. Zbylých \(100 - Int(percent)) % je nedodržený slib.", bundle: .kept, locale: .kept))
                         .scaledFont(.body)
                         .foregroundStyle(Theme.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -52,7 +52,7 @@ struct PartialView: View {
             }
             .scrollDismissesKeyboard(.interactively)
             VStack(spacing: 10) {
-                Button(String(localized: "ULOŽIT JAKO \(Int(percent)) %", bundle: .kept)) {
+                Button(String(localized: "ULOŽIT JAKO \(Int(percent)) %", bundle: .kept, locale: .kept)) {
                     onConfirm(percent / 100, note.trimmingCharacters(in: .whitespacesAndNewlines))
                     dismiss()
                 }

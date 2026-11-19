@@ -168,9 +168,9 @@ struct GymTimerView: View {
                     }
                     .padding(.top, 16)
                     TileRow {
-                        MetricTile(value: "\(session?.pauseCount ?? 0)", label: String(localized: "Pauzy", bundle: .kept))
-                        MetricTile(value: averageRest.map(FocusView.clock) ?? "—", label: String(localized: "Průměrná pauza", bundle: .kept))
-                        MetricTile(value: FocusView.minutes(session?.paused(at: now) ?? 0), label: String(localized: "V pauzách", bundle: .kept))
+                        MetricTile(value: "\(session?.pauseCount ?? 0)", label: String(localized: "Pauzy", bundle: .kept, locale: .kept))
+                        MetricTile(value: averageRest.map(FocusView.clock) ?? "—", label: String(localized: "Průměrná pauza", bundle: .kept, locale: .kept))
+                        MetricTile(value: FocusView.minutes(session?.paused(at: now) ?? 0), label: String(localized: "V pauzách", bundle: .kept, locale: .kept))
                     }
                     VStack(alignment: .leading, spacing: 8) {
                         restPicker
@@ -672,7 +672,7 @@ private struct ExerciseCard: View {
         }
         .card()
         // Swiping the whole card to the left removes the exercise; a set inside is still swiped away on its own.
-        .swipeToDelete(String(localized: "Odebrat cvik", bundle: .kept), cornerRadius: Theme.radius) { requestRemove() }
+        .swipeToDelete(String(localized: "Odebrat cvik", bundle: .kept, locale: .kept), cornerRadius: Theme.radius) { requestRemove() }
         .alert("Odebrat \(log.name)?", isPresented: $confirmsRemove) {
             Button("Odebrat", role: .destructive, action: onRemove)
             Button("Zrušit", role: .cancel) {}
@@ -739,10 +739,10 @@ private struct SetRow: View {
 
     private var warning: String? {
         if set.weight > Self.implausibleWeight {
-            return String(localized: "\(set.weight.kilogramText) je nejspíš překlep. Zkontroluj váhu, jinak ti pokazí rekordy.", bundle: .kept)
+            return String(localized: "\(set.weight.kilogramText) je nejspíš překlep. Zkontroluj váhu, jinak ti pokazí rekordy.", bundle: .kept, locale: .kept)
         }
         if set.reps > Self.implausibleReps {
-            return String(localized: "\(set.reps) opakování je nejspíš překlep. Zkontroluj počet.", bundle: .kept)
+            return String(localized: "\(set.reps) opakování je nejspíš překlep. Zkontroluj počet.", bundle: .kept, locale: .kept)
         }
         return nil
     }
@@ -750,7 +750,7 @@ private struct SetRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             row
-                .swipeToDelete(set.isWarmup ? String(localized: "Smazat rozcvičku", bundle: .kept) : String(localized: "Smazat sérii", bundle: .kept), cornerRadius: 8, onDelete: onDelete)
+                .swipeToDelete(set.isWarmup ? String(localized: "Smazat rozcvičku", bundle: .kept, locale: .kept) : String(localized: "Smazat sérii", bundle: .kept, locale: .kept), cornerRadius: 8, onDelete: onDelete)
             if let warning {
                 Label(warning, systemImage: "exclamationmark.triangle.fill")
                     .scaledFont(.caption, weight: .medium)

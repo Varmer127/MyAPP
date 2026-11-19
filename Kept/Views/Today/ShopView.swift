@@ -22,10 +22,10 @@ struct ShopView: View {
                 VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                     header
                     VStack(spacing: 10) {
-                        SectionLabel(text: String(localized: "Za body", bundle: .kept))
+                        SectionLabel(text: String(localized: "Za body", bundle: .kept, locale: .kept))
                         if let broken = StreakService.broken(tasks), broken.canRepair() {
-                            row(symbol: "flame.fill", title: String(localized: "Vrátit sérii \(String.days(broken.length))", bundle: .kept),
-                                summary: String(localized: "Plamínek se vrátí, jako by se nepřerušil. Jde to jen 48 hodin od půlnoci, kdy série skončila.", bundle: .kept),
+                            row(symbol: "flame.fill", title: String(localized: "Vrátit sérii \(String.days(broken.length))", bundle: .kept, locale: .kept),
+                                summary: String(localized: "Plamínek se vrátí, jako by se nepřerušil. Jde to jen 48 hodin od půlnoci, kdy série skončila.", bundle: .kept, locale: .kept),
                                 cost: broken.cost, note: nil) { confirmRepair = broken }
                         }
                         ForEach(ShopItem.allCases) { item in
@@ -83,7 +83,7 @@ struct ShopView: View {
                 Text("BODŮ").labelStyle()
             }
             ThinBar(value: Double(balance) / Double(PointsService.cap))
-            Text(String(localized: "Strop je \(PointsService.cap.formatted(.number.locale(.app))). \(PointsService.perCommitment) za splněný týdenní závazek, \(PointsService.perSuggestion) za splněný návrh aplikace, \(DiaryService.pointsPerEntry) za den v deníku, bonusy za milníky série.", bundle: .kept))
+            Text(String(localized: "Strop je \(PointsService.cap.formatted(.number.locale(.app))). \(PointsService.perCommitment) za splněný týdenní závazek, \(PointsService.perSuggestion) za splněný návrh aplikace, \(DiaryService.pointsPerEntry) za den v deníku, bonusy za milníky série.", bundle: .kept, locale: .kept))
                 .scaledFont(.caption)
                 .foregroundStyle(Theme.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -94,10 +94,10 @@ struct ShopView: View {
     private func note(for item: ShopItem, owned: Int) -> String? {
         switch item {
         case .streakInsurance:
-            owned > 0 ? String(localized: "Máš připraveno: \(owned) z \(item.maxStored ?? owned)", bundle: .kept) : nil
+            owned > 0 ? String(localized: "Máš připraveno: \(owned) z \(item.maxStored ?? owned)", bundle: .kept, locale: .kept) : nil
         case .extraPostpone:
             PointsService.extraPostponements(purchases) > 0
-                ? String(localized: "Tento měsíc koupeno: \(PointsService.extraPostponements(purchases))", bundle: .kept) : nil
+                ? String(localized: "Tento měsíc koupeno: \(PointsService.extraPostponements(purchases))", bundle: .kept, locale: .kept) : nil
         }
     }
 
@@ -122,7 +122,7 @@ struct ShopView: View {
                         .scaledFont(.caption, weight: .semibold)
                         .foregroundStyle(Theme.green)
                 }
-                Button(soldOut ? "MÁŠ MAXIMUM" : String(localized: "\(cost.formatted(.number.locale(.app))) BODŮ", bundle: .kept)) {
+                Button(soldOut ? "MÁŠ MAXIMUM" : String(localized: "\(cost.formatted(.number.locale(.app))) BODŮ", bundle: .kept, locale: .kept)) {
                     guard balance < cost else { return action() }
                     // Not enough points: the price shakes its head instead of doing nothing.
                     UINotificationFeedbackGenerator().notificationOccurred(.error)
@@ -133,7 +133,7 @@ struct ShopView: View {
                 .modifier(Shake(animatableData: CGFloat(refusals[title, default: 0])))
                 .padding(.top, 6)
                 if !soldOut, balance < cost {
-                    Text(String(localized: "Chybí ti \((cost - balance).formatted(.number.locale(.app))) bodů", bundle: .kept))
+                    Text(String(localized: "Chybí ti \((cost - balance).formatted(.number.locale(.app))) bodů", bundle: .kept, locale: .kept))
                         .scaledFont(.caption, weight: .semibold)
                         .foregroundStyle(Theme.textTertiary)
                 }
@@ -144,15 +144,15 @@ struct ShopView: View {
 
     /// The pass is spent directly on a task, so its button only explains where.
     private var passRow: some View {
-        row(symbol: "ticket.fill", title: String(localized: "Propustka ze závazku", bundle: .kept),
-            summary: String(localized: "Zruší jeden otevřený týdenní závazek bez postihu. Použiješ ji přímo u úkolu: klepni na Přeskočit a zvol zrušení za body.", bundle: .kept),
+        row(symbol: "ticket.fill", title: String(localized: "Propustka ze závazku", bundle: .kept, locale: .kept),
+            summary: String(localized: "Zruší jeden otevřený týdenní závazek bez postihu. Použiješ ji přímo u úkolu: klepni na Přeskočit a zvol zrušení za body.", bundle: .kept, locale: .kept),
             cost: PointsService.passCost, note: nil) { showsPassInfo = true }
     }
 
     private var milestones: some View {
         let all = StreakService.milestones(tasks)
         return VStack(spacing: 10) {
-            SectionLabel(text: String(localized: "Milníky série", bundle: .kept))
+            SectionLabel(text: String(localized: "Milníky série", bundle: .kept, locale: .kept))
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
                 ForEach(all) { milestone in
                     let reached = milestone.reachedOn != nil
@@ -163,7 +163,7 @@ struct ShopView: View {
                         Text(String.days(milestone.days))
                             .scaledFont(.body, weight: .heavy)
                             .foregroundStyle(reached ? Theme.textPrimary : Theme.textSecondary)
-                        Text(reached ? (milestone.reachedOn?.dayMonthText ?? "") : String(localized: "+\(milestone.bonus.formatted(.number.locale(.app))) bodů", bundle: .kept))
+                        Text(reached ? (milestone.reachedOn?.dayMonthText ?? "") : String(localized: "+\(milestone.bonus.formatted(.number.locale(.app))) bodů", bundle: .kept, locale: .kept))
                             .scaledFont(.caption, weight: .semibold)
                             .foregroundStyle(reached ? Theme.green : Theme.textTertiary)
                     }

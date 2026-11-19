@@ -34,7 +34,7 @@ extension OnboardingView {
 
     func stepper(_ value: String, caption: String? = nil, minus: @escaping () -> Void, plus: @escaping () -> Void) -> some View {
         HStack {
-            roundButton("minus", label: String(localized: "Méně", bundle: .kept), action: minus)
+            roundButton("minus", label: String(localized: "Méně", bundle: .kept, locale: .kept), action: minus)
             Spacer()
             VStack(spacing: 2) {
                 Text(value)
@@ -44,7 +44,7 @@ extension OnboardingView {
                 if let caption { Text(caption).labelStyle() }
             }
             Spacer()
-            roundButton("plus", label: String(localized: "Více", bundle: .kept), action: plus)
+            roundButton("plus", label: String(localized: "Více", bundle: .kept, locale: .kept), action: plus)
         }
         .card()
     }
@@ -79,13 +79,13 @@ extension OnboardingView {
 
     func compactStepper(_ value: String, minus: @escaping () -> Void, plus: @escaping () -> Void) -> some View {
         HStack(spacing: 8) {
-            smallRound("minus", label: String(localized: "Dřív", bundle: .kept), action: minus)
+            smallRound("minus", label: String(localized: "Dřív", bundle: .kept, locale: .kept), action: minus)
             Text(value)
                 .scaledFont(.heading, weight: .heavy)
                 .monospacedDigit()
                 .foregroundStyle(Theme.textPrimary)
                 .frame(minWidth: 62)
-            smallRound("plus", label: String(localized: "Později", bundle: .kept), action: plus)
+            smallRound("plus", label: String(localized: "Později", bundle: .kept, locale: .kept), action: plus)
         }
     }
 

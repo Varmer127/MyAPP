@@ -206,7 +206,7 @@ struct TaskEditorView: View {
                             showsDatePicker = false
                         } label: {
                             VStack(spacing: 2) {
-                                Text(day.isSameDay(as: .now) ? String(localized: "Dnes", bundle: .kept) : day.formatted(.dateTime.weekday(.abbreviated).locale(.app)).localizedCapitalized)
+                                Text(day.isSameDay(as: .now) ? String(localized: "Dnes", bundle: .kept, locale: .kept) : day.formatted(.dateTime.weekday(.abbreviated).locale(.app)).localizedCapitalized)
                                     .scaledFont(.caption)
                                 Text(day.formatted(.dateTime.day().locale(.app)))
                                     .scaledFont(.heading, weight: .bold)
@@ -251,7 +251,7 @@ struct TaskEditorView: View {
 
     private var propertyChips: some View {
         FlowLayout(spacing: 8) {
-            chip(.deadline, "clock", draft.hasDeadline ? String(localized: "do \(draft.deadlineTime.timeText)", bundle: .kept) : String(localized: "bez deadlinu", bundle: .kept))
+            chip(.deadline, "clock", draft.hasDeadline ? String(localized: "do \(draft.deadlineTime.timeText)", bundle: .kept, locale: .kept) : String(localized: "bez deadlinu", bundle: .kept, locale: .kept))
             chip(.duration, "hourglass", durationText)
             chip(.priority, "flag", draft.priority.title)
         }
@@ -542,8 +542,8 @@ struct TaskEditorView: View {
 
     private var removalMessage: String {
         isCommitted
-            ? String(localized: "K tomuhle ses zavázal. Odstranění se počítá jako porušený slib a zůstane v historii.", bundle: .kept)
-            : String(localized: "Úkol ještě není součástí závazku, takže se prostě smaže.", bundle: .kept)
+            ? String(localized: "K tomuhle ses zavázal. Odstranění se počítá jako porušený slib a zůstane v historii.", bundle: .kept, locale: .kept)
+            : String(localized: "Úkol ještě není součástí závazku, takže se prostě smaže.", bundle: .kept, locale: .kept)
     }
 
     /// The user's categories, plus the one this task already has.

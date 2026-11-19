@@ -3,10 +3,18 @@ import Testing
 @testable import Kept
 
 struct HelpersTests {
-    @Test func czechPluralsOfDays() {
+    /// Whatever language the test app was left in, each language gets its own plural forms.
+    @MainActor
+    @Test func pluralsOfDaysInBothLanguages() {
+        let previous = LanguageBundle.fixedCode
+        defer { LanguageBundle.fixedCode = previous }
+        LanguageBundle.fixedCode = "cs"
         #expect(String.days(1) == "1 den")
         #expect(String.days(3) == "3 dny")
         #expect(String.days(5) == "5 dní")
+        LanguageBundle.fixedCode = "en"
+        #expect(String.days(1) == "1 day")
+        #expect(String.days(5) == "5 days")
     }
 
     @Test func activityNamesCompareLikeAPersonWould() {

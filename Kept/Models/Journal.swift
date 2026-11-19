@@ -34,7 +34,7 @@ final class WeekReflection {
         self.weekStart = weekStart
     }
 
-    static let satisfactionLabels = [String(localized: "Vůbec", bundle: .kept), String(localized: "Spíš ne", bundle: .kept), String(localized: "Tak napůl", bundle: .kept), String(localized: "Spíš ano", bundle: .kept), String(localized: "Naprosto", bundle: .kept)]
+    static let satisfactionLabels = [String(localized: "Vůbec", bundle: .kept, locale: .kept), String(localized: "Spíš ne", bundle: .kept, locale: .kept), String(localized: "Tak napůl", bundle: .kept, locale: .kept), String(localized: "Spíš ano", bundle: .kept, locale: .kept), String(localized: "Naprosto", bundle: .kept, locale: .kept)]
 
     var satisfactionLabel: String {
         WeekReflection.satisfactionLabels[min(max(satisfaction, 1), 5) - 1]

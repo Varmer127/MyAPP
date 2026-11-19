@@ -61,71 +61,71 @@ extension TodayView {
         let challenges = TogetherService.shared.challenges
         let weekKept = ScoreEngine.promisesKept(tasks.filter { $0.scheduledDate.weekStart == now.weekStart && $0.countsInScores }, now: now)
         VStack(alignment: .leading, spacing: 10) {
-            SectionLabel(text: String(localized: "Pro tebe", bundle: .kept))
+            SectionLabel(text: String(localized: "Pro tebe", bundle: .kept, locale: .kept))
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     if let week {
-                        ForYouTile(symbol: "sparkles", title: "Tvůj týden je hotový", detail: String(localized: "\(week.done) z \(week.total) slibů", bundle: .kept)) {
+                        ForYouTile(symbol: "sparkles", title: "Tvůj týden je hotový", detail: String(localized: "\(week.done) z \(week.total) slibů", bundle: .kept, locale: .kept)) {
                             story = week
                         }
                     }
                     if let month {
-                        ForYouTile(symbol: "calendar.badge.checkmark", title: "Tvůj měsíc je hotový", detail: String(localized: "\(month.done) z \(month.total) slibů", bundle: .kept)) {
+                        ForYouTile(symbol: "calendar.badge.checkmark", title: "Tvůj měsíc je hotový", detail: String(localized: "\(month.done) z \(month.total) slibů", bundle: .kept, locale: .kept)) {
                             monthStory = month
                         }
                     }
                     if let pending {
-                        ForYouTile(symbol: "book.closed", title: "Sebereflexe týdne", detail: String(localized: "Týden \(pending.weekStart.weekNumber)", bundle: .kept)) {
+                        ForYouTile(symbol: "book.closed", title: "Sebereflexe týdne", detail: String(localized: "Týden \(pending.weekStart.weekNumber)", bundle: .kept, locale: .kept)) {
                             reflection = pending
                         }
                     }
                     if insuranceUsed {
                         ForYouTile(symbol: ShopItem.streakInsurance.symbol, title: "Pojistka série použita",
-                                   detail: String(localized: "Zbývá: \(PointsService.unused(.streakInsurance, in: purchases))", bundle: .kept), tint: Theme.orange) {}
+                                   detail: String(localized: "Zbývá: \(PointsService.unused(.streakInsurance, in: purchases))", bundle: .kept, locale: .kept), tint: Theme.orange) {}
                     }
                     if let recap {
-                        ForYouTile(symbol: "sunrise", title: "Jak dopadl včerejšek", detail: String(localized: "Dodrženo \(recap.done) z \(recap.total)", bundle: .kept)) {
+                        ForYouTile(symbol: "sunrise", title: "Jak dopadl včerejšek", detail: String(localized: "Dodrženo \(recap.done) z \(recap.total)", bundle: .kept, locale: .kept)) {
                             forYouSheet = .recap(recap)
                         }
                     }
                     if let nextWeek {
                         ForYouTile(symbol: "calendar.badge.plus", title: "Naplánuj příští týden",
-                                   detail: nextWeek == 0 ? String(localized: "Zatím prázdný", bundle: .kept) : String(localized: "V plánu: \(nextWeek)", bundle: .kept), tint: Theme.orange) {
+                                   detail: nextWeek == 0 ? String(localized: "Zatím prázdný", bundle: .kept, locale: .kept) : String(localized: "V plánu: \(nextWeek)", bundle: .kept, locale: .kept), tint: Theme.orange) {
                             openNextWeek()
                         }
                     }
                     if settings?.diaryEnabled != false, !wroteToday {
-                        ForYouTile(symbol: "square.and.pencil", title: "Zapiš si dnešek", detail: String(localized: "Pár vět do deníku", bundle: .kept)) {
+                        ForYouTile(symbol: "square.and.pencil", title: "Zapiš si dnešek", detail: String(localized: "Pár vět do deníku", bundle: .kept, locale: .kept)) {
                             forYouSheet = .diary
                         }
                     }
-                    ForYouTile(symbol: "star.circle", title: "Tvoje body", detail: String(localized: "Zůstatek: \(points)", bundle: .kept)) {
+                    ForYouTile(symbol: "star.circle", title: "Tvoje body", detail: String(localized: "Zůstatek: \(points)", bundle: .kept, locale: .kept)) {
                         showsShop = true
                     }
                     if let lastGym {
                         ForYouTile(symbol: TaskCategory.gym.symbol, title: "Gym – progres",
-                                   detail: String(localized: "Naposledy \(lastGym.formatted(.relative(presentation: .named).locale(.app)))", bundle: .kept)) {
+                                   detail: String(localized: "Naposledy \(lastGym.formatted(.relative(presentation: .named).locale(.app)))", bundle: .kept, locale: .kept)) {
                             forYouSheet = .gym
                         }
                     }
                     ForYouTile(symbol: "person.2", title: "Přátelé",
                                detail: friends.incoming.isEmpty
-                                   ? (friends.unreadPokes > 0 ? String(localized: "Nová šťouchnutí: \(friends.unreadPokes)", bundle: .kept) : String(localized: "Spolu je to snazší", bundle: .kept))
-                                   : String(localized: "Žádosti: \(friends.incoming.count)", bundle: .kept)) {
+                                   ? (friends.unreadPokes > 0 ? String(localized: "Nová šťouchnutí: \(friends.unreadPokes)", bundle: .kept, locale: .kept) : String(localized: "Spolu je to snazší", bundle: .kept, locale: .kept))
+                                   : String(localized: "Žádosti: \(friends.incoming.count)", bundle: .kept, locale: .kept)) {
                         forYouSheet = .friends
                     }
                     if signedIn {
                         ForYouTile(symbol: "trophy", title: "Sázky",
-                                   detail: bets.open.isEmpty ? String(localized: "Vsaď se o body", bundle: .kept) : String(localized: "Běží: \(bets.open.count)", bundle: .kept)) {
+                                   detail: bets.open.isEmpty ? String(localized: "Vsaď se o body", bundle: .kept, locale: .kept) : String(localized: "Běží: \(bets.open.count)", bundle: .kept, locale: .kept)) {
                             forYouSheet = .bets
                         }
                         ForYouTile(symbol: "flag.2.crossed", title: "Výzvy",
-                                   detail: challenges.isEmpty ? String(localized: "Dotáhněte to spolu", bundle: .kept) : String(localized: "Tvoje výzvy: \(challenges.count)", bundle: .kept)) {
+                                   detail: challenges.isEmpty ? String(localized: "Dotáhněte to spolu", bundle: .kept, locale: .kept) : String(localized: "Tvoje výzvy: \(challenges.count)", bundle: .kept, locale: .kept)) {
                             forYouSheet = .challenges
                         }
                     }
                     if let weekKept {
-                        ForYouTile(symbol: "chart.bar", title: "Statistiky", detail: String(localized: "Tento týden \(weekKept.percentText)", bundle: .kept)) {
+                        ForYouTile(symbol: "chart.bar", title: "Statistiky", detail: String(localized: "Tento týden \(weekKept.percentText)", bundle: .kept, locale: .kept)) {
                             forYouSheet = .stats
                         }
                     }

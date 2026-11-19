@@ -163,7 +163,7 @@ struct LeaderboardSection: View {
                         .scaledFont(.body, weight: .bold)
                         .foregroundStyle(index == 0 ? Theme.orange : Theme.textSecondary)
                         .frame(width: 28, alignment: .leading)
-                    Text(row.isMe ? String(localized: "Ty", bundle: .kept) : row.displayName)
+                    Text(row.isMe ? String(localized: "Ty", bundle: .kept, locale: .kept) : row.displayName)
                         .scaledFont(.body, weight: row.isMe ? .bold : .regular)
                         .foregroundStyle(Theme.textPrimary)
                     Spacer()

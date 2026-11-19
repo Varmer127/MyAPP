@@ -136,17 +136,17 @@ enum HealthService {
 
     private static func name(of activity: HKWorkoutActivityType) -> String {
         switch activity {
-        case .traditionalStrengthTraining, .functionalStrengthTraining: String(localized: "Silový trénink", bundle: .kept)
-        case .coreTraining: String(localized: "Střed těla", bundle: .kept)
+        case .traditionalStrengthTraining, .functionalStrengthTraining: String(localized: "Silový trénink", bundle: .kept, locale: .kept)
+        case .coreTraining: String(localized: "Střed těla", bundle: .kept, locale: .kept)
         case .highIntensityIntervalTraining: "HIIT"
-        case .crossTraining, .mixedCardio: String(localized: "Kardio", bundle: .kept)
-        case .running: String(localized: "Běh", bundle: .kept)
-        case .walking: String(localized: "Chůze", bundle: .kept)
-        case .hiking: String(localized: "Turistika", bundle: .kept)
-        case .cycling: String(localized: "Kolo", bundle: .kept)
-        case .swimming: String(localized: "Plavání", bundle: .kept)
-        case .yoga: String(localized: "Jóga", bundle: .kept)
-        default: String(localized: "Trénink", bundle: .kept)
+        case .crossTraining, .mixedCardio: String(localized: "Kardio", bundle: .kept, locale: .kept)
+        case .running: String(localized: "Běh", bundle: .kept, locale: .kept)
+        case .walking: String(localized: "Chůze", bundle: .kept, locale: .kept)
+        case .hiking: String(localized: "Turistika", bundle: .kept, locale: .kept)
+        case .cycling: String(localized: "Kolo", bundle: .kept, locale: .kept)
+        case .swimming: String(localized: "Plavání", bundle: .kept, locale: .kept)
+        case .yoga: String(localized: "Jóga", bundle: .kept, locale: .kept)
+        default: String(localized: "Trénink", bundle: .kept, locale: .kept)
         }
     }
 
@@ -281,7 +281,7 @@ extension HealthService {
             let km = Double(steps) * 0.00075
             return DayMetrics(day: day, steps: steps, km: km, kcal: Int(Double(steps) * 0.045) + seed % 150)
         }
-        let names = [String(localized: "Silový trénink", bundle: .kept), String(localized: "Běh", bundle: .kept), String(localized: "Chůze", bundle: .kept), String(localized: "Kolo", bundle: .kept), String(localized: "Jóga", bundle: .kept)]
+        let names = [String(localized: "Silový trénink", bundle: .kept, locale: .kept), String(localized: "Běh", bundle: .kept, locale: .kept), String(localized: "Chůze", bundle: .kept, locale: .kept), String(localized: "Kolo", bundle: .kept, locale: .kept), String(localized: "Jóga", bundle: .kept, locale: .kept)]
         let workouts = (0..<40).map { index -> (date: Date, name: String, minutes: Int) in
             let date = today.addingDays(-index * 2 - 1).addingTimeInterval(18 * 3600)
             return (date, names[index % names.count], 25 + (index * 7) % 50)

@@ -116,7 +116,7 @@ struct ExerciseInput: View {
                         .scaledFont(.heading, weight: .semibold)
                         .multilineTextAlignment(.center)
                 }
-                column(String(localized: "OPAKOVÁNÍ", bundle: .kept)) {
+                column(String(localized: "OPAKOVÁNÍ", bundle: .kept, locale: .kept)) {
                     Picker("Opakování", selection: draft.reps) {
                         ForEach(Self.repsRange, id: \.self) { Text("\($0)").tag($0) }
                     }
@@ -124,7 +124,7 @@ struct ExerciseInput: View {
                     .labelsHidden()
                     .tint(Theme.textPrimary)
                 }
-                column(String(localized: "SÉRIE", bundle: .kept)) {
+                column(String(localized: "SÉRIE", bundle: .kept, locale: .kept)) {
                     Picker("Série", selection: draft.sets) {
                         ForEach(Self.setsRange, id: \.self) { Text("\($0)").tag($0) }
                     }
@@ -145,7 +145,7 @@ struct ExerciseInput: View {
             }
         }
         .card(padding: 12)
-        .swipeToDelete(String(localized: "Odebrat cvik", bundle: .kept), cornerRadius: Theme.radius) { toggle(draft.wrappedValue.name) }
+        .swipeToDelete(String(localized: "Odebrat cvik", bundle: .kept, locale: .kept), cornerRadius: Theme.radius) { toggle(draft.wrappedValue.name) }
     }
 
     /// One labelled input cell of an exercise row.

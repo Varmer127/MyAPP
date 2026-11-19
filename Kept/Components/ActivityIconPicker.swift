@@ -14,34 +14,34 @@ struct ActivityIconPicker: View {
     }
 
     private static let groups: [IconGroup] = [
-        IconGroup(title: String(localized: "Sport a pohyb", bundle: .kept), symbols: [
+        IconGroup(title: String(localized: "Sport a pohyb", bundle: .kept, locale: .kept), symbols: [
             "dumbbell", "figure.strengthtraining.traditional", "figure.run", "figure.walk", "figure.hiking",
             "figure.outdoor.cycle", "bicycle", "figure.pool.swim", "figure.yoga", "figure.core.training",
             "figure.boxing", "figure.martial.arts", "figure.climbing", "figure.skiing.downhill",
             "figure.soccer", "figure.basketball", "figure.tennis",
         ]),
-        IconGroup(title: String(localized: "Učení a mysl", bundle: .kept), symbols: [
+        IconGroup(title: String(localized: "Učení a mysl", bundle: .kept, locale: .kept), symbols: [
             "book", "books.vertical", "text.book.closed", "character.book.closed", "graduationcap",
             "lightbulb", "brain.head.profile", "translate", "globe.europe.africa", "pencil.and.ruler",
         ]),
-        IconGroup(title: String(localized: "Práce", bundle: .kept), symbols: [
+        IconGroup(title: String(localized: "Práce", bundle: .kept, locale: .kept), symbols: [
             "briefcase", "laptopcomputer", "chevron.left.forwardslash.chevron.right", "doc.text",
             "list.bullet.clipboard", "chart.bar", "envelope", "phone", "calendar", "banknote",
             "hammer", "wrench.and.screwdriver",
         ]),
-        IconGroup(title: String(localized: "Tvoření", bundle: .kept), symbols: [
+        IconGroup(title: String(localized: "Tvoření", bundle: .kept, locale: .kept), symbols: [
             "paintbrush", "paintpalette", "music.note", "guitars", "pianokeys", "mic",
             "camera", "film", "theatermasks", "scissors", "gamecontroller",
         ]),
-        IconGroup(title: String(localized: "Zdraví a klid", bundle: .kept), symbols: [
-            "heart", String(localized: "figure.mind.and.body", bundle: .kept), "bed.double", "drop", "fork.knife", "carrot",
+        IconGroup(title: String(localized: "Zdraví a klid", bundle: .kept, locale: .kept), symbols: [
+            "heart", String(localized: "figure.mind.and.body", bundle: .kept, locale: .kept), "bed.double", "drop", "fork.knife", "carrot",
             "cup.and.saucer", "pills", "stethoscope", "sun.max", "moon.stars",
         ]),
-        IconGroup(title: String(localized: "Příroda a domov", bundle: .kept), symbols: [
+        IconGroup(title: String(localized: "Příroda a domov", bundle: .kept, locale: .kept), symbols: [
             "leaf", "tree", "mountain.2", "pawprint", "dog", "house", "cart", "bag",
             "car", "airplane", "person.2", "gift",
         ]),
-        IconGroup(title: String(localized: "Ostatní", bundle: .kept), symbols: [
+        IconGroup(title: String(localized: "Ostatní", bundle: .kept, locale: .kept), symbols: [
             "star", "flame", "target", "sparkles", "checkmark.seal", "circle.grid.2x2",
         ]),
     ]

@@ -6,9 +6,9 @@ enum NotificationTone: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .normal: String(localized: "Normální", bundle: .kept)
-        case .strict: String(localized: "Přísný", bundle: .kept)
-        case .savage: String(localized: "Drsný", bundle: .kept)
+        case .normal: String(localized: "Normální", bundle: .kept, locale: .kept)
+        case .strict: String(localized: "Přísný", bundle: .kept, locale: .kept)
+        case .savage: String(localized: "Drsný", bundle: .kept, locale: .kept)
         }
     }
 
@@ -23,9 +23,9 @@ enum NotificationTone: String, CaseIterable, Identifiable {
 
     var summary: String {
         switch self {
-        case .normal: String(localized: "Věcný a neutrální.", bundle: .kept)
-        case .strict: String(localized: "Přímý a konfrontační.", bundle: .kept)
-        case .savage: String(localized: "Tvrdý. Míří na tvoje chování, nikdy na tebe jako člověka.", bundle: .kept)
+        case .normal: String(localized: "Věcný a neutrální.", bundle: .kept, locale: .kept)
+        case .strict: String(localized: "Přímý a konfrontační.", bundle: .kept, locale: .kept)
+        case .savage: String(localized: "Tvrdý. Míří na tvoje chování, nikdy na tebe jako člověka.", bundle: .kept, locale: .kept)
         }
     }
 }

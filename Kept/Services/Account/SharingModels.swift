@@ -8,17 +8,17 @@ enum ShareLevel: String, CaseIterable, Identifiable, Codable {
 
     var title: String {
         switch self {
-        case .none: String(localized: "Nic", bundle: .kept)
-        case .summary: String(localized: "Souhrn týdne", bundle: .kept)
-        case .plan: String(localized: "Celý plán týdne", bundle: .kept)
+        case .none: String(localized: "Nic", bundle: .kept, locale: .kept)
+        case .summary: String(localized: "Souhrn týdne", bundle: .kept, locale: .kept)
+        case .plan: String(localized: "Celý plán týdne", bundle: .kept, locale: .kept)
         }
     }
 
     var detail: String {
         switch self {
-        case .none: String(localized: "Přátelé uvidí jen tvoje jméno.", bundle: .kept)
-        case .summary: String(localized: "Spolehlivost, kolik slibů máš splněno a sérii. Bez názvů úkolů.", bundle: .kept)
-        case .plan: String(localized: "Navíc názvy úkolů, dny a jestli jsou splněné. Poznámky, důvody a sázky nikdy.", bundle: .kept)
+        case .none: String(localized: "Přátelé uvidí jen tvoje jméno.", bundle: .kept, locale: .kept)
+        case .summary: String(localized: "Spolehlivost, kolik slibů máš splněno a sérii. Bez názvů úkolů.", bundle: .kept, locale: .kept)
+        case .plan: String(localized: "Navíc názvy úkolů, dny a jestli jsou splněné. Poznámky, důvody a sázky nikdy.", bundle: .kept, locale: .kept)
         }
     }
 }
@@ -38,10 +38,10 @@ enum ReactionKind: String, CaseIterable, Identifiable, Codable {
 
     var title: String {
         switch self {
-        case .fire: String(localized: "Hoříš", bundle: .kept)
-        case .clap: String(localized: "Potlesk", bundle: .kept)
-        case .strong: String(localized: "Síla", bundle: .kept)
-        case .heart: String(localized: "Fandím ti", bundle: .kept)
+        case .fire: String(localized: "Hoříš", bundle: .kept, locale: .kept)
+        case .clap: String(localized: "Potlesk", bundle: .kept, locale: .kept)
+        case .strong: String(localized: "Síla", bundle: .kept, locale: .kept)
+        case .heart: String(localized: "Fandím ti", bundle: .kept, locale: .kept)
         }
     }
 }

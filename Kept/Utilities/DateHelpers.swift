@@ -41,17 +41,8 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 }
 
 extension Locale {
-    /// Dates, numbers and speech in the app's language. English keeps the phone's region, so dates read
-    /// the British or the American way as the user is used to.
-    static var app: Locale {
-        switch AppLanguage.current {
-        case .cs:
-            return Locale(identifier: "cs_CZ")
-        case .en:
-            let region = Locale.current.region?.identifier ?? "GB"
-            return Locale(identifier: "en_\(region)")
-        }
-    }
+    /// Dates, numbers and speech in the app's language.
+    static var app: Locale { .kept }
 }
 
 extension Date {
@@ -115,7 +106,7 @@ extension String {
 
     /// "1 den", "3 dny", "5 dní" / "1 day", "5 days": the plural forms of both languages live in the string catalog.
     static func days(_ count: Int) -> String {
-        String(localized: "\(count) dní", bundle: .kept, comment: "A number of days, with plural forms")
+        String(localized: "\(count) dní", bundle: .kept, locale: .kept, comment: "A number of days, with plural forms")
     }
 }
 

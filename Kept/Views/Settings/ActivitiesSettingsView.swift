@@ -69,7 +69,7 @@ struct ActivitiesSettingsView: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel("Odebrat \(item)")
                 }
-                .listSwipeToDelete(String(localized: "Odebrat", bundle: .kept)) {
+                .listSwipeToDelete(String(localized: "Odebrat", bundle: .kept, locale: .kept)) {
                     settings.customActivities = custom.filter { $0 != item }
                     settings.setCountsAsWorkout(false, custom: item)
                     ActivityIcons.shared.removeCustom(item)

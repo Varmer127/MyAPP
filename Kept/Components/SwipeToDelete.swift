@@ -101,14 +101,14 @@ private struct SwipeToDelete: ViewModifier {
 extension View {
     /// Adds swipe-left-to-delete to a row that is not inside a `List`.
     /// `background` must match what is behind the row, so the uncovered button does not show through.
-    func swipeToDelete(_ label: String = String(localized: "Smazat", bundle: .kept), isEnabled: Bool = true, background: Color = Theme.card,
+    func swipeToDelete(_ label: String = String(localized: "Smazat", bundle: .kept, locale: .kept), isEnabled: Bool = true, background: Color = Theme.card,
                        cornerRadius: CGFloat = 0, onDelete: @escaping () -> Void) -> some View {
         modifier(SwipeToDelete(isEnabled: isEnabled, background: background, cornerRadius: cornerRadius,
                                label: label, onDelete: onDelete))
     }
 
     /// Swipe-left-to-delete for a row inside a `List` or `Form`, with the system look.
-    func listSwipeToDelete(_ label: String = String(localized: "Smazat", bundle: .kept), isEnabled: Bool = true, onDelete: @escaping () -> Void) -> some View {
+    func listSwipeToDelete(_ label: String = String(localized: "Smazat", bundle: .kept, locale: .kept), isEnabled: Bool = true, onDelete: @escaping () -> Void) -> some View {
         swipeActions(edge: .trailing, allowsFullSwipe: true) {
             if isEnabled {
                 Button(role: .destructive, action: onDelete) {

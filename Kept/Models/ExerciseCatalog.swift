@@ -9,22 +9,22 @@ enum Muscle: String, CaseIterable, Identifiable, Codable {
 
     var title: String {
         switch self {
-        case .chest: String(localized: "Prsa", bundle: .kept)
-        case .shoulders: String(localized: "Ramena", bundle: .kept)
-        case .biceps: String(localized: "Biceps", bundle: .kept)
-        case .triceps: String(localized: "Triceps", bundle: .kept)
-        case .forearms: String(localized: "Předloktí", bundle: .kept)
-        case .abs: String(localized: "Břicho", bundle: .kept)
-        case .obliques: String(localized: "Šikmé břicho", bundle: .kept)
-        case .traps: String(localized: "Trapézy", bundle: .kept)
-        case .lats: String(localized: "Široký sval zádový", bundle: .kept)
-        case .upperBack: String(localized: "Horní záda", bundle: .kept)
-        case .lowerBack: String(localized: "Spodní záda", bundle: .kept)
-        case .glutes: String(localized: "Hýždě", bundle: .kept)
-        case .quads: String(localized: "Přední stehna", bundle: .kept)
-        case .hamstrings: String(localized: "Zadní stehna", bundle: .kept)
-        case .adductors: String(localized: "Vnitřní stehna", bundle: .kept)
-        case .calves: String(localized: "Lýtka", bundle: .kept)
+        case .chest: String(localized: "Prsa", bundle: .kept, locale: .kept)
+        case .shoulders: String(localized: "Ramena", bundle: .kept, locale: .kept)
+        case .biceps: String(localized: "Biceps", bundle: .kept, locale: .kept)
+        case .triceps: String(localized: "Triceps", bundle: .kept, locale: .kept)
+        case .forearms: String(localized: "Předloktí", bundle: .kept, locale: .kept)
+        case .abs: String(localized: "Břicho", bundle: .kept, locale: .kept)
+        case .obliques: String(localized: "Šikmé břicho", bundle: .kept, locale: .kept)
+        case .traps: String(localized: "Trapézy", bundle: .kept, locale: .kept)
+        case .lats: String(localized: "Široký sval zádový", bundle: .kept, locale: .kept)
+        case .upperBack: String(localized: "Horní záda", bundle: .kept, locale: .kept)
+        case .lowerBack: String(localized: "Spodní záda", bundle: .kept, locale: .kept)
+        case .glutes: String(localized: "Hýždě", bundle: .kept, locale: .kept)
+        case .quads: String(localized: "Přední stehna", bundle: .kept, locale: .kept)
+        case .hamstrings: String(localized: "Zadní stehna", bundle: .kept, locale: .kept)
+        case .adductors: String(localized: "Vnitřní stehna", bundle: .kept, locale: .kept)
+        case .calves: String(localized: "Lýtka", bundle: .kept, locale: .kept)
         }
     }
 }
@@ -36,14 +36,14 @@ enum Equipment: String, CaseIterable, Identifiable, Codable {
 
     var title: String {
         switch self {
-        case .barbell: String(localized: "Velká činka", bundle: .kept)
-        case .dumbbell: String(localized: "Jednoručky", bundle: .kept)
-        case .machine: String(localized: "Stroj", bundle: .kept)
-        case .cable: String(localized: "Kladka", bundle: .kept)
-        case .bodyweight: String(localized: "Vlastní váha", bundle: .kept)
-        case .kettlebell: String(localized: "Kettlebell", bundle: .kept)
-        case .band: String(localized: "Guma", bundle: .kept)
-        case .other: String(localized: "Jiné", bundle: .kept)
+        case .barbell: String(localized: "Velká činka", bundle: .kept, locale: .kept)
+        case .dumbbell: String(localized: "Jednoručky", bundle: .kept, locale: .kept)
+        case .machine: String(localized: "Stroj", bundle: .kept, locale: .kept)
+        case .cable: String(localized: "Kladka", bundle: .kept, locale: .kept)
+        case .bodyweight: String(localized: "Vlastní váha", bundle: .kept, locale: .kept)
+        case .kettlebell: String(localized: "Kettlebell", bundle: .kept, locale: .kept)
+        case .band: String(localized: "Guma", bundle: .kept, locale: .kept)
+        case .other: String(localized: "Jiné", bundle: .kept, locale: .kept)
         }
     }
 }

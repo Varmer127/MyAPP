@@ -158,20 +158,20 @@ struct DiaryView: View {
                     .scaledFont(.heading, weight: .semibold)
                     .foregroundStyle(Theme.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
-                field("answer", String(localized: "Stačí jedna věta.", bundle: .kept), text: $draft.answer, lines: 2...6)
+                field("answer", String(localized: "Stačí jedna věta.", bundle: .kept, locale: .kept), text: $draft.answer, lines: 2...6)
             }
-            scaleRow(String(localized: "NÁLADA", bundle: .kept), value: $draft.mood, low: String(localized: "mizerně", bundle: .kept), high: String(localized: "skvěle", bundle: .kept))
-            scaleRow(String(localized: "ENERGIE", bundle: .kept), value: $draft.energy, low: String(localized: "vyčerpaný", bundle: .kept), high: String(localized: "nabitý", bundle: .kept))
+            scaleRow(String(localized: "NÁLADA", bundle: .kept, locale: .kept), value: $draft.mood, low: String(localized: "mizerně", bundle: .kept, locale: .kept), high: String(localized: "skvěle", bundle: .kept, locale: .kept))
+            scaleRow(String(localized: "ENERGIE", bundle: .kept, locale: .kept), value: $draft.energy, low: String(localized: "vyčerpaný", bundle: .kept, locale: .kept), high: String(localized: "nabitý", bundle: .kept, locale: .kept))
             VStack(alignment: .leading, spacing: 10) {
                 Text("TŘI ŘÁDKY").labelStyle()
-                field("well", String(localized: "Co se povedlo", bundle: .kept), text: $draft.wentWell, lines: 1...4, symbol: "checkmark", color: Theme.green)
-                field("badly", String(localized: "Co se nepovedlo", bundle: .kept), text: $draft.wentBadly, lines: 1...4, symbol: "xmark", color: Theme.red)
-                field("differently", String(localized: "Co zítra udělám jinak", bundle: .kept), text: $draft.doDifferently, lines: 1...4,
+                field("well", String(localized: "Co se povedlo", bundle: .kept, locale: .kept), text: $draft.wentWell, lines: 1...4, symbol: "checkmark", color: Theme.green)
+                field("badly", String(localized: "Co se nepovedlo", bundle: .kept, locale: .kept), text: $draft.wentBadly, lines: 1...4, symbol: "xmark", color: Theme.red)
+                field("differently", String(localized: "Co zítra udělám jinak", bundle: .kept, locale: .kept), text: $draft.doDifferently, lines: 1...4,
                       symbol: "arrow.forward", color: Theme.orange)
             }
             VStack(alignment: .leading, spacing: 10) {
                 Text("VDĚČNOST").labelStyle()
-                field("gratitude", String(localized: "Za co jsem dnes vděčný", bundle: .kept), text: $draft.gratitude, lines: 1...3, symbol: "heart", color: Theme.textSecondary)
+                field("gratitude", String(localized: "Za co jsem dnes vděčný", bundle: .kept, locale: .kept), text: $draft.gratitude, lines: 1...3, symbol: "heart", color: Theme.textSecondary)
             }
             Button(earnsPoints ? "ULOŽIT ZÁPIS · +\(DiaryService.pointsPerEntry) BODŮ" : "ULOŽIT ZMĚNY") { save(now: .now) }
                 .buttonStyle(PrimaryButtonStyle())
@@ -215,7 +215,7 @@ struct DiaryView: View {
             HStack {
                 Text(title).labelStyle()
                 Spacer()
-                Text(value.wrappedValue == 0 ? "" : (value.wrappedValue <= 2 ? low : (value.wrappedValue >= 4 ? high : String(localized: "tak napůl", bundle: .kept))))
+                Text(value.wrappedValue == 0 ? "" : (value.wrappedValue <= 2 ? low : (value.wrappedValue >= 4 ? high : String(localized: "tak napůl", bundle: .kept, locale: .kept))))
                     .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -301,8 +301,8 @@ struct DiaryView: View {
     }
 
     private func lines(of entry: DiaryEntry) -> [(label: String, text: String)] {
-        [(entry.question, entry.answer), (String(localized: "Povedlo se", bundle: .kept), entry.wentWell), (String(localized: "Nepovedlo se", bundle: .kept), entry.wentBadly),
-         (String(localized: "Zítra jinak", bundle: .kept), entry.doDifferently), (String(localized: "Vděčnost", bundle: .kept), entry.gratitude)]
+        [(entry.question, entry.answer), (String(localized: "Povedlo se", bundle: .kept, locale: .kept), entry.wentWell), (String(localized: "Nepovedlo se", bundle: .kept, locale: .kept), entry.wentBadly),
+         (String(localized: "Zítra jinak", bundle: .kept, locale: .kept), entry.doDifferently), (String(localized: "Vděčnost", bundle: .kept, locale: .kept), entry.gratitude)]
             .filter { !$0.1.isEmpty }
             .map { (label: $0.0, text: $0.1) }
     }
@@ -397,7 +397,7 @@ struct DiaryView: View {
             .sorted { $0.date > $1.date }
         if !items.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: String(localized: "Posledních \(Self.historyDays) dní · starší ve Všech zápisech", bundle: .kept))
+                SectionLabel(text: String(localized: "Posledních \(Self.historyDays) dní · starší ve Všech zápisech", bundle: .kept, locale: .kept))
                 ForEach(items) { item in
                     switch item {
                     case .entry(let entry): DiaryEntryCard(entry: entry)

@@ -236,7 +236,7 @@ enum PlanService {
         let oldTime = task.deadline?.minutesIntoDay
         let newTime = deadline?.minutesIntoDay
         if oldTime != newTime {
-            let none = String(localized: "žádný", bundle: .kept)
+            let none = String(localized: "žádný", bundle: .kept, locale: .kept)
             let detail = "\(task.deadline?.timeText ?? none) → \(deadline?.timeText ?? none)"
             log(.deadlineChanged, task: task, detail: detail, in: plan)
             changed = true

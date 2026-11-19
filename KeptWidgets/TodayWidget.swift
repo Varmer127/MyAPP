@@ -110,8 +110,8 @@ struct TodayWidgetView: View {
                     focusPanel(focus, timerSize: 34)
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
-                        label(String(localized: "DALŠÍ ÚKOL", bundle: .kept))
-                        Text(snapshot?.nextTitle ?? (total == 0 ? String(localized: "Dnes nic v plánu", bundle: .kept) : String(localized: "Všechno hotovo", bundle: .kept)))
+                        label(String(localized: "DALŠÍ ÚKOL", bundle: .kept, locale: .kept))
+                        Text(snapshot?.nextTitle ?? (total == 0 ? String(localized: "Dnes nic v plánu", bundle: .kept, locale: .kept) : String(localized: "Všechno hotovo", bundle: .kept, locale: .kept)))
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(WidgetStyle.text)
                             .lineLimit(2)
@@ -129,7 +129,7 @@ struct TodayWidgetView: View {
                             }
                             .buttonStyle(.plain)
                         } else {
-                            label(String(localized: "DODRŽENÉ SLIBY", bundle: .kept))
+                            label(String(localized: "DODRŽENÉ SLIBY", bundle: .kept, locale: .kept))
                             Text(snapshot?.promisesKept.map { "\(Int(($0 * 100).rounded())) %" } ?? "—")
                                 .font(.system(size: 20, weight: .bold))
                                 .foregroundStyle(WidgetStyle.text)
@@ -158,7 +158,7 @@ struct TodayWidgetView: View {
     }
 
     private func statusText(_ focus: WidgetSnapshot.Focus) -> String {
-        focus.isPaused ? String(localized: "FOCUS POZASTAVEN", bundle: .kept) : (isBehind(focus) ? String(localized: "NESTÍHÁŠ PLÁN", bundle: .kept) : (isOvertime(focus) ? String(localized: "NAD PLÁN", bundle: .kept) : String(localized: "FOCUS BĚŽÍ", bundle: .kept)))
+        focus.isPaused ? String(localized: "FOCUS POZASTAVEN", bundle: .kept, locale: .kept) : (isBehind(focus) ? String(localized: "NESTÍHÁŠ PLÁN", bundle: .kept, locale: .kept) : (isOvertime(focus) ? String(localized: "NAD PLÁN", bundle: .kept, locale: .kept) : String(localized: "FOCUS BĚŽÍ", bundle: .kept, locale: .kept)))
     }
 
     /// Running: a system-driven timer that keeps ticking without the app. Paused: the frozen time.

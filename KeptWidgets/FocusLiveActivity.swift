@@ -100,7 +100,7 @@ struct FocusLiveActivity: Widget {
     private func statusLabel(_ context: ActivityViewContext<FocusActivityAttributes>) -> some View {
         let overtime = isOvertime(context)
         let behind = overtime && context.attributes.hasDeadline
-        let text = context.state.isPaused ? String(localized: "FOCUS POZASTAVEN", bundle: .kept) : (behind ? String(localized: "NESTÍHÁŠ PLÁN", bundle: .kept) : (overtime ? String(localized: "NAD PLÁN", bundle: .kept) : String(localized: "FOCUS BĚŽÍ", bundle: .kept)))
+        let text = context.state.isPaused ? String(localized: "FOCUS POZASTAVEN", bundle: .kept, locale: .kept) : (behind ? String(localized: "NESTÍHÁŠ PLÁN", bundle: .kept, locale: .kept) : (overtime ? String(localized: "NAD PLÁN", bundle: .kept, locale: .kept) : String(localized: "FOCUS BĚŽÍ", bundle: .kept, locale: .kept)))
         return Text(text)
             .font(.system(size: 11, weight: .bold))
             .tracking(1)

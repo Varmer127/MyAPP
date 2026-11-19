@@ -102,7 +102,7 @@ struct QuickPlanView: View {
                     if !planned.isEmpty {
                         plannedStrip
                     }
-                    group(String(localized: "Co", bundle: .kept)) {
+                    group(String(localized: "Co", bundle: .kept, locale: .kept)) {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 8)], spacing: 8) {
                             ForEach(settingsList.first?.enabledCategories ?? TaskCategory.allCases) { option in
                                 chip(option.title, symbol: option.icon, isSelected: category == option && !isCustomTitle) { select(option) }
@@ -122,14 +122,14 @@ struct QuickPlanView: View {
                                 }
                                 .transition(.scale.combined(with: .opacity))
                             }
-                            chip(String(localized: "Vlastní", bundle: .kept), symbol: "plus", isSelected: false) { addsActivity = true }
+                            chip(String(localized: "Vlastní", bundle: .kept, locale: .kept), symbol: "plus", isSelected: false) { addsActivity = true }
                                 .accessibilityLabel("Přidat vlastní aktivitu")
                         }
                         TextField("Název", text: $title)
                             .scaledFont(.body)
                             .card()
                     }
-                    group(String(localized: "Které dny", bundle: .kept)) {
+                    group(String(localized: "Které dny", bundle: .kept, locale: .kept)) {
                         HStack(alignment: .top, spacing: 6) {
                             ForEach(days, id: \.self) { day in
                                 let isPast = day.endOfDay <= Date.now
@@ -157,13 +157,13 @@ struct QuickPlanView: View {
                                 .foregroundStyle(Theme.textSecondary)
                         }
                     }
-                    group(String(localized: "Priorita", bundle: .kept)) {
+                    group(String(localized: "Priorita", bundle: .kept, locale: .kept)) {
                         Picker("Priorita", selection: $priority) {
                             ForEach(TaskPriority.allCases) { Text($0.title).tag($0) }
                         }
                         .pickerStyle(.segmented)
                     }
-                    group(String(localized: "Délka", bundle: .kept)) {
+                    group(String(localized: "Délka", bundle: .kept, locale: .kept)) {
                         Picker("Délka", selection: $minutes) {
                             ForEach(Self.durationOptions, id: \.self) { Text(Self.durationText($0)).tag($0) }
                         }

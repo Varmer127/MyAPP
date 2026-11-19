@@ -11,27 +11,27 @@ struct OnboardingDraft {
         var title: String {
             switch self {
             case .pushPullLegs: "Push / Pull / Legs"
-            case .upperLower: String(localized: "Horní / Spodní", bundle: .kept)
-            case .fullBody: String(localized: "Full body", bundle: .kept)
-            case .own: String(localized: "Vlastní split", bundle: .kept)
+            case .upperLower: String(localized: "Horní / Spodní", bundle: .kept, locale: .kept)
+            case .fullBody: String(localized: "Full body", bundle: .kept, locale: .kept)
+            case .own: String(localized: "Vlastní split", bundle: .kept, locale: .kept)
             }
         }
 
         var summary: String {
             switch self {
-            case .pushPullLegs: String(localized: "Tlaky, tahy, nohy", bundle: .kept)
-            case .upperLower: String(localized: "Vršek a spodek těla střídavě", bundle: .kept)
-            case .fullBody: String(localized: "Celé tělo při každém tréninku", bundle: .kept)
-            case .own: String(localized: "Tréninky si pojmenuješ sám", bundle: .kept)
+            case .pushPullLegs: String(localized: "Tlaky, tahy, nohy", bundle: .kept, locale: .kept)
+            case .upperLower: String(localized: "Vršek a spodek těla střídavě", bundle: .kept, locale: .kept)
+            case .fullBody: String(localized: "Celé tělo při každém tréninku", bundle: .kept, locale: .kept)
+            case .own: String(localized: "Tréninky si pojmenuješ sám", bundle: .kept, locale: .kept)
             }
         }
 
         /// The workouts offered when logging a gym session.
         var workouts: [String] {
             switch self {
-            case .pushPullLegs: [String(localized: "Push (tlaky)", bundle: .kept), String(localized: "Pull (tahy)", bundle: .kept), String(localized: "Legs (nohy)", bundle: .kept)]
-            case .upperLower: [String(localized: "Horní polovina", bundle: .kept), String(localized: "Spodní polovina", bundle: .kept)]
-            case .fullBody: [String(localized: "Full body", bundle: .kept)]
+            case .pushPullLegs: [String(localized: "Push (tlaky)", bundle: .kept, locale: .kept), String(localized: "Pull (tahy)", bundle: .kept, locale: .kept), String(localized: "Legs (nohy)", bundle: .kept, locale: .kept)]
+            case .upperLower: [String(localized: "Horní polovina", bundle: .kept, locale: .kept), String(localized: "Spodní polovina", bundle: .kept, locale: .kept)]
+            case .fullBody: [String(localized: "Full body", bundle: .kept, locale: .kept)]
             case .own: []
             }
         }
@@ -50,7 +50,7 @@ struct OnboardingDraft {
     var grammar: GrammarGender = .neutral
     var gymMode: GymMode = .simple
     var split: Split = .pushPullLegs
-    var ownWorkouts = [String(localized: "Hrudník a triceps", bundle: .kept), String(localized: "Záda a biceps", bundle: .kept), String(localized: "Nohy", bundle: .kept)]
+    var ownWorkouts = [String(localized: "Hrudník a triceps", bundle: .kept, locale: .kept), String(localized: "Záda a biceps", bundle: .kept, locale: .kept), String(localized: "Nohy", bundle: .kept, locale: .kept)]
     var gymPerWeek = TaskCategory.gym.defaultWeeklyTarget
     var restName = RestPreset.defaults[1].name
     var health = false

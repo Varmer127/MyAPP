@@ -34,7 +34,7 @@ struct ExerciseLibraryView: View {
         var seen = Set<String>()
         let names = task.exercises.sorted { $0.date < $1.date }.map(\.name).filter { seen.insert($0.activityKey).inserted }
         guard !names.isEmpty else { return nil }
-        let type = task.workoutType.isEmpty ? String(localized: "Trénink", bundle: .kept) : task.workoutType
+        let type = task.workoutType.isEmpty ? String(localized: "Trénink", bundle: .kept, locale: .kept) : task.workoutType
         return ("\(type) · \(latest.date.dayMonthText)", names)
     }
 
@@ -186,7 +186,7 @@ struct ExerciseLibraryView: View {
         VStack(alignment: .leading, spacing: 8) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    chip(String(localized: "Všechny partie", bundle: .kept), isOn: muscle == nil) { muscle = nil }
+                    chip(String(localized: "Všechny partie", bundle: .kept, locale: .kept), isOn: muscle == nil) { muscle = nil }
                     ForEach(Muscle.allCases) { item in
                         chip(item.title, isOn: muscle == item) { muscle = muscle == item ? nil : item }
                     }
@@ -195,7 +195,7 @@ struct ExerciseLibraryView: View {
             }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    chip(String(localized: "Jakékoli vybavení", bundle: .kept), isOn: equipment == nil) { equipment = nil }
+                    chip(String(localized: "Jakékoli vybavení", bundle: .kept, locale: .kept), isOn: equipment == nil) { equipment = nil }
                     ForEach(Equipment.allCases) { item in
                         chip(item.title, isOn: equipment == item) { equipment = equipment == item ? nil : item }
                     }

@@ -40,8 +40,8 @@ struct DayRecapView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     TileRow {
-                        MetricTile(value: recap.productivity.percentText, label: String(localized: "Produktivita", bundle: .kept))
-                        MetricTile(value: "\(streak)", label: streak == 1 ? String(localized: "Den v řadě", bundle: .kept) : String(localized: "Dní v řadě", bundle: .kept))
+                        MetricTile(value: recap.productivity.percentText, label: String(localized: "Produktivita", bundle: .kept, locale: .kept))
+                        MetricTile(value: "\(streak)", label: streak == 1 ? String(localized: "Den v řadě", bundle: .kept, locale: .kept) : String(localized: "Dní v řadě", bundle: .kept, locale: .kept))
                     }
                     VStack(spacing: 0) {
                         ForEach(recap.tasks) { task in

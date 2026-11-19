@@ -379,7 +379,7 @@ struct TodayView: View {
             }
             Button("Zrušit", role: .cancel) {}
         } message: { task in
-            Text(String(localized: "\(task.title) · \(task.plannedMinutes) min\n\nBuď k sobě upřímný. Podvedl bys jen sám sebe.", bundle: .kept))
+            Text(String(localized: "\(task.title) · \(task.plannedMinutes) min\n\nBuď k sobě upřímný. Podvedl bys jen sám sebe.", bundle: .kept, locale: .kept))
         }
         .fullScreenCover(item: $focusTask, onDismiss: {
             if let task = completeAfterFocus {
@@ -429,7 +429,7 @@ struct TodayView: View {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.82)) { task.markDone() }
             // Outside a sent plan a task earns no points, but keeping your word still deserves a moment.
             if PointsService.earned(by: task) == 0 {
-                pointsGain = PointsGain(amount: 0, text: share < 1 ? String(localized: "ČÁSTEČNĚ SPLNĚNO", bundle: .kept) : String(localized: "SPLNĚNO", bundle: .kept))
+                pointsGain = PointsGain(amount: 0, text: share < 1 ? String(localized: "ČÁSTEČNĚ SPLNĚNO", bundle: .kept, locale: .kept) : String(localized: "SPLNĚNO", bundle: .kept, locale: .kept))
             }
         }
     }
@@ -509,20 +509,20 @@ struct TodayView: View {
                     realityCheckCard
                 }
                 if !day.unresolved.isEmpty {
-                    section(String(localized: "Uzavři, co zůstalo otevřené · \(day.unresolved.count)", bundle: .kept), color: Theme.orange, tasks: day.unresolved, now: now)
+                    section(String(localized: "Uzavři, co zůstalo otevřené · \(day.unresolved.count)", bundle: .kept, locale: .kept), color: Theme.orange, tasks: day.unresolved, now: now)
                 }
                 if !day.critical.isEmpty {
-                    section(String(localized: "Kritické", bundle: .kept), tasks: day.critical, now: now)
+                    section(String(localized: "Kritické", bundle: .kept, locale: .kept), tasks: day.critical, now: now)
                 }
                 if !day.open.isEmpty {
-                    section(String(localized: "Úkoly", bundle: .kept), tasks: day.open, now: now)
+                    section(String(localized: "Úkoly", bundle: .kept, locale: .kept), tasks: day.open, now: now)
                 }
                 if !day.weekIsCommitted {
                     uncommittedCard
                 }
                 forYouRow(now: now)
                 if !day.closed.isEmpty {
-                    section(String(localized: "Uzavřené", bundle: .kept), tasks: day.closed, now: now)
+                    section(String(localized: "Uzavřené", bundle: .kept, locale: .kept), tasks: day.closed, now: now)
                 }
                 // What the app recommends adding comes last, on its own.
                 suggestionsSection(now: now)

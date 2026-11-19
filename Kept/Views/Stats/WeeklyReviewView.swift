@@ -123,15 +123,15 @@ struct WeeklyReviewView: View {
     /// One observation about the plan: empty days ahead, or the busiest day.
     private func weekAheadNote(byDay: [Date: [TaskItem]], days: [Date]) -> String {
         if weekTasks.isEmpty {
-            return String(localized: "Zatím je týden prázdný. Naplánuj si ho na obrazovce Týden a tady uvidíš, jak se plní.", bundle: .kept)
+            return String(localized: "Zatím je týden prázdný. Naplánuj si ho na obrazovce Týden a tady uvidíš, jak se plní.", bundle: .kept, locale: .kept)
         }
         let emptyAhead = days.filter { $0.endOfDay > now && (byDay[$0.startOfDay] ?? []).isEmpty }
         if !emptyAhead.isEmpty {
             let names = emptyAhead.map(\.weekdayShortText).joined(separator: ", ")
-            return String(localized: "Volné dny: \(names). Klidně je nech na odpočinek, nebo tam něco doplň.", bundle: .kept)
+            return String(localized: "Volné dny: \(names). Klidně je nech na odpočinek, nebo tam něco doplň.", bundle: .kept, locale: .kept)
         }
         if let busiest = days.max(by: { (byDay[$0.startOfDay]?.count ?? 0) < (byDay[$1.startOfDay]?.count ?? 0) }) {
-            return String(localized: "Nejnabitější den je \(busiest.weekdayText). Každý den něco, tak to má být.", bundle: .kept)
+            return String(localized: "Nejnabitější den je \(busiest.weekdayText). Každý den něco, tak to má být.", bundle: .kept, locale: .kept)
         }
         return ""
     }
@@ -157,7 +157,7 @@ struct WeeklyReviewView: View {
                 }
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 10)], spacing: 14) {
                     if minimum > 0 {
-                        ring(title: String(localized: "Aktivity", bundle: .kept), symbol: "target", done: doneCount, target: minimum)
+                        ring(title: String(localized: "Aktivity", bundle: .kept, locale: .kept), symbol: "target", done: doneCount, target: minimum)
                     }
                     ForEach(goals) { goal in
                         ring(title: goal.category.title, symbol: goal.category.icon, done: goal.done, target: goal.target)
@@ -210,8 +210,8 @@ struct WeeklyReviewView: View {
                     .foregroundStyle(Theme.textPrimary)
                     .padding(.top, 8)
                 Text(plannedCount > 0
-                     ? String(localized: "V plánu máš \(plannedCount) úkolů. Přehled se naplní, jak je budeš plnit.", bundle: .kept, comment: "Planned task count, with plural forms")
-                     : String(localized: "Zatím tu nic není. Naplánuj si týden a přehled se začne plnit.", bundle: .kept))
+                     ? String(localized: "V plánu máš \(plannedCount) úkolů. Přehled se naplní, jak je budeš plnit.", bundle: .kept, locale: .kept, comment: "Planned task count, with plural forms")
+                     : String(localized: "Zatím tu nic není. Naplánuj si týden a přehled se začne plnit.", bundle: .kept, locale: .kept))
                     .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -244,10 +244,10 @@ struct WeeklyReviewView: View {
             if !closed.isEmpty, showsProductivity || integrity != nil {
                 HStack(spacing: 10) {
                     if showsProductivity {
-                        MetricTile(value: productivity.percentText, label: String(localized: "Produktivita", bundle: .kept))
+                        MetricTile(value: productivity.percentText, label: String(localized: "Produktivita", bundle: .kept, locale: .kept))
                     }
                     if let integrity {
-                        MetricTile(value: integrity.percentText, label: String(localized: "Věrnost plánu", bundle: .kept))
+                        MetricTile(value: integrity.percentText, label: String(localized: "Věrnost plánu", bundle: .kept, locale: .kept))
                     }
                 }
                 .padding(.top, 12)
@@ -261,20 +261,20 @@ struct WeeklyReviewView: View {
         let missed = closed.count - done.count
         return VStack(spacing: 10) {
             TileRow {
-                MetricTile(value: "\(closed.count)", label: String(localized: "Celkem", bundle: .kept))
-                MetricTile(value: "\(done.count)", label: String(localized: "Splněno", bundle: .kept))
-                MetricTile(value: "\(missed)", label: String(localized: "Nesplněno", bundle: .kept), color: missed > 0 ? Theme.red : Theme.textPrimary)
+                MetricTile(value: "\(closed.count)", label: String(localized: "Celkem", bundle: .kept, locale: .kept))
+                MetricTile(value: "\(done.count)", label: String(localized: "Splněno", bundle: .kept, locale: .kept))
+                MetricTile(value: "\(missed)", label: String(localized: "Nesplněno", bundle: .kept, locale: .kept), color: missed > 0 ? Theme.red : Theme.textPrimary)
             }
             TileRow {
-                MetricTile(value: "\(done.count - late)", label: String(localized: "Včas", bundle: .kept))
-                MetricTile(value: "\(late)", label: String(localized: "Pozdě", bundle: .kept), color: late > 0 ? Theme.orange : Theme.textPrimary)
+                MetricTile(value: "\(done.count - late)", label: String(localized: "Včas", bundle: .kept, locale: .kept))
+                MetricTile(value: "\(late)", label: String(localized: "Pozdě", bundle: .kept, locale: .kept), color: late > 0 ? Theme.orange : Theme.textPrimary)
             }
         }
     }
 
     private var dayChart: some View {
         VStack(spacing: 10) {
-            SectionLabel(text: String(localized: "Produktivita po dnech", bundle: .kept))
+            SectionLabel(text: String(localized: "Produktivita po dnech", bundle: .kept, locale: .kept))
             Chart(dayScores) { score in
                 BarMark(x: .value("Den", score.day.weekdayShortText.uppercased()),
                         y: .value("Produktivita", (score.productivity ?? 0) * 100 * chartProgress))
@@ -312,19 +312,19 @@ struct WeeklyReviewView: View {
             if scored.count >= 2, let best = scored.max(by: { $0.value < $1.value }),
                let worst = scored.min(by: { $0.value < $1.value }) {
                 HStack(spacing: 10) {
-                    highlight(String(localized: "Nejlepší den", bundle: .kept), best.day.weekdayText.capitalizedFirst, best.value.percentText)
-                    highlight(String(localized: "Nejhorší den", bundle: .kept), worst.day.weekdayText.capitalizedFirst, worst.value.percentText)
+                    highlight(String(localized: "Nejlepší den", bundle: .kept, locale: .kept), best.day.weekdayText.capitalizedFirst, best.value.percentText)
+                    highlight(String(localized: "Nejhorší den", bundle: .kept, locale: .kept), worst.day.weekdayText.capitalizedFirst, worst.value.percentText)
                 }
             }
             if categories.count >= 2, let best = categories.max(by: { $0.rate < $1.rate }),
                let worst = categories.min(by: { $0.rate < $1.rate }), best.category != worst.category {
                 HStack(spacing: 10) {
-                    highlight(String(localized: "Nejlepší kategorie", bundle: .kept), best.category.title, best.rate.percentText)
-                    highlight(String(localized: "Nejhorší kategorie", bundle: .kept), worst.category.title, worst.rate.percentText)
+                    highlight(String(localized: "Nejlepší kategorie", bundle: .kept, locale: .kept), best.category.title, best.rate.percentText)
+                    highlight(String(localized: "Nejhorší kategorie", bundle: .kept, locale: .kept), worst.category.title, worst.rate.percentText)
                 }
             }
             if let mostFailed, let title = mostFailed.value.first?.title {
-                highlight(String(localized: "Nejčastěji nesplněný úkol", bundle: .kept), title, String(localized: "\(mostFailed.value.count)× nesplněno", bundle: .kept))
+                highlight(String(localized: "Nejčastěji nesplněný úkol", bundle: .kept, locale: .kept), title, String(localized: "\(mostFailed.value.count)× nesplněno", bundle: .kept, locale: .kept))
             }
         }
     }
@@ -352,7 +352,7 @@ struct WeeklyReviewView: View {
         let counts = StatisticsService.excuseCounts(weekFailures)
         if !counts.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: String(localized: "Tvoje výmluvy", bundle: .kept))
+                SectionLabel(text: String(localized: "Tvoje výmluvy", bundle: .kept, locale: .kept))
                 ExcuseList(counts: counts)
             }
         }
@@ -363,7 +363,7 @@ struct WeeklyReviewView: View {
         let insights = PatternDetectionService.insights(tasks: closed, failures: weekFailures, plans: weekPlans, now: now)
         if !insights.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: String(localized: "Zjištěné vzorce", bundle: .kept))
+                SectionLabel(text: String(localized: "Zjištěné vzorce", bundle: .kept, locale: .kept))
                 InsightList(insights: insights)
             }
         }
@@ -375,7 +375,7 @@ struct WeeklyReviewView: View {
         if !records.isEmpty {
             let repeated = StatisticsService.excuseCounts(weekFailures).first { $0.count >= 2 }
             VStack(spacing: 10) {
-                SectionLabel(text: String(localized: "Tvoje vlastní slova", bundle: .kept))
+                SectionLabel(text: String(localized: "Tvoje vlastní slova", bundle: .kept, locale: .kept))
                 VStack(alignment: .leading, spacing: 14) {
                     ForEach(records) { record in
                         VStack(alignment: .leading, spacing: 3) {
@@ -428,17 +428,17 @@ struct WeeklyReviewView: View {
 
     private var truthVerdict: (text: String, color: Color) {
         if ScoreEngine.isBusyNotProductive(closed, now: now) {
-            return (String(localized: "Byl jsi aktivní. Nebyl jsi produktivní.", bundle: .kept), Theme.red)
+            return (String(localized: "Byl jsi aktivní. Nebyl jsi produktivní.", bundle: .kept, locale: .kept), Theme.red)
         }
         let kept = promisesKept ?? ScoreEngine.completionRate(closed) ?? 0
         let productive = productivity ?? 0
         if kept >= Self.truthGood, productive >= Self.truthGood {
-            return (String(localized: "Dodržel jsi slovo.", bundle: .kept), Theme.green)
+            return (String(localized: "Dodržel jsi slovo.", bundle: .kept, locale: .kept), Theme.green)
         }
         if kept < Self.truthPoor {
-            return (String(localized: "Většinu toho, co sis slíbil, jsi nedodržel.", bundle: .kept), Theme.red)
+            return (String(localized: "Většinu toho, co sis slíbil, jsi nedodržel.", bundle: .kept, locale: .kept), Theme.red)
         }
-        return (String(localized: "Slušný týden. Rezervy znáš sám nejlíp.", bundle: .kept), Theme.orange)
+        return (String(localized: "Slušný týden. Rezervy znáš sám nejlíp.", bundle: .kept, locale: .kept), Theme.orange)
     }
 }
 

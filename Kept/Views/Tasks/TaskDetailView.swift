@@ -24,20 +24,20 @@ struct TaskDetailView: View {
                             .foregroundStyle(Theme.textSecondary)
                     }
                     if task.isDone, AccountService.shared.profile != nil {
-                        block(String(localized: "Svědek", bundle: .kept)) {
+                        block(String(localized: "Svědek", bundle: .kept, locale: .kept)) {
                             WitnessRow(task: task)
                                 .scaledFont(.body, weight: .semibold)
                                 .foregroundStyle(Theme.textPrimary)
                         }
                     }
                     if !task.partialNote.isEmpty {
-                        block(String(localized: "Co chybělo", bundle: .kept)) { quote(task.partialNote) }
+                        block(String(localized: "Co chybělo", bundle: .kept, locale: .kept)) { quote(task.partialNote) }
                     }
                     if !task.notes.isEmpty {
-                        block(String(localized: "Poznámka", bundle: .kept)) { quote(task.notes) }
+                        block(String(localized: "Poznámka", bundle: .kept, locale: .kept)) { quote(task.notes) }
                     }
                     if !task.stake.isEmpty {
-                        block(String(localized: "Sázka", bundle: .kept)) {
+                        block(String(localized: "Sázka", bundle: .kept, locale: .kept)) {
                             quote(task.stake)
                             if task.stakeOutcome != 0 {
                                 Text(task.stakeOutcome == 1 ? "Dodržena" : "Nedodržena")
@@ -47,10 +47,10 @@ struct TaskDetailView: View {
                         }
                     }
                     if let workout = task.workoutSummary {
-                        block(String(localized: "Trénink", bundle: .kept)) { quote(workout) }
+                        block(String(localized: "Trénink", bundle: .kept, locale: .kept)) { quote(workout) }
                     }
                     if !task.exercises.isEmpty {
-                        block(String(localized: "Cviky", bundle: .kept)) {
+                        block(String(localized: "Cviky", bundle: .kept, locale: .kept)) {
                             ForEach(task.exercises.sorted { $0.name < $1.name }) { exercise in
                                 HStack {
                                     Text(exercise.name.exerciseShown)
@@ -69,13 +69,13 @@ struct TaskDetailView: View {
                         let paused = finishedSessions.reduce(0) { $0 + $1.pauseSeconds }
                         let pauses = finishedSessions.reduce(0) { $0 + $1.pauseCount }
                         TileRow {
-                            MetricTile(value: "\(task.plannedMinutes) min", label: String(localized: "Plán", bundle: .kept))
-                            MetricTile(value: FocusView.minutes(active), label: String(localized: "Soustředění", bundle: .kept))
-                            MetricTile(value: FocusView.minutes(paused), label: String(localized: "Pauza \(pauses)×", bundle: .kept))
+                            MetricTile(value: "\(task.plannedMinutes) min", label: String(localized: "Plán", bundle: .kept, locale: .kept))
+                            MetricTile(value: FocusView.minutes(active), label: String(localized: "Soustředění", bundle: .kept, locale: .kept))
+                            MetricTile(value: FocusView.minutes(paused), label: String(localized: "Pauza \(pauses)×", bundle: .kept, locale: .kept))
                         }
                     }
                     if !task.proofNote.isEmpty || task.proofPhoto != nil {
-                        block(String(localized: "Důkaz", bundle: .kept)) {
+                        block(String(localized: "Důkaz", bundle: .kept, locale: .kept)) {
                             if let data = task.proofPhoto, let image = UIImage(data: data) {
                                 Image(uiImage: image)
                                     .resizable()
@@ -87,7 +87,7 @@ struct TaskDetailView: View {
                         }
                     }
                     ForEach(task.failures.sorted { $0.date < $1.date }) { record in
-                        block(String(localized: "Vysvětlení · \(record.reason.title)", bundle: .kept)) {
+                        block(String(localized: "Vysvětlení · \(record.reason.title)", bundle: .kept, locale: .kept)) {
                             quote("„\(record.critique)“")
                             if !record.prevention.isEmpty {
                                 Text("Příště: \(record.prevention)")
@@ -97,7 +97,7 @@ struct TaskDetailView: View {
                         }
                     }
                     if !task.why.isEmpty {
-                        block(String(localized: "Proč na tom záleží", bundle: .kept)) { quote(task.why) }
+                        block(String(localized: "Proč na tom záleží", bundle: .kept, locale: .kept)) { quote(task.why) }
                     }
                 }
                 .padding(Theme.screenPadding)

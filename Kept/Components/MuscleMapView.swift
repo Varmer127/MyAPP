@@ -100,7 +100,7 @@ struct MuscleMapView: View {
 
     var body: some View {
         HStack(spacing: 20) {
-            figure(Self.frontPaths, label: String(localized: "ZEPŘEDU", bundle: .kept))
+            figure(Self.frontPaths, label: String(localized: "ZEPŘEDU", bundle: .kept, locale: .kept))
             figure(Self.backPaths, label: "ZEZADU")
         }
         .accessibilityElement()
@@ -144,7 +144,7 @@ struct MuscleMapView: View {
 
     private var accessibilityText: String {
         let lit = Muscle.allCases.filter { (intensity[$0] ?? 0) > 0 }.map(\.title)
-        return lit.isEmpty ? String(localized: "Mapa svalů, nic nezvýrazněno", bundle: .kept) : String(localized: "Mapa svalů: \(lit.joined(separator: ", "))", bundle: .kept)
+        return lit.isEmpty ? String(localized: "Mapa svalů, nic nezvýrazněno", bundle: .kept, locale: .kept) : String(localized: "Mapa svalů: \(lit.joined(separator: ", "))", bundle: .kept, locale: .kept)
     }
 
     // MARK: Path data

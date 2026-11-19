@@ -21,7 +21,7 @@ extension OnboardingView {
                         withAnimation { draft.grammar = gender }
                     }
                 }
-                note(String(localized: "Slouží jen k tomu, aby věty od Kept seděly. Nikam se neposílá a změníš to v Nastavení.", bundle: .kept))
+                note(String(localized: "Slouží jen k tomu, aby věty od Kept seděly. Nikam se neposílá a změníš to v Nastavení.", bundle: .kept, locale: .kept))
             }
         }
     }
@@ -83,9 +83,9 @@ extension OnboardingView {
     var howItWorks: some View {
         VStack(spacing: 10) {
             ForEach(Array([
-                (String(localized: "Naplánuj týden", bundle: .kept), String(localized: "V neděli si rozvrhneš, co uděláš a kdy. Rychle, na pár klepnutí.", bundle: .kept)),
-                (String(localized: "Zapečeť ho", bundle: .kept), String(localized: "Odešleš plánovač a za hodinu se zapečetí. Pak už je to slib.", bundle: .kept)),
-                (String(localized: "Dodrž slovo", bundle: .kept), String(localized: "Kept hlídá, připomíná a počítá spolehlivost. Výmluvy si musíš obhájit.", bundle: .kept)),
+                (String(localized: "Naplánuj týden", bundle: .kept, locale: .kept), String(localized: "V neděli si rozvrhneš, co uděláš a kdy. Rychle, na pár klepnutí.", bundle: .kept, locale: .kept)),
+                (String(localized: "Zapečeť ho", bundle: .kept, locale: .kept), String(localized: "Odešleš plánovač a za hodinu se zapečetí. Pak už je to slib.", bundle: .kept, locale: .kept)),
+                (String(localized: "Dodrž slovo", bundle: .kept, locale: .kept), String(localized: "Kept hlídá, připomíná a počítá spolehlivost. Výmluvy si musíš obhájit.", bundle: .kept, locale: .kept)),
             ].enumerated()), id: \.offset) { index, item in
                 HStack(alignment: .top, spacing: 14) {
                     Text("\(index + 1)")
@@ -144,8 +144,8 @@ extension OnboardingView {
             }
             if !draft.activityNames.isEmpty { activityIcons }
             note(draft.activityNames.isEmpty
-                 ? String(localized: "Vyber aspoň jednu aktivitu, jinak ti Kept nemá co navrhovat.", bundle: .kept)
-                 : String(localized: "Vybráno: \(draft.activityNames.count). Kolikrát týdně je chceš dělat, si nastavíš v Nastavení → Týdenní cíle.", bundle: .kept))
+                 ? String(localized: "Vyber aspoň jednu aktivitu, jinak ti Kept nemá co navrhovat.", bundle: .kept, locale: .kept)
+                 : String(localized: "Vybráno: \(draft.activityNames.count). Kolikrát týdně je chceš dělat, si nastavíš v Nastavení → Týdenní cíle.", bundle: .kept, locale: .kept))
         }
     }
 
@@ -194,23 +194,23 @@ extension OnboardingView {
 
     var minimum: some View {
         let count = draft.minimum
-        let caption = count == 0 ? String(localized: "BEZ MINIMA", bundle: .kept) : (count == 1 ? String(localized: "AKTIVITA TÝDNĚ", bundle: .kept) : (count <= 4 ? String(localized: "AKTIVITY TÝDNĚ", bundle: .kept) : String(localized: "AKTIVIT TÝDNĚ", bundle: .kept)))
+        let caption = count == 0 ? String(localized: "BEZ MINIMA", bundle: .kept, locale: .kept) : (count == 1 ? String(localized: "AKTIVITA TÝDNĚ", bundle: .kept, locale: .kept) : (count <= 4 ? String(localized: "AKTIVITY TÝDNĚ", bundle: .kept, locale: .kept) : String(localized: "AKTIVIT TÝDNĚ", bundle: .kept, locale: .kept)))
         return VStack(alignment: .leading, spacing: 14) {
             stepper("\(count)", caption: caption,
                     minus: { withAnimation { draft.minimum = max(0, count - 1) } },
                     plus: { withAnimation { draft.minimum = min(UserSettings.minimumWeeklyTasksRange.upperBound, count + 1) } })
-            note(count == 0 ? String(localized: "Bez minima si plán sestavíš libovolně malý.", bundle: .kept)
-                 : count <= 4 ? String(localized: "Klidný start. Hodí se, když si zvykáš plánovat.", bundle: .kept)
-                 : count <= 9 ? String(localized: "Zhruba jedna aktivita denně. Většině lidí sedí.", bundle: .kept)
-                 : String(localized: "Náročné. Počítej s tím, že tě Kept bude držet zkrátka.", bundle: .kept))
+            note(count == 0 ? String(localized: "Bez minima si plán sestavíš libovolně malý.", bundle: .kept, locale: .kept)
+                 : count <= 4 ? String(localized: "Klidný start. Hodí se, když si zvykáš plánovat.", bundle: .kept, locale: .kept)
+                 : count <= 9 ? String(localized: "Zhruba jedna aktivita denně. Většině lidí sedí.", bundle: .kept, locale: .kept)
+                 : String(localized: "Náročné. Počítej s tím, že tě Kept bude držet zkrátka.", bundle: .kept, locale: .kept))
         }
     }
 
     var gym: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 10) {
-                option(String(localized: "Chodím", bundle: .kept), nil, isOn: draft.doesGym) { draft.activities.insert(.gym) }
-                option(String(localized: "Nechodím", bundle: .kept), nil, isOn: !draft.doesGym) { draft.activities.remove(.gym) }
+                option(String(localized: "Chodím", bundle: .kept, locale: .kept), nil, isOn: draft.doesGym) { draft.activities.insert(.gym) }
+                option(String(localized: "Nechodím", bundle: .kept, locale: .kept), nil, isOn: !draft.doesGym) { draft.activities.remove(.gym) }
             }
             if draft.doesGym {
                 VStack(alignment: .leading, spacing: 8) {
@@ -223,7 +223,7 @@ extension OnboardingView {
                         }
                     }
                     GymModePreview(mode: draft.gymMode)
-                    note(String(localized: "Přepnout můžeš kdykoli v Nastavení gymu. Nic se tím nesmaže, data z pokročilého režimu jen zůstanou schovaná.", bundle: .kept))
+                    note(String(localized: "Přepnout můžeš kdykoli v Nastavení gymu. Nic se tím nesmaže, data z pokročilého režimu jen zůstanou schovaná.", bundle: .kept, locale: .kept))
                 }
                 VStack(alignment: .leading, spacing: 8) {
                     Text("JAKÝ SPLIT JEDEŠ").labelStyle()
@@ -236,10 +236,10 @@ extension OnboardingView {
                 }
                 VStack(alignment: .leading, spacing: 8) {
                     Text("KOLIKRÁT TÝDNĚ ZHRUBA").labelStyle()
-                    stepper("\(draft.gymPerWeek)×", caption: String(localized: "ORIENTAČNĚ", bundle: .kept),
+                    stepper("\(draft.gymPerWeek)×", caption: String(localized: "ORIENTAČNĚ", bundle: .kept, locale: .kept),
                             minus: { withAnimation { draft.gymPerWeek = max(1, draft.gymPerWeek - 1) } },
                             plus: { withAnimation { draft.gymPerWeek = min(7, draft.gymPerWeek + 1) } })
-                    note(String(localized: "Jen orientační cíl: jeden týden 3×, druhý 6× je v pořádku, žádný postih. Jak ho plníš, se trochu promítá do spolehlivosti a podle něj ti Kept gym navrhuje. Změníš ho v Nastavení gymu.", bundle: .kept))
+                    note(String(localized: "Jen orientační cíl: jeden týden 3×, druhý 6× je v pořádku, žádný postih. Jak ho plníš, se trochu promítá do spolehlivosti a podle něj ti Kept gym navrhuje. Změníš ho v Nastavení gymu.", bundle: .kept, locale: .kept))
                 }
                 VStack(alignment: .leading, spacing: 8) {
                     Text("VÝCHOZÍ PAUZA MEZI SÉRIEMI").labelStyle()
@@ -260,10 +260,10 @@ extension OnboardingView {
                             .buttonStyle(.plain)
                         }
                     }
-                    note(String(localized: "Vlastní pauzy (třeba „Dřep 4:00“) si přidáš později v Nastavení gymu. Ta nahoře v seznamu je ve stopkách výchozí.", bundle: .kept))
+                    note(String(localized: "Vlastní pauzy (třeba „Dřep 4:00“) si přidáš později v Nastavení gymu. Ta nahoře v seznamu je ve stopkách výchozí.", bundle: .kept, locale: .kept))
                 }
             } else {
-                note(String(localized: "Gym se nebude nabízet ani navrhovat. Zapnout ho můžeš kdykoli v Nastavení → Moje aktivity.", bundle: .kept))
+                note(String(localized: "Gym se nebude nabízet ani navrhovat. Zapnout ho můžeš kdykoli v Nastavení → Moje aktivity.", bundle: .kept, locale: .kept))
             }
         }
     }
@@ -271,7 +271,7 @@ extension OnboardingView {
     var ownSplit: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Tvoje tréninky").scaledFont(.body, weight: .bold).foregroundStyle(Theme.textPrimary)
-            note(String(localized: "Pojmenuj tréninky, které se v týdnu střídají.", bundle: .kept))
+            note(String(localized: "Pojmenuj tréninky, které se v týdnu střídají.", bundle: .kept, locale: .kept))
             ForEach(draft.ownWorkouts.indices, id: \.self) { index in
                 HStack(spacing: 8) {
                     Text(String(UnicodeScalar(UInt8(65 + index))))
@@ -295,7 +295,7 @@ extension OnboardingView {
                     .disabled(draft.ownWorkouts.count <= 1)
                     .accessibilityLabel("Odebrat trénink")
                 }
-                .swipeToDelete(String(localized: "Odebrat trénink", bundle: .kept), isEnabled: draft.ownWorkouts.count > 1) {
+                .swipeToDelete(String(localized: "Odebrat trénink", bundle: .kept, locale: .kept), isEnabled: draft.ownWorkouts.count > 1) {
                     withAnimation { _ = draft.ownWorkouts.remove(at: index) }
                 }
             }
@@ -319,9 +319,9 @@ extension OnboardingView {
     var health: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 10) {
-                ForEach([String(localized: "Kroky, aktivní energie a tréninky za posledních 7 dní", bundle: .kept),
-                         String(localized: "Váha se doplní do zápisu tréninku a do grafu", bundle: .kept),
-                         String(localized: "Když hodinky uloží silový trénink, Kept ti hned nabídne ho zapsat", bundle: .kept)], id: \.self) { line in
+                ForEach([String(localized: "Kroky, aktivní energie a tréninky za posledních 7 dní", bundle: .kept, locale: .kept),
+                         String(localized: "Váha se doplní do zápisu tréninku a do grafu", bundle: .kept, locale: .kept),
+                         String(localized: "Když hodinky uloží silový trénink, Kept ti hned nabídne ho zapsat", bundle: .kept, locale: .kept)], id: \.self) { line in
                     HStack(alignment: .top, spacing: 10) {
                         Circle().fill(Theme.green).frame(width: 6, height: 6).padding(.top, 7)
                         Text(line).scaledFont(.body).foregroundStyle(Theme.textPrimary)
@@ -341,18 +341,18 @@ extension OnboardingView {
                                                 textColor: draft.health ? Theme.onPrimary : Theme.onPrimary))
                 .disabled(draft.health)
             } else {
-                note(String(localized: "Apple Zdraví na tomto zařízení není dostupné.", bundle: .kept))
+                note(String(localized: "Apple Zdraví na tomto zařízení není dostupné.", bundle: .kept, locale: .kept))
             }
-            note(String(localized: "Kept ze Zdraví jen čte a nic nikam neposílá. Propojit to jde i později v Nastavení.", bundle: .kept))
+            note(String(localized: "Kept ze Zdraví jen čte a nic nikam neposílá. Propojit to jde i později v Nastavení.", bundle: .kept, locale: .kept))
         }
     }
 
     var friends: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 10) {
-                ForEach([String(localized: "Sdílej svůj týden a drž se s kamarády", bundle: .kept),
-                         String(localized: "Pošťouchni přítele, když si zapomněl makat", bundle: .kept),
-                         String(localized: "Sázejte se o body, nikdy o peníze", bundle: .kept)], id: \.self) { line in
+                ForEach([String(localized: "Sdílej svůj týden a drž se s kamarády", bundle: .kept, locale: .kept),
+                         String(localized: "Pošťouchni přítele, když si zapomněl makat", bundle: .kept, locale: .kept),
+                         String(localized: "Sázejte se o body, nikdy o peníze", bundle: .kept, locale: .kept)], id: \.self) { line in
                     HStack(alignment: .top, spacing: 10) {
                         Circle().fill(Theme.green).frame(width: 6, height: 6).padding(.top, 7)
                         Text(line).scaledFont(.body).foregroundStyle(Theme.textPrimary)
@@ -361,9 +361,9 @@ extension OnboardingView {
                 }
             }
             .card()
-            note(String(localized: "Účet je volitelný a Kept funguje i bez něj. Deník, váha, zdraví a fotky zůstanou jen v tvém telefonu a nic se nesdílí, dokud to sám nezapneš. Účet založíš i později v Nastavení.", bundle: .kept))
+            note(String(localized: "Účet je volitelný a Kept funguje i bez něj. Deník, váha, zdraví a fotky zůstanou jen v tvém telefonu a nic se nesdílí, dokud to sám nezapneš. Účet založíš i později v Nastavení.", bundle: .kept, locale: .kept))
             if AccountService.shared.isSignedIn {
-                note(String(localized: "Účet máš hotový.", bundle: .kept))
+                note(String(localized: "Účet máš hotový.", bundle: .kept, locale: .kept))
             } else {
                 Button("Přeskočit, bez účtu to zvládnu") { go(1) }
                     .scaledFont(.body, weight: .semibold)
@@ -375,11 +375,11 @@ extension OnboardingView {
 
     var diary: some View {
         VStack(alignment: .leading, spacing: 10) {
-            toggleRow(String(localized: "Zapnout deník", bundle: .kept), String(localized: "Přidá sekci Deník. Kdo nechce psát, nechá vypnuté.", bundle: .kept), isOn: $draft.diary)
+            toggleRow(String(localized: "Zapnout deník", bundle: .kept, locale: .kept), String(localized: "Přidá sekci Deník. Kdo nechce psát, nechá vypnuté.", bundle: .kept, locale: .kept), isOn: $draft.diary)
             if draft.diary {
-                toggleRow(String(localized: "Zamknout deník Face ID", bundle: .kept), String(localized: "Jen deník, zbytek aplikace zůstane otevřený.", bundle: .kept), isOn: $draft.diaryLock)
+                toggleRow(String(localized: "Zamknout deník Face ID", bundle: .kept, locale: .kept), String(localized: "Jen deník, zbytek aplikace zůstane otevřený.", bundle: .kept, locale: .kept), isOn: $draft.diaryLock)
             }
-            note(String(localized: "Otázka dne, nálada a energie, tři řádky a vděčnost. Za každý den se zápisem \(DiaryService.pointsPerEntry) bodů.", bundle: .kept))
+            note(String(localized: "Otázka dne, nálada a energie, tři řádky a vděčnost. Za každý den se zápisem \(DiaryService.pointsPerEntry) bodů.", bundle: .kept, locale: .kept))
         }
         .animation(.easeOut(duration: 0.2), value: draft.diary)
     }
@@ -395,25 +395,25 @@ extension OnboardingView {
                 .overlay(Circle().stroke(Theme.border, lineWidth: 1))
                 .contentTransition(.symbolEffect(.replace))
                 .animation(.easeInOut(duration: 0.25), value: draft.appLock)
-            toggleRow(String(localized: "Zamknout Kept Face ID", bundle: .kept), String(localized: "Při každém otevření aplikace. Kdo vezme telefon, tvoje plány ani deník neuvidí.", bundle: .kept),
+            toggleRow(String(localized: "Zamknout Kept Face ID", bundle: .kept, locale: .kept), String(localized: "Při každém otevření aplikace. Kdo vezme telefon, tvoje plány ani deník neuvidí.", bundle: .kept, locale: .kept),
                       isOn: $draft.appLock)
         }
         .frame(maxWidth: .infinity)
     }
 
     var tabOptions: [(tab: AppTab, title: String, subtitle: String, symbol: String)] {
-        var options: [(AppTab, String, String, String)] = [(.stats, String(localized: "Statistiky", bundle: .kept), String(localized: "Grafy, kalendář, rekordy", bundle: .kept), "chart.bar")]
-        if draft.doesGym { options.append((.gym, String(localized: "Gym", bundle: .kept), String(localized: "Tréninky a síla", bundle: .kept), TaskCategory.gym.symbol)) }
-        if HealthService.isAvailable { options.append((.health, String(localized: "Zdraví", bundle: .kept), String(localized: "Kroky a váha", bundle: .kept), "heart")) }
-        if draft.diary { options.append((.diary, String(localized: "Deník", bundle: .kept), String(localized: "Večerní reflexe", bundle: .kept), "book.closed")) }
+        var options: [(AppTab, String, String, String)] = [(.stats, String(localized: "Statistiky", bundle: .kept, locale: .kept), String(localized: "Grafy, kalendář, rekordy", bundle: .kept, locale: .kept), "chart.bar")]
+        if draft.doesGym { options.append((.gym, String(localized: "Gym", bundle: .kept, locale: .kept), String(localized: "Tréninky a síla", bundle: .kept, locale: .kept), TaskCategory.gym.symbol)) }
+        if HealthService.isAvailable { options.append((.health, String(localized: "Zdraví", bundle: .kept, locale: .kept), String(localized: "Kroky a váha", bundle: .kept, locale: .kept), "heart")) }
+        if draft.diary { options.append((.diary, String(localized: "Deník", bundle: .kept, locale: .kept), String(localized: "Večerní reflexe", bundle: .kept, locale: .kept), "book.closed")) }
         return options
     }
 
     var tabs: some View {
         let chosen = draft.tabs.filter { tab in tabOptions.contains { $0.tab == tab } }
-        let bar: [(String, String)] = [(String(localized: "Dnes", bundle: .kept), "sun.max"), (String(localized: "Týden", bundle: .kept), "calendar")]
+        let bar: [(String, String)] = [(String(localized: "Dnes", bundle: .kept, locale: .kept), "sun.max"), (String(localized: "Týden", bundle: .kept, locale: .kept), "calendar")]
             + tabOptions.filter { chosen.contains($0.tab) }.map { ($0.title, $0.symbol) }
-            + [(String(localized: "Nastavení", bundle: .kept), "gearshape")]
+            + [(String(localized: "Nastavení", bundle: .kept, locale: .kept), "gearshape")]
         return VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 2) {
                 ForEach(Array(bar.enumerated()), id: \.offset) { index, item in
@@ -461,9 +461,9 @@ extension OnboardingView {
     var tone: some View {
         let activity = draft.exampleActivity
         let sample: (title: String, body: String, about: String) = switch draft.tone {
-        case .normal: (activity.uppercased(), String(localized: "Je 15:00 a \(activity) pořád není hotové.", bundle: .kept), String(localized: "Věcný a neutrální. Připomene, ale netlačí.", bundle: .kept))
-        case .strict: (activity.uppercased(), String(localized: "Zase to odkládáš. \(activity). Začni.", bundle: .kept), String(localized: "Přímý a konfrontační. Výchozí volba.", bundle: .kept))
-        case .savage: (String(localized: "GET THE FUCK UP.", bundle: .kept), String(localized: "Furt meleš o tom, čeho chceš dosáhnout. Tak kde je ta práce? \(activity).", bundle: .kept), String(localized: "Tvrdý. Pro ty, kdo potřebují kopanec.", bundle: .kept))
+        case .normal: (activity.uppercased(), String(localized: "Je 15:00 a \(activity) pořád není hotové.", bundle: .kept, locale: .kept), String(localized: "Věcný a neutrální. Připomene, ale netlačí.", bundle: .kept, locale: .kept))
+        case .strict: (activity.uppercased(), String(localized: "Zase to odkládáš. \(activity). Začni.", bundle: .kept, locale: .kept), String(localized: "Přímý a konfrontační. Výchozí volba.", bundle: .kept, locale: .kept))
+        case .savage: (String(localized: "GET THE FUCK UP.", bundle: .kept, locale: .kept), String(localized: "Furt meleš o tom, čeho chceš dosáhnout. Tak kde je ta práce? \(activity).", bundle: .kept, locale: .kept), String(localized: "Tvrdý. Pro ty, kdo potřebují kopanec.", bundle: .kept, locale: .kept))
         }
         return VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 8) {
@@ -518,8 +518,8 @@ extension OnboardingView {
 
     var times: some View {
         VStack(alignment: .leading, spacing: 10) {
-            timeRow(String(localized: "Ranní přehled", bundle: .kept), String(localized: "Co tě dnes čeká", bundle: .kept), minutes: $draft.morningMinutes, range: 5 * 60...12 * 60)
-            timeRow(String(localized: "Večerní bilance", bundle: .kept), String(localized: "Jak dnešek dopadl", bundle: .kept), minutes: $draft.eveningMinutes, range: 17 * 60...23 * 60 + 30)
+            timeRow(String(localized: "Ranní přehled", bundle: .kept, locale: .kept), String(localized: "Co tě dnes čeká", bundle: .kept, locale: .kept), minutes: $draft.morningMinutes, range: 5 * 60...12 * 60)
+            timeRow(String(localized: "Večerní bilance", bundle: .kept, locale: .kept), String(localized: "Jak dnešek dopadl", bundle: .kept, locale: .kept), minutes: $draft.eveningMinutes, range: 17 * 60...23 * 60 + 30)
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("Nedělní plánování").scaledFont(.body, weight: .bold).foregroundStyle(Theme.textPrimary)
@@ -540,7 +540,7 @@ extension OnboardingView {
             .buttonStyle(PrimaryButtonStyle(color: notificationsAllowed ? Theme.green : Theme.textPrimary,
                                             textColor: notificationsAllowed ? Theme.onPrimary : Theme.onPrimary))
             .disabled(notificationsAllowed)
-            note(String(localized: "Bez upozornění Kept nemůže připomínat úkoly ani hlídat sérii. iPhone se zeptá jen jednou.", bundle: .kept))
+            note(String(localized: "Bez upozornění Kept nemůže připomínat úkoly ani hlídat sérii. iPhone se zeptá jen jednou.", bundle: .kept, locale: .kept))
         }
         .task {
             notificationsAllowed = await NotificationManager.authorizationStatus() == .authorized
@@ -579,14 +579,14 @@ extension OnboardingView {
             }
             .card()
             HStack(alignment: .top, spacing: 10) {
-                pointsList(String(localized: "ZÍSKÁŠ", bundle: .kept), [("+\(PointsService.perCommitment)", String(localized: "splněný závazek", bundle: .kept)),
-                                     ("+\(PointsService.perSuggestion)", String(localized: "splněný návrh", bundle: .kept)),
-                                     ("+\(DiaryService.pointsPerEntry)", String(localized: "den v deníku", bundle: .kept)),
-                                     ("+50…1 000", String(localized: "milníky série", bundle: .kept))], color: Theme.green)
-                pointsList(String(localized: "UTRATÍŠ", bundle: .kept), [("1 000", "propustka"),
-                                      ("\(ShopItem.streakInsurance.cost)", String(localized: "pojistka série", bundle: .kept)),
-                                      ("\(ShopItem.extraPostpone.cost)", String(localized: "odklad navíc", bundle: .kept)),
-                                      ("\(PointsService.streakRepairCost)", String(localized: "vrácení série / den", bundle: .kept))], color: Theme.textPrimary)
+                pointsList(String(localized: "ZÍSKÁŠ", bundle: .kept, locale: .kept), [("+\(PointsService.perCommitment)", String(localized: "splněný závazek", bundle: .kept, locale: .kept)),
+                                     ("+\(PointsService.perSuggestion)", String(localized: "splněný návrh", bundle: .kept, locale: .kept)),
+                                     ("+\(DiaryService.pointsPerEntry)", String(localized: "den v deníku", bundle: .kept, locale: .kept)),
+                                     ("+50…1 000", String(localized: "milníky série", bundle: .kept, locale: .kept))], color: Theme.green)
+                pointsList(String(localized: "UTRATÍŠ", bundle: .kept, locale: .kept), [("1 000", "propustka"),
+                                      ("\(ShopItem.streakInsurance.cost)", String(localized: "pojistka série", bundle: .kept, locale: .kept)),
+                                      ("\(ShopItem.extraPostpone.cost)", String(localized: "odklad navíc", bundle: .kept, locale: .kept)),
+                                      ("\(PointsService.streakRepairCost)", String(localized: "vrácení série / den", bundle: .kept, locale: .kept))], color: Theme.textPrimary)
             }
         }
     }
@@ -610,16 +610,16 @@ extension OnboardingView {
             : draft.split.title
         let tabNames = tabOptions.filter { draft.tabs.contains($0.tab) }.map(\.title)
         let rows: [(String, String)] = [
-            (String(localized: "Vzhled", bundle: .kept), (AppAppearance(rawValue: appearanceRaw) ?? .dark).title),
-            (String(localized: "Oslovení", bundle: .kept), draft.addressName.trimmingCharacters(in: .whitespaces).isEmpty ? String(localized: "bez jména", bundle: .kept) : draft.addressName),
-            (String(localized: "Aktivity", bundle: .kept), draft.activityNames.joined(separator: ", ")),
-            (String(localized: "Minimum", bundle: .kept), draft.minimum == 0 ? String(localized: "bez minima", bundle: .kept) : String(localized: "\(draft.minimum) týdně", bundle: .kept)),
-            (String(localized: "Gym", bundle: .kept), draft.doesGym ? String(localized: "\(draft.gymMode.title) · \(split), asi \(draft.gymPerWeek)× týdně", bundle: .kept) : String(localized: "ne", bundle: .kept)),
-            (String(localized: "Zdraví", bundle: .kept), draft.health ? "propojeno" : String(localized: "později", bundle: .kept)),
-            (String(localized: "Deník", bundle: .kept), draft.diary ? (draft.diaryLock ? String(localized: "zapnutý, zamčený", bundle: .kept) : String(localized: "zapnutý", bundle: .kept)) : String(localized: "vypnutý", bundle: .kept)),
-            (String(localized: "Zámek aplikace", bundle: .kept), draft.appLock ? String(localized: "Face ID", bundle: .kept) : String(localized: "bez zámku", bundle: .kept)),
-            (String(localized: "Lišta", bundle: .kept), ([String(localized: "Dnes", bundle: .kept), String(localized: "Týden", bundle: .kept)] + tabNames + [String(localized: "Nastavení", bundle: .kept)]).joined(separator: " · ")),
-            (String(localized: "Tón", bundle: .kept), draft.tone.title),
+            (String(localized: "Vzhled", bundle: .kept, locale: .kept), (AppAppearance(rawValue: appearanceRaw) ?? .dark).title),
+            (String(localized: "Oslovení", bundle: .kept, locale: .kept), draft.addressName.trimmingCharacters(in: .whitespaces).isEmpty ? String(localized: "bez jména", bundle: .kept, locale: .kept) : draft.addressName),
+            (String(localized: "Aktivity", bundle: .kept, locale: .kept), draft.activityNames.joined(separator: ", ")),
+            (String(localized: "Minimum", bundle: .kept, locale: .kept), draft.minimum == 0 ? String(localized: "bez minima", bundle: .kept, locale: .kept) : String(localized: "\(draft.minimum) týdně", bundle: .kept, locale: .kept)),
+            (String(localized: "Gym", bundle: .kept, locale: .kept), draft.doesGym ? String(localized: "\(draft.gymMode.title) · \(split), asi \(draft.gymPerWeek)× týdně", bundle: .kept, locale: .kept) : String(localized: "ne", bundle: .kept, locale: .kept)),
+            (String(localized: "Zdraví", bundle: .kept, locale: .kept), draft.health ? "propojeno" : String(localized: "později", bundle: .kept, locale: .kept)),
+            (String(localized: "Deník", bundle: .kept, locale: .kept), draft.diary ? (draft.diaryLock ? String(localized: "zapnutý, zamčený", bundle: .kept, locale: .kept) : String(localized: "zapnutý", bundle: .kept, locale: .kept)) : String(localized: "vypnutý", bundle: .kept, locale: .kept)),
+            (String(localized: "Zámek aplikace", bundle: .kept, locale: .kept), draft.appLock ? String(localized: "Face ID", bundle: .kept, locale: .kept) : String(localized: "bez zámku", bundle: .kept, locale: .kept)),
+            (String(localized: "Lišta", bundle: .kept, locale: .kept), ([String(localized: "Dnes", bundle: .kept, locale: .kept), String(localized: "Týden", bundle: .kept, locale: .kept)] + tabNames + [String(localized: "Nastavení", bundle: .kept, locale: .kept)]).joined(separator: " · ")),
+            (String(localized: "Tón", bundle: .kept, locale: .kept), draft.tone.title),
         ]
         return VStack(alignment: .leading, spacing: 8) {
             ForEach(rows, id: \.0) { key, value in
@@ -633,7 +633,7 @@ extension OnboardingView {
                 }
                 .card(padding: 12)
             }
-            note(String(localized: "Všechno změníš v Nastavení. Teď si naplánuj první týden a odešli plánovač.", bundle: .kept))
+            note(String(localized: "Všechno změníš v Nastavení. Teď si naplánuj první týden a odešli plánovač.", bundle: .kept, locale: .kept))
                 .padding(.top, 6)
         }
     }

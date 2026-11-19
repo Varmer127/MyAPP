@@ -61,3 +61,19 @@ struct ExerciseEnglishTests {
         }
     }
 }
+
+@MainActor
+struct ActivityNameTests {
+    /// Built-in activity names stored in tasks are rewritten in the chosen language, both ways.
+    @Test func builtInNamesFollowTheLanguage() {
+        let toEnglish = ActivityNames.translations(to: .en)
+        #expect(toEnglish["Ostatní"] == "Other")
+        #expect(toEnglish["Práce"] == "Work")
+        #expect(toEnglish["Procházka v přírodě"] != nil)
+        let toCzech = ActivityNames.translations(to: .cs)
+        #expect(toCzech["Other"] == "Ostatní")
+        #expect(toCzech["Work"] == "Práce")
+        // A name the user typed is not a built-in one.
+        #expect(toEnglish["Kytara"] == nil)
+    }
+}

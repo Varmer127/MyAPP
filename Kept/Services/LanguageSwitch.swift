@@ -26,6 +26,7 @@ final class LanguageSwitch {
     /// Called once at launch, before anything is shown.
     static func installAtLaunch() {
         KeptLanguage.install(code: AppLanguage.current.rawValue)
+        ActivityNames.follow(AppLanguage.current, in: AppStore.container.mainContext)
     }
 
     func select(_ language: AppLanguage, reopeningSettings: Bool = false) {
@@ -33,6 +34,8 @@ final class LanguageSwitch {
         reopensSettings = reopeningSettings
         KeptLanguage.save(language.rawValue)
         KeptLanguage.use(language.rawValue)
+        // Built-in activity names stored in tasks follow, so notifications and widgets say them in the new language.
+        ActivityNames.follow(language, in: AppStore.container.mainContext)
         revision += 1
         WidgetCenter.shared.reloadAllTimelines()
         // Scheduled notifications were written in the old language.

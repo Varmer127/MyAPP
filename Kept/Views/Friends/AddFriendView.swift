@@ -104,7 +104,7 @@ struct AddFriendView: View {
                 }
                 .padding(.top, 4)
                 if let code = profile.inviteCode {
-                    ShareLink(item: String(localized: "Jsem v Kept jako \(profile.handle). Najdeš mě podle tohohle označení.", bundle: .kept)) {
+                    ShareLink(item: String(localized: "Jsem v Kept jako \(profile.handle). Najdeš mě podle tohohle označení.", bundle: .kept, locale: .kept)) {
                         Label("Poslat označení", systemImage: "square.and.arrow.up")
                             .frame(maxWidth: .infinity)
                     }

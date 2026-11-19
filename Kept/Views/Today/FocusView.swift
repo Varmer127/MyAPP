@@ -77,9 +77,9 @@ struct FocusView: View {
             .padding(.horizontal, Theme.screenPadding)
             Spacer()
             TileRow {
-                MetricTile(value: "\(task.plannedMinutes) min", label: String(localized: "Plán", bundle: .kept))
-                MetricTile(value: Self.minutes(session?.active(at: now) ?? 0), label: String(localized: "Soustředění", bundle: .kept))
-                MetricTile(value: Self.minutes(session?.paused(at: now) ?? 0), label: String(localized: "Pauza \(session?.pauseCount ?? 0)×", bundle: .kept))
+                MetricTile(value: "\(task.plannedMinutes) min", label: String(localized: "Plán", bundle: .kept, locale: .kept))
+                MetricTile(value: Self.minutes(session?.active(at: now) ?? 0), label: String(localized: "Soustředění", bundle: .kept, locale: .kept))
+                MetricTile(value: Self.minutes(session?.paused(at: now) ?? 0), label: String(localized: "Pauza \(session?.pauseCount ?? 0)×", bundle: .kept, locale: .kept))
             }
             .padding(.horizontal, Theme.screenPadding)
             VStack(spacing: 10) {

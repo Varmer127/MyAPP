@@ -67,15 +67,15 @@ enum BetText {
     static func summary(_ bet: Bet) -> String {
         switch bet.status {
         case .open:
-            if bet.awaitsMyAnswer { return String(localized: "Pozvánka · vklad \(bet.stake) b.", bundle: .kept) }
-            if bet.awaitsMyVerdict { return String(localized: "\(bet.name(of: bet.claimant) ?? "") tvrdí, že to splnil", bundle: .kept) }
-            return String(localized: "V banku \(bet.pot) b. · do \(bet.endsAt.formatted(.dateTime.day().month().locale(.app)))", bundle: .kept)
+            if bet.awaitsMyAnswer { return String(localized: "Pozvánka · vklad \(bet.stake) b.", bundle: .kept, locale: .kept) }
+            if bet.awaitsMyVerdict { return String(localized: "\(bet.name(of: bet.claimant) ?? "") tvrdí, že to splnil", bundle: .kept, locale: .kept) }
+            return String(localized: "V banku \(bet.pot) b. · do \(bet.endsAt.formatted(.dateTime.day().month().locale(.app)))", bundle: .kept, locale: .kept)
         case .settled:
             return bet.winner == bet.me?.id
-                ? String(localized: "Vyhrál jsi \(bet.pot) b.", bundle: .kept)
-                : String(localized: "Vyhrál \(bet.name(of: bet.winner) ?? "")", bundle: .kept)
-        case .refunded: return String(localized: "Bez vítěze, vklady vráceny", bundle: .kept)
-        case .cancelled: return String(localized: "Zrušeno, vklad vrácen", bundle: .kept)
+                ? String(localized: "Vyhrál jsi \(bet.pot) b.", bundle: .kept, locale: .kept)
+                : String(localized: "Vyhrál \(bet.name(of: bet.winner) ?? "")", bundle: .kept, locale: .kept)
+        case .refunded: return String(localized: "Bez vítěze, vklady vráceny", bundle: .kept, locale: .kept)
+        case .cancelled: return String(localized: "Zrušeno, vklad vrácen", bundle: .kept, locale: .kept)
         }
     }
 }
@@ -263,7 +263,7 @@ struct BetDetailView: View {
                     Section("Kdo hraje") {
                         ForEach(bet.participants) { person in
                             HStack {
-                                Text(person.isMe ? String(localized: "Ty", bundle: .kept) : person.name).foregroundStyle(Theme.textPrimary)
+                                Text(person.isMe ? String(localized: "Ty", bundle: .kept, locale: .kept) : person.name).foregroundStyle(Theme.textPrimary)
                                 Spacer()
                                 Text(state(of: person, in: bet)).scaledFont(.caption).foregroundStyle(Theme.textSecondary)
                             }

@@ -82,7 +82,7 @@ struct SettingsView: View {
                 Section("O aplikaci") {
                     LabeledContent("Verze", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—")
                     // With an account the profile and the shared features live on the server, so this names what really stays here.
-                    LabeledContent("Úkoly, deník a zdraví", value: String(localized: "Jen v tomto zařízení", bundle: .kept))
+                    LabeledContent("Úkoly, deník a zdraví", value: String(localized: "Jen v tomto zařízení", bundle: .kept, locale: .kept))
                     LabeledContent("Šablony notifikací", value: "\(NotificationTemplates.totalCount)")
                 }
                 .listRowBackground(Theme.card)
@@ -184,22 +184,22 @@ struct SettingsView: View {
     private func summary(of page: Page, _ settings: UserSettings) -> String {
         switch page {
         case .tabs:
-            return String(localized: "Navíc \(settings.optionalTabCount) ze \(UserSettings.maxOptionalTabs)", bundle: .kept)
+            return String(localized: "Navíc \(settings.optionalTabCount) ze \(UserSettings.maxOptionalTabs)", bundle: .kept, locale: .kept)
         case .notifications:
-            guard settings.taskRemindersEnabled || settings.realityCheckEnabled || settings.morningBriefEnabled else { return String(localized: "Vypnuto", bundle: .kept) }
-            let nudges = settings.nudgesPerDay > 0 ? String(localized: "úkoly bez termínu \(settings.nudgesPerDay)× denně", bundle: .kept) : String(localized: "úkoly bez termínu bez připomínek", bundle: .kept)
+            guard settings.taskRemindersEnabled || settings.realityCheckEnabled || settings.morningBriefEnabled else { return String(localized: "Vypnuto", bundle: .kept, locale: .kept) }
+            let nudges = settings.nudgesPerDay > 0 ? String(localized: "úkoly bez termínu \(settings.nudgesPerDay)× denně", bundle: .kept, locale: .kept) : String(localized: "úkoly bez termínu bez připomínek", bundle: .kept, locale: .kept)
             return "\(settings.tone.title) · \(nudges)"
         case .activities:
-            return String(localized: "Aktivit: \(settings.enabledCategories.count - 1 + settings.customActivities.count)", bundle: .kept)
+            return String(localized: "Aktivit: \(settings.enabledCategories.count - 1 + settings.customActivities.count)", bundle: .kept, locale: .kept)
         case .gym:
-            return String(localized: "Partie, cviky, pauzy", bundle: .kept)
+            return String(localized: "Partie, cviky, pauzy", bundle: .kept, locale: .kept)
         case .health:
-            return settings.healthEnabled ? String(localized: "Propojeno, cíl \(settings.stepGoal.formatted(.number.locale(.app))) kroků", bundle: .kept) : String(localized: "Nepropojeno", bundle: .kept)
+            return settings.healthEnabled ? String(localized: "Propojeno, cíl \(settings.stepGoal.formatted(.number.locale(.app))) kroků", bundle: .kept, locale: .kept) : String(localized: "Nepropojeno", bundle: .kept, locale: .kept)
         case .calendar:
-            return settings.calendarEnabled ? String(localized: "Zapnuto", bundle: .kept) : String(localized: "Vypnuto", bundle: .kept)
+            return settings.calendarEnabled ? String(localized: "Zapnuto", bundle: .kept, locale: .kept) : String(localized: "Vypnuto", bundle: .kept, locale: .kept)
         case .diary:
-            let lock = settings.diaryLockEnabled || settings.appLockEnabled ? String(localized: "zámek zapnutý", bundle: .kept) : String(localized: "bez zámku", bundle: .kept)
-            return (settings.diaryEnabled ? String(localized: "Deník zapnutý", bundle: .kept) : String(localized: "Deník vypnutý", bundle: .kept)) + " · " + lock
+            let lock = settings.diaryLockEnabled || settings.appLockEnabled ? String(localized: "zámek zapnutý", bundle: .kept, locale: .kept) : String(localized: "bez zámku", bundle: .kept, locale: .kept)
+            return (settings.diaryEnabled ? String(localized: "Deník zapnutý", bundle: .kept, locale: .kept) : String(localized: "Deník vypnutý", bundle: .kept, locale: .kept)) + " · " + lock
         }
     }
 
@@ -514,14 +514,14 @@ struct SettingsView: View {
     private func tabsSection(_ settings: UserSettings) -> some View {
         let isFull = settings.optionalTabCount >= UserSettings.maxOptionalTabs
         return Section {
-            LabeledContent("Vždy v liště", value: String(localized: "Dnes · Týden · Nastavení", bundle: .kept))
-            tabToggle(String(localized: "Statistiky", bundle: .kept), "chart.bar", Bindable(settings).showsStatsTab, isFull: isFull)
-            tabToggle(String(localized: "Gym", bundle: .kept), TaskCategory.gym.symbol, Bindable(settings).showsGymTab, isFull: isFull)
+            LabeledContent("Vždy v liště", value: String(localized: "Dnes · Týden · Nastavení", bundle: .kept, locale: .kept))
+            tabToggle(String(localized: "Statistiky", bundle: .kept, locale: .kept), "chart.bar", Bindable(settings).showsStatsTab, isFull: isFull)
+            tabToggle(String(localized: "Gym", bundle: .kept, locale: .kept), TaskCategory.gym.symbol, Bindable(settings).showsGymTab, isFull: isFull)
             if HealthService.isAvailable {
-                tabToggle(String(localized: "Zdraví", bundle: .kept), "heart", Bindable(settings).showsHealthTab, isFull: isFull)
+                tabToggle(String(localized: "Zdraví", bundle: .kept, locale: .kept), "heart", Bindable(settings).showsHealthTab, isFull: isFull)
             }
             if settings.diaryEnabled {
-                tabToggle(String(localized: "Deník", bundle: .kept), "book.closed", Bindable(settings).showsDiaryTab, isFull: isFull)
+                tabToggle(String(localized: "Deník", bundle: .kept, locale: .kept), "book.closed", Bindable(settings).showsDiaryTab, isFull: isFull)
             }
         } header: {
             Text("Navíc v liště: \(settings.optionalTabCount) ze \(UserSettings.maxOptionalTabs)")
@@ -556,7 +556,7 @@ struct SettingsView: View {
             }
             .tint(Theme.textSecondary)
             if blockedTab == title {
-                Label(String(localized: "Lišta je plná. Nejdřív jednu záložku vypni.", bundle: .kept), systemImage: "hand.raised.fill")
+                Label(String(localized: "Lišta je plná. Nejdřív jednu záložku vypni.", bundle: .kept, locale: .kept), systemImage: "hand.raised.fill")
                     .scaledFont(.caption, weight: .semibold)
                     .foregroundStyle(Theme.red)
                     .transition(.move(edge: .top).combined(with: .opacity))
@@ -573,7 +573,7 @@ struct SettingsView: View {
             fullBarShakes += 1
         }
         UIAccessibility.post(notification: .announcement,
-                             argument: String(localized: "Lišta je plná. Nejdřív jednu záložku vypni.", bundle: .kept))
+                             argument: String(localized: "Lišta je plná. Nejdřív jednu záložku vypni.", bundle: .kept, locale: .kept))
         Task {
             try? await Task.sleep(for: .seconds(2.5))
             if blockedTab == title {

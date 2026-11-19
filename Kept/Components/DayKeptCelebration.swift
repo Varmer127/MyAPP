@@ -76,12 +76,12 @@ struct DayKeptCelebration: View {
     /// Who the user is becoming, said once at each milestone.
     static func identity(for days: Int) -> String {
         switch days {
-        case ..<7: return String(localized: "Tři dny v kuse. Začátek je za tebou.", bundle: .kept)
-        case ..<14: return String(localized: "Celý týden. Už to není náhoda.", bundle: .kept)
-        case ..<30: return String(localized: "Dva týdny. Z rozhodnutí se stává zvyk.", bundle: .kept)
-        case ..<60: return String(localized: "Měsíc dodrženého slova. Tohle jsi ty.", bundle: .kept)
-        case ..<100: return String(localized: "Dva měsíce. Lidi kolem tebe to poznají.", bundle: .kept)
-        default: return String(localized: "Sto dní. Tvoje slovo platí.", bundle: .kept)
+        case ..<7: return String(localized: "Tři dny v kuse. Začátek je za tebou.", bundle: .kept, locale: .kept)
+        case ..<14: return String(localized: "Celý týden. Už to není náhoda.", bundle: .kept, locale: .kept)
+        case ..<30: return String(localized: "Dva týdny. Z rozhodnutí se stává zvyk.", bundle: .kept, locale: .kept)
+        case ..<60: return String(localized: "Měsíc dodrženého slova. Tohle jsi ty.", bundle: .kept, locale: .kept)
+        case ..<100: return String(localized: "Dva měsíce. Lidi kolem tebe to poznají.", bundle: .kept, locale: .kept)
+        default: return String(localized: "Sto dní. Tvoje slovo platí.", bundle: .kept, locale: .kept)
         }
     }
 }

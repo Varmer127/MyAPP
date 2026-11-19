@@ -97,30 +97,30 @@ struct TaskCard: View {
     private var badgeItems: [(text: String, color: Color)] {
         var items: [(String, Color)] = []
         switch task.status {
-        case .completedLate: items.append((String(localized: "Pozdě", bundle: .kept), Theme.orange))
-        case .excused: items.append((String(localized: "Zrušeno za body", bundle: .kept), Theme.textSecondary))
-        case .skipped: items.append((String(localized: "Přeskočeno", bundle: .kept), Theme.red))
-        case .failed: items.append((String(localized: "Nesplněno", bundle: .kept), Theme.red))
+        case .completedLate: items.append((String(localized: "Pozdě", bundle: .kept, locale: .kept), Theme.orange))
+        case .excused: items.append((String(localized: "Zrušeno za body", bundle: .kept, locale: .kept), Theme.textSecondary))
+        case .skipped: items.append((String(localized: "Přeskočeno", bundle: .kept, locale: .kept), Theme.red))
+        case .failed: items.append((String(localized: "Nesplněno", bundle: .kept, locale: .kept), Theme.red))
         case .pending:
             if isMissed {
-                items.append((String(localized: "Nesplněno: \(task.scheduledDate.weekdayText)", bundle: .kept), Theme.red))
+                items.append((String(localized: "Nesplněno: \(task.scheduledDate.weekdayText)", bundle: .kept, locale: .kept), Theme.red))
             } else if isOverdue {
-                items.append((String(localized: "Po termínu \(overdueText)", bundle: .kept), Theme.red))
+                items.append((String(localized: "Po termínu \(overdueText)", bundle: .kept, locale: .kept), Theme.red))
             }
         case .completed: break
         }
         if task.isPartial {
-            items.append((String(localized: "Částečně \(Int((task.completionShare * 100).rounded())) %", bundle: .kept), Theme.orange))
+            items.append((String(localized: "Částečně \(Int((task.completionShare * 100).rounded())) %", bundle: .kept, locale: .kept), Theme.orange))
         }
         if task.priority == .critical {
             items.append((TaskPriority.critical.badge, task.status == .pending ? Theme.textPrimary : Theme.textSecondary))
         } else if task.priority == .high {
             items.append((TaskPriority.high.badge, Theme.textSecondary))
         }
-        if task.moveCount > 0 { items.append((String(localized: "Přesunuto", bundle: .kept), Theme.textSecondary)) }
-        if task.isAddedAfterCommitment { items.append((String(localized: "Přidáno později", bundle: .kept), Theme.textSecondary)) }
-        if task.isRecovery { items.append((String(localized: "Recovery", bundle: .kept), Theme.orange)) }
-        if task.requiresProof, task.status == .pending { items.append((String(localized: "Důkaz", bundle: .kept), Theme.textSecondary)) }
+        if task.moveCount > 0 { items.append((String(localized: "Přesunuto", bundle: .kept, locale: .kept), Theme.textSecondary)) }
+        if task.isAddedAfterCommitment { items.append((String(localized: "Přidáno později", bundle: .kept, locale: .kept), Theme.textSecondary)) }
+        if task.isRecovery { items.append((String(localized: "Recovery", bundle: .kept, locale: .kept), Theme.orange)) }
+        if task.requiresProof, task.status == .pending { items.append((String(localized: "Důkaz", bundle: .kept, locale: .kept), Theme.textSecondary)) }
         return items
     }
 
@@ -148,7 +148,7 @@ struct TaskCard: View {
     private var metadata: String {
         var parts = [task.category.title, "\(task.plannedMinutes) min"]
         if let deadline = task.deadline {
-            parts.append(String(localized: "Deadline \(deadline.timeText)", bundle: .kept))
+            parts.append(String(localized: "Deadline \(deadline.timeText)", bundle: .kept, locale: .kept))
         }
         if let workout = task.workoutSummary {
             parts.append(workout)
