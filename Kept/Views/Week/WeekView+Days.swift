@@ -95,8 +95,8 @@ extension WeekView {
                         }
                     }
                 }
-                PerformanceBar(label: "Dodržené sliby", value: ScoreEngine.promisesKept(plan.tasks))
-                PerformanceBar(label: "Věrnost plánu", value: ScoreEngine.commitmentIntegrity(plan))
+                PerformanceBar(label: String(localized: "Dodržené sliby"), value: ScoreEngine.promisesKept(plan.tasks))
+                PerformanceBar(label: String(localized: "Věrnost plánu"), value: ScoreEngine.commitmentIntegrity(plan))
             }
             .card()
             .transition(.scale(scale: 0.94).combined(with: .opacity))

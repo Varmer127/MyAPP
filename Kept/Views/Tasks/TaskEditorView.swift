@@ -251,7 +251,7 @@ struct TaskEditorView: View {
 
     private var propertyChips: some View {
         FlowLayout(spacing: 8) {
-            chip(.deadline, "clock", draft.hasDeadline ? "do \(draft.deadlineTime.timeText)" : "bez deadlinu")
+            chip(.deadline, "clock", draft.hasDeadline ? String(localized: "do \(draft.deadlineTime.timeText)") : String(localized: "bez deadlinu"))
             chip(.duration, "hourglass", durationText)
             chip(.priority, "flag", draft.priority.title)
         }
@@ -542,8 +542,8 @@ struct TaskEditorView: View {
 
     private var removalMessage: String {
         isCommitted
-            ? "K tomuhle ses zavázal. Odstranění se počítá jako porušený slib a zůstane v historii."
-            : "Úkol ještě není součástí závazku, takže se prostě smaže."
+            ? String(localized: "K tomuhle ses zavázal. Odstranění se počítá jako porušený slib a zůstane v historii.")
+            : String(localized: "Úkol ještě není součástí závazku, takže se prostě smaže.")
     }
 
     /// The user's categories, plus the one this task already has.

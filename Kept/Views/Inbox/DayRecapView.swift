@@ -41,7 +41,7 @@ struct DayRecapView: View {
                     }
                     TileRow {
                         MetricTile(value: recap.productivity.percentText, label: "Produktivita")
-                        MetricTile(value: "\(streak)", label: streak == 1 ? "Den v řadě" : "Dní v řadě")
+                        MetricTile(value: "\(streak)", label: streak == 1 ? String(localized: "Den v řadě") : String(localized: "Dní v řadě"))
                     }
                     VStack(spacing: 0) {
                         ForEach(recap.tasks) { task in

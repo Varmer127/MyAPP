@@ -110,8 +110,8 @@ struct TodayWidgetView: View {
                     focusPanel(focus, timerSize: 34)
                 } else {
                     VStack(alignment: .leading, spacing: 8) {
-                        label("DALŠÍ ÚKOL")
-                        Text(snapshot?.nextTitle ?? (total == 0 ? "Dnes nic v plánu" : "Všechno hotovo"))
+                        label(String(localized: "DALŠÍ ÚKOL"))
+                        Text(snapshot?.nextTitle ?? (total == 0 ? String(localized: "Dnes nic v plánu") : String(localized: "Všechno hotovo")))
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundStyle(WidgetStyle.text)
                             .lineLimit(2)
@@ -129,7 +129,7 @@ struct TodayWidgetView: View {
                             }
                             .buttonStyle(.plain)
                         } else {
-                            label("DODRŽENÉ SLIBY")
+                            label(String(localized: "DODRŽENÉ SLIBY"))
                             Text(snapshot?.promisesKept.map { "\(Int(($0 * 100).rounded())) %" } ?? "—")
                                 .font(.system(size: 20, weight: .bold))
                                 .foregroundStyle(WidgetStyle.text)
@@ -158,7 +158,7 @@ struct TodayWidgetView: View {
     }
 
     private func statusText(_ focus: WidgetSnapshot.Focus) -> String {
-        focus.isPaused ? "FOCUS POZASTAVEN" : (isBehind(focus) ? "NESTÍHÁŠ PLÁN" : (isOvertime(focus) ? "NAD PLÁN" : "FOCUS BĚŽÍ"))
+        focus.isPaused ? String(localized: "FOCUS POZASTAVEN") : (isBehind(focus) ? String(localized: "NESTÍHÁŠ PLÁN") : (isOvertime(focus) ? String(localized: "NAD PLÁN") : String(localized: "FOCUS BĚŽÍ")))
     }
 
     /// Running: a system-driven timer that keeps ticking without the app. Paused: the frozen time.

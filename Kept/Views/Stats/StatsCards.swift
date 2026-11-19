@@ -103,7 +103,7 @@ struct WhenYouKeepCard: View {
         let peak = slots.max() ?? 0
         if peak > 0 || !insights.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: "Kdy ti to jde")
+                SectionLabel(text: String(localized: "Kdy ti to jde"))
                 VStack(alignment: .leading, spacing: 12) {
                     if peak > 0 {
                         HStack(alignment: .bottom, spacing: 4) {
@@ -174,7 +174,7 @@ struct GoalsLeftCard: View {
         let open = goals.filter { !$0.isMet }
         if !open.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: "Do cíle týdne")
+                SectionLabel(text: String(localized: "Do cíle týdne"))
                 VStack(alignment: .leading, spacing: 12) {
                     ForEach(open) { goal in
                         VStack(alignment: .leading, spacing: 6) {

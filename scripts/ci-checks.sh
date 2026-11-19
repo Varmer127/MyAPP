@@ -57,6 +57,27 @@ echo "Developer keys still present: $(grep -rn --include='*.swift' -c 'devShow\|
 # 7. Reminder only (not a failure yet): places in the legal documents that still wait for real details.
 echo "Legal documents: places still to fill in: $(grep -c -E '\[(DOPLNIT|OVĚŘIT|TO BE COMPLETED|TO BE VERIFIED)' Kept/Resources/Legal/*.md | awk -F: '{s+=$2} END {print s+0}')"
 
+# 9. Warning only: texts in the string catalogs that have no English yet (fill them in, see scripts/sync-strings.py).
+untranslated=$(python3 - <<'PY'
+import json
+missing = []
+for path in ("Kept/Localizable.xcstrings", "KeptWidgets/Localizable.xcstrings"):
+    for key, entry in json.load(open(path, encoding="utf-8"))["strings"].items():
+        if entry.get("extractionState") != "stale" and entry.get("shouldTranslate", True) \
+                and "en" not in entry.get("localizations", {}):
+            missing.append(key)
+print(len(missing))
+for key in missing[:10]:
+    print("  " + key)
+PY
+)
+if [ "$(echo "$untranslated" | head -1)" != "0" ]; then
+  echo "::warning::Texts without English: $(echo "$untranslated" | head -1)"
+  echo "$untranslated" | tail -n +2
+else
+  echo "Translations: all texts have English"
+fi
+
 # 8. Warning only: something changed that the legal documents may have to mention (see docs/LEGAL.md, "Hlídač").
 legal_diff=$(scripts/legal-baseline.sh | diff docs/legal-baseline.txt - | grep -E '^[<>]' || true)
 if [ -n "$legal_diff" ]; then

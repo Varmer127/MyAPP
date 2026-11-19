@@ -34,7 +34,7 @@ struct SealedWeekShare: Transferable {
         DataRepresentation(exportedContentType: .png) { share in
             try await share.png()
         }
-        .suggestedFileName { "Kept – týden \($0.weekNumber).png" }
+        .suggestedFileName { String(localized: "Kept – týden \($0.weekNumber).png") }
     }
 
     @MainActor

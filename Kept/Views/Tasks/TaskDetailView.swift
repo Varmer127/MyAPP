@@ -24,20 +24,20 @@ struct TaskDetailView: View {
                             .foregroundStyle(Theme.textSecondary)
                     }
                     if task.isDone, AccountService.shared.profile != nil {
-                        block("Svědek") {
+                        block(String(localized: "Svědek")) {
                             WitnessRow(task: task)
                                 .scaledFont(.body, weight: .semibold)
                                 .foregroundStyle(Theme.textPrimary)
                         }
                     }
                     if !task.partialNote.isEmpty {
-                        block("Co chybělo") { quote(task.partialNote) }
+                        block(String(localized: "Co chybělo")) { quote(task.partialNote) }
                     }
                     if !task.notes.isEmpty {
-                        block("Poznámka") { quote(task.notes) }
+                        block(String(localized: "Poznámka")) { quote(task.notes) }
                     }
                     if !task.stake.isEmpty {
-                        block("Sázka") {
+                        block(String(localized: "Sázka")) {
                             quote(task.stake)
                             if task.stakeOutcome != 0 {
                                 Text(task.stakeOutcome == 1 ? "Dodržena" : "Nedodržena")
@@ -47,7 +47,7 @@ struct TaskDetailView: View {
                         }
                     }
                     if let workout = task.workoutSummary {
-                        block("Trénink") { quote(workout) }
+                        block(String(localized: "Trénink")) { quote(workout) }
                     }
                     if !task.exercises.isEmpty {
                         block("Cviky") {
@@ -69,13 +69,13 @@ struct TaskDetailView: View {
                         let paused = finishedSessions.reduce(0) { $0 + $1.pauseSeconds }
                         let pauses = finishedSessions.reduce(0) { $0 + $1.pauseCount }
                         TileRow {
-                            MetricTile(value: "\(task.plannedMinutes) min", label: "Plán")
-                            MetricTile(value: FocusView.minutes(active), label: "Soustředění")
+                            MetricTile(value: "\(task.plannedMinutes) min", label: String(localized: "Plán"))
+                            MetricTile(value: FocusView.minutes(active), label: String(localized: "Soustředění"))
                             MetricTile(value: FocusView.minutes(paused), label: "Pauza \(pauses)×")
                         }
                     }
                     if !task.proofNote.isEmpty || task.proofPhoto != nil {
-                        block("Důkaz") {
+                        block(String(localized: "Důkaz")) {
                             if let data = task.proofPhoto, let image = UIImage(data: data) {
                                 Image(uiImage: image)
                                     .resizable()
@@ -87,7 +87,7 @@ struct TaskDetailView: View {
                         }
                     }
                     ForEach(task.failures.sorted { $0.date < $1.date }) { record in
-                        block("Vysvětlení · \(record.reason.title)") {
+                        block(String(localized: "Vysvětlení · \(record.reason.title)")) {
                             quote("„\(record.critique)“")
                             if !record.prevention.isEmpty {
                                 Text("Příště: \(record.prevention)")
@@ -97,7 +97,7 @@ struct TaskDetailView: View {
                         }
                     }
                     if !task.why.isEmpty {
-                        block("Proč na tom záleží") { quote(task.why) }
+                        block(String(localized: "Proč na tom záleží")) { quote(task.why) }
                     }
                 }
                 .padding(Theme.screenPadding)

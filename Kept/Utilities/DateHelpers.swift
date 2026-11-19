@@ -11,9 +11,26 @@ extension Calendar {
     }()
 }
 
+/// The language Kept speaks: the one iOS picked for it from the phone's languages, or the one chosen
+/// in Settings → Kept → Language. Czech unless English comes first.
+enum AppLanguage: String {
+    case cs, en
+
+    static let current: AppLanguage = Bundle.main.preferredLocalizations.first.flatMap(AppLanguage.init(rawValue:)) ?? .cs
+}
+
 extension Locale {
-    /// The UI is Czech regardless of device language.
-    static let app = Locale(identifier: "cs_CZ")
+    /// Dates, numbers and speech in the app's language. English keeps the phone's region, so dates read
+    /// the British or the American way as the user is used to.
+    static let app: Locale = {
+        switch AppLanguage.current {
+        case .cs:
+            return Locale(identifier: "cs_CZ")
+        case .en:
+            let region = Locale.current.region?.identifier ?? "GB"
+            return Locale(identifier: "en_\(region)")
+        }
+    }()
 }
 
 extension Date {
@@ -75,13 +92,9 @@ extension Date {
 extension String {
     var capitalizedFirst: String { prefix(1).uppercased() + dropFirst() }
 
-    /// "1 den", "3 dny", "5 dní"
+    /// "1 den", "3 dny", "5 dní" / "1 day", "5 days": the plural forms of both languages live in the string catalog.
     static func days(_ count: Int) -> String {
-        switch count {
-        case 1: "1 den"
-        case 2...4: "\(count) dny"
-        default: "\(count) dní"
-        }
+        String(localized: "\(count) dní", comment: "A number of days, with plural forms")
     }
 }
 

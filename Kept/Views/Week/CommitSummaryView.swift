@@ -42,7 +42,8 @@ struct CommitSummaryView: View {
 
     private var plannedText: String {
         let minutes = tasks.reduce(0) { $0 + $1.plannedMinutes }
-        return "Naplánováno \(minutes / 60) h \(String(format: "%02d", minutes % 60)) min"
+        let rest = String(format: "%02d", minutes % 60)
+        return String(localized: "Naplánováno \(minutes / 60) h \(rest) min")
     }
 
     private var criticalCount: Int { tasks.filter { $0.priority == .critical }.count }

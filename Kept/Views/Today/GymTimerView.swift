@@ -169,8 +169,8 @@ struct GymTimerView: View {
                     .padding(.top, 16)
                     TileRow {
                         MetricTile(value: "\(session?.pauseCount ?? 0)", label: "Pauzy")
-                        MetricTile(value: averageRest.map(FocusView.clock) ?? "—", label: "Průměrná pauza")
-                        MetricTile(value: FocusView.minutes(session?.paused(at: now) ?? 0), label: "V pauzách")
+                        MetricTile(value: averageRest.map(FocusView.clock) ?? "—", label: String(localized: "Průměrná pauza"))
+                        MetricTile(value: FocusView.minutes(session?.paused(at: now) ?? 0), label: String(localized: "V pauzách"))
                     }
                     VStack(alignment: .leading, spacing: 8) {
                         restPicker
@@ -739,10 +739,10 @@ private struct SetRow: View {
 
     private var warning: String? {
         if set.weight > Self.implausibleWeight {
-            return "\(set.weight.kilogramText) je nejspíš překlep. Zkontroluj váhu, jinak ti pokazí rekordy."
+            return String(localized: "\(set.weight.kilogramText) je nejspíš překlep. Zkontroluj váhu, jinak ti pokazí rekordy.")
         }
         if set.reps > Self.implausibleReps {
-            return "\(set.reps) opakování je nejspíš překlep. Zkontroluj počet."
+            return String(localized: "\(set.reps) opakování je nejspíš překlep. Zkontroluj počet.")
         }
         return nil
     }
@@ -750,7 +750,7 @@ private struct SetRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             row
-                .swipeToDelete(set.isWarmup ? "Smazat rozcvičku" : "Smazat sérii", cornerRadius: 8, onDelete: onDelete)
+                .swipeToDelete(set.isWarmup ? String(localized: "Smazat rozcvičku") : String(localized: "Smazat sérii"), cornerRadius: 8, onDelete: onDelete)
             if let warning {
                 Label(warning, systemImage: "exclamationmark.triangle.fill")
                     .scaledFont(.caption, weight: .medium)

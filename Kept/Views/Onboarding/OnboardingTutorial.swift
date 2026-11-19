@@ -14,10 +14,10 @@ struct OnboardingTutorial: View {
 
         var title: String {
             switch self {
-            case .task: "Úkol"
-            case .planning: "Plánování"
-            case .planner: "Plánovač"
-            case .streak: "Série"
+            case .task: String(localized: "Úkol")
+            case .planning: String(localized: "Plánování")
+            case .planner: String(localized: "Plánovač")
+            case .streak: String(localized: "Série")
             case .missed: "Nesplnil jsem"
             case .score: "Spolehlivost"
             }
@@ -25,12 +25,12 @@ struct OnboardingTutorial: View {
 
         var text: String {
             switch self {
-            case .task: "Každý den máš na obrazovce Dnes svoje úkoly. Hotovo, částečně, nebo přeskočit. Za splněný závazek dostaneš 100 bodů, za částečný jen jeho díl."
-            case .planning: "Týden si skládáš na obrazovce Týden. Rychlé plánování dá jednu aktivitu na víc dní najednou, Jako minule vezme minulý týden a Jeden úkol přidá úkol se všemi detaily. Vyzkoušej všechny tři."
-            case .planner: "Týden naplánuješ a odešleš plánovač. Hodinu ho můžeš měnit bez postihu, pak se sám zapečetí. Od té chvíle je každý úkol slib a každá změna se zaznamená."
-            case .streak: "Den, kdy splníš aspoň 80 % úkolů, rozdmýchá plamínek. Jeden špatný den ho zhasne. Kept tě večer varuje a po přerušení ještě týden připomíná."
-            case .missed: "Nesplněný úkol nezmizí. Buď ho dodáš pozdě, nebo napíšeš proč a co uděláš příště. Kept si to pamatuje a připomene, až se to bude opakovat."
-            case .score: "Velké číslo na obrazovce Dnes je tvoje spolehlivost za posledních 30 dní. Klepni na jednotlivé části a uvidíš, z čeho se skládá."
+            case .task: String(localized: "Každý den máš na obrazovce Dnes svoje úkoly. Hotovo, částečně, nebo přeskočit. Za splněný závazek dostaneš 100 bodů, za částečný jen jeho díl.")
+            case .planning: String(localized: "Týden si skládáš na obrazovce Týden. Rychlé plánování dá jednu aktivitu na víc dní najednou, Jako minule vezme minulý týden a Jeden úkol přidá úkol se všemi detaily. Vyzkoušej všechny tři.")
+            case .planner: String(localized: "Týden naplánuješ a odešleš plánovač. Hodinu ho můžeš měnit bez postihu, pak se sám zapečetí. Od té chvíle je každý úkol slib a každá změna se zaznamená.")
+            case .streak: String(localized: "Den, kdy splníš aspoň 80 % úkolů, rozdmýchá plamínek. Jeden špatný den ho zhasne. Kept tě večer varuje a po přerušení ještě týden připomíná.")
+            case .missed: String(localized: "Nesplněný úkol nezmizí. Buď ho dodáš pozdě, nebo napíšeš proč a co uděláš příště. Kept si to pamatuje a připomene, až se to bude opakovat.")
+            case .score: String(localized: "Velké číslo na obrazovce Dnes je tvoje spolehlivost za posledních 30 dní. Klepni na jednotlivé části a uvidíš, z čeho se skládá.")
             }
         }
     }
@@ -141,8 +141,8 @@ private struct TaskDemo: View {
             case .open:
                 HStack(spacing: 8) {
                     demoButton("HOTOVO", fill: Theme.green, text: Theme.onPrimary) { set(.confirm) }
-                    demoButton("ČÁSTEČNĚ", fill: Theme.cardRaised, text: Theme.orange) { set(.partial) }
-                    demoButton("PŘESKOČIT", fill: Theme.cardRaised, text: Theme.red) { set(.skip) }
+                    demoButton(String(localized: "ČÁSTEČNĚ"), fill: Theme.cardRaised, text: Theme.orange) { set(.partial) }
+                    demoButton(String(localized: "PŘESKOČIT"), fill: Theme.cardRaised, text: Theme.red) { set(.skip) }
                 }
             case .confirm:
                 inner {
@@ -150,8 +150,8 @@ private struct TaskDemo: View {
                     Text("Kept se ptá pokaždé. Chvilka upřímnosti, než se něco započítá.")
                         .scaledFont(.caption).foregroundStyle(Theme.textSecondary)
                     HStack(spacing: 8) {
-                        demoButton("Ještě ne", fill: Theme.card, text: Theme.textPrimary) { set(.open) }
-                        demoButton("Ano, splnil", fill: Theme.green, text: Theme.onPrimary) { set(.done) }
+                        demoButton(String(localized: "Ještě ne"), fill: Theme.card, text: Theme.textPrimary) { set(.open) }
+                        demoButton(String(localized: "Ano, splnil"), fill: Theme.green, text: Theme.onPrimary) { set(.done) }
                     }
                 }
             case .partial:
@@ -166,17 +166,17 @@ private struct TaskDemo: View {
             case .skip:
                 inner {
                     Text("Co s tím úkolem?").scaledFont(.body, weight: .bold).foregroundStyle(Theme.textPrimary)
-                    demoButton("Odložit bez postihu (zbývá 3 ze 3)", fill: Theme.card, text: Theme.textPrimary) { set(.postponed) }
-                    demoButton("Přeskočit a vysvětlit", fill: Theme.red, text: Color(hex: 0xFFFFFF)) { set(.skipped) }
+                    demoButton(String(localized: "Odložit bez postihu (zbývá 3 ze 3)"), fill: Theme.card, text: Theme.textPrimary) { set(.postponed) }
+                    demoButton(String(localized: "Přeskočit a vysvětlit"), fill: Theme.red, text: Color(hex: 0xFFFFFF)) { set(.skipped) }
                 }
             case .done:
-                finished("+100 bodů. Závazek dodržen, plamínek se přiblížil.", color: Theme.green)
+                finished(String(localized: "+100 bodů. Závazek dodržen, plamínek se přiblížil."), color: Theme.green)
             case .partialDone(let share):
-                finished("+\(share) bodů. Částečně splněno na \(share) %, do spolehlivosti se počítá jen tenhle díl.", color: Theme.orange)
+                finished(String(localized: "+\(share) bodů. Částečně splněno na \(share) %, do spolehlivosti se počítá jen tenhle díl."), color: Theme.orange)
             case .postponed:
-                finished("Úkol se přesunul na jiný den bez postihu. Takové odklady máš tři za měsíc.", color: Theme.orange)
+                finished(String(localized: "Úkol se přesunul na jiný den bez postihu. Takové odklady máš tři za měsíc."), color: Theme.orange)
             case .skipped:
-                finished("Přeskočeno. Teď napíšeš, proč to nevyšlo a co uděláš příště. Počítá se to jako porušený slib.", color: Theme.red)
+                finished(String(localized: "Přeskočeno. Teď napíšeš, proč to nevyšlo a co uděláš příště. Počítá se to jako porušený slib."), color: Theme.red)
             }
         }
         .sensoryFeedback(.success, trigger: phase) { _, new in new == .done }
@@ -185,10 +185,10 @@ private struct TaskDemo: View {
     private var badge: (text: String, color: Color) {
         switch phase {
         case .done: ("Hotovo", Theme.green)
-        case .partialDone: ("Částečně", Theme.orange)
-        case .postponed: ("Odloženo", Theme.orange)
-        case .skipped: ("Přeskočeno", Theme.red)
-        default: ("Otevřeno", Theme.textSecondary)
+        case .partialDone: (String(localized: "Částečně"), Theme.orange)
+        case .postponed: (String(localized: "Odloženo"), Theme.orange)
+        case .skipped: (String(localized: "Přeskočeno"), Theme.red)
+        default: (String(localized: "Otevřeno"), Theme.textSecondary)
         }
     }
 
@@ -232,7 +232,7 @@ private struct PlanningDemo: View {
         let minutes: Int
     }
 
-    private static let dayNames = ["PO", "ÚT", "ST", "ČT", "PÁ", "SO", "NE"]
+    private static let dayNames = [String(localized: "PO"), String(localized: "ÚT"), String(localized: "ST"), String(localized: "ČT"), String(localized: "PÁ"), String(localized: "SO"), String(localized: "NE")]
 
     @State private var mode: Mode = .quick
     @State private var items: [Item] = []
@@ -248,7 +248,7 @@ private struct PlanningDemo: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Picker("Způsob", selection: $mode.animation(.easeOut(duration: 0.2))) {
-                ForEach(Mode.allCases) { Text($0.rawValue).tag($0) }
+                ForEach(Mode.allCases) { Text(LocalizedStringKey($0.rawValue)).tag($0) }
             }
             .pickerStyle(.segmented)
             Text(explanation)
@@ -266,9 +266,9 @@ private struct PlanningDemo: View {
 
     private var explanation: String {
         switch mode {
-        case .quick: "Na obrazovce Týden klepneš na Rychlé plánování. Vybereš aktivitu a dny a přidáš ji na všechny najednou."
-        case .copy: "Na obrazovce Týden je karta Naplánuj si týden. Jako minule vezme celý minulý týden, nejdřív se zeptá a co už máš, nezdvojí."
-        case .single: "Jeden úkol nebo plus u dne otevře editor: název, kategorie, čas, délka, priorita i deadline."
+        case .quick: String(localized: "Na obrazovce Týden klepneš na Rychlé plánování. Vybereš aktivitu a dny a přidáš ji na všechny najednou.")
+        case .copy: String(localized: "Na obrazovce Týden je karta Naplánuj si týden. Jako minule vezme celý minulý týden, nejdřív se zeptá a co už máš, nezdvojí.")
+        case .single: String(localized: "Jeden úkol nebo plus u dne otevře editor: název, kategorie, čas, délka, priorita i deadline.")
         }
     }
 
@@ -360,8 +360,8 @@ private struct PlanningDemo: View {
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: 8) {
-                        alertButton("Zpět") { confirmsCopy = false }
-                        alertButton("Zkopírovat", bold: true) {
+                        alertButton(String(localized: "Zpět")) { confirmsCopy = false }
+                        alertButton(String(localized: "Zkopírovat"), bold: true) {
                             confirmsCopy = false
                             add([
                                 Item(day: 0, title: TaskCategory.gym.title, category: .gym, minutes: 60),
@@ -420,11 +420,11 @@ private struct PlanningDemo: View {
                     VStack(spacing: 0) {
                         formRow { TextField("Název", text: $editorTitle).foregroundStyle(Theme.textPrimary) }
                         Divider().overlay(Theme.border)
-                        formRow { LabeledContent("Den", value: "\(Self.dayNames[day].capitalized) tento týden") }
+                        formRow { LabeledContent("Den", value: String(localized: "\(Self.dayNames[day].capitalized) tento týden")) }
                         Divider().overlay(Theme.border)
-                        formRow { LabeledContent("Délka", value: "1 h") }
+                        formRow { LabeledContent("Délka", value: String(localized: "1 h")) }
                         Divider().overlay(Theme.border)
-                        formRow { LabeledContent("Priorita", value: "Střední") }
+                        formRow { LabeledContent("Priorita", value: String(localized: "Střední")) }
                     }
                     .background(Theme.card)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -547,7 +547,7 @@ private struct PlanningDemo: View {
 
     private func add(_ new: [Item]) {
         let clash = new.first { entry in items.contains { $0.day == entry.day && $0.title.activityKey == entry.title.activityKey } }
-        duplicateNote = clash.map { "„\($0.title)“ už na \(Self.dayNames[$0.day]) máš. V aplikaci se tě Kept zeptá, jestli ho tam chceš podruhé." }
+        duplicateNote = clash.map { String(localized: "„\($0.title)“ už na \(Self.dayNames[$0.day]) máš. V aplikaci se tě Kept zeptá, jestli ho tam chceš podruhé.") }
         withAnimation(.spring(duration: 0.35)) {
             items += new.filter { entry in !items.contains { $0.day == entry.day && $0.title.activityKey == entry.title.activityKey } }
         }
@@ -616,7 +616,7 @@ private struct PlannerDemo: View {
 
 private struct StreakDemo: View {
     @State private var days = [true, true, false, true, true, true, true]
-    private static let names = ["PO", "ÚT", "ST", "ČT", "PÁ", "SO", "NE"]
+    private static let names = [String(localized: "PO"), String(localized: "ÚT"), String(localized: "ST"), String(localized: "ČT"), String(localized: "PÁ"), String(localized: "SO"), String(localized: "NE")]
 
     private var count: Int { days.reversed().prefix { $0 }.count }
 
@@ -650,14 +650,14 @@ private struct StreakDemo: View {
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("\(Self.names[index]): \(ok ? "splněno" : "nesplněno")")
+                    .accessibilityLabel(ok ? String(localized: "\(Self.names[index]): splněno") : String(localized: "\(Self.names[index]): nesplněno"))
                 }
             }
             Text("Klepnutím na den přepínáš, jestli vyšel. Den bez úkolů sérii nepřeruší.")
                 .scaledFont(.caption)
                 .foregroundStyle(Theme.textSecondary)
             if days.last == false {
-                resultText("Série skončila. Do 48 hodin ji můžeš vrátit za \(PointsService.streakRepairCost) bodů za každý vynechaný den, nebo začít znovu.",
+                resultText(String(localized: "Série skončila. Do 48 hodin ji můžeš vrátit za \(PointsService.streakRepairCost) bodů za každý vynechaný den, nebo začít znovu."),
                            color: Theme.orange)
             }
         }
@@ -679,14 +679,14 @@ private struct MissedDemo: View {
             switch phase {
             case .open:
                 HStack(spacing: 8) {
-                    demoButton("SPLNĚNO POZDĚ", fill: Theme.orange, text: Theme.onPrimary) { set(.late) }
+                    demoButton(String(localized: "SPLNĚNO POZDĚ"), fill: Theme.orange, text: Theme.onPrimary) { set(.late) }
                     demoButton("NESPLNIL JSEM", fill: Theme.cardRaised, text: Theme.red) { set(.reasons) }
                 }
             case .reasons:
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Proč to nevyšlo?").scaledFont(.body, weight: .bold).foregroundStyle(Theme.textPrimary)
                     FlowLayout(spacing: 6) {
-                        ForEach(["Prokrastinoval jsem", "Nechtělo se mi", "Neměl jsem čas", "Zapomněl jsem"], id: \.self) { reason in
+                        ForEach([String(localized: "Prokrastinoval jsem"), String(localized: "Nechtělo se mi"), String(localized: "Neměl jsem čas"), String(localized: "Zapomněl jsem")], id: \.self) { reason in
                             Button(reason) { set(.written(reason)) }
                                 .scaledFont(.body, weight: .semibold)
                                 .foregroundStyle(Theme.textPrimary)
@@ -703,9 +703,9 @@ private struct MissedDemo: View {
                 .background(Theme.cardRaised)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             case .late:
-                finished("Splněno pozdě. Body dostaneš, ale méně: čím později, tím menší díl.", color: Theme.orange)
+                finished(String(localized: "Splněno pozdě. Body dostaneš, ale méně: čím později, tím menší díl."), color: Theme.orange)
             case .written(let reason):
-                finished("„\(reason).“ Teď ještě napíšeš sebekritiku a co uděláš příště. Až to bude potřeba, Kept ti tvoje slova připomene.",
+                finished(String(localized: "„\(reason).“ Teď ještě napíšeš sebekritiku a co uděláš příště. Až to bude potřeba, Kept ti tvoje slova připomene."),
                          color: Theme.textPrimary)
             }
         }
@@ -728,11 +728,11 @@ private struct ScoreDemo: View {
     @State private var open: Int? = 0
 
     private static let parts: [(label: String, share: Int, fill: Double, text: String)] = [
-        ("Dodržené sliby", 40, 0.92, "Kolik zapečetěných závazků jsi opravdu splnil. Největší část skóre."),
-        ("Produktivita", 25, 0.81, "Kolik bodové váhy úkolů jsi za den odvedl, kritické úkoly váží víc."),
-        ("Věrnost plánu", 15, 0.74, "Jak moc jsi zapečetěný plán měnil. Mazání a přesuny ji snižují."),
-        ("Včas", 10, 0.88, "Kolik úkolů jsi splnil do termínu, ne až potom."),
-        ("Týdenní cíle", 10, 0.75, "Jak se ti daří orientační cíle, třeba gym zhruba 4× týdně. Žádný postih, jen se to promítne."),
+        (String(localized: "Dodržené sliby"), 40, 0.92, String(localized: "Kolik zapečetěných závazků jsi opravdu splnil. Největší část skóre.")),
+        (String(localized: "Produktivita"), 25, 0.81, String(localized: "Kolik bodové váhy úkolů jsi za den odvedl, kritické úkoly váží víc.")),
+        (String(localized: "Věrnost plánu"), 15, 0.74, String(localized: "Jak moc jsi zapečetěný plán měnil. Mazání a přesuny ji snižují.")),
+        (String(localized: "Včas"), 10, 0.88, String(localized: "Kolik úkolů jsi splnil do termínu, ne až potom.")),
+        (String(localized: "Týdenní cíle"), 10, 0.75, String(localized: "Jak se ti daří orientační cíle, třeba gym zhruba 4× týdně. Žádný postih, jen se to promítne.")),
     ]
 
     var body: some View {

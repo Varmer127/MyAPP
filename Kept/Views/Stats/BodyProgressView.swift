@@ -12,7 +12,7 @@ struct BodyProgressView: View {
     @State private var comparing = false
     @State private var deleting: BodyEntry?
 
-    private static let poses: [(key: String, title: String)] = [("front", "Zepředu"), ("side", "Z boku"), ("back", "Zezadu")]
+    private static let poses: [(key: String, title: String)] = [("front", String(localized: "Zepředu")), ("side", String(localized: "Z boku")), ("back", String(localized: "Zezadu"))]
 
     var body: some View {
         ScrollView {
@@ -40,7 +40,7 @@ struct BodyProgressView: View {
                 ForEach(entries) { entry in
                     Button { editing = entry } label: { entryCard(entry) }
                         .buttonStyle(.plain)
-                        .swipeToDelete("Smazat zápis", cornerRadius: Theme.radius) { deleting = entry }
+                        .swipeToDelete(String(localized: "Smazat zápis"), cornerRadius: Theme.radius) { deleting = entry }
                 }
             }
             .padding(.horizontal, Theme.screenPadding)
@@ -66,7 +66,7 @@ struct BodyProgressView: View {
                 Rectangle().fill(.ultraThickMaterial).ignoresSafeArea()
             }
         }
-        .modifier(FaceIDLock(isEnabled: true, title: "Míry a fotky jsou zamčené", reason: "Odemknout míry a fotky"))
+        .modifier(FaceIDLock(isEnabled: true, title: String(localized: "Míry a fotky jsou zamčené"), reason: String(localized: "Odemknout míry a fotky")))
     }
 
     private func entryCard(_ entry: BodyEntry) -> some View {
@@ -149,8 +149,8 @@ struct BodyProgressView: View {
     }
 
     static func values(of entry: BodyEntry) -> [(String, Double, String)] {
-        [("Váha", entry.weight, "kg"), ("Pas", entry.waist, "cm"), ("Hrudník", entry.chest, "cm"),
-         ("Paže", entry.arm, "cm"), ("Stehno", entry.thigh, "cm"), ("Boky", entry.hips, "cm")]
+        [(String(localized: "Váha"), entry.weight, "kg"), (String(localized: "Pas"), entry.waist, "cm"), (String(localized: "Hrudník"), entry.chest, "cm"),
+         (String(localized: "Paže"), entry.arm, "cm"), (String(localized: "Stehno"), entry.thigh, "cm"), (String(localized: "Boky"), entry.hips, "cm")]
             .compactMap { label, value, unit in value.map { (label, $0, unit) } }
     }
 }
@@ -183,16 +183,16 @@ private struct BodyEntryEditor: View {
     @State private var confirmsDelete = false
     @State private var noCamera = false
 
-    private static let poses: [(key: String, title: String)] = [("front", "Zepředu"), ("side", "Z boku"), ("back", "Zezadu")]
+    private static let poses: [(key: String, title: String)] = [("front", String(localized: "Zepředu")), ("side", String(localized: "Z boku")), ("back", String(localized: "Zezadu"))]
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Míry") {
-                    field("Váha (kg)", $entry.weight)
+                    field(String(localized: "Váha (kg)"), $entry.weight)
                     field("Pas (cm)", $entry.waist)
-                    field("Hrudník (cm)", $entry.chest)
-                    field("Paže (cm)", $entry.arm)
+                    field(String(localized: "Hrudník (cm)"), $entry.chest)
+                    field(String(localized: "Paže (cm)"), $entry.arm)
                     field("Stehno (cm)", $entry.thigh)
                     field("Boky (cm)", $entry.hips)
                 }

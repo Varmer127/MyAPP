@@ -130,9 +130,9 @@ struct GymProgressView: View {
         let thisWeek = workouts.filter { Self.date(of: $0).weekStart == Date.now.weekStart }.count
         let target = settingsList.first?.weeklyTarget(for: .gym) ?? TaskCategory.gym.defaultWeeklyTarget
         return TileRow {
-            MetricTile(value: target > 0 ? "\(thisWeek) / \(target)" : "\(thisWeek)", label: "Tento týden",
+            MetricTile(value: target > 0 ? "\(thisWeek) / \(target)" : "\(thisWeek)", label: String(localized: "Tento týden"),
                        color: target > 0 && thisWeek >= target ? Theme.green : Theme.textPrimary)
-            MetricTile(value: "\(recent.count)", label: "Za 30 dní")
+            MetricTile(value: "\(recent.count)", label: String(localized: "Za 30 dní"))
             MetricTile(value: "\(workouts.count)", label: "Celkem")
         }
     }
@@ -153,7 +153,7 @@ struct GymProgressView: View {
 
         if !presets.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: "Co jsi jel za \(Self.recentDays) dní")
+                SectionLabel(text: String(localized: "Co jsi jel za \(Self.recentDays) dní"))
                 VStack(spacing: 14) {
                     ForEach(presets, id: \.self) { name in
                         let count = counts[name] ?? 0
@@ -266,7 +266,7 @@ struct GymProgressView: View {
         let all = lifts
         let names = all.keys.sorted()
         VStack(spacing: 10) {
-            SectionLabel(text: "Cviky a síla")
+            SectionLabel(text: String(localized: "Cviky a síla"))
             if names.isEmpty {
                 Text("Při zápisu tréninku vyber cviky a zapiš váhu, opakování a série. Tady pak uvidíš, jak sílíš.")
                     .scaledFont(.body)
@@ -286,7 +286,7 @@ struct GymProgressView: View {
                         let bestMax = entries.map(\.estimatedMax).max() ?? last.estimatedMax
                         TileRow {
                             MetricTile(value: last.weight.kilogramText, label: "Naposledy × \(last.reps)")
-                            MetricTile(value: best.kilogramText, label: "Nejtěžší váha")
+                            MetricTile(value: best.kilogramText, label: String(localized: "Nejtěžší váha"))
                             MetricTile(value: bestMax.kilogramText, label: "Odhad maxima")
                         }
                         if entries.count > 1 {
@@ -295,7 +295,7 @@ struct GymProgressView: View {
                                 .scaledFont(.caption, weight: .semibold)
                                 .foregroundStyle(change > 0 ? Theme.green : (change < 0 ? Theme.red : Theme.textSecondary))
                             Picker("Graf", selection: $liftMetric) {
-                                ForEach(LiftMetric.allCases) { Text($0.rawValue).tag($0) }
+                                ForEach(LiftMetric.allCases) { Text(LocalizedStringKey($0.rawValue)).tag($0) }
                             }
                             .pickerStyle(.segmented)
                             lineChart(entries.map { ($0.date, liftMetric.value($0.weight, $0.estimatedMax, $0.volume)) })
@@ -328,7 +328,7 @@ struct GymProgressView: View {
                             }
                             Spacer()
                             if let last = entries.last {
-                                Text("\(last.weight > 0 ? last.weight.kilogramText : "vl. váha") × \(last.reps)")
+                                Text("\(last.weight > 0 ? last.weight.kilogramText : String(localized: "vl. váha")) × \(last.reps)")
                                     .scaledFont(.body, weight: .bold)
                                     .foregroundStyle(Theme.textPrimary)
                             }
@@ -371,7 +371,7 @@ struct GymProgressView: View {
         if let first = entries.first, let last = entries.last {
             let change = last.1 - first.1
             VStack(spacing: 10) {
-                SectionLabel(text: "Tělesná váha")
+                SectionLabel(text: String(localized: "Tělesná váha"))
                 VStack(alignment: .leading, spacing: 16) {
                     HStack(alignment: .firstTextBaseline, spacing: 10) {
                         Text(last.1.kilogramText)

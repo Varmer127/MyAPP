@@ -87,7 +87,7 @@ struct PokeView: View {
             Label("Už jsi ho šťouchl", systemImage: "clock")
                 .scaledFont(.body, weight: .semibold)
                 .foregroundStyle(Theme.textPrimary)
-            Text("Znovu to půjde \(date.formatted(.relative(presentation: .named, unitsStyle: .wide).locale(.app))).")
+            Text(String(localized: "Znovu to půjde \(date.formatted(.relative(presentation: .named, unitsStyle: .wide).locale(.app)))."))
                 .scaledFont(.body)
                 .foregroundStyle(Theme.textSecondary)
         }

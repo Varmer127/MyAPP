@@ -8,9 +8,9 @@ enum BadgeTier: Int, Comparable {
 
     var title: String {
         switch self {
-        case .common: "BĚŽNÝ"
-        case .rare: "VZÁCNÝ"
-        case .legendary: "LEGENDÁRNÍ"
+        case .common: String(localized: "BĚŽNÝ")
+        case .rare: String(localized: "VZÁCNÝ")
+        case .legendary: String(localized: "LEGENDÁRNÍ")
         }
     }
 }
@@ -22,12 +22,12 @@ enum BadgeGroup: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .streak: "Série"
-        case .seal: "Pečeť"
+        case .streak: String(localized: "Série")
+        case .seal: String(localized: "Pečeť")
         case .word: "Slovo"
-        case .habit: "Návyk"
+        case .habit: String(localized: "Návyk")
         case .gym: "Gym"
-        case .health: "Zdraví"
+        case .health: String(localized: "Zdraví")
         }
     }
 }
@@ -48,11 +48,11 @@ struct Achievement: Identifiable {
 
     var shownName: String { isSecret && !isEarned ? "???" : name }
     var shownSymbol: String { isSecret && !isEarned ? "questionmark" : symbol }
-    var shownHow: String { isSecret && !isEarned ? "Skrytý odznak. Prozradí se, až ho získáš." : how }
+    var shownHow: String { isSecret && !isEarned ? String(localized: "Skrytý odznak. Prozradí se, až ho získáš.") : how }
 
     /// "Získáno", or how far along the user is ("5 / 14") when it can be counted. Nothing for an uncounted locked badge.
     var statusText: String {
-        if isEarned { return "Získáno" }
+        if isEarned { return String(localized: "Získáno") }
         guard let progress else { return "" }
         return "\(min(progress.current, progress.target)) / \(progress.target)"
     }
@@ -150,56 +150,56 @@ enum BadgeService {
             .values.contains { Set($0.map(\.category)).count >= 5 }
 
         return [
-            make("streak7", "Týden v kuse", "flame.fill", .streak, .common, "Dodrž slovo 7 dní v řadě.",
+            make("streak7", String(localized: "Týden v kuse"), "flame.fill", .streak, .common, String(localized: "Dodrž slovo 7 dní v řadě."),
                  earned: reached[7] == true, progress: (currentStreak, 7)),
-            make("streak14", "Dva týdny", "flame.fill", .streak, .common, "Série 14 dní. Z rozhodnutí se stává zvyk.",
+            make("streak14", String(localized: "Dva týdny"), "flame.fill", .streak, .common, String(localized: "Série 14 dní. Z rozhodnutí se stává zvyk."),
                  earned: reached[14] == true, progress: (currentStreak, 14)),
-            make("streak30", "Měsíc slova", "flame.fill", .streak, .rare, "Série 30 dní.",
+            make("streak30", String(localized: "Měsíc slova"), "flame.fill", .streak, .rare, String(localized: "Série 30 dní."),
                  earned: reached[30] == true, progress: (currentStreak, 30)),
-            make("streak60", "Šedesát dní", "flame.fill", .streak, .rare, "Série 60 dní.",
+            make("streak60", String(localized: "Šedesát dní"), "flame.fill", .streak, .rare, String(localized: "Série 60 dní."),
                  earned: reached[60] == true, progress: (currentStreak, 60)),
-            make("streak100", "Sto dní", "flame.fill", .streak, .legendary, "Série 100 dní.",
+            make("streak100", String(localized: "Sto dní"), "flame.fill", .streak, .legendary, String(localized: "Série 100 dní."),
                  earned: reached[100] == true, progress: (currentStreak, 100)),
 
-            make("seal1", "První pečeť", "checkmark.seal.fill", .seal, .common, "Zapeceť svůj první týden.",
+            make("seal1", String(localized: "První pečeť"), "checkmark.seal.fill", .seal, .common, String(localized: "Zapeceť svůj první týden."),
                  earned: !committed.isEmpty, progress: (committed.count, 1)),
-            make("seal4", "Čtyři pečeti", "checkmark.seal.fill", .seal, .rare, "Čtyři zapečetěné týdny v řadě.",
+            make("seal4", String(localized: "Čtyři pečeti"), "checkmark.seal.fill", .seal, .rare, String(localized: "Čtyři zapečetěné týdny v řadě."),
                  earned: longestRun >= 4, progress: (longestRun, 4)),
-            make("untouched", "Bez couvnutí", "shield.fill", .seal, .rare,
-                 "Týden zapečetěný bez jediné změny po pečeti, s aspoň pěti slibů.", earned: untouched),
-            make("seal12", "Dvanáct pečetí", "checkmark.seal.fill", .seal, .legendary, "Dvanáct zapečetěných týdnů celkem.",
+            make("untouched", String(localized: "Bez couvnutí"), "shield.fill", .seal, .rare,
+                 String(localized: "Týden zapečetěný bez jediné změny po pečeti, s aspoň pěti slibů."), earned: untouched),
+            make("seal12", String(localized: "Dvanáct pečetí"), "checkmark.seal.fill", .seal, .legendary, String(localized: "Dvanáct zapečetěných týdnů celkem."),
                  earned: committed.count >= 12, progress: (committed.count, 12)),
 
-            make("clean", "Čistý týden", "checkmark.circle.fill", .word, .rare, "Týden se sedmi a více sliby, všechny dodržené.",
+            make("clean", String(localized: "Čistý týden"), "checkmark.circle.fill", .word, .rare, String(localized: "Týden se sedmi a více sliby, všechny dodržené."),
                  earned: cleanWeek),
-            make("critical", "Kritická práce", "scope", .word, .rare, "Týden, ve kterém splníš všechny aspoň tři kritické úkoly.",
+            make("critical", String(localized: "Kritická práce"), "scope", .word, .rare, String(localized: "Týden, ve kterém splníš všechny aspoň tři kritické úkoly."),
                  earned: criticalWeek),
-            make("honest", "Upřímný", "pencil.and.list.clipboard", .word, .common, "Deset nesplněných slibů poctivě vysvětlených.",
+            make("honest", String(localized: "Upřímný"), "pencil.and.list.clipboard", .word, .common, String(localized: "Deset nesplněných slibů poctivě vysvětlených."),
                  earned: honest >= 10, progress: (honest, 10)),
-            make("goals", "Cíle týdne", "target", .word, .rare, "Týden, ve kterém splníš všechny týdenní cíle.", earned: goalsWeek),
+            make("goals", String(localized: "Cíle týdne"), "target", .word, .rare, String(localized: "Týden, ve kterém splníš všechny týdenní cíle."), earned: goalsWeek),
 
-            make("early", "Ranní ptáče", "sunrise.fill", .habit, .rare, "Splň osm úkolů před 9:00 během jednoho týdne.",
+            make("early", String(localized: "Ranní ptáče"), "sunrise.fill", .habit, .rare, String(localized: "Splň osm úkolů před 9:00 během jednoho týdne."),
                  earned: early >= 8, progress: (early, 8)),
-            make("comeback", "Comeback", "arrow.uturn.up", .habit, .rare, "Třikrát po dni pod 60 % hned druhý den na 80 % a víc.",
+            make("comeback", String(localized: "Comeback"), "arrow.uturn.up", .habit, .rare, String(localized: "Třikrát po dni pod 60 % hned druhý den na 80 % a víc."),
                  earned: comebacks >= 3, progress: (comebacks, 3)),
-            make("back", "Zpátky v sedle", "figure.walk", .habit, .common, "Vrať se po pauze delší než pět dní a splň úkol.", earned: returned),
-            make("month1", "První měsíc", "calendar.badge.checkmark", .habit, .common,
-                 "Měsíc od prvního splněného úkolu v Kept.",
+            make("back", String(localized: "Zpátky v sedle"), "figure.walk", .habit, .common, String(localized: "Vrať se po pauze delší než pět dní a splň úkol."), earned: returned),
+            make("month1", String(localized: "První měsíc"), "calendar.badge.checkmark", .habit, .common,
+                 String(localized: "Měsíc od prvního splněného úkolu v Kept."),
                  earned: monthsInApp >= 30, progress: (monthsInApp, 30)),
-            make("diary", "Reflexe", "book.closed.fill", .habit, .rare, "Deset zápisů v deníku za sebou.",
+            make("diary", String(localized: "Reflexe"), "book.closed.fill", .habit, .rare, String(localized: "Deset zápisů v deníku za sebou."),
                  earned: diaryBest >= 10, progress: (diaryBest, 10)),
 
-            make("gym1", "První trénink", "dumbbell.fill", .gym, .common, "Splň první trénink.",
+            make("gym1", String(localized: "První trénink"), "dumbbell.fill", .gym, .common, String(localized: "Splň první trénink."),
                  earned: workouts >= 1, progress: (workouts, 1)),
-            make("gym25", "Pravidelný", "dumbbell.fill", .gym, .rare, "25 splněných tréninků.",
+            make("gym25", String(localized: "Pravidelný"), "dumbbell.fill", .gym, .rare, String(localized: "25 splněných tréninků."),
                  earned: workouts >= 25, progress: (workouts, 25)),
-            make("gym100", "Sto tréninků", "dumbbell.fill", .gym, .legendary, "100 splněných tréninků.",
+            make("gym100", String(localized: "Sto tréninků"), "dumbbell.fill", .gym, .legendary, String(localized: "100 splněných tréninků."),
                  earned: workouts >= 100, progress: (workouts, 100)),
-            make("night", "Noční sova", "moon.stars.fill", .habit, .rare, "Splň úkol po jedenácté večer nebo před čtvrtou ráno.",
+            make("night", String(localized: "Noční sova"), "moon.stars.fill", .habit, .rare, String(localized: "Splň úkol po jedenácté večer nebo před čtvrtou ráno."),
                  earned: nightOwl, secret: true),
-            make("lastminute", "Na poslední chvíli", "timer", .habit, .rare, "Splň úkol v posledních pěti minutách před deadlinem.",
+            make("lastminute", String(localized: "Na poslední chvíli"), "timer", .habit, .rare, String(localized: "Splň úkol v posledních pěti minutách před deadlinem."),
                  earned: lastMinute, secret: true),
-            make("allround", "Všestranný", "square.grid.3x3.fill", .habit, .rare, "Splň úkoly v pěti různých oblastech za jeden týden.",
+            make("allround", String(localized: "Všestranný"), "square.grid.3x3.fill", .habit, .rare, String(localized: "Splň úkoly v pěti různých oblastech za jeden týden."),
                  earned: allRounder, secret: true),
         ] + healthBadges(health)
     }
@@ -212,31 +212,31 @@ enum BadgeService {
                         isEarned: have >= need, progress: (current: have, target: need))
         }
         return [
-            make("steps10k", "Desítka", "figure.walk", .common, "10 000 kroků za jeden den.",
+            make("steps10k", String(localized: "Desítka"), "figure.walk", .common, String(localized: "10 000 kroků za jeden den."),
                  have: health.maxSteps, need: 10_000),
-            make("steps20k", "Dvacítka", "figure.walk.motion", .rare, "20 000 kroků za jeden den.",
+            make("steps20k", String(localized: "Dvacítka"), "figure.walk.motion", .rare, String(localized: "20 000 kroků za jeden den."),
                  have: health.maxSteps, need: 20_000),
-            make("steps30k", "Třicítka", "figure.hiking", .legendary, "30 000 kroků za jeden den.",
+            make("steps30k", String(localized: "Třicítka"), "figure.hiking", .legendary, String(localized: "30 000 kroků za jeden den."),
                  have: health.maxSteps, need: 30_000),
-            make("steps50k", "Padesátka", "figure.climbing", .legendary, "50 000 kroků za jeden den.",
+            make("steps50k", String(localized: "Padesátka"), "figure.climbing", .legendary, String(localized: "50 000 kroků za jeden den."),
                  have: health.maxSteps, need: 50_000),
-            make("steps100k", "Stovka", "mountain.2.fill", .legendary, "100 000 kroků za jeden den.",
+            make("steps100k", String(localized: "Stovka"), "mountain.2.fill", .legendary, String(localized: "100 000 kroků za jeden den."),
                  have: health.maxSteps, need: 100_000),
-            make("run20k", "Tři dvacítky v řadě", "bolt.fill", .legendary, "Tři dny po sobě přes 20 000 kroků.",
+            make("run20k", String(localized: "Tři dvacítky v řadě"), "bolt.fill", .legendary, String(localized: "Tři dny po sobě přes 20 000 kroků."),
                  have: health.run20k, need: 3),
-            make("move7", "Týden v pohybu", "calendar.badge.checkmark", .rare, "Sedm dní po sobě aspoň 10 000 kroků.",
+            make("move7", String(localized: "Týden v pohybu"), "calendar.badge.checkmark", .rare, String(localized: "Sedm dní po sobě aspoň 10 000 kroků."),
                  have: health.run10k, need: 7),
-            make("move30", "Měsíc v pohybu", "calendar", .legendary, "Třicet dní po sobě aspoň 10 000 kroků.",
+            make("move30", String(localized: "Měsíc v pohybu"), "calendar", .legendary, String(localized: "Třicet dní po sobě aspoň 10 000 kroků."),
                  have: health.run10k, need: 30),
-            make("km21", "Půlmaraton", "map.fill", .rare, "21 km chůze nebo běhu za jeden den.",
+            make("km21", String(localized: "Půlmaraton"), "map.fill", .rare, String(localized: "21 km chůze nebo běhu za jeden den."),
                  have: Int(health.maxKm), need: 21),
-            make("km42", "Maraton", "flag.checkered", .legendary, "42 km chůze nebo běhu za jeden den.",
+            make("km42", String(localized: "Maraton"), "flag.checkered", .legendary, String(localized: "42 km chůze nebo běhu za jeden den."),
                  have: Int(health.maxKm), need: 42),
-            make("week50", "Týden na nohou", "point.topleft.down.to.point.bottomright.curvepath.fill", .rare,
-                 "50 km chůze nebo běhu za jeden týden.", have: Int(health.bestWeekKm), need: 50),
-            make("kcal1000", "Tisíc kalorií", "flame.fill", .rare, "1 000 aktivních kalorií za jeden den.",
+            make("week50", String(localized: "Týden na nohou"), "point.topleft.down.to.point.bottomright.curvepath.fill", .rare,
+                 String(localized: "50 km chůze nebo běhu za jeden týden."), have: Int(health.bestWeekKm), need: 50),
+            make("kcal1000", String(localized: "Tisíc kalorií"), "flame.fill", .rare, String(localized: "1 000 aktivních kalorií za jeden den."),
                  have: health.maxKcal, need: 1_000),
-            make("train5", "Pětkrát týdně", "figure.run", .rare, "Pět dní s tréninkem za jeden týden. Počítá se Gym, Sport, tvoje aktivity označené jako trénink i tréninky ze Zdraví.",
+            make("train5", String(localized: "Pětkrát týdně"), "figure.run", .rare, String(localized: "Pět dní s tréninkem za jeden týden. Počítá se Gym, Sport, tvoje aktivity označené jako trénink i tréninky ze Zdraví."),
                  have: health.bestWeekWorkouts, need: 5),
         ]
     }

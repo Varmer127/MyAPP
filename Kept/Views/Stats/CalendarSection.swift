@@ -57,7 +57,7 @@ struct ConsistencySection: View {
     @State private var openMonth: Date? = ConsistencySection.monthStart(of: .now)
     @State private var selectedDay: DayRequest?
 
-    private static let weekdayLabels = ["PO", "ÚT", "ST", "ČT", "PÁ", "SO", "NE"]
+    private static let weekdayLabels = [String(localized: "PO"), String(localized: "ÚT"), String(localized: "ST"), String(localized: "ČT"), String(localized: "PÁ"), String(localized: "SO"), String(localized: "NE")]
     private static let daysInWeek = 7
 
     private static func monthStart(of date: Date) -> Date {
@@ -126,7 +126,7 @@ struct ConsistencySection: View {
         let streak = ScoreEngine.dayStreak(tasks)
         let perfect = StatisticsService.perfectDayStreak(tasks)
         let weeks = StatisticsService.weeklyPromiseStreak(tasks)
-        return Text("Série \(String.days(streak)) · perfektní dny v řadě: \(perfect) · týdny nad 80 %: \(weeks)")
+        return Text(String(localized: "Série \(String.days(streak)) · perfektní dny v řadě: \(perfect) · týdny nad 80 %: \(weeks)"))
             .scaledFont(.caption)
             .foregroundStyle(Theme.textSecondary)
             .fixedSize(horizontal: false, vertical: true)
@@ -224,7 +224,7 @@ struct ConsistencySection: View {
                     }
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel(score.day.longDayText)
-                    .accessibilityValue(score.productivity.map(\.percentText) ?? "bez úkolů")
+                    .accessibilityValue(score.productivity.map(\.percentText) ?? String(localized: "bez úkolů"))
                     .accessibilityAddTraits(isFuture ? [] : .isButton)
             }
         }
@@ -303,7 +303,7 @@ struct ConsistencySection: View {
         .buttonStyle(.plain)
         .disabled(isFuture)
         .accessibilityLabel(start.formatted(Date.FormatStyle(locale: .app).month(.wide)))
-        .accessibilityValue(share.map { "dny nad 80 %: \($0.percentText)" } ?? "bez dat")
+        .accessibilityValue(share.map { String(localized: "dny nad 80 %: \($0.percentText)") } ?? String(localized: "bez dat"))
         .accessibilityAddTraits(isOpen ? .isSelected : [])
     }
 

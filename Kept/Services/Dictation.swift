@@ -11,7 +11,7 @@ final class Dictation: ObservableObject {
     @Published private(set) var activeField: String?
     @Published var errorMessage: String?
 
-    private let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "cs-CZ"))
+    private let recognizer = SFSpeechRecognizer(locale: Locale.app)
     private let engine = AVAudioEngine()
     private var request: SFSpeechAudioBufferRecognitionRequest?
     private var task: SFSpeechRecognitionTask?
@@ -25,7 +25,7 @@ final class Dictation: ObservableObject {
         stop()
         Task {
             guard await Self.requestPermissions() else {
-                errorMessage = "Kept nemá přístup k mikrofonu nebo k rozpoznávání řeči. Povol je v Nastavení iPhonu → Aplikace → Kept."
+                errorMessage = String(localized: "Kept nemá přístup k mikrofonu nebo k rozpoznávání řeči. Povol je v Nastavení iPhonu → Aplikace → Kept.")
                 return
             }
             start(field: field, text: text)
@@ -45,7 +45,7 @@ final class Dictation: ObservableObject {
 
     private func start(field: String, text: Binding<String>) {
         guard let recognizer, recognizer.isAvailable else {
-            errorMessage = "Rozpoznávání češtiny teď není dostupné."
+            errorMessage = String(localized: "Rozpoznávání češtiny teď není dostupné.")
             return
         }
         do {
@@ -75,7 +75,7 @@ final class Dictation: ObservableObject {
                 }
             }
         } catch {
-            errorMessage = "Nahrávání se nepodařilo spustit."
+            errorMessage = String(localized: "Nahrávání se nepodařilo spustit.")
             stop()
         }
     }

@@ -20,28 +20,28 @@ struct ActivityIconPicker: View {
             "figure.boxing", "figure.martial.arts", "figure.climbing", "figure.skiing.downhill",
             "figure.soccer", "figure.basketball", "figure.tennis",
         ]),
-        IconGroup(title: "Učení a mysl", symbols: [
+        IconGroup(title: String(localized: "Učení a mysl"), symbols: [
             "book", "books.vertical", "text.book.closed", "character.book.closed", "graduationcap",
             "lightbulb", "brain.head.profile", "translate", "globe.europe.africa", "pencil.and.ruler",
         ]),
-        IconGroup(title: "Práce", symbols: [
+        IconGroup(title: String(localized: "Práce"), symbols: [
             "briefcase", "laptopcomputer", "chevron.left.forwardslash.chevron.right", "doc.text",
             "list.bullet.clipboard", "chart.bar", "envelope", "phone", "calendar", "banknote",
             "hammer", "wrench.and.screwdriver",
         ]),
-        IconGroup(title: "Tvoření", symbols: [
+        IconGroup(title: String(localized: "Tvoření"), symbols: [
             "paintbrush", "paintpalette", "music.note", "guitars", "pianokeys", "mic",
             "camera", "film", "theatermasks", "scissors", "gamecontroller",
         ]),
-        IconGroup(title: "Zdraví a klid", symbols: [
-            "heart", "figure.mind.and.body", "bed.double", "drop", "fork.knife", "carrot",
+        IconGroup(title: String(localized: "Zdraví a klid"), symbols: [
+            "heart", String(localized: "figure.mind.and.body"), "bed.double", "drop", "fork.knife", "carrot",
             "cup.and.saucer", "pills", "stethoscope", "sun.max", "moon.stars",
         ]),
-        IconGroup(title: "Příroda a domov", symbols: [
+        IconGroup(title: String(localized: "Příroda a domov"), symbols: [
             "leaf", "tree", "mountain.2", "pawprint", "dog", "house", "cart", "bag",
             "car", "airplane", "person.2", "gift",
         ]),
-        IconGroup(title: "Ostatní", symbols: [
+        IconGroup(title: String(localized: "Ostatní"), symbols: [
             "star", "flame", "target", "sparkles", "checkmark.seal", "circle.grid.2x2",
         ]),
     ]

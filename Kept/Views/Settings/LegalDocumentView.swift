@@ -41,13 +41,13 @@ enum LegalLanguage: String, CaseIterable, Identifiable {
     /// The name of each language in that language, so it is not translated.
     var title: String {
         switch self {
-        case .cs: "Česky"
+        case .cs: String(localized: "Česky")
         case .en: "English"
         }
     }
 
-    /// The app speaks Czech for now, so the Czech translation opens first; the English one is binding.
-    static let initial = LegalLanguage.cs
+    /// The documents open in the app's language.
+    static let initial: LegalLanguage = AppLanguage.current == .en ? .en : .cs
 }
 
 /// One piece of a document: its title, a section heading, a paragraph or a bullet.

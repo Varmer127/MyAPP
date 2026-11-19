@@ -124,7 +124,7 @@ struct ReviewHistorySection: View {
         let weeks = Set(tasks.map { $0.scheduledDate.weekStart }).filter { $0 <= now }.sorted(by: >)
         if !weeks.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: "Přehledy týdnů")
+                SectionLabel(text: String(localized: "Přehledy týdnů"))
                 VStack(spacing: 0) {
                     ForEach(Array(weeks.enumerated()), id: \.element) { index, week in
                         if index > 0 {
@@ -169,7 +169,7 @@ struct RecordsSection: View {
         let records = StatisticsService.records(tasks: tasks, sessions: sessions)
         if !records.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: "Osobní rekordy")
+                SectionLabel(text: String(localized: "Osobní rekordy"))
                 VStack(spacing: 0) {
                     ForEach(Array(records.enumerated()), id: \.element.id) { index, record in
                         if index > 0 {

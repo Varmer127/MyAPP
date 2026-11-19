@@ -123,15 +123,15 @@ struct WeeklyReviewView: View {
     /// One observation about the plan: empty days ahead, or the busiest day.
     private func weekAheadNote(byDay: [Date: [TaskItem]], days: [Date]) -> String {
         if weekTasks.isEmpty {
-            return "Zatím je týden prázdný. Naplánuj si ho na obrazovce Týden a tady uvidíš, jak se plní."
+            return String(localized: "Zatím je týden prázdný. Naplánuj si ho na obrazovce Týden a tady uvidíš, jak se plní.")
         }
         let emptyAhead = days.filter { $0.endOfDay > now && (byDay[$0.startOfDay] ?? []).isEmpty }
         if !emptyAhead.isEmpty {
             let names = emptyAhead.map(\.weekdayShortText).joined(separator: ", ")
-            return "Volné dny: \(names). Klidně je nech na odpočinek, nebo tam něco doplň."
+            return String(localized: "Volné dny: \(names). Klidně je nech na odpočinek, nebo tam něco doplň.")
         }
         if let busiest = days.max(by: { (byDay[$0.startOfDay]?.count ?? 0) < (byDay[$1.startOfDay]?.count ?? 0) }) {
-            return "Nejnabitější den je \(busiest.weekdayText). Každý den něco, tak to má být."
+            return String(localized: "Nejnabitější den je \(busiest.weekdayText). Každý den něco, tak to má být.")
         }
         return ""
     }
@@ -210,8 +210,8 @@ struct WeeklyReviewView: View {
                     .foregroundStyle(Theme.textPrimary)
                     .padding(.top, 8)
                 Text(plannedCount > 0
-                     ? "V plánu máš \(plannedCount) \(plannedCount == 1 ? "úkol" : (2...4).contains(plannedCount) ? "úkoly" : "úkolů"). Přehled se naplní, jak je budeš plnit."
-                     : "Zatím tu nic není. Naplánuj si týden a přehled se začne plnit.")
+                     ? String(localized: "V plánu máš \(plannedCount) úkolů. Přehled se naplní, jak je budeš plnit.", comment: "Planned task count, with plural forms")
+                     : String(localized: "Zatím tu nic není. Naplánuj si týden a přehled se začne plnit."))
                     .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -247,7 +247,7 @@ struct WeeklyReviewView: View {
                         MetricTile(value: productivity.percentText, label: "Produktivita")
                     }
                     if let integrity {
-                        MetricTile(value: integrity.percentText, label: "Věrnost plánu")
+                        MetricTile(value: integrity.percentText, label: String(localized: "Věrnost plánu"))
                     }
                 }
                 .padding(.top, 12)
@@ -262,12 +262,12 @@ struct WeeklyReviewView: View {
         return VStack(spacing: 10) {
             TileRow {
                 MetricTile(value: "\(closed.count)", label: "Celkem")
-                MetricTile(value: "\(done.count)", label: "Splněno")
-                MetricTile(value: "\(missed)", label: "Nesplněno", color: missed > 0 ? Theme.red : Theme.textPrimary)
+                MetricTile(value: "\(done.count)", label: String(localized: "Splněno"))
+                MetricTile(value: "\(missed)", label: String(localized: "Nesplněno"), color: missed > 0 ? Theme.red : Theme.textPrimary)
             }
             TileRow {
-                MetricTile(value: "\(done.count - late)", label: "Včas")
-                MetricTile(value: "\(late)", label: "Pozdě", color: late > 0 ? Theme.orange : Theme.textPrimary)
+                MetricTile(value: "\(done.count - late)", label: String(localized: "Včas"))
+                MetricTile(value: "\(late)", label: String(localized: "Pozdě"), color: late > 0 ? Theme.orange : Theme.textPrimary)
             }
         }
     }
@@ -312,19 +312,19 @@ struct WeeklyReviewView: View {
             if scored.count >= 2, let best = scored.max(by: { $0.value < $1.value }),
                let worst = scored.min(by: { $0.value < $1.value }) {
                 HStack(spacing: 10) {
-                    highlight("Nejlepší den", best.day.weekdayText.capitalizedFirst, best.value.percentText)
-                    highlight("Nejhorší den", worst.day.weekdayText.capitalizedFirst, worst.value.percentText)
+                    highlight(String(localized: "Nejlepší den"), best.day.weekdayText.capitalizedFirst, best.value.percentText)
+                    highlight(String(localized: "Nejhorší den"), worst.day.weekdayText.capitalizedFirst, worst.value.percentText)
                 }
             }
             if categories.count >= 2, let best = categories.max(by: { $0.rate < $1.rate }),
                let worst = categories.min(by: { $0.rate < $1.rate }), best.category != worst.category {
                 HStack(spacing: 10) {
-                    highlight("Nejlepší kategorie", best.category.title, best.rate.percentText)
-                    highlight("Nejhorší kategorie", worst.category.title, worst.rate.percentText)
+                    highlight(String(localized: "Nejlepší kategorie"), best.category.title, best.rate.percentText)
+                    highlight(String(localized: "Nejhorší kategorie"), worst.category.title, worst.rate.percentText)
                 }
             }
             if let mostFailed, let title = mostFailed.value.first?.title {
-                highlight("Nejčastěji nesplněný úkol", title, "\(mostFailed.value.count)× nesplněno")
+                highlight(String(localized: "Nejčastěji nesplněný úkol"), title, String(localized: "\(mostFailed.value.count)× nesplněno"))
             }
         }
     }
@@ -352,7 +352,7 @@ struct WeeklyReviewView: View {
         let counts = StatisticsService.excuseCounts(weekFailures)
         if !counts.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: "Tvoje výmluvy")
+                SectionLabel(text: String(localized: "Tvoje výmluvy"))
                 ExcuseList(counts: counts)
             }
         }
@@ -363,7 +363,7 @@ struct WeeklyReviewView: View {
         let insights = PatternDetectionService.insights(tasks: closed, failures: weekFailures, plans: weekPlans, now: now)
         if !insights.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: "Zjištěné vzorce")
+                SectionLabel(text: String(localized: "Zjištěné vzorce"))
                 InsightList(insights: insights)
             }
         }
@@ -375,7 +375,7 @@ struct WeeklyReviewView: View {
         if !records.isEmpty {
             let repeated = StatisticsService.excuseCounts(weekFailures).first { $0.count >= 2 }
             VStack(spacing: 10) {
-                SectionLabel(text: "Tvoje vlastní slova")
+                SectionLabel(text: String(localized: "Tvoje vlastní slova"))
                 VStack(alignment: .leading, spacing: 14) {
                     ForEach(records) { record in
                         VStack(alignment: .leading, spacing: 3) {
@@ -428,17 +428,17 @@ struct WeeklyReviewView: View {
 
     private var truthVerdict: (text: String, color: Color) {
         if ScoreEngine.isBusyNotProductive(closed, now: now) {
-            return ("Byl jsi aktivní. Nebyl jsi produktivní.", Theme.red)
+            return (String(localized: "Byl jsi aktivní. Nebyl jsi produktivní."), Theme.red)
         }
         let kept = promisesKept ?? ScoreEngine.completionRate(closed) ?? 0
         let productive = productivity ?? 0
         if kept >= Self.truthGood, productive >= Self.truthGood {
-            return ("Dodržel jsi slovo.", Theme.green)
+            return (String(localized: "Dodržel jsi slovo."), Theme.green)
         }
         if kept < Self.truthPoor {
-            return ("Většinu toho, co sis slíbil, jsi nedodržel.", Theme.red)
+            return (String(localized: "Většinu toho, co sis slíbil, jsi nedodržel."), Theme.red)
         }
-        return ("Slušný týden. Rezervy znáš sám nejlíp.", Theme.orange)
+        return (String(localized: "Slušný týden. Rezervy znáš sám nejlíp."), Theme.orange)
     }
 }
 

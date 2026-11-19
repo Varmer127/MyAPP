@@ -23,9 +23,9 @@ struct NoExcusesView: View {
 
         var title: String {
             switch self {
-            case .reason: "PROČ JSI SELHAL?"
+            case .reason: String(localized: "PROČ JSI SELHAL?")
             case .critique: "SEBEKRITIKA"
-            case .prevention: "CO UDĚLÁŠ JINAK?"
+            case .prevention: String(localized: "CO UDĚLÁŠ JINAK?")
             }
         }
     }
@@ -176,12 +176,12 @@ struct NoExcusesView: View {
     }
 
     private var critiqueStep: some View {
-        textStep(prompt: "Proč se to doopravdy stalo?", text: $critique,
+        textStep(prompt: String(localized: "Proč se to doopravdy stalo?"), text: $critique,
                  length: critiqueLength, minimum: Self.minimumCritiqueLength)
     }
 
     private var preventionStep: some View {
-        textStep(prompt: "Co zabrání tomu, aby se to opakovalo?", text: $prevention,
+        textStep(prompt: String(localized: "Co zabrání tomu, aby se to opakovalo?"), text: $prevention,
                  length: preventionLength, minimum: Self.minimumPreventionLength)
     }
 

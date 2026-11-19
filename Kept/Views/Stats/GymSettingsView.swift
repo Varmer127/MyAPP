@@ -39,22 +39,22 @@ struct GymSettingsView: View {
                 } header: {
                     Text("Trénink")
                 } footer: {
-                    Text("Orientační: jeden týden 3×, druhý 6× je v pořádku, žádný postih. Jak cíl plníš, se z 10 % promítá do spolehlivosti a podle něj ti Kept gym navrhuje. "
+                    Text(String(localized: "Orientační: jeden týden 3×, druhý 6× je v pořádku, žádný postih. Jak cíl plníš, se z 10 % promítá do spolehlivosti a podle něj ti Kept gym navrhuje. ")
                          + (settings.healthEnabled
-                            ? "Když Apple Health zaznamená silový trénink, pošle ti Kept upozornění, ze kterého ho rovnou zapíšeš."
-                            : "Po propojení s Apple Health (Nastavení → Zdraví) ti Kept pošle upozornění, když Health zaznamená silový trénink."))
+                            ? String(localized: "Když Apple Health zaznamená silový trénink, pošle ti Kept upozornění, ze kterého ho rovnou zapíšeš.")
+                            : String(localized: "Po propojení s Apple Health (Nastavení → Zdraví) ti Kept pošle upozornění, když Health zaznamená silový trénink.")))
                 }
                 .listRowBackground(Theme.card)
 
                 restSection(settings)
-                presetList(title: "Co jsem jel", addLabel: "Přidat partii", placeholder: "Název partie",
+                presetList(title: String(localized: "Co jsem jel"), addLabel: String(localized: "Přidat partii"), placeholder: String(localized: "Název partie"),
                            text: $newPreset, isAdding: $isAddingPreset,
-                           footer: "Nabízí se při zápisu tréninku. Břicho se zaškrtává zvlášť ke každému tréninku.",
+                           footer: String(localized: "Nabízí se při zápisu tréninku. Břicho se zaškrtává zvlášť ke každému tréninku."),
                            items: Bindable(settings).workoutPresets)
                 if settings.gymMode == .advanced {
-                    presetList(title: "Cviky", addLabel: "Přidat cvik", placeholder: "Název cviku",
+                    presetList(title: String(localized: "Cviky"), addLabel: String(localized: "Přidat cvik"), placeholder: String(localized: "Název cviku"),
                                text: $newExercise, isAdding: $isAddingExercise,
-                               footer: "Odebrání cviku ze seznamu nesmaže jeho historii ve statistikách.",
+                               footer: String(localized: "Odebrání cviku ze seznamu nesmaže jeho historii ve statistikách."),
                                items: Bindable(settings).exercisePresets)
                 }
             }
@@ -71,7 +71,7 @@ struct GymSettingsView: View {
         Button {
             withAnimation { isAdding.wrappedValue.toggle() }
         } label: {
-            Label(isAdding.wrappedValue ? "Zrušit" : label, systemImage: isAdding.wrappedValue ? "xmark" : "plus")
+            Label(isAdding.wrappedValue ? String(localized: "Zrušit") : label, systemImage: isAdding.wrappedValue ? "xmark" : "plus")
                 .scaledFont(.body, weight: .semibold)
                 .foregroundStyle(Theme.textPrimary)
         }
@@ -116,10 +116,10 @@ struct GymSettingsView: View {
                 reordered.move(fromOffsets: from, toOffset: to)
                 settings.restPresets = reordered
             }
-            addRow("Přidat vlastní pauzu", isAdding: $isAddingRest)
+            addRow(String(localized: "Přidat vlastní pauzu"), isAdding: $isAddingRest)
             if isAddingRest {
                 TextField("Název pauzy", text: $newRestName)
-                Stepper("Délka: \(FocusView.clock(TimeInterval(newRestSeconds)))", value: $newRestSeconds,
+                Stepper(String(localized: "Délka: \(FocusView.clock(TimeInterval(newRestSeconds)))"), value: $newRestSeconds,
                         in: RestPreset.secondsRange, step: RestPreset.secondsStep)
                 Button("ULOŽIT PAUZU") {
                     settings.restPresets = presets + [RestPreset(name: name, seconds: newRestSeconds)]

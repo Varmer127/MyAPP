@@ -158,20 +158,20 @@ struct DiaryView: View {
                     .scaledFont(.heading, weight: .semibold)
                     .foregroundStyle(Theme.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
-                field("answer", "Stačí jedna věta.", text: $draft.answer, lines: 2...6)
+                field("answer", String(localized: "Stačí jedna věta."), text: $draft.answer, lines: 2...6)
             }
-            scaleRow("NÁLADA", value: $draft.mood, low: "mizerně", high: "skvěle")
-            scaleRow("ENERGIE", value: $draft.energy, low: "vyčerpaný", high: "nabitý")
+            scaleRow(String(localized: "NÁLADA"), value: $draft.mood, low: String(localized: "mizerně"), high: String(localized: "skvěle"))
+            scaleRow(String(localized: "ENERGIE"), value: $draft.energy, low: String(localized: "vyčerpaný"), high: String(localized: "nabitý"))
             VStack(alignment: .leading, spacing: 10) {
                 Text("TŘI ŘÁDKY").labelStyle()
-                field("well", "Co se povedlo", text: $draft.wentWell, lines: 1...4, symbol: "checkmark", color: Theme.green)
-                field("badly", "Co se nepovedlo", text: $draft.wentBadly, lines: 1...4, symbol: "xmark", color: Theme.red)
-                field("differently", "Co zítra udělám jinak", text: $draft.doDifferently, lines: 1...4,
+                field("well", String(localized: "Co se povedlo"), text: $draft.wentWell, lines: 1...4, symbol: "checkmark", color: Theme.green)
+                field("badly", String(localized: "Co se nepovedlo"), text: $draft.wentBadly, lines: 1...4, symbol: "xmark", color: Theme.red)
+                field("differently", String(localized: "Co zítra udělám jinak"), text: $draft.doDifferently, lines: 1...4,
                       symbol: "arrow.forward", color: Theme.orange)
             }
             VStack(alignment: .leading, spacing: 10) {
                 Text("VDĚČNOST").labelStyle()
-                field("gratitude", "Za co jsem dnes vděčný", text: $draft.gratitude, lines: 1...3, symbol: "heart", color: Theme.textSecondary)
+                field("gratitude", String(localized: "Za co jsem dnes vděčný"), text: $draft.gratitude, lines: 1...3, symbol: "heart", color: Theme.textSecondary)
             }
             Button(earnsPoints ? "ULOŽIT ZÁPIS · +\(DiaryService.pointsPerEntry) BODŮ" : "ULOŽIT ZMĚNY") { save(now: .now) }
                 .buttonStyle(PrimaryButtonStyle())
@@ -215,7 +215,7 @@ struct DiaryView: View {
             HStack {
                 Text(title).labelStyle()
                 Spacer()
-                Text(value.wrappedValue == 0 ? "" : (value.wrappedValue <= 2 ? low : (value.wrappedValue >= 4 ? high : "tak napůl")))
+                Text(value.wrappedValue == 0 ? "" : (value.wrappedValue <= 2 ? low : (value.wrappedValue >= 4 ? high : String(localized: "tak napůl"))))
                     .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -301,8 +301,8 @@ struct DiaryView: View {
     }
 
     private func lines(of entry: DiaryEntry) -> [(label: String, text: String)] {
-        [(entry.question, entry.answer), ("Povedlo se", entry.wentWell), ("Nepovedlo se", entry.wentBadly),
-         ("Zítra jinak", entry.doDifferently), ("Vděčnost", entry.gratitude)]
+        [(entry.question, entry.answer), (String(localized: "Povedlo se"), entry.wentWell), (String(localized: "Nepovedlo se"), entry.wentBadly),
+         (String(localized: "Zítra jinak"), entry.doDifferently), (String(localized: "Vděčnost"), entry.gratitude)]
             .filter { !$0.1.isEmpty }
             .map { (label: $0.0, text: $0.1) }
     }
@@ -397,7 +397,7 @@ struct DiaryView: View {
             .sorted { $0.date > $1.date }
         if !items.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: "Posledních \(Self.historyDays) dní · starší ve Všech zápisech")
+                SectionLabel(text: String(localized: "Posledních \(Self.historyDays) dní · starší ve Všech zápisech"))
                 ForEach(items) { item in
                     switch item {
                     case .entry(let entry): DiaryEntryCard(entry: entry)

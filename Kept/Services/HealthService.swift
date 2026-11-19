@@ -136,17 +136,17 @@ enum HealthService {
 
     private static func name(of activity: HKWorkoutActivityType) -> String {
         switch activity {
-        case .traditionalStrengthTraining, .functionalStrengthTraining: "Silový trénink"
-        case .coreTraining: "Střed těla"
+        case .traditionalStrengthTraining, .functionalStrengthTraining: String(localized: "Silový trénink")
+        case .coreTraining: String(localized: "Střed těla")
         case .highIntensityIntervalTraining: "HIIT"
         case .crossTraining, .mixedCardio: "Kardio"
-        case .running: "Běh"
-        case .walking: "Chůze"
+        case .running: String(localized: "Běh")
+        case .walking: String(localized: "Chůze")
         case .hiking: "Turistika"
         case .cycling: "Kolo"
-        case .swimming: "Plavání"
-        case .yoga: "Jóga"
-        default: "Trénink"
+        case .swimming: String(localized: "Plavání")
+        case .yoga: String(localized: "Jóga")
+        default: String(localized: "Trénink")
         }
     }
 
@@ -281,7 +281,7 @@ extension HealthService {
             let km = Double(steps) * 0.00075
             return DayMetrics(day: day, steps: steps, km: km, kcal: Int(Double(steps) * 0.045) + seed % 150)
         }
-        let names = ["Silový trénink", "Běh", "Chůze", "Kolo", "Jóga"]
+        let names = [String(localized: "Silový trénink"), String(localized: "Běh"), String(localized: "Chůze"), String(localized: "Kolo"), String(localized: "Jóga")]
         let workouts = (0..<40).map { index -> (date: Date, name: String, minutes: Int) in
             let date = today.addingDays(-index * 2 - 1).addingTimeInterval(18 * 3600)
             return (date, names[index % names.count], 25 + (index * 7) % 50)

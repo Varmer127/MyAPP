@@ -36,10 +36,10 @@ struct OnboardingView: View {
     var offersAccount: Bool { step == .friends && !AccountService.shared.isSignedIn }
 
     var primaryTitle: String {
-        if isLast { return "NAPLÁNOVAT PRVNÍ TÝDEN" }
-        if step == .welcome { return "ZAČÍT" }
-        if needsName { return "NAPIŠ, JAK TI MÁM ŘÍKAT" }
-        return offersAccount ? "VYTVOŘIT ÚČET" : "POKRAČOVAT"
+        if isLast { return String(localized: "NAPLÁNOVAT PRVNÍ TÝDEN") }
+        if step == .welcome { return String(localized: "ZAČÍT") }
+        if needsName { return String(localized: "NAPIŠ, JAK TI MÁM ŘÍKAT") }
+        return offersAccount ? String(localized: "VYTVOŘIT ÚČET") : String(localized: "POKRAČOVAT")
     }
 
     var body: some View {
@@ -148,22 +148,22 @@ struct OnboardingView: View {
 
     var headingText: (kicker: String, title: String, subtitle: String) {
         switch step {
-        case .welcome: ("VÍTEJ V KEPT", "Dodrž, co si slíbíš.", "Nejdřív jazyk a vzhled. Pak tě Kept provede nastavením, zabere to pár minut.")
-        case .name: ("TY", "Jak ti mám říkat?", "Kept s tebou mluví každý den. Napiš oslovení tak, jak ho chceš slyšet, třeba „Filipe“ nebo „Anežko“.")
-        case .howItWorks: ("JAK TO FUNGUJE", "Plán. Pečeť. Slovo.", "Kept není seznam úkolů. Je to smlouva se sebou samým.")
-        case .tutorial: ("PRŮVODCE", "Vyzkoušej si Kept.", "Šest krátkých ukázek. Všechno si můžeš naklikat, nic se neuloží.")
-        case .activities: ("TVOJE AKTIVITY", "Čemu se chceš věnovat?", "Vyber z nabídky nebo přidej vlastní. Kept je bude navrhovat a hlídat.")
-        case .minimum: ("TÝDENNÍ MINIMUM", "Kolik aktivit týdně?", "Plán s menším počtem aktivit nepůjde odeslat. Začni realisticky, zvednout to můžeš kdykoli.")
-        case .gym: ("GYM", "Tvoje sekce Gym.", "Tréninky, cviky, váhy a stopky na pauzy, sestavené podle tebe.")
-        case .health: ("APPLE ZDRAVÍ", "Propojit se Zdravím?", "Kroky, tréninky a váha na jednom místě, bez ručního zapisování.")
-        case .diary: ("DENÍK", "Krátká večerní reflexe.", "Jedna otázka denně, nálada a tři řádky. Pro ty, kdo chtějí víc než čísla.")
-        case .lock: ("SOUKROMÍ", "Zamknout celou aplikaci?", "Kept obsahuje tvoje selhání i deník. Můžeš ho schovat za Face ID.")
-        case .tabs: ("SPODNÍ LIŠTA", "Co chceš mít po ruce?", "Dnes, Týden a Nastavení jsou vždy. Navíc si vyber nejvýš dvě záložky, zbytek najdeš v Nastavení.")
-        case .tone: ("TÓN UPOZORNĚNÍ", "Jak tvrdě tě má Kept honit?", "Podle toho se píšou připomínky úkolů a série.")
-        case .times: ("ČASY", "Kdy ti má Kept psát?", "Ranní přehled, večerní bilance a nedělní připomínky plánu.")
-        case .points: ("BODY", "Body za dodržené slovo.", "Za splněné závazky sbíráš body a utrácíš je v obchodě. Na start dostáváš tohle:")
-        case .friends: ("PŘÁTELÉ · VOLITELNÉ", "Kept s kamarády.", "Sdílej týden, pošťouchávejte se a sázejte se o body. Nic z toho nemusíš.")
-        case .done: ("HOTOVO", "Připraveno.", "Takhle sis Kept nastavil:")
+        case .welcome: (String(localized: "VÍTEJ V KEPT"), String(localized: "Dodrž, co si slíbíš."), String(localized: "Nejdřív jazyk a vzhled. Pak tě Kept provede nastavením, zabere to pár minut."))
+        case .name: (String(localized: "TY"), String(localized: "Jak ti mám říkat?"), String(localized: "Kept s tebou mluví každý den. Napiš oslovení tak, jak ho chceš slyšet, třeba „Filipe“ nebo „Anežko“."))
+        case .howItWorks: (String(localized: "JAK TO FUNGUJE"), String(localized: "Plán. Pečeť. Slovo."), String(localized: "Kept není seznam úkolů. Je to smlouva se sebou samým."))
+        case .tutorial: (String(localized: "PRŮVODCE"), String(localized: "Vyzkoušej si Kept."), String(localized: "Šest krátkých ukázek. Všechno si můžeš naklikat, nic se neuloží."))
+        case .activities: (String(localized: "TVOJE AKTIVITY"), String(localized: "Čemu se chceš věnovat?"), String(localized: "Vyber z nabídky nebo přidej vlastní. Kept je bude navrhovat a hlídat."))
+        case .minimum: (String(localized: "TÝDENNÍ MINIMUM"), String(localized: "Kolik aktivit týdně?"), String(localized: "Plán s menším počtem aktivit nepůjde odeslat. Začni realisticky, zvednout to můžeš kdykoli."))
+        case .gym: (String(localized: "GYM"), String(localized: "Tvoje sekce Gym."), String(localized: "Tréninky, cviky, váhy a stopky na pauzy, sestavené podle tebe."))
+        case .health: (String(localized: "APPLE ZDRAVÍ"), String(localized: "Propojit se Zdravím?"), String(localized: "Kroky, tréninky a váha na jednom místě, bez ručního zapisování."))
+        case .diary: (String(localized: "DENÍK"), String(localized: "Krátká večerní reflexe."), String(localized: "Jedna otázka denně, nálada a tři řádky. Pro ty, kdo chtějí víc než čísla."))
+        case .lock: (String(localized: "SOUKROMÍ"), String(localized: "Zamknout celou aplikaci?"), String(localized: "Kept obsahuje tvoje selhání i deník. Můžeš ho schovat za Face ID."))
+        case .tabs: (String(localized: "SPODNÍ LIŠTA"), String(localized: "Co chceš mít po ruce?"), String(localized: "Dnes, Týden a Nastavení jsou vždy. Navíc si vyber nejvýš dvě záložky, zbytek najdeš v Nastavení."))
+        case .tone: (String(localized: "TÓN UPOZORNĚNÍ"), String(localized: "Jak tvrdě tě má Kept honit?"), String(localized: "Podle toho se píšou připomínky úkolů a série."))
+        case .times: (String(localized: "ČASY"), String(localized: "Kdy ti má Kept psát?"), String(localized: "Ranní přehled, večerní bilance a nedělní připomínky plánu."))
+        case .points: (String(localized: "BODY"), String(localized: "Body za dodržené slovo."), String(localized: "Za splněné závazky sbíráš body a utrácíš je v obchodě. Na start dostáváš tohle:"))
+        case .friends: (String(localized: "PŘÁTELÉ · VOLITELNÉ"), String(localized: "Kept s kamarády."), String(localized: "Sdílej týden, pošťouchávejte se a sázejte se o body. Nic z toho nemusíš."))
+        case .done: (String(localized: "HOTOVO"), String(localized: "Připraveno."), String(localized: "Takhle sis Kept nastavil:"))
         }
     }
 

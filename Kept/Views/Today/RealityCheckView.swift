@@ -160,7 +160,7 @@ struct RealityCheckView: View {
 
     private func metadata(of task: TaskItem) -> String {
         var parts = [task.category.title, "\(task.plannedMinutes) min"]
-        if let deadline = task.deadline { parts.append("do \(deadline.timeText)") }
+        if let deadline = task.deadline { parts.append(String(localized: "do \(deadline.timeText)")) }
         return parts.joined(separator: " · ")
     }
 

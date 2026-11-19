@@ -53,8 +53,8 @@ struct GymInsights: View {
         let top = sets.values.max() ?? 0
         return VStack(spacing: 10) {
             HStack(spacing: 4) {
-                SectionLabel(text: weekOffset == 0 ? "Svaly tento týden"
-                             : "Týden \(weekStart.weekNumber) · \(weekStart.dayMonthText) – \(weekStart.addingDays(6).dayMonthText)")
+                SectionLabel(text: weekOffset == 0 ? String(localized: "Svaly tento týden")
+                             : String(localized: "Týden \(weekStart.weekNumber) · \(weekStart.dayMonthText) – \(weekStart.addingDays(6).dayMonthText)"))
                 Spacer(minLength: 6)
                 if weekOffset > 0 {
                     // One tap from any week back to the present.
@@ -129,7 +129,7 @@ struct GymInsights: View {
         }
         .sorted { $0.1.bestEstimatedMax > $1.1.bestEstimatedMax }
         return VStack(spacing: 10) {
-            SectionLabel(text: "Osobní rekordy")
+            SectionLabel(text: String(localized: "Osobní rekordy"))
             if best.isEmpty {
                 Text("Rekordy se objeví po prvních zapsaných sériích s váhou.")
                     .scaledFont(.caption)
@@ -173,7 +173,7 @@ struct GymInsights: View {
         }
         let average = Double(perWeek.dropLast().reduce(0, +)) / Double(max(Self.calendarWeeks - 1, 1))
         return VStack(spacing: 10) {
-            SectionLabel(text: "Tréninky za \(Self.calendarWeeks) týdnů")
+            SectionLabel(text: String(localized: "Tréninky za \(Self.calendarWeeks) týdnů"))
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .top, spacing: 4) {
                     ForEach(0..<Self.calendarWeeks, id: \.self) { week in
@@ -187,7 +187,7 @@ struct GymInsights: View {
                         }
                     }
                 }
-                Text("Průměrně \(average.formatted(.number.precision(.fractionLength(0...1)).locale(.app)))× týdně za posledních \(Self.calendarWeeks - 1) dokončených týdnů.")
+                Text(String(localized: "Průměrně \(average.formatted(.number.precision(.fractionLength(0...1)).locale(.app)))× týdně za posledních \(Self.calendarWeeks - 1) dokončených týdnů."))
                     .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
             }

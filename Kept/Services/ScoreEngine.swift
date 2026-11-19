@@ -156,15 +156,15 @@ enum ScoreEngine {
             // A coach, not a judge: what is true, then the one step that helps.
             if unexplained > 0 {
                 return unexplained == 1
-                    ? "Jeden slib zůstal otevřený. Uzavři ho a skóre se zvedne."
-                    : "\(unexplained) sliby zůstaly otevřené. Uzavři je a skóre se zvedne."
+                    ? String(localized: "Jeden slib zůstal otevřený. Uzavři ho a skóre se zvedne.")
+                    : String(localized: "\(unexplained) sliby zůstaly otevřené. Uzavři je a skóre se zvedne.")
             }
-            if criticalLost > 0, score >= 60 { return "Většinu slibů držíš. Teď ohlídej ty nejdůležitější." }
+            if criticalLost > 0, score >= 60 { return String(localized: "Většinu slibů držíš. Teď ohlídej ty nejdůležitější.") }
             switch score {
-            case 85...: return "Držíš slovo. Takhle dál."
-            case 70..<85: return "Většinou držíš slovo. Kousek chybí do špičky."
-            case 50..<70: return "Část slibů ti utíká. Jeden splněný úkol dnes je začátek obratu."
-            default: return "Teď se ti nedaří. Splň dnes jeden slib a začni obrat."
+            case 85...: return String(localized: "Držíš slovo. Takhle dál.")
+            case 70..<85: return String(localized: "Většinou držíš slovo. Kousek chybí do špičky.")
+            case 50..<70: return String(localized: "Část slibů ti utíká. Jeden splněný úkol dnes je začátek obratu.")
+            default: return String(localized: "Teď se ti nedaří. Splň dnes jeden slib a začni obrat.")
             }
         }
     }

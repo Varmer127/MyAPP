@@ -9,22 +9,22 @@ enum Muscle: String, CaseIterable, Identifiable, Codable {
 
     var title: String {
         switch self {
-        case .chest: "Prsa"
-        case .shoulders: "Ramena"
-        case .biceps: "Biceps"
-        case .triceps: "Triceps"
-        case .forearms: "Předloktí"
-        case .abs: "Břicho"
-        case .obliques: "Šikmé břicho"
-        case .traps: "Trapézy"
-        case .lats: "Široký sval zádový"
-        case .upperBack: "Horní záda"
-        case .lowerBack: "Spodní záda"
-        case .glutes: "Hýždě"
-        case .quads: "Přední stehna"
-        case .hamstrings: "Zadní stehna"
-        case .adductors: "Vnitřní stehna"
-        case .calves: "Lýtka"
+        case .chest: String(localized: "Prsa")
+        case .shoulders: String(localized: "Ramena")
+        case .biceps: String(localized: "Biceps")
+        case .triceps: String(localized: "Triceps")
+        case .forearms: String(localized: "Předloktí")
+        case .abs: String(localized: "Břicho")
+        case .obliques: String(localized: "Šikmé břicho")
+        case .traps: String(localized: "Trapézy")
+        case .lats: String(localized: "Široký sval zádový")
+        case .upperBack: String(localized: "Horní záda")
+        case .lowerBack: String(localized: "Spodní záda")
+        case .glutes: String(localized: "Hýždě")
+        case .quads: String(localized: "Přední stehna")
+        case .hamstrings: String(localized: "Zadní stehna")
+        case .adductors: String(localized: "Vnitřní stehna")
+        case .calves: String(localized: "Lýtka")
         }
     }
 }
@@ -36,14 +36,14 @@ enum Equipment: String, CaseIterable, Identifiable, Codable {
 
     var title: String {
         switch self {
-        case .barbell: "Velká činka"
-        case .dumbbell: "Jednoručky"
-        case .machine: "Stroj"
-        case .cable: "Kladka"
-        case .bodyweight: "Vlastní váha"
-        case .kettlebell: "Kettlebell"
-        case .band: "Guma"
-        case .other: "Jiné"
+        case .barbell: String(localized: "Velká činka")
+        case .dumbbell: String(localized: "Jednoručky")
+        case .machine: String(localized: "Stroj")
+        case .cable: String(localized: "Kladka")
+        case .bodyweight: String(localized: "Vlastní váha")
+        case .kettlebell: String(localized: "Kettlebell")
+        case .band: String(localized: "Guma")
+        case .other: String(localized: "Jiné")
         }
     }
 }

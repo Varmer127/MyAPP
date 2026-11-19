@@ -47,7 +47,7 @@ struct GymModePreview: View {
                     .foregroundStyle(Theme.textSecondary)
             }
             HStack(spacing: 4) {
-                ForEach(["Svaly", "Síla", "Vytrvalost"], id: \.self) { name in
+                ForEach([String(localized: "Svaly"), String(localized: "Síla"), String(localized: "Vytrvalost")], id: \.self) { name in
                     Text(name)
                         .scaledFont(.caption, weight: .semibold)
                         .foregroundStyle(Theme.textPrimary)

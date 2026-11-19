@@ -122,14 +122,14 @@ struct QuickPlanView: View {
                                 }
                                 .transition(.scale.combined(with: .opacity))
                             }
-                            chip("Vlastní", symbol: "plus", isSelected: false) { addsActivity = true }
+                            chip(String(localized: "Vlastní"), symbol: "plus", isSelected: false) { addsActivity = true }
                                 .accessibilityLabel("Přidat vlastní aktivitu")
                         }
                         TextField("Název", text: $title)
                             .scaledFont(.body)
                             .card()
                     }
-                    group("Které dny") {
+                    group(String(localized: "Které dny")) {
                         HStack(alignment: .top, spacing: 6) {
                             ForEach(days, id: \.self) { day in
                                 let isPast = day.endOfDay <= Date.now
@@ -163,7 +163,7 @@ struct QuickPlanView: View {
                         }
                         .pickerStyle(.segmented)
                     }
-                    group("Délka") {
+                    group(String(localized: "Délka")) {
                         Picker("Délka", selection: $minutes) {
                             ForEach(Self.durationOptions, id: \.self) { Text(Self.durationText($0)).tag($0) }
                         }

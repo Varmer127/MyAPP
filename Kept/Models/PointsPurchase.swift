@@ -36,8 +36,8 @@ enum ShopItem: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .streakInsurance: "Pojistka série"
-        case .extraPostpone: "Odklad navíc"
+        case .streakInsurance: String(localized: "Pojistka série")
+        case .extraPostpone: String(localized: "Odklad navíc")
         }
     }
 
@@ -50,8 +50,8 @@ enum ShopItem: String, CaseIterable, Identifiable {
 
     var summary: String {
         switch self {
-        case .streakInsurance: "Koupíš ji dopředu. Až jeden den nevyjde, spotřebuje se sama a plamínek nezhasne. Den se dál počítá do spolehlivosti."
-        case .extraPostpone: "Jeden odklad bez postihu navíc pro tento měsíc, nad tvůj měsíční limit."
+        case .streakInsurance: String(localized: "Koupíš ji dopředu. Až jeden den nevyjde, spotřebuje se sama a plamínek nezhasne. Den se dál počítá do spolehlivosti.")
+        case .extraPostpone: String(localized: "Jeden odklad bez postihu navíc pro tento měsíc, nad tvůj měsíční limit.")
         }
     }
 

@@ -23,8 +23,8 @@ struct ProfileCard: View {
                         .scaledFont(.heading, weight: .bold)
                         .foregroundStyle(Theme.textPrimary)
                     Text(streak > 0
-                         ? "Držíš slovo \(streak) \(streak == 1 ? "den" : (2...4).contains(streak) ? "dny" : "dní") · odznaky \(badges.filter(\.isEarned).count) / \(badges.count)"
-                         : "Odznaky \(badges.filter(\.isEarned).count) / \(badges.count) · začni sérii dnes")
+                         ? String(localized: "Držíš slovo \(String.days(streak)) · odznaky \(badges.filter(\.isEarned).count) / \(badges.count)")
+                         : String(localized: "Odznaky \(badges.filter(\.isEarned).count) / \(badges.count) · začni sérii dnes"))
                         .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary)
                 }
@@ -38,7 +38,7 @@ struct ProfileCard: View {
 enum ProfileData {
     static func displayName(_ settings: UserSettings?) -> String {
         let name = settings?.addressName.trimmingCharacters(in: .whitespaces) ?? ""
-        return name.isEmpty ? "Tvůj profil" : name
+        return name.isEmpty ? String(localized: "Tvůj profil") : name
     }
 
     static func badges(tasks: [TaskItem], plans: [WeeklyPlan], failures: [FailureRecord], diary: [DiaryEntry],
@@ -111,7 +111,7 @@ struct ProfileView: View {
                     }
                     nearest(all)
                     Picker("Filtr", selection: $filter) {
-                        ForEach(Filter.allCases) { Text($0.rawValue).tag($0) }
+                        ForEach(Filter.allCases) { Text(LocalizedStringKey($0.rawValue)).tag($0) }
                     }
                     .pickerStyle(.segmented)
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3), spacing: 16) {
@@ -127,17 +127,20 @@ struct ProfileView: View {
                 }
                 if let settings {
                     VStack(alignment: .leading, spacing: 10) {
-                        SectionLabel(text: "Oslovení")
+                        SectionLabel(text: String(localized: "Oslovení"))
                         VStack(alignment: .leading, spacing: 0) {
                             TextField("Oslovení, např. Filipe", text: Bindable(settings).addressName)
                                 .scaledFont(.body)
                                 .frame(minHeight: 44)
-                            Divider().overlay(Theme.border)
-                            Picker("Mluvit se mnou", selection: Bindable(settings).grammar) {
-                                ForEach(GrammarGender.allCases) { Text($0.title).tag($0) }
+                            // Grammatical gender only exists in Czech.
+                            if AppLanguage.current == .cs {
+                                Divider().overlay(Theme.border)
+                                Picker("Mluvit se mnou", selection: Bindable(settings).grammar) {
+                                    ForEach(GrammarGender.allCases) { Text($0.title).tag($0) }
+                                }
+                                .tint(Theme.textPrimary)
+                                .frame(minHeight: 44)
                             }
-                            .tint(Theme.textPrimary)
-                            .frame(minHeight: 44)
                         }
                         .card(padding: 14)
                         Text("Takhle tě Kept oslovuje ráno a v textech. Napiš oslovení tak, jak ho chceš číst, třeba „Filipe“ nebo „Anežko“.")
@@ -228,16 +231,16 @@ struct ProfileView: View {
                     Text(ProfileData.displayName(settings))
                         .scaledFont(.title, weight: .bold)
                         .foregroundStyle(Theme.textPrimary)
-                    Text(streak > 0 ? "Držíš slovo \(streak) \(streak == 1 ? "den" : (2...4).contains(streak) ? "dny" : "dní") v řadě." : "Dnes můžeš začít novou sérii.")
+                    Text(streak > 0 ? String(localized: "Držíš slovo \(String.days(streak)) v řadě.") : String(localized: "Dnes můžeš začít novou sérii."))
                         .scaledFont(.body)
                         .foregroundStyle(Theme.textSecondary)
                 }
                 Spacer(minLength: 0)
             }
             TileRow {
-                MetricTile(value: "\(streak)", label: "Série dní")
-                MetricTile(value: "\(sealed)", label: "Pečetí")
-                MetricTile(value: points.formatted(.number.locale(.app)), label: "Bodů")
+                MetricTile(value: "\(streak)", label: String(localized: "Série dní"))
+                MetricTile(value: "\(sealed)", label: String(localized: "Pečetí"))
+                MetricTile(value: points.formatted(.number.locale(.app)), label: String(localized: "Bodů"))
             }
         }
     }
@@ -286,7 +289,7 @@ private struct BadgeTile: View {
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(badge.shownName), \(badge.statusText.isEmpty ? "zamčeno" : badge.statusText). \(badge.shownHow)")
+        .accessibilityLabel("\(badge.shownName), \(badge.statusText.isEmpty ? String(localized: "zamčeno") : badge.statusText). \(badge.shownHow)")
     }
 }
 
@@ -406,7 +409,7 @@ struct StreakCalendar: View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
         return VStack(alignment: .leading, spacing: 14) {
             HStack {
-                SectionLabel(text: "Kalendář série")
+                SectionLabel(text: String(localized: "Kalendář série"))
                 Spacer()
                 Button { shift(-1) } label: { Image(systemName: "chevron.left").frame(width: 36, height: 36) }
                     .accessibilityLabel("Předchozí měsíc")
@@ -420,7 +423,7 @@ struct StreakCalendar: View {
             }
             .foregroundStyle(Theme.textPrimary)
             LazyVGrid(columns: columns, spacing: 6) {
-                ForEach(["Po", "Út", "St", "Čt", "Pá", "So", "Ne"], id: \.self) { name in
+                ForEach([String(localized: "Po"), String(localized: "Út"), String(localized: "St"), String(localized: "Čt"), String(localized: "Pá"), String(localized: "So"), String(localized: "Ne")], id: \.self) { name in
                     Text(name).scaledFont(.caption, weight: .bold).foregroundStyle(Theme.textTertiary)
                 }
                 ForEach(Array(days.enumerated()), id: \.offset) { _, day in
@@ -432,9 +435,9 @@ struct StreakCalendar: View {
                 }
             }
             HStack(spacing: 14) {
-                legend(Theme.green, "den dodržen")
-                legend(Theme.red, "slib porušen")
-                legend(Theme.orange.opacity(0.35), "série")
+                legend(Theme.green, String(localized: "den dodržen"))
+                legend(Theme.red, String(localized: "slib porušen"))
+                legend(Theme.orange.opacity(0.35), String(localized: "série"))
                 Label("milník", systemImage: "flame.fill").scaledFont(.caption).foregroundStyle(Theme.orange)
             }
             .scaledFont(.caption)
@@ -502,10 +505,10 @@ struct StreakCalendar: View {
         let state = status(of: selected)
         let title: String = {
             switch state {
-            case .kept: "Den dodržen"
-            case .broken: "Slib porušen"
-            case .open: selected.isSameDay(as: .now) ? "Dnes ještě není hotovo" : "Ještě se nestalo"
-            case .none: "Bez plánu"
+            case .kept: String(localized: "Den dodržen")
+            case .broken: String(localized: "Slib porušen")
+            case .open: selected.isSameDay(as: .now) ? String(localized: "Dnes ještě není hotovo") : String(localized: "Ještě se nestalo")
+            case .none: String(localized: "Bez plánu")
             }
         }()
         return VStack(alignment: .leading, spacing: 4) {

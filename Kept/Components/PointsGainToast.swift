@@ -30,7 +30,7 @@ struct PointsGainToast: View {
             onFinish()
         } label: {
             HStack(spacing: 10) {
-                Label(text ?? "+\(amount.formatted(.number.locale(.app))) BODŮ", systemImage: text == nil ? "sparkles" : "checkmark")
+                Label(text ?? String(localized: "+\(amount.formatted(.number.locale(.app))) BODŮ"), systemImage: text == nil ? "sparkles" : "checkmark")
                 if spends {
                     Rectangle().fill(Theme.onPrimary.opacity(0.3)).frame(width: 1, height: 18)
                     HStack(spacing: 3) {

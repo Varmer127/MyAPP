@@ -73,7 +73,7 @@ struct DiaryArchiveView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 14, pinnedViews: []) {
                 Picker("Co zobrazit", selection: $filter) {
-                    ForEach(Filter.allCases) { Text($0.rawValue).tag($0) }
+                    ForEach(Filter.allCases) { Text(LocalizedStringKey($0.rawValue)).tag($0) }
                 }
                 .pickerStyle(.segmented)
                 if months.isEmpty {
@@ -116,7 +116,7 @@ struct DiaryArchiveView: View {
                     .scaledFont(.caption, weight: .semibold)
                     .foregroundStyle(Theme.textSecondary)
             }
-            DiaryQuote(label: "Jak jsem se sebou spokojený", text: reflection.text)
+            DiaryQuote(label: String(localized: "Jak jsem se sebou spokojený"), text: reflection.text)
         }
         .card()
     }
@@ -159,8 +159,8 @@ struct DiaryEntryCard: View {
     let entry: DiaryEntry
 
     static func lines(of entry: DiaryEntry) -> [(label: String, text: String)] {
-        [(entry.question, entry.answer), ("Povedlo se", entry.wentWell), ("Nepovedlo se", entry.wentBadly),
-         ("Zítra jinak", entry.doDifferently), ("Vděčnost", entry.gratitude)]
+        [(entry.question, entry.answer), (String(localized: "Povedlo se"), entry.wentWell), (String(localized: "Nepovedlo se"), entry.wentBadly),
+         (String(localized: "Zítra jinak"), entry.doDifferently), (String(localized: "Vděčnost"), entry.gratitude)]
             .filter { !$0.1.isEmpty }
             .map { (label: $0.0, text: $0.1) }
     }
@@ -174,7 +174,7 @@ struct DiaryEntryCard: View {
             HStack {
                 Text(entry.day.longDayText.uppercased()).labelStyle()
                 Spacer()
-                if entry.mood > 0 { Badge(text: "Nálada \(entry.mood)", color: Self.levelColor(entry.mood)) }
+                if entry.mood > 0 { Badge(text: String(localized: "Nálada \(entry.mood)"), color: Self.levelColor(entry.mood)) }
                 if entry.energy > 0 { Badge(text: "Energie \(entry.energy)", color: Self.levelColor(entry.energy)) }
             }
             ForEach(Self.lines(of: entry), id: \.label) { line in
@@ -191,14 +191,14 @@ struct FailureNoteCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("\(record.kind == .missed ? "NESPLNĚNO" : "PŘESKOČENO") · \(record.taskDate.dayMonthText)")
+            Text(record.kind == .missed ? "NESPLNĚNO · \(record.taskDate.dayMonthText)" : "PŘESKOČENO · \(record.taskDate.dayMonthText)")
                 .labelStyle(Theme.red)
             Text(record.taskTitle)
                 .scaledFont(.body, weight: .semibold)
                 .foregroundStyle(Theme.textPrimary)
             DiaryQuote(label: record.reason.title, text: record.critique)
             if !record.prevention.isEmpty {
-                DiaryQuote(label: "Příště", text: record.prevention)
+                DiaryQuote(label: String(localized: "Příště"), text: record.prevention)
             }
         }
         .card()

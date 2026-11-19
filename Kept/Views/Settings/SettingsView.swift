@@ -78,7 +78,7 @@ struct SettingsView: View {
                 Section("O aplikaci") {
                     LabeledContent("Verze", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—")
                     // With an account the profile and the shared features live on the server, so this names what really stays here.
-                    LabeledContent("Úkoly, deník a zdraví", value: "Jen v tomto zařízení")
+                    LabeledContent("Úkoly, deník a zdraví", value: String(localized: "Jen v tomto zařízení"))
                     LabeledContent("Šablony notifikací", value: "\(NotificationTemplates.totalCount)")
                 }
                 .listRowBackground(Theme.card)
@@ -180,22 +180,22 @@ struct SettingsView: View {
     private func summary(of page: Page, _ settings: UserSettings) -> String {
         switch page {
         case .tabs:
-            return "Navíc \(settings.optionalTabCount) ze \(UserSettings.maxOptionalTabs)"
+            return String(localized: "Navíc \(settings.optionalTabCount) ze \(UserSettings.maxOptionalTabs)")
         case .notifications:
             guard settings.taskRemindersEnabled || settings.realityCheckEnabled || settings.morningBriefEnabled else { return "Vypnuto" }
-            let nudges = settings.nudgesPerDay > 0 ? "úkoly bez termínu \(settings.nudgesPerDay)× denně" : "úkoly bez termínu bez připomínek"
+            let nudges = settings.nudgesPerDay > 0 ? String(localized: "úkoly bez termínu \(settings.nudgesPerDay)× denně") : String(localized: "úkoly bez termínu bez připomínek")
             return "\(settings.tone.title) · \(nudges)"
         case .activities:
             return "Aktivit: \(settings.enabledCategories.count - 1 + settings.customActivities.count)"
         case .gym:
             return "Partie, cviky, pauzy"
         case .health:
-            return settings.healthEnabled ? "Propojeno, cíl \(settings.stepGoal.formatted(.number.locale(.app))) kroků" : "Nepropojeno"
+            return settings.healthEnabled ? String(localized: "Propojeno, cíl \(settings.stepGoal.formatted(.number.locale(.app))) kroků") : String(localized: "Nepropojeno")
         case .calendar:
             return settings.calendarEnabled ? "Zapnuto" : "Vypnuto"
         case .diary:
-            let lock = settings.diaryLockEnabled || settings.appLockEnabled ? "zámek zapnutý" : "bez zámku"
-            return (settings.diaryEnabled ? "Deník zapnutý" : "Deník vypnutý") + " · " + lock
+            let lock = settings.diaryLockEnabled || settings.appLockEnabled ? String(localized: "zámek zapnutý") : String(localized: "bez zámku")
+            return (settings.diaryEnabled ? String(localized: "Deník zapnutý") : String(localized: "Deník vypnutý")) + " · " + lock
         }
     }
 
@@ -247,6 +247,7 @@ struct SettingsView: View {
                 ForEach(AppAppearance.allCases) { Text($0.title).tag($0.rawValue) }
             }
             .pickerStyle(.segmented)
+            LanguageRow()
         }
         .listRowBackground(Theme.card)
     }
@@ -254,8 +255,11 @@ struct SettingsView: View {
     private func nameSection(_ settings: UserSettings) -> some View {
         Section {
             TextField("Oslovení, např. Filipe", text: Bindable(settings).addressName)
-            Picker("Mluvit se mnou", selection: Bindable(settings).grammar) {
-                ForEach(GrammarGender.allCases) { Text($0.title).tag($0) }
+            // Grammatical gender only exists in Czech.
+            if AppLanguage.current == .cs {
+                Picker("Mluvit se mnou", selection: Bindable(settings).grammar) {
+                    ForEach(GrammarGender.allCases) { Text($0.title).tag($0) }
+                }
             }
         } header: {
             Text("Ty")
@@ -504,14 +508,14 @@ struct SettingsView: View {
     private func tabsSection(_ settings: UserSettings) -> some View {
         let isFull = settings.optionalTabCount >= UserSettings.maxOptionalTabs
         return Section {
-            LabeledContent("Vždy v liště", value: "Dnes · Týden · Nastavení")
+            LabeledContent("Vždy v liště", value: String(localized: "Dnes · Týden · Nastavení"))
             tabToggle("Statistiky", "chart.bar", Bindable(settings).showsStatsTab, isFull: isFull)
             tabToggle("Gym", TaskCategory.gym.symbol, Bindable(settings).showsGymTab, isFull: isFull)
             if HealthService.isAvailable {
-                tabToggle("Zdraví", "heart", Bindable(settings).showsHealthTab, isFull: isFull)
+                tabToggle(String(localized: "Zdraví"), "heart", Bindable(settings).showsHealthTab, isFull: isFull)
             }
             if settings.diaryEnabled {
-                tabToggle("Deník", "book.closed", Bindable(settings).showsDiaryTab, isFull: isFull)
+                tabToggle(String(localized: "Deník"), "book.closed", Bindable(settings).showsDiaryTab, isFull: isFull)
             }
         } header: {
             Text("Navíc v liště: \(settings.optionalTabCount) ze \(UserSettings.maxOptionalTabs)")

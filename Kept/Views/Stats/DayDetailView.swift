@@ -44,7 +44,7 @@ struct DayDetailView: View {
                         let scored = items.filter { !$0.isRecovery && $0.countsInScores }
                         TileRow {
                             MetricTile(value: ScoreEngine.productivity(items, now: now).percentText, label: "Produktivita")
-                            MetricTile(value: "\(scored.filter(\.isDone).count) / \(scored.count)", label: "Splněno")
+                            MetricTile(value: "\(scored.filter(\.isDone).count) / \(scored.count)", label: String(localized: "Splněno"))
                             MetricTile(value: ScoreEngine.promisesKept(items, now: now).percentText, label: "Sliby")
                         }
                         ForEach(items) { task in
@@ -99,8 +99,8 @@ struct DayDetailView: View {
     }
 
     private func diaryCard(_ entry: DiaryEntry) -> some View {
-        let lines = [(entry.question, entry.answer), ("Povedlo se", entry.wentWell), ("Nepovedlo se", entry.wentBadly),
-                     ("Zítra jinak", entry.doDifferently), ("Vděčnost", entry.gratitude)].filter { !$0.1.isEmpty }
+        let lines = [(entry.question, entry.answer), (String(localized: "Povedlo se"), entry.wentWell), (String(localized: "Nepovedlo se"), entry.wentBadly),
+                     (String(localized: "Zítra jinak"), entry.doDifferently), (String(localized: "Vděčnost"), entry.gratitude)].filter { !$0.1.isEmpty }
         return VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Label("DENÍK", systemImage: "book.closed").labelStyle(Theme.textPrimary)
@@ -135,25 +135,26 @@ struct DayDetailView: View {
     /// Every piece of text the user wrote about this task, in the order it tells the story.
     private func notes(_ task: TaskItem) -> [(label: String, text: String)] {
         var notes: [(String, String)] = []
-        if let workout = task.workoutSummary { notes.append(("Trénink", workout)) }
+        if let workout = task.workoutSummary { notes.append((String(localized: "Trénink"), workout)) }
         for exercise in task.exercises.sorted(by: { $0.name < $1.name }) {
             notes.append((exercise.name, exercise.summary))
         }
         if !task.liftName.isEmpty, let weight = task.liftWeight {
-            notes.append(("Hlavní cvik", "\(task.liftName) \(weight.kilogramText)\(task.liftReps > 0 ? " × \(task.liftReps)" : "")"))
+            notes.append((String(localized: "Hlavní cvik"), "\(task.liftName) \(weight.kilogramText)\(task.liftReps > 0 ? " × \(task.liftReps)" : "")"))
         }
-        if !task.partialNote.isEmpty { notes.append(("Co chybělo", task.partialNote)) }
-        if !task.proofNote.isEmpty { notes.append(("Důkaz", task.proofNote)) }
-        if task.proofPhoto != nil { notes.append(("Fotka", "Přiložena – klepni pro zobrazení")) }
+        if !task.partialNote.isEmpty { notes.append((String(localized: "Co chybělo"), task.partialNote)) }
+        if !task.proofNote.isEmpty { notes.append((String(localized: "Důkaz"), task.proofNote)) }
+        if task.proofPhoto != nil { notes.append((String(localized: "Fotka"), String(localized: "Přiložena – klepni pro zobrazení"))) }
         for (index, record) in task.failures.sorted(by: { $0.date < $1.date }).enumerated() {
-            notes.append(("Důvod\(index > 0 ? " \(index + 1)" : "")", "\(record.reason.title): „\(record.critique)“"))
-            if !record.prevention.isEmpty { notes.append(("Příště\(index > 0 ? " \(index + 1)" : "")", record.prevention)) }
+            notes.append((index > 0 ? String(localized: "Důvod \(index + 1)") : String(localized: "Důvod"),
+                          String(localized: "\(record.reason.title): „\(record.critique)“")))
+            if !record.prevention.isEmpty { notes.append((index > 0 ? String(localized: "Příště \(index + 1)") : String(localized: "Příště"), record.prevention)) }
         }
         if !task.stake.isEmpty {
-            let result = task.stakeOutcome == 1 ? " (dodržena)" : (task.stakeOutcome == 2 ? " (nedodržena)" : "")
-            notes.append(("Sázka", task.stake + result))
+            let result = task.stakeOutcome == 1 ? String(localized: " (dodržena)") : (task.stakeOutcome == 2 ? String(localized: " (nedodržena)") : "")
+            notes.append((String(localized: "Sázka"), task.stake + result))
         }
-        if !task.notes.isEmpty { notes.append(("Poznámka", task.notes)) }
+        if !task.notes.isEmpty { notes.append((String(localized: "Poznámka"), task.notes)) }
         return notes
     }
 }

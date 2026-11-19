@@ -14,9 +14,9 @@ struct PlanStartCard: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("NAPLÁNUJ SI TÝDEN").labelStyle()
             HStack(spacing: 8) {
-                tile("Rychlé plánování", detail: "Jedna aktivita na víc dní", symbol: "bolt.fill", action: onQuick)
-                tile("Jeden úkol", detail: "Čas, délka i deadline", symbol: "plus", action: onSingle)
-                tile("Jako minule", detail: "Týden \(previousWeek) znovu", symbol: "doc.on.doc", action: onCopy)
+                tile(String(localized: "Rychlé plánování"), detail: String(localized: "Jedna aktivita na víc dní"), symbol: "bolt.fill", action: onQuick)
+                tile(String(localized: "Jeden úkol"), detail: String(localized: "Čas, délka i deadline"), symbol: "plus", action: onSingle)
+                tile(String(localized: "Jako minule"), detail: String(localized: "Týden \(previousWeek) znovu"), symbol: "doc.on.doc", action: onCopy)
                     .flightFrame(PlanStartCard.copyTile)
             }
             if let onReset {

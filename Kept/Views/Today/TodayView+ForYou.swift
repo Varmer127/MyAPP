@@ -65,41 +65,41 @@ extension TodayView {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     if let week {
-                        ForYouTile(symbol: "sparkles", title: "Tvůj týden je hotový", detail: "\(week.done) z \(week.total) slibů") {
+                        ForYouTile(symbol: "sparkles", title: "Tvůj týden je hotový", detail: String(localized: "\(week.done) z \(week.total) slibů")) {
                             story = week
                         }
                     }
                     if let month {
-                        ForYouTile(symbol: "calendar.badge.checkmark", title: "Tvůj měsíc je hotový", detail: "\(month.done) z \(month.total) slibů") {
+                        ForYouTile(symbol: "calendar.badge.checkmark", title: "Tvůj měsíc je hotový", detail: String(localized: "\(month.done) z \(month.total) slibů")) {
                             monthStory = month
                         }
                     }
                     if let pending {
-                        ForYouTile(symbol: "book.closed", title: "Sebereflexe týdne", detail: "Týden \(pending.weekStart.weekNumber)") {
+                        ForYouTile(symbol: "book.closed", title: "Sebereflexe týdne", detail: String(localized: "Týden \(pending.weekStart.weekNumber)")) {
                             reflection = pending
                         }
                     }
                     if insuranceUsed {
                         ForYouTile(symbol: ShopItem.streakInsurance.symbol, title: "Pojistka série použita",
-                                   detail: "Zbývá: \(PointsService.unused(.streakInsurance, in: purchases))", tint: Theme.orange) {}
+                                   detail: String(localized: "Zbývá: \(PointsService.unused(.streakInsurance, in: purchases))"), tint: Theme.orange) {}
                     }
                     if let recap {
-                        ForYouTile(symbol: "sunrise", title: "Jak dopadl včerejšek", detail: "Dodrženo \(recap.done) z \(recap.total)") {
+                        ForYouTile(symbol: "sunrise", title: "Jak dopadl včerejšek", detail: String(localized: "Dodrženo \(recap.done) z \(recap.total)")) {
                             forYouSheet = .recap(recap)
                         }
                     }
                     if let nextWeek {
                         ForYouTile(symbol: "calendar.badge.plus", title: "Naplánuj příští týden",
-                                   detail: nextWeek == 0 ? "Zatím prázdný" : "V plánu: \(nextWeek)", tint: Theme.orange) {
+                                   detail: nextWeek == 0 ? String(localized: "Zatím prázdný") : String(localized: "V plánu: \(nextWeek)"), tint: Theme.orange) {
                             openNextWeek()
                         }
                     }
                     if settings?.diaryEnabled != false, !wroteToday {
-                        ForYouTile(symbol: "square.and.pencil", title: "Zapiš si dnešek", detail: "Pár vět do deníku") {
+                        ForYouTile(symbol: "square.and.pencil", title: "Zapiš si dnešek", detail: String(localized: "Pár vět do deníku")) {
                             forYouSheet = .diary
                         }
                     }
-                    ForYouTile(symbol: "star.circle", title: "Tvoje body", detail: "Zůstatek: \(points)") {
+                    ForYouTile(symbol: "star.circle", title: "Tvoje body", detail: String(localized: "Zůstatek: \(points)")) {
                         showsShop = true
                     }
                     if let lastGym {
@@ -110,22 +110,22 @@ extension TodayView {
                     }
                     ForYouTile(symbol: "person.2", title: "Přátelé",
                                detail: friends.incoming.isEmpty
-                                   ? (friends.unreadPokes > 0 ? "Nová šťouchnutí: \(friends.unreadPokes)" : "Spolu je to snazší")
-                                   : "Žádosti: \(friends.incoming.count)") {
+                                   ? (friends.unreadPokes > 0 ? String(localized: "Nová šťouchnutí: \(friends.unreadPokes)") : String(localized: "Spolu je to snazší"))
+                                   : String(localized: "Žádosti: \(friends.incoming.count)")) {
                         forYouSheet = .friends
                     }
                     if signedIn {
                         ForYouTile(symbol: "trophy", title: "Sázky",
-                                   detail: bets.open.isEmpty ? "Vsaď se o body" : "Běží: \(bets.open.count)") {
+                                   detail: bets.open.isEmpty ? String(localized: "Vsaď se o body") : String(localized: "Běží: \(bets.open.count)")) {
                             forYouSheet = .bets
                         }
                         ForYouTile(symbol: "flag.2.crossed", title: "Výzvy",
-                                   detail: challenges.isEmpty ? "Dotáhněte to spolu" : "Tvoje výzvy: \(challenges.count)") {
+                                   detail: challenges.isEmpty ? String(localized: "Dotáhněte to spolu") : String(localized: "Tvoje výzvy: \(challenges.count)")) {
                             forYouSheet = .challenges
                         }
                     }
                     if let weekKept {
-                        ForYouTile(symbol: "chart.bar", title: "Statistiky", detail: "Tento týden \(weekKept.percentText)") {
+                        ForYouTile(symbol: "chart.bar", title: "Statistiky", detail: String(localized: "Tento týden \(weekKept.percentText)")) {
                             forYouSheet = .stats
                         }
                     }

@@ -116,7 +116,7 @@ struct ExerciseInput: View {
                         .scaledFont(.heading, weight: .semibold)
                         .multilineTextAlignment(.center)
                 }
-                column("OPAKOVÁNÍ") {
+                column(String(localized: "OPAKOVÁNÍ")) {
                     Picker("Opakování", selection: draft.reps) {
                         ForEach(Self.repsRange, id: \.self) { Text("\($0)").tag($0) }
                     }
@@ -124,7 +124,7 @@ struct ExerciseInput: View {
                     .labelsHidden()
                     .tint(Theme.textPrimary)
                 }
-                column("SÉRIE") {
+                column(String(localized: "SÉRIE")) {
                     Picker("Série", selection: draft.sets) {
                         ForEach(Self.setsRange, id: \.self) { Text("\($0)").tag($0) }
                     }

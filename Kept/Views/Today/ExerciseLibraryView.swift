@@ -186,7 +186,7 @@ struct ExerciseLibraryView: View {
         VStack(alignment: .leading, spacing: 8) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    chip("Všechny partie", isOn: muscle == nil) { muscle = nil }
+                    chip(String(localized: "Všechny partie"), isOn: muscle == nil) { muscle = nil }
                     ForEach(Muscle.allCases) { item in
                         chip(item.title, isOn: muscle == item) { muscle = muscle == item ? nil : item }
                     }
@@ -195,7 +195,7 @@ struct ExerciseLibraryView: View {
             }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    chip("Jakékoli vybavení", isOn: equipment == nil) { equipment = nil }
+                    chip(String(localized: "Jakékoli vybavení"), isOn: equipment == nil) { equipment = nil }
                     ForEach(Equipment.allCases) { item in
                         chip(item.title, isOn: equipment == item) { equipment = equipment == item ? nil : item }
                     }

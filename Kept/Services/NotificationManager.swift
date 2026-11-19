@@ -117,7 +117,7 @@ enum NotificationManager {
     static func scheduleFocusEnd(title: String, in seconds: TimeInterval) async {
         let content = UNMutableNotificationContent()
         content.title = title
-        content.body = "Plánovaný čas je za tebou. Dokonči to, nebo si přidej pár minut."
+        content.body = String(localized: "Plánovaný čas je za tebou. Dokonči to, nebo si přidej pár minut.")
         content.sound = .default
         content.userInfo = [NotificationRouter.routeKey: AppRoute.today.rawValue]
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(seconds, 1), repeats: false)
@@ -127,8 +127,8 @@ enum NotificationManager {
     /// Tells the user the rest between sets is over, also with the screen locked.
     static func scheduleRestEnd(in seconds: TimeInterval) async {
         let content = UNMutableNotificationContent()
-        content.title = "Pauza je u konce"
-        content.body = "Další série čeká. Do toho!"
+        content.title = String(localized: "Pauza je u konce")
+        content.body = String(localized: "Další série čeká. Do toho!")
         content.sound = .default
         content.userInfo = [NotificationRouter.routeKey: AppRoute.today.rawValue]
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(seconds, 1), repeats: false)
@@ -138,8 +138,8 @@ enum NotificationManager {
     /// Health recorded a gym workout that is not logged in the app yet.
     static func notifyWorkoutDetected(minutes: Int) async {
         let content = UNMutableNotificationContent()
-        content.title = "Trénink ve Zdraví: \(minutes) min"
-        content.body = "Zapiš si cviky a série, ať příště víš, co překonávat."
+        content.title = String(localized: "Trénink ve Zdraví: \(minutes) min")
+        content.body = String(localized: "Zapiš si cviky a série, ať příště víš, co překonávat.")
         content.sound = .default
         content.userInfo = [NotificationRouter.routeKey: AppRoute.today.rawValue]
         try? await center.add(UNNotificationRequest(identifier: "health.workout", content: content, trigger: nil))
@@ -186,22 +186,22 @@ enum NotificationManager {
         if weekHasTasks, !reflections.contains(where: { $0.weekStart == now.weekStart }) {
             planned.append(Planned(
                 id: "reflection", date: time(reflectionHour * 60, on: now.weekStart.addingDays(6)),
-                title: "Týden končí", body: "Jak se ti dařilo? Pár řádků do deníčku a týden je uzavřený.",
+                title: String(localized: "Týden končí"), body: String(localized: "Jak se ti dařilo? Pár řádků do deníčku a týden je uzavřený."),
                 route: .today))
         }
         for sealing in plans {
             guard let sealDate = sealing.sealDate else { continue }
             let week = sealing.weekStart.weekNumber
             planned.append(Planned(id: "seal.warning.\(week)", date: sealDate.addingTimeInterval(-sealWarningLead),
-                                   title: "Za 10 minut se plán zapečetí",
-                                   body: "Týden \(week): poslední chvíle na změny bez postihu.", route: .planning))
+                                   title: String(localized: "Za 10 minut se plán zapečetí"),
+                                   body: String(localized: "Týden \(week): poslední chvíle na změny bez postihu."), route: .planning))
             // What is announced has to be what will really happen at that moment.
             let seals = PlanService.willSeal(sealing, minimum: settings.minimumWeeklyTasks)
             planned.append(Planned(
-                id: "seal.\(week)", date: sealDate, title: seals ? "Plán je zapečetěný" : "Plán se nezapečetil",
+                id: "seal.\(week)", date: sealDate, title: seals ? String(localized: "Plán je zapečetěný") : String(localized: "Plán se nezapečetil"),
                 body: seals
-                    ? "Týden \(week) platí. Závazky: \(sealing.pledgeableTasks(sealDate).count). Teď už jen držet slovo."
-                    : "Týden \(week) nemá dost úkolů na minimum, vrátil se jako návrh. Doplň ho a odešli znovu.",
+                    ? String(localized: "Týden \(week) platí. Závazky: \(sealing.pledgeableTasks(sealDate).count). Teď už jen držet slovo.")
+                    : String(localized: "Týden \(week) nemá dost úkolů na minimum, vrátil se jako návrh. Doplň ho a odešli znovu."),
                 route: .planning))
         }
         if settings.morningBriefEnabled {
@@ -251,7 +251,7 @@ enum NotificationManager {
         if current > 0 {
             let body = NotificationTemplates.pick(NotificationTemplates.streakAtRisk[tone] ?? [], seed: seed)
             planned.append(Planned(id: "streak.risk", date: time(streakAtRiskHour * 60, on: anchor),
-                                   title: "Série v ohrožení", body: body.replacingOccurrences(of: "{days}", with: days),
+                                   title: String(localized: "Série v ohrožení"), body: body.replacingOccurrences(of: "{days}", with: days),
                                    route: .today))
         }
         // Buying back is only mentioned while it is really on offer: not turned down and affordable.
@@ -264,15 +264,15 @@ enum NotificationManager {
             if index == 0 {
                 // "Your streak of N days ended" only makes sense when there was one.
                 guard length > 0 else { continue }
-                title = "Série skončila"
+                title = String(localized: "Série skončila")
                 body = NotificationTemplates.pick(NotificationTemplates.streakLost[tone] ?? [], seed: seed)
                     .replacingOccurrences(of: "{days}", with: days)
             } else if index == streakFollowUps.count - 1 {
-                title = "Poslední připomínka"
+                title = String(localized: "Poslední připomínka")
                 body = NotificationTemplates.streakFinal[tone] ?? ""
             } else {
                 let pool = NotificationTemplates.streakFollowUp[tone] ?? []
-                title = "Plamínek nehoří"
+                title = String(localized: "Plamínek nehoří")
                 body = (pool.isEmpty ? "" : pool[min(index - 1, pool.count - 1)])
                     .replacingOccurrences(of: "{n}", with: "\(step.day)")
             }
@@ -303,7 +303,7 @@ enum NotificationManager {
               settings.sundayStartHour <= settings.sundayEndHour else { return [] }
 
         return (settings.sundayStartHour...settings.sundayEndHour).enumerated().map { index, hour in
-            Planned(id: "sunday.\(hour)", date: time(hour * 60, on: sunday), title: "Plán na příští týden",
+            Planned(id: "sunday.\(hour)", date: time(hour * 60, on: sunday), title: String(localized: "Plán na příští týden"),
                     body: NotificationTemplates.sunday(tone: settings.tone, index: index), route: .planning)
         }
     }
@@ -363,15 +363,15 @@ enum NotificationManager {
             let open = all.filter { $0.status == .pending }.count
             let body: String
             if offset == 0, done == all.count {
-                body = "Všechno hotovo, \(done) z \(all.count). Slovo platí."
+                body = String(localized: "Všechno hotovo, \(done) z \(all.count). Slovo platí.")
             } else if offset == 0 {
-                body = "Hotovo \(done) z \(all.count), zbývá \(open). Ještě je čas to uzavřít."
+                body = String(localized: "Hotovo \(done) z \(all.count), zbývá \(open). Ještě je čas to uzavřít.")
             } else {
                 body = NotificationTemplates.pick(NotificationTemplates.realityCheck[settings.tone] ?? [], seed: day.daySeed)
                     .replacingOccurrences(of: "{n}", with: "\(all.count)")
             }
             return Planned(id: "reality.\(offset)", date: time(settings.realityCheckMinutes, on: day),
-                           title: "Večerní bilance", body: body, route: .realityCheck)
+                           title: String(localized: "Večerní bilance"), body: body, route: .realityCheck)
         }
     }
 

@@ -97,30 +97,30 @@ struct TaskCard: View {
     private var badgeItems: [(text: String, color: Color)] {
         var items: [(String, Color)] = []
         switch task.status {
-        case .completedLate: items.append(("Pozdě", Theme.orange))
-        case .excused: items.append(("Zrušeno za body", Theme.textSecondary))
-        case .skipped: items.append(("Přeskočeno", Theme.red))
-        case .failed: items.append(("Nesplněno", Theme.red))
+        case .completedLate: items.append((String(localized: "Pozdě"), Theme.orange))
+        case .excused: items.append((String(localized: "Zrušeno za body"), Theme.textSecondary))
+        case .skipped: items.append((String(localized: "Přeskočeno"), Theme.red))
+        case .failed: items.append((String(localized: "Nesplněno"), Theme.red))
         case .pending:
             if isMissed {
-                items.append(("Nesplněno: \(task.scheduledDate.weekdayText)", Theme.red))
+                items.append((String(localized: "Nesplněno: \(task.scheduledDate.weekdayText)"), Theme.red))
             } else if isOverdue {
-                items.append(("Po termínu \(overdueText)", Theme.red))
+                items.append((String(localized: "Po termínu \(overdueText)"), Theme.red))
             }
         case .completed: break
         }
         if task.isPartial {
-            items.append(("Částečně \(Int((task.completionShare * 100).rounded())) %", Theme.orange))
+            items.append((String(localized: "Částečně \(Int((task.completionShare * 100).rounded())) %"), Theme.orange))
         }
         if task.priority == .critical {
             items.append((TaskPriority.critical.badge, task.status == .pending ? Theme.textPrimary : Theme.textSecondary))
         } else if task.priority == .high {
             items.append((TaskPriority.high.badge, Theme.textSecondary))
         }
-        if task.moveCount > 0 { items.append(("Přesunuto", Theme.textSecondary)) }
-        if task.isAddedAfterCommitment { items.append(("Přidáno později", Theme.textSecondary)) }
+        if task.moveCount > 0 { items.append((String(localized: "Přesunuto"), Theme.textSecondary)) }
+        if task.isAddedAfterCommitment { items.append((String(localized: "Přidáno později"), Theme.textSecondary)) }
         if task.isRecovery { items.append(("Recovery", Theme.orange)) }
-        if task.requiresProof, task.status == .pending { items.append(("Důkaz", Theme.textSecondary)) }
+        if task.requiresProof, task.status == .pending { items.append((String(localized: "Důkaz"), Theme.textSecondary)) }
         return items
     }
 

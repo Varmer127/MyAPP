@@ -76,8 +76,8 @@ enum AppAppearance: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .dark: "Tmavý"
-        case .light: "Světlý"
+        case .dark: String(localized: "Tmavý")
+        case .light: String(localized: "Světlý")
         case .system: "Automaticky"
         }
     }

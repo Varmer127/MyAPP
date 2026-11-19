@@ -56,7 +56,7 @@ struct GymWidgetView: View {
                 }
             } else {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Gym · \(thisWeek)\(target > 0 ? " / \(target)" : "") tento týden").font(.headline)
+                    Text(target > 0 ? "Gym · \(thisWeek) / \(target) tento týden" : "Gym · \(thisWeek) tento týden").font(.headline)
                     Text(lastText).font(.caption)
                 }
             }
@@ -64,7 +64,7 @@ struct GymWidgetView: View {
             if let gym {
                 HStack(alignment: .top, spacing: 16) {
                     VStack(alignment: .leading, spacing: 4) {
-                        WidgetStyle.label("TRÉNINK · \(gym.workout.uppercased())")
+                        WidgetStyle.label(String(localized: "TRÉNINK · \(gym.workout.uppercased())"))
                             .lineLimit(1)
                         workoutClock(gym)
                             .font(.system(size: 36, weight: .heavy))
@@ -82,7 +82,7 @@ struct GymWidgetView: View {
                 HStack(alignment: .top, spacing: 16) {
                     weekSummary
                     VStack(alignment: .leading, spacing: 6) {
-                        WidgetStyle.label("POSLEDNĚ")
+                        WidgetStyle.label(String(localized: "POSLEDNĚ"))
                         Text(lastText)
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(WidgetStyle.text)
@@ -98,7 +98,7 @@ struct GymWidgetView: View {
         default:
             if let gym {
                 VStack(alignment: .leading, spacing: 4) {
-                    WidgetStyle.label(gym.heldTotal == nil ? "TRÉNINK" : "ČAS STOJÍ")
+                    WidgetStyle.label(gym.heldTotal == nil ? String(localized: "TRÉNINK") : String(localized: "ČAS STOJÍ"))
                     workoutClock(gym)
                         .font(.system(size: 30, weight: .heavy))
                         .foregroundStyle(WidgetStyle.text)
@@ -115,20 +115,20 @@ struct GymWidgetView: View {
     }
 
     private var lastText: String {
-        guard let last = snapshot?.lastGym else { return "Zatím žádný trénink" }
+        guard let last = snapshot?.lastGym else { return String(localized: "Zatím žádný trénink") }
         let days = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: last),
                                                    to: Calendar.current.startOfDay(for: entry.date)).day ?? 0
         switch days {
         case ..<1: return "Dnes"
-        case 1: return "Včera"
-        default: return "Před \(days) dny"
+        case 1: return String(localized: "Včera")
+        default: return String(localized: "Před \(days) dny")
         }
     }
 
     private var weekSummary: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                WidgetStyle.label("GYM TENTO TÝDEN")
+                WidgetStyle.label(String(localized: "GYM TENTO TÝDEN"))
                 Spacer(minLength: 0)
                 Image(systemName: "dumbbell.fill")
                     .font(.system(size: 13))
@@ -159,7 +159,7 @@ struct GymWidgetView: View {
     }
 
     private func restLabel(_ gym: WidgetSnapshot.Gym) -> String {
-        gym.heldTotal != nil ? "ČAS STOJÍ" : (gym.restStart == nil ? "TRÉNINK BĚŽÍ" : (isOver(gym) ? "JDI NA DALŠÍ SÉRII" : "PAUZA"))
+        gym.heldTotal != nil ? String(localized: "ČAS STOJÍ") : (gym.restStart == nil ? String(localized: "TRÉNINK BĚŽÍ") : (isOver(gym) ? String(localized: "JDI NA DALŠÍ SÉRII") : String(localized: "PAUZA")))
     }
 
     /// The workout time: ticking while it runs, standing still while the clock is stopped.
@@ -189,7 +189,7 @@ struct GymWidgetView: View {
             let over = isOver(gym)
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
-                    WidgetStyle.label(over ? "DALŠÍ SÉRIE" : "PAUZA", color: over ? WidgetStyle.green : WidgetStyle.orange)
+                    WidgetStyle.label(over ? String(localized: "DALŠÍ SÉRIE") : String(localized: "PAUZA"), color: over ? WidgetStyle.green : WidgetStyle.orange)
                     if !over {
                         Text(timerInterval: start...end, countsDown: true)
                             .font(.system(size: 13, weight: .bold))
@@ -264,7 +264,7 @@ struct StreakWidgetView: View {
     var body: some View {
         switch family {
         case .accessoryInline:
-            Label("Série \(streak) \(streak == 1 ? "den" : (2...4).contains(streak) ? "dny" : "dní")", systemImage: "flame.fill")
+            Label(String(localized: "Série \(streak) dní", comment: "Streak length in days, with plural forms"), systemImage: "flame.fill")
         case .accessoryCircular:
             VStack(spacing: 0) {
                 Image(systemName: "flame.fill").font(.system(size: 14))
@@ -272,7 +272,7 @@ struct StreakWidgetView: View {
             }
         default:
             VStack(alignment: .leading, spacing: 4) {
-                WidgetStyle.label("SÉRIE")
+                WidgetStyle.label(String(localized: "SÉRIE"))
                 Spacer(minLength: 0)
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Image(systemName: "flame.fill")
@@ -315,7 +315,7 @@ struct WeekWidget: Widget {
 struct WeekWidgetView: View {
     let entry: TodayEntry
 
-    private static let weekdays = ["Po", "Út", "St", "Čt", "Pá", "So", "Ne"]
+    private static let weekdays = [String(localized: "Po"), String(localized: "Út"), String(localized: "St"), String(localized: "Čt"), String(localized: "Pá"), String(localized: "So"), String(localized: "Ne")]
 
     private var days: [WidgetSnapshot.Day] {
         guard let snapshot = entry.snapshot, snapshot.day.weekStartForWidget == entry.date.weekStartForWidget else { return [] }
@@ -325,10 +325,10 @@ struct WeekWidgetView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                WidgetStyle.label("TENTO TÝDEN")
+                WidgetStyle.label(String(localized: "TENTO TÝDEN"))
                 Spacer(minLength: 0)
                 if let kept = entry.snapshot?.promisesKept, !days.isEmpty {
-                    Text("Dodržené sliby \(Int((kept * 100).rounded())) %")
+                    Text(String(localized: "Dodržené sliby \(Int((kept * 100).rounded())) %"))
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(WidgetStyle.text)
                 }
@@ -392,7 +392,7 @@ struct NextTaskWidgetView: View {
     let entry: TodayEntry
 
     private var today: WidgetSnapshot? { entry.today }
-    private var emptyText: String { (today?.total ?? 0) == 0 ? "Dnes nic v plánu" : "Všechno hotovo" }
+    private var emptyText: String { (today?.total ?? 0) == 0 ? String(localized: "Dnes nic v plánu") : String(localized: "Všechno hotovo") }
 
     var body: some View {
         if family == .accessoryRectangular {
@@ -405,7 +405,7 @@ struct NextTaskWidgetView: View {
         } else {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    WidgetStyle.label("DALŠÍ ÚKOL")
+                    WidgetStyle.label(String(localized: "DALŠÍ ÚKOL"))
                     Spacer(minLength: 0)
                     Text("\(today?.done ?? 0)/\(today?.total ?? 0)")
                         .font(.system(size: 11, weight: .bold))

@@ -106,7 +106,7 @@ final class TaskItem {
     /// "Nohy + břicho"
     var workoutSummary: String? {
         guard !workoutType.isEmpty else { return nil }
-        var parts = [workoutAbs ? "\(workoutType) + břicho" : workoutType]
+        var parts = [workoutAbs ? String(localized: "\(workoutType) + břicho") : workoutType]
         if let bodyWeight {
             parts.append(bodyWeight.kilogramText)
         }

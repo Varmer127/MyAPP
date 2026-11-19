@@ -120,7 +120,7 @@ struct StatsView: View {
                         .foregroundStyle(Theme.textSecondary)
                 }
             }
-            PerformanceBar(label: "Dodržené sliby", value: ScoreEngine.promisesKept(scoped, now: now),
+            PerformanceBar(label: String(localized: "Dodržené sliby"), value: ScoreEngine.promisesKept(scoped, now: now),
                            series: weeklySeries(now: now) { ScoreEngine.promisesKept($0, now: now) })
             if let change = keptChange {
                 Text(change >= 0 ? "O \(change) p. b. víc než \(previousName)" : "O \(-change) p. b. míň než \(previousName)")
@@ -130,12 +130,12 @@ struct StatsView: View {
             }
             PerformanceBar(label: "Produktivita", value: ScoreEngine.productivity(scoped, now: now),
                            series: weeklySeries(now: now) { ScoreEngine.productivity($0, now: now) })
-            PerformanceBar(label: "Věrnost plánu", value: integrity,
+            PerformanceBar(label: String(localized: "Věrnost plánu"), value: integrity,
                            series: (0..<Self.sparkWeeks).reversed().map { back in
                                let start = now.weekStart.addingDays(-7 * back)
                                return plans.first { $0.weekStart == start }.flatMap(ScoreEngine.commitmentIntegrity)
                            })
-            PerformanceBar(label: "Týdenní cíle", value: accountability?.weeklyGoals)
+            PerformanceBar(label: String(localized: "Týdenní cíle"), value: accountability?.weeklyGoals)
             if ScoreEngine.isBusyNotProductive(scoped, now: now) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Splněno úkolů: \(ScoreEngine.completionRate(scoped).percentText)")
@@ -164,7 +164,7 @@ struct StatsView: View {
         let planned = !tasks.filter { !$0.isRemoved }.isEmpty
         let sealed = plans.contains(where: \.isCommitted)
         return VStack(spacing: 10) {
-            SectionLabel(text: "Výsledky")
+            SectionLabel(text: String(localized: "Výsledky"))
             VStack(spacing: 12) {
                 EmptyStateArt(kind: .stats)
                 Text("Statistiky se rozjedou po prvním týdnu")
@@ -255,6 +255,10 @@ struct StatsView: View {
         }
     }
 
+    private static func volumeText(_ volume: Double) -> String {
+        volume >= 1000 ? "\((volume / 1000).formatted(.number.precision(.fractionLength(0...1)).locale(.app))) t" : "\(Int(volume)) kg"
+    }
+
     private static func daysText(_ days: Double) -> String {
         days < 1.5 ? String(localized: "1 den")
             : String(localized: "\(days.formatted(.number.precision(.fractionLength(0...1)).locale(.app))) dne")
@@ -277,7 +281,7 @@ struct StatsView: View {
                          caption: String(localized: "čistý čas ve focus timeru"))
                 StatTile(label: "Gym", value: "\(gym)×",
                          caption: volume > 0
-                            ? String(localized: "tréninků · objem \(volume >= 1000 ? "\((volume / 1000).formatted(.number.precision(.fractionLength(0...1)).locale(.app))) t" : "\(Int(volume)) kg")")
+                            ? String(localized: "tréninků · objem \(Self.volumeText(volume))")
                             : String(localized: "tréninků"))
             }
             .fixedSize(horizontal: false, vertical: true)
@@ -291,7 +295,7 @@ struct StatsView: View {
         let focused = StatisticsService.focusSeconds(sessions, in: range) / 60
         if planned > 0 && focused > 0 {
             VStack(spacing: 10) {
-                SectionLabel(text: "Plán vs. skutečnost")
+                SectionLabel(text: String(localized: "Plán vs. skutečnost"))
                 VStack(alignment: .leading, spacing: 10) {
                     HStack {
                         Text("\(Self.hoursText(focused * 60)) z \(Self.hoursText(Double(planned) * 60))")

@@ -54,7 +54,7 @@ struct HealthSummaryView: View {
             switch self {
             case .steps: "kroky"
             case .distance: "kilometry"
-            case .energy: "aktivní energie"
+            case .energy: String(localized: "aktivní energie")
             }
         }
 
@@ -122,13 +122,13 @@ struct HealthSummaryView: View {
                     NotificationBell(circled: true)
                 }
                 if !HealthService.isAvailable && !isDemo {
-                    info("Apple Health na tomto zařízení není dostupné.")
+                    info(String(localized: "Apple Health na tomto zařízení není dostupné."))
                 } else if settings?.healthEnabled != true && !isDemo {
                     connectCard
                     badgesCard
                 } else if let summary {
                     if summary.isEmpty {
-                        info("Ze Zdraví zatím nepřišla žádná data. Zkontroluj v aplikaci Zdraví → Sdílení → Aplikace → Kept, že má Kept povolené čtení.")
+                        info(String(localized: "Ze Zdraví zatím nepřišla žádná data. Zkontroluj v aplikaci Zdraví → Sdílení → Aplikace → Kept, že má Kept povolené čtení."))
                     } else {
                         todayCard(summary)
                         trendCard(summary)
@@ -140,7 +140,7 @@ struct HealthSummaryView: View {
                         .scaledFont(.caption)
                         .foregroundStyle(Theme.textTertiary)
                 } else {
-                    info(isLoading ? "Načítám…" : "Žádná data.")
+                    info(isLoading ? String(localized: "Načítám…") : String(localized: "Žádná data."))
                 }
             }
             .padding(.horizontal, Theme.screenPadding)
@@ -245,7 +245,7 @@ struct HealthSummaryView: View {
                 .accessibilityValue("\(steps.formatted(.number.locale(.app))) z \(goal.formatted(.number.locale(.app)))")
                 VStack(alignment: .leading, spacing: 10) {
                     goalMenu
-                    Text(reached ? "Cíl splněn." : "Do cíle zbývá \((goal - steps).formatted(.number.locale(.app))).")
+                    Text(reached ? "Cíl splněn." : String(localized: "Do cíle zbývá \((goal - steps).formatted(.number.locale(.app)))."))
                         .scaledFont(.body, weight: .semibold)
                         .foregroundStyle(reached ? Theme.green : Theme.textPrimary)
                     if streak > 0 {
@@ -257,8 +257,8 @@ struct HealthSummaryView: View {
                 Spacer(minLength: 0)
             }
             TileRow {
-                MetricTile(value: Metric.distance.text(summary.today?.km ?? 0), label: "Dnes ušlo")
-                MetricTile(value: Metric.energy.text(Double(summary.today?.kcal ?? 0)), label: "Aktivní energie")
+                MetricTile(value: Metric.distance.text(summary.today?.km ?? 0), label: String(localized: "Dnes ušlo"))
+                MetricTile(value: Metric.energy.text(Double(summary.today?.kcal ?? 0)), label: String(localized: "Aktivní energie"))
             }
         }
         .animation(.easeOut(duration: 0.6), value: steps)
@@ -271,7 +271,7 @@ struct HealthSummaryView: View {
             showsGoalSheet = true
         } label: {
             HStack(spacing: 4) {
-                Text("CÍL \(goal.formatted(.number.locale(.app)))")
+                Text(String(localized: "CÍL \(goal.formatted(.number.locale(.app)))"))
                 Image(systemName: "slider.horizontal.3").scaledFont(.caption, weight: .bold)
             }
             .scaledFont(.caption, weight: .heavy)
@@ -283,7 +283,7 @@ struct HealthSummaryView: View {
             .padding(.vertical, 7)
             .contentShape(Rectangle())
         }
-        .accessibilityLabel("Cíl kroků \(goal.formatted(.number.locale(.app)))")
+        .accessibilityLabel(String(localized: "Cíl kroků \(goal.formatted(.number.locale(.app)))"))
         .accessibilityHint("Otevře nastavení cíle")
         .sheet(isPresented: $showsGoalSheet) {
             StepGoalSheet(goal: goal) { settings?.stepGoal = $0 }
@@ -386,10 +386,10 @@ struct HealthSummaryView: View {
     /// "Průměr za den", compared with the period right before it when there is one to compare with.
     private func comparison(average: Double, before: [HealthService.DayMetrics]) -> String {
         let base = before.isEmpty ? 0 : before.map(metric.value).reduce(0, +) / Double(before.count)
-        guard base > 0 else { return "Průměr za den" }
+        guard base > 0 else { return String(localized: "Průměr za den") }
         let change = Int(((average - base) / base * 100).rounded())
-        if change == 0 { return "Průměr za den, stejně jako předtím" }
-        return change > 0 ? "Průměr za den, o \(change) % víc než předtím" : "Průměr za den, o \(-change) % míň než předtím"
+        if change == 0 { return String(localized: "Průměr za den, stejně jako předtím") }
+        return change > 0 ? String(localized: "Průměr za den, o \(change) % víc než předtím") : String(localized: "Průměr za den, o \(-change) % míň než předtím")
     }
 
     private func trendChart(_ shown: [HealthService.DayMetrics]) -> some View {
@@ -443,9 +443,9 @@ struct HealthSummaryView: View {
 
     /// The chart for VoiceOver: the average, the best day and the latest day, since the bars themselves cannot be read.
     private func chartSummary(_ shown: [HealthService.DayMetrics]) -> String {
-        guard let best = shown.max(by: { metric.value($0) < metric.value($1) }), let last = shown.last else { return "Žádná data" }
+        guard let best = shown.max(by: { metric.value($0) < metric.value($1) }), let last = shown.last else { return String(localized: "Žádná data") }
         let average = shown.map(metric.value).reduce(0, +) / Double(shown.count)
-        return "Průměr \(metric.text(average)). Nejlepší den \(best.day.longDayText): \(metric.text(metric.value(best))). Dnes \(metric.text(metric.value(last)))."
+        return String(localized: "Průměr \(metric.text(average)). Nejlepší den \(best.day.longDayText): \(metric.text(metric.value(best))). Dnes \(metric.text(metric.value(last))).")
     }
 
     /// Steps above the goal are green; the chosen day stands out and the others fade.
@@ -487,9 +487,9 @@ struct HealthSummaryView: View {
         let total = shown.map(metric.value).reduce(0, +)
         let reachedDays = shown.filter { $0.steps >= goal }.count
         return TileRow {
-            MetricTile(value: best.map { metric.text(metric.value($0)) } ?? "—", label: "Nejlepší den")
+            MetricTile(value: best.map { metric.text(metric.value($0)) } ?? "—", label: String(localized: "Nejlepší den"))
             if metric == .steps {
-                MetricTile(value: "\(reachedDays) / \(shown.count)", label: "Dnů nad cílem",
+                MetricTile(value: "\(reachedDays) / \(shown.count)", label: String(localized: "Dnů nad cílem"),
                            color: reachedDays > 0 ? Theme.green : Theme.textPrimary)
             } else {
                 MetricTile(value: metric.text(total), label: "Celkem")
@@ -506,7 +506,7 @@ struct HealthSummaryView: View {
         if !shown.isEmpty {
             let minutes = shown.map(\.minutes).reduce(0, +)
             VStack(spacing: 10) {
-                SectionLabel(text: "Tréninky za \(range.rawValue) dní · \(shown.count)× · \(minutes / 60) h \(minutes % 60) min")
+                SectionLabel(text: String(localized: "Tréninky za \(range.rawValue) dní · \(shown.count)× · \(minutes / 60) h \(minutes % 60) min"))
                 VStack(spacing: 0) {
                     ForEach(Array(shown.prefix(8).enumerated()), id: \.offset) { index, workout in
                         if index > 0 {
@@ -553,7 +553,7 @@ struct HealthSummaryView: View {
             let picked = selectedWeight.flatMap { date in points.min { abs($0.date.timeIntervalSince(date)) < abs($1.date.timeIntervalSince(date)) } }
             VStack(spacing: 10) {
                 HStack {
-                    SectionLabel(text: "Váha")
+                    SectionLabel(text: String(localized: "Váha"))
                     Picker("Období váhy", selection: $weightRange) {
                         ForEach(WeightRange.allCases) { Text($0.title).tag($0) }
                     }
@@ -626,7 +626,7 @@ struct HealthSummaryView: View {
         let badges = healthBadges
         return VStack(spacing: 10) {
             HStack {
-                SectionLabel(text: "Odznaky ze Zdraví")
+                SectionLabel(text: String(localized: "Odznaky ze Zdraví"))
                 Spacer()
                 Text("\(badges.filter(\.isEarned).count) / \(badges.count)")
                     .scaledFont(.caption, weight: .bold)

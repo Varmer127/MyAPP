@@ -135,7 +135,7 @@ final class UserSettings {
         }
     }
 
-    static let defaultWorkoutPresets = ["Ruce a ramena", "Záda a prsa", "Nohy"]
+    static let defaultWorkoutPresets = [String(localized: "Ruce a ramena"), String(localized: "Záda a prsa"), String(localized: "Nohy")]
     static let defaultExercisePresets = ["Bench press", "Dřep", "Mrtvý tah", "Tlaky nad hlavu", "Shyby", "Přítahy v předklonu"]
 
     var restPresets: [RestPreset] {
@@ -266,7 +266,7 @@ struct RestPreset: Codable, Hashable, Identifiable {
     static let secondsStep = 15
 
     static let defaults = [
-        RestPreset(name: "Síla", seconds: 180),
+        RestPreset(name: String(localized: "Síla"), seconds: 180),
         RestPreset(name: "Svaly", seconds: 90),
         RestPreset(name: "Vytrvalost", seconds: 30),
     ]
@@ -281,22 +281,22 @@ enum GymMode: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .simple: "Jednoduchý"
-        case .advanced: "Pokročilý"
+        case .simple: String(localized: "Jednoduchý")
+        case .advanced: String(localized: "Pokročilý")
         }
     }
 
     var summary: String {
         switch self {
-        case .simple: "Stopky tréninku a pauzy. Zapíšeš, co jsi jel, a hotovo."
-        case .advanced: "Cviky, série, váhy a opakování, rekordy, šablony a mapa svalů."
+        case .simple: String(localized: "Stopky tréninku a pauzy. Zapíšeš, co jsi jel, a hotovo.")
+        case .advanced: String(localized: "Cviky, série, váhy a opakování, rekordy, šablony a mapa svalů.")
         }
     }
 
     var features: [String] {
         switch self {
-        case .simple: ["Stopky celého tréninku", "Odpočet pauzy jedním klepnutím", "Co jsi jel a počet tréninků týdně"]
-        case .advanced: ["Cviky série po sérii, s čísly z minula", "Knihovna cviků s mapou svalů", "Rekordy, síla v čase a týdenní mapa svalů", "Šablony tréninků a rozcvičky"]
+        case .simple: [String(localized: "Stopky celého tréninku"), String(localized: "Odpočet pauzy jedním klepnutím"), String(localized: "Co jsi jel a počet tréninků týdně")]
+        case .advanced: [String(localized: "Cviky série po sérii, s čísly z minula"), String(localized: "Knihovna cviků s mapou svalů"), String(localized: "Rekordy, síla v čase a týdenní mapa svalů"), String(localized: "Šablony tréninků a rozcvičky")]
         }
     }
 }
@@ -310,17 +310,17 @@ enum GrammarGender: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .masculine: "Mužský rod"
-        case .feminine: "Ženský rod"
-        case .neutral: "Neutrálně"
+        case .masculine: String(localized: "Mužský rod")
+        case .feminine: String(localized: "Ženský rod")
+        case .neutral: String(localized: "Neutrálně")
         }
     }
 
     var example: String {
         switch self {
-        case .masculine: "„Splnil jsi to.“"
-        case .feminine: "„Splnila jsi to.“"
-        case .neutral: "„To je splněno.“"
+        case .masculine: String(localized: "„Splnil jsi to.“")
+        case .feminine: String(localized: "„Splnila jsi to.“")
+        case .neutral: String(localized: "„To je splněno.“")
         }
     }
 

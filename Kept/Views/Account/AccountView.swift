@@ -100,7 +100,7 @@ struct AccountView: View {
                     Text("Jméno")
                 } footer: {
                     if let nextRename {
-                        Text("Jméno jde změnit zase \(nextRename.formatted(.dateTime.day().month().hour().minute().locale(.app))).")
+                        Text(String(localized: "Jméno jde změnit zase \(nextRename.formatted(.dateTime.day().month().hour().minute().locale(.app)))."))
                     } else {
                         Text("Jméno jde změnit nejvýš jednou za 7 dní. Čtyři čísla zůstanou, pokud jsou u nového jména volná.")
                     }

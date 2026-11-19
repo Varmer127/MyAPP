@@ -8,16 +8,16 @@ enum TaskCategory: String, CaseIterable, Identifiable, Codable {
 
     var title: String {
         switch self {
-        case .newSkill: "Nový skill"
-        case .building: "Vlastní projekt"
-        case .work: "Práce"
-        case .education: "Škola"
-        case .reading: "Čtení"
+        case .newSkill: String(localized: "Nový skill")
+        case .building: String(localized: "Vlastní projekt")
+        case .work: String(localized: "Práce")
+        case .education: String(localized: "Škola")
+        case .reading: String(localized: "Čtení")
         case .administration: "Administrativa"
         case .gym: "Gym"
         case .sport: "Sport"
-        case .nature: "Příroda"
-        case .other: "Ostatní"
+        case .nature: String(localized: "Příroda")
+        case .other: String(localized: "Ostatní")
         }
     }
 
@@ -62,9 +62,9 @@ enum TaskCategory: String, CaseIterable, Identifiable, Codable {
 
     var suggestionTitle: String {
         switch self {
-        case .newSkill: "Naučit se něco nového"
-        case .nature: "Procházka v přírodě"
-        case .building: "Práce na projektu"
+        case .newSkill: String(localized: "Naučit se něco nového")
+        case .nature: String(localized: "Procházka v přírodě")
+        case .building: String(localized: "Práce na projektu")
         default: title
         }
     }
@@ -84,20 +84,20 @@ enum TaskPriority: String, CaseIterable, Identifiable, Codable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .low: "Nízká"
-        case .medium: "Střední"
-        case .high: "Vysoká"
-        case .critical: "Kritická"
+        case .low: String(localized: "Nízká")
+        case .medium: String(localized: "Střední")
+        case .high: String(localized: "Vysoká")
+        case .critical: String(localized: "Kritická")
         }
     }
 
     /// Short label shown on a task.
     var badge: String {
         switch self {
-        case .low: "Nízká priorita"
-        case .medium: "Střední priorita"
-        case .high: "Vysoká priorita"
-        case .critical: "Kritický"
+        case .low: String(localized: "Nízká priorita")
+        case .medium: String(localized: "Střední priorita")
+        case .high: String(localized: "Vysoká priorita")
+        case .critical: String(localized: "Kritický")
         }
     }
 
@@ -133,15 +133,15 @@ enum FailureReason: String, CaseIterable, Identifiable, Codable {
 
     var title: String {
         switch self {
-        case .forgot: "Zapomněl jsem"
+        case .forgot: String(localized: "Zapomněl jsem")
         case .procrastinated: "Prokrastinoval jsem"
-        case .lazy: "Byl jsem líný"
-        case .didNotFeelLikeIt: "Nechtělo se mi"
-        case .plannedBadly: "Špatně jsem si to naplánoval"
-        case .noTime: "Neměl jsem dost času"
-        case .unexpected: "Nečekaná situace"
-        case .health: "Zdraví"
-        case .other: "Jiné"
+        case .lazy: String(localized: "Byl jsem líný")
+        case .didNotFeelLikeIt: String(localized: "Nechtělo se mi")
+        case .plannedBadly: String(localized: "Špatně jsem si to naplánoval")
+        case .noTime: String(localized: "Neměl jsem dost času")
+        case .unexpected: String(localized: "Nečekaná situace")
+        case .health: String(localized: "Zdraví")
+        case .other: String(localized: "Jiné")
         }
     }
 }
@@ -158,14 +158,14 @@ enum EditKind: String, Codable {
 
     var title: String {
         switch self {
-        case .removed: "Odstraněno"
-        case .moved: "Přesunuto"
-        case .priorityLowered: "Snížená priorita"
-        case .priorityRaised: "Zvýšená priorita"
-        case .deadlineChanged: "Změněný deadline"
-        case .weightLowered: "Snížená váha"
-        case .weightRaised: "Zvýšená váha"
-        case .addedLater: "Přidáno po závazku"
+        case .removed: String(localized: "Odstraněno")
+        case .moved: String(localized: "Přesunuto")
+        case .priorityLowered: String(localized: "Snížená priorita")
+        case .priorityRaised: String(localized: "Zvýšená priorita")
+        case .deadlineChanged: String(localized: "Změněný deadline")
+        case .weightLowered: String(localized: "Snížená váha")
+        case .weightRaised: String(localized: "Zvýšená váha")
+        case .addedLater: String(localized: "Přidáno po závazku")
         }
     }
 

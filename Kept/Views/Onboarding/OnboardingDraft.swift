@@ -11,18 +11,18 @@ struct OnboardingDraft {
         var title: String {
             switch self {
             case .pushPullLegs: "Push / Pull / Legs"
-            case .upperLower: "Horní / Spodní"
-            case .fullBody: "Full body"
-            case .own: "Vlastní split"
+            case .upperLower: String(localized: "Horní / Spodní")
+            case .fullBody: String(localized: "Full body")
+            case .own: String(localized: "Vlastní split")
             }
         }
 
         var summary: String {
             switch self {
             case .pushPullLegs: "Tlaky, tahy, nohy"
-            case .upperLower: "Vršek a spodek těla střídavě"
-            case .fullBody: "Celé tělo při každém tréninku"
-            case .own: "Tréninky si pojmenuješ sám"
+            case .upperLower: String(localized: "Vršek a spodek těla střídavě")
+            case .fullBody: String(localized: "Celé tělo při každém tréninku")
+            case .own: String(localized: "Tréninky si pojmenuješ sám")
             }
         }
 
@@ -30,8 +30,8 @@ struct OnboardingDraft {
         var workouts: [String] {
             switch self {
             case .pushPullLegs: ["Push (tlaky)", "Pull (tahy)", "Legs (nohy)"]
-            case .upperLower: ["Horní polovina", "Spodní polovina"]
-            case .fullBody: ["Full body"]
+            case .upperLower: [String(localized: "Horní polovina"), String(localized: "Spodní polovina")]
+            case .fullBody: [String(localized: "Full body")]
             case .own: []
             }
         }
@@ -50,7 +50,7 @@ struct OnboardingDraft {
     var grammar: GrammarGender = .neutral
     var gymMode: GymMode = .simple
     var split: Split = .pushPullLegs
-    var ownWorkouts = ["Hrudník a triceps", "Záda a biceps", "Nohy"]
+    var ownWorkouts = [String(localized: "Hrudník a triceps"), String(localized: "Záda a biceps"), String(localized: "Nohy")]
     var gymPerWeek = TaskCategory.gym.defaultWeeklyTarget
     var restName = RestPreset.defaults[1].name
     var health = false
