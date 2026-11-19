@@ -263,7 +263,7 @@ struct RegistrationView: View {
                 onDone()
                 dismiss()
             }
-            .buttonStyle(PrimaryButtonStyle(color: Theme.green, textColor: Color(hex: 0x000000)))
+            .buttonStyle(PrimaryButtonStyle(color: Theme.green, textColor: Theme.onPrimary))
         }
     }
 

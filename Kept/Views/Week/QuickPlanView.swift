@@ -24,8 +24,15 @@ struct QuickPlanView: View {
 
     private var days: [Date] { (0..<Self.daysInWeek).map { weekStart.addingDays($0) } }
     private var trimmedTitle: String { title.trimmingCharacters(in: .whitespacesAndNewlines) }
-    private var isCustomTitle: Bool { category == .other && (settingsList.first?.customActivities ?? []).contains(trimmedTitle) }
+    private var isCustomTitle: Bool {
+        category == .other && ((settingsList.first?.customActivities ?? []).contains(trimmedTitle) || oneOffActivity == trimmedTitle)
+    }
+    /// An activity added "just this once": offered here for this planning only, never saved among the activities.
+    @State private var oneOffActivity: String?
     @State private var confirmsDuplicate = false
+    @State private var addsActivity = false
+    /// Activities added during this planning, marked as new in the overview at the top.
+    @State private var addedNow: Set<String> = []
     // What gets added flies from its day into the review button, which counts the plan.
     @State private var flights: [PlanFlight] = []
     @State private var flightFrames = FlightFrameStore()
@@ -34,6 +41,31 @@ struct QuickPlanView: View {
 
     private var weekTaskCount: Int {
         tasks.filter { !$0.isRemoved && $0.scheduledDate >= weekStart && $0.scheduledDate < weekStart.addingDays(7) }.count
+    }
+
+    /// One planned activity of the week: what it is and on which days.
+    private struct PlannedActivity: Identifiable {
+        let key: String
+        let title: String
+        let category: TaskCategory
+        let symbol: String
+        let days: [Date]
+        var id: String { key }
+    }
+
+    /// What the week already holds, one entry per activity, in the order of its first day.
+    private var planned: [PlannedActivity] {
+        let week = tasks.filter {
+            !$0.isRemoved && !$0.isRecovery && $0.scheduledDate >= weekStart && $0.scheduledDate < weekStart.addingDays(7)
+        }
+        return Dictionary(grouping: week) { $0.title.activityKey }
+            .compactMap { key, items -> PlannedActivity? in
+                let sorted = items.sorted { $0.scheduledDate < $1.scheduledDate }
+                guard let first = sorted.first else { return nil }
+                return PlannedActivity(key: key, title: first.title, category: first.category,
+                                       symbol: ActivityIcons.shared.symbol(for: first), days: sorted.map(\.scheduledDate))
+            }
+            .sorted { ($0.days.first ?? .distantFuture, $0.title) < ($1.days.first ?? .distantFuture, $1.title) }
     }
 
     private var takenSelected: [Date] { selectedDays.filter(isTaken).sorted() }
@@ -67,6 +99,9 @@ struct QuickPlanView: View {
                             .background(Theme.cardRaised)
                             .clipShape(Capsule())
                     }
+                    if !planned.isEmpty {
+                        plannedStrip
+                    }
                     group("Co") {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 8)], spacing: 8) {
                             ForEach(settingsList.first?.enabledCategories ?? TaskCategory.allCases) { option in
@@ -79,6 +114,16 @@ struct QuickPlanView: View {
                                     title = name
                                 }
                             }
+                            if let oneOff = oneOffActivity, !(settingsList.first?.customActivities ?? []).contains(oneOff) {
+                                chip(oneOff, symbol: ActivityIcons.shared.symbol(forCustom: oneOff),
+                                     isSelected: category == .other && trimmedTitle == oneOff) {
+                                    category = .other
+                                    title = oneOff
+                                }
+                                .transition(.scale.combined(with: .opacity))
+                            }
+                            chip("Vlastní", symbol: "plus", isSelected: false) { addsActivity = true }
+                                .accessibilityLabel("Přidat vlastní aktivitu")
                         }
                         TextField("Název", text: $title)
                             .scaledFont(.body)
@@ -143,7 +188,7 @@ struct QuickPlanView: View {
                         if landedCount > 0 {
                             Text("+\(landedCount)")
                                 .scaledFont(.caption, weight: .heavy)
-                                .foregroundStyle(Color(hex: 0x000000))
+                                .foregroundStyle(Theme.onPrimary)
                                 .padding(.horizontal, 8)
                                 .frame(minHeight: 24)
                                 .background(Theme.green)
@@ -172,11 +217,73 @@ struct QuickPlanView: View {
             .allowsHitTesting(false)
         }
         .sensoryFeedback(.success, trigger: reviewPulse) { _, new in new % 2 == 1 }
+        .sheet(isPresented: $addsActivity) {
+            NewActivitySheet { name, isPermanent in
+                withAnimation(.spring(duration: 0.3)) {
+                    if !isPermanent { oneOffActivity = name }
+                    category = .other
+                    title = name
+                }
+            }
+        }
         .alert("„\(trimmedTitle)“ už v ten den máš", isPresented: $confirmsDuplicate) {
             Button("Přidat znovu") { save() }
             Button("Zrušit", role: .cancel) {}
         } message: {
             Text("Naplánované už je: \(takenSelected.map(\.shortDayText).joined(separator: ", ")) Opravdu ho tam chceš podruhé? Třeba když jdeš do gymu dvakrát za den.")
+        }
+    }
+
+    /// What is already planned this week, always in sight: each activity with its days. Tapping one picks it again.
+    private var plannedStrip: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("UŽ V PLÁNU · \(weekTaskCount)").labelStyle()
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(planned) { item in
+                        let isNew = addedNow.contains(item.key)
+                        Button {
+                            Haptics.light()
+                            withAnimation(.spring(duration: 0.3)) {
+                                category = item.category
+                                title = item.title
+                            }
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: item.symbol)
+                                    .scaledFont(.body, weight: .semibold)
+                                    .foregroundStyle(isNew ? Theme.onPrimary : Theme.textPrimary)
+                                    .frame(width: 34, height: 34)
+                                    .background(isNew ? Theme.green : Theme.cardRaised)
+                                    .clipShape(Circle())
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(item.title)
+                                        .scaledFont(.body, weight: .semibold)
+                                        .foregroundStyle(Theme.textPrimary)
+                                        .lineLimit(1)
+                                    Text(item.days.map { $0.weekdayShortText.capitalizedFirst }.joined(separator: " · "))
+                                        .scaledFont(.caption)
+                                        .foregroundStyle(Theme.textSecondary)
+                                        .lineLimit(1)
+                                        .contentTransition(.numericText())
+                                }
+                            }
+                            .padding(.leading, 6)
+                            .padding(.trailing, 14)
+                            .padding(.vertical, 6)
+                            .background(Theme.card)
+                            .clipShape(Capsule())
+                            .overlay(Capsule().stroke(isNew ? Theme.green.opacity(0.6) : Theme.border, lineWidth: 1))
+                        }
+                        .buttonStyle(PillPressStyle())
+                        .accessibilityLabel("\(item.title), \(item.days.map(\.longDayText).joined(separator: ", "))")
+                        .accessibilityHint("Vybere tuto aktivitu k přidání dalších dnů")
+                        .transition(.scale(scale: 0.8).combined(with: .opacity))
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+            .animation(.spring(response: 0.4, dampingFraction: 0.75), value: planned.map { "\($0.key)\($0.days.count)" })
         }
     }
 
@@ -256,6 +363,7 @@ struct QuickPlanView: View {
 
     private func save() {
         let added = selectedDays.sorted()
+        addedNow.insert(trimmedTitle.activityKey)
         let icon = category == .other && isCustomTitle ? ActivityIcons.shared.symbol(forCustom: trimmedTitle) : category.icon
         defer { flyIntoReview(added, icon: icon) }
         let settings = UserSettings.current(in: context)

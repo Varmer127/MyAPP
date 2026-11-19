@@ -98,10 +98,18 @@ struct WeekView: View {
     }
 
     var weeklyTotal: (planned: Int, done: Int, minimum: Int)? {
-        let minimum = settingsList.first?.minimumWeeklyTasks ?? UserSettings.defaultMinimumWeeklyTasks
+        let minimum = settingsList.first?.minimumWeeklyTasks(forWeekStarting: weekStart) ?? UserSettings.defaultMinimumWeeklyTasks
         guard minimum > 0 else { return nil }
         let week = (plan?.committableTasks ?? [])
         return (week.count, week.filter(\.isDone).count, minimum)
+    }
+
+    /// The welcome to planning, on the first week only, until the user has handed in any plan at all.
+    var showsFirstWeekCard: Bool {
+        guard let onboardedAt = settingsList.first?.onboardedAt else { return false }
+        return weekStart == FirstWeek.start(onboardedAt: onboardedAt)
+            && Date.now < weekStart.addingDays(7)
+            && !plans.contains { $0.isCommitted || $0.isSealing }
     }
 
     var canCommit: Bool {
@@ -114,7 +122,17 @@ struct WeekView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: Theme.sectionSpacing) {
                     header
-                    statusCard
+                    if showsFirstWeekCard, let settings = settingsList.first {
+                        FirstWeekPlanCard(weekStart: weekStart,
+                                          isShortened: FirstWeek.daysCounted(weekStart: weekStart, onboardedAt: settings.onboardedAt) != nil,
+                                          minimum: settings.minimumWeeklyTasks(forWeekStarting: weekStart),
+                                          usualMinimum: settings.minimumWeeklyTasks) { showsQuickPlan = true }
+                            .transition(.scale(scale: 0.94).combined(with: .opacity))
+                    }
+                    // An empty first week would say "plan your week" twice; the welcome card already does.
+                    if !showsFirstWeekCard || plan?.activeTasks.isEmpty == false {
+                        statusCard
+                    }
                     if Date.now < weekStart.addingDays(7), plan?.isCommitted != true, plan?.isSealing != true {
                         PlanStartCard(previousWeek: weekStart.addingDays(-7).weekNumber,
                                       onQuick: { showsQuickPlan = true },
@@ -166,7 +184,7 @@ struct WeekView: View {
                             if landedCount > 0 {
                                 Text("+\(landedCount)")
                                     .scaledFont(.caption, weight: .heavy)
-                                    .foregroundStyle(Color(hex: 0x000000))
+                                    .foregroundStyle(Theme.onPrimary)
                                     .padding(.horizontal, 8)
                                     .frame(minHeight: 24)
                                     .background(Theme.green)

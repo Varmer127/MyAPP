@@ -103,7 +103,7 @@ private struct InvitationButtons: View {
         HStack(spacing: 10) {
             ActionButton(title: "Ne, díky", look: .bigSecondary(SecondaryButtonStyle()), action: decline)
             ActionButton(title: acceptTitle, symbol: "hand.thumbsup.fill",
-                         look: .big(PrimaryButtonStyle(color: Theme.green, textColor: Color(hex: 0x000000))), action: accept)
+                         look: .big(PrimaryButtonStyle(color: Theme.green, textColor: Theme.onPrimary)), action: accept)
         }
     }
 }
@@ -466,7 +466,7 @@ struct WitnessInboxView: View {
                             try await together.answer(request, confirm: false)
                         }
                         ActionButton(title: "POTVRZUJI", symbol: "checkmark.seal.fill",
-                                     look: .big(PrimaryButtonStyle(color: Theme.green, textColor: Color(hex: 0x000000)))) {
+                                     look: .big(PrimaryButtonStyle(color: Theme.green, textColor: Theme.onPrimary))) {
                             try await together.answer(request, confirm: true)
                         }
                     }

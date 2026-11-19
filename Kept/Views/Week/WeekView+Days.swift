@@ -102,7 +102,7 @@ extension WeekView {
             .transition(.scale(scale: 0.94).combined(with: .opacity))
         } else if let plan, let sealDate = plan.sealDate, let submittedAt = plan.submittedAt {
             SealingCard(plan: plan, submittedAt: submittedAt, sealDate: sealDate,
-                        minimum: settingsList.first?.minimumWeeklyTasks ?? UserSettings.defaultMinimumWeeklyTasks)
+                        minimum: settingsList.first?.minimumWeeklyTasks(forWeekStarting: plan.weekStart) ?? UserSettings.defaultMinimumWeeklyTasks)
                 .transition(.scale(scale: 0.94).combined(with: .opacity))
         } else {
             VStack(alignment: .leading, spacing: 4) {

@@ -121,7 +121,7 @@ struct TodayWidgetView: View {
                                 Label("SPLNIL JSEM", systemImage: "checkmark")
                                     .font(.system(size: 13, weight: .bold))
                                     .tracking(0.6)
-                                    .foregroundStyle(.black)
+                                    .foregroundStyle(WidgetStyle.onText)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 8)
                                     .background(Self.green)

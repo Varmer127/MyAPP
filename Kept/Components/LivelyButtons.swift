@@ -35,7 +35,7 @@ struct PillButtonStyle: ButtonStyle {
         switch kind {
         case .primary: Theme.onPrimary
         case .secondary: Theme.textPrimary
-        case .positive: Color(hex: 0x000000)
+        case .positive: Theme.onPrimary
         case .destructive: Theme.red
         }
     }
@@ -182,7 +182,7 @@ struct HoldClockButton: View {
             }
         }
         .scaledFont(.caption, weight: .heavy)
-        .foregroundStyle(isHeld ? Color(hex: 0x000000) : Theme.textPrimary)
+        .foregroundStyle(isHeld ? Theme.onPrimary : Theme.textPrimary)
         .padding(.horizontal, withText ? 14 : 0)
         .frame(minWidth: 40, minHeight: 40)
         .background(isHeld ? Theme.orange : Theme.cardRaised, in: Capsule())

@@ -309,8 +309,7 @@ struct RootView: View {
 
     /// After the guide the user lands on the week to plan: this one, or the next one from Friday on.
     private func finishOnboarding() {
-        let weekday = Calendar.app.component(.weekday, from: .now)
-        weekShowsNext = weekday == 1 || weekday >= 6
+        weekShowsNext = FirstWeek.start(onboardedAt: .now) != Date.now.weekStart
         tab = .week
         Task { await NotificationManager.reschedule(context: context) }
     }

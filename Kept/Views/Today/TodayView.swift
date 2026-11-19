@@ -41,6 +41,9 @@ struct TodayView: View {
 
     @State var sparkTrigger = 0
 
+    /// The flame jumps for a moment when the streak grows.
+    @State var flameJump = false
+
     @State var heroFlash: Color?
 
     @State var showsMorning = false
@@ -63,6 +66,12 @@ struct TodayView: View {
     @AppStorage("reflectionPromptDay") var reflectionPromptDay = 0.0
 
     @State var reflection: ReflectionRequest?
+
+    /// Day (start, as a timestamp) of the last recap of yesterday that was opened, shared with the bell.
+    @AppStorage("daySummarySeen") var daySummarySeen = 0.0
+
+    /// Day on which the evening close last opened by itself, so it interrupts once a day at most.
+    @AppStorage("eveningAutoDay") var eveningAutoDay = 0.0
 
     /// Minutes of a gym workout Apple Health recorded today, if any.
     @State var healthGymMinutes: Int?
@@ -177,7 +186,10 @@ struct TodayView: View {
         .sheet(item: $forYouSheet) { sheet in
             switch sheet {
             case .recap(let recap):
-                DayRecapView(recap: recap, streak: ScoreEngine.dayStreak(tasks)) { forYouSheet = nil }
+                DayRecapView(recap: recap, streak: ScoreEngine.dayStreak(tasks)) {
+                    daySummarySeen = recap.day.timeIntervalSince1970
+                    forYouSheet = nil
+                }
             default:
                 NavigationStack {
                     sheet.destination
@@ -211,6 +223,7 @@ struct TodayView: View {
             reflectionPromptDay = today
             reflection = pending
         }
+        .task(id: scenePhase) { await openReadyOverview() }
         .task(id: scenePhase) {
             guard scenePhase == .active, settingsList.first?.healthEnabled == true else { return }
             healthGymMinutes = await HealthService.gymMinutesToday()
@@ -429,6 +442,44 @@ struct TodayView: View {
     var todayKept: Bool {
         let today = todayTasks
         return !today.isEmpty && today.allSatisfy(\.isDone)
+    }
+
+    /// Something already covers the screen or needs the user, so no overview opens by itself now.
+    var isBusy: Bool {
+        showsMorning || reflection != nil || story != nil || monthStory != nil || showsRealityCheck || forYouSheet != nil
+            || editor != nil || excuse != nil || focusTask != nil || gymTimerTask != nil || detailTask != nil
+            || workoutTask != nil || proofTask != nil || partialTask != nil || postponeTask != nil || showsShop || showsDayKept
+    }
+
+    /// Opens the overview that is ready (evening close, month, week, yesterday) when the app comes to the front,
+    /// instead of leaving it under the bell. Waits a moment so the morning greeting and the reflection go first.
+    func openReadyOverview() async {
+        guard scenePhase == .active else { return }
+        try? await Task.sleep(for: .seconds(1))
+        let now = Date.now
+        guard !Task.isCancelled, scenePhase == .active, !isBusy,
+              AutoOverview.isAllowed(onboardedAt: settingsList.first?.onboardedAt, now: now) else { return }
+        if let routed = NotificationRouter.shared.specificRouteAt, now.timeIntervalSince(routed) < 10 { return }
+        let today = now.startOfDay.timeIntervalSince1970
+        let snapshot = TodaySnapshot(tasks: tasks, plans: plans, targets: settingsList.first?.weeklyTargets ?? [:], now: now)
+        let month = MonthStory.offeredMonth(now: now).flatMap { start in
+            storySeenMonth == start.timeIntervalSince1970 ? nil : MonthStory.make(tasks: tasks, monthStart: start, now: now)
+        }
+        let week = WeekStory.offeredWeek(now: now).flatMap { start in
+            storySeenWeek == start.timeIntervalSince1970 ? nil : WeekStory.make(tasks: tasks, diary: diaryEntries, weekStart: start, now: now)
+        }
+        let recap = DayRecap.make(tasks: tasks, now: now).flatMap { daySummarySeen == $0.day.timeIntervalSince1970 ? nil : $0 }
+        let isEvening = settingsList.first.map { now.minutesIntoDay >= $0.realityCheckMinutes } ?? false
+        switch AutoOverview.next(eveningDue: showsRealityCheckCard(snapshot, now: now), eveningShownToday: eveningAutoDay == today,
+                                 hasMonth: month != nil, hasWeek: week != nil, hasYesterday: recap != nil, isEvening: isEvening) {
+        case .evening:
+            eveningAutoDay = today
+            showsRealityCheck = true
+        case .month: monthStory = month
+        case .week: story = week
+        case .yesterday: forYouSheet = recap.map { .recap($0) }
+        case nil: break
+        }
     }
 
     /// From the configured time on, as long as something is still open today.

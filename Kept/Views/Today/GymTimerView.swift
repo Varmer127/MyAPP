@@ -319,7 +319,7 @@ struct GymTimerView: View {
                             Label("DALŠÍ SÉRIE", systemImage: "forward.fill")
                                 .scaledFont(.caption, weight: .heavy)
                                 .tracking(0.5)
-                                .foregroundStyle(Color(hex: 0x000000))
+                                .foregroundStyle(Theme.onPrimary)
                                 .padding(.horizontal, 14)
                                 .frame(minHeight: 40)
                                 .background(reached ? Theme.green : Theme.orange)
@@ -439,12 +439,12 @@ struct GymTimerView: View {
         HStack(spacing: 12) {
             Image(systemName: "trophy.fill")
                 .scaledFont(.title)
-                .foregroundStyle(Color(hex: 0x000000))
+                .foregroundStyle(Theme.onPrimary)
             VStack(alignment: .leading, spacing: 2) {
-                Text("NOVÝ REKORD").scaledFont(.caption, weight: .heavy).tracking(1).foregroundStyle(Color(hex: 0x000000))
+                Text("NOVÝ REKORD").scaledFont(.caption, weight: .heavy).tracking(1).foregroundStyle(Theme.onPrimary)
                 Text("\(banner.exercise) · \(banner.text)")
                     .scaledFont(.body, weight: .semibold)
-                    .foregroundStyle(Color(hex: 0x000000))
+                    .foregroundStyle(Theme.onPrimary)
             }
             Spacer()
         }
@@ -813,7 +813,7 @@ private struct SetRow: View {
             Button(action: onTick) {
                 Image(systemName: "checkmark")
                     .scaledFont(.body, weight: .heavy)
-                    .foregroundStyle(set.isDone ? Color(hex: 0x000000) : Theme.textTertiary)
+                    .foregroundStyle(set.isDone ? Theme.onPrimary : Theme.textTertiary)
                     .frame(width: 40, height: 36)
                     .background(set.isDone ? Theme.green : Theme.cardRaised)
                     .clipShape(RoundedRectangle(cornerRadius: 8))

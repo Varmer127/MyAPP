@@ -332,7 +332,7 @@ extension OnboardingView {
                     }
                 }
                 .buttonStyle(PrimaryButtonStyle(color: draft.health ? Theme.green : Theme.textPrimary,
-                                                textColor: draft.health ? Color(hex: 0x000000) : Theme.onPrimary))
+                                                textColor: draft.health ? Theme.onPrimary : Theme.onPrimary))
                 .disabled(draft.health)
             } else {
                 note("Apple Zdraví na tomto zařízení není dostupné.")
@@ -382,7 +382,7 @@ extension OnboardingView {
         VStack(spacing: 16) {
             Image(systemName: draft.appLock ? "lock.fill" : "lock.open")
                 .scaledFont(40)
-                .foregroundStyle(draft.appLock ? Color(hex: 0x000000) : Theme.textPrimary)
+                .foregroundStyle(draft.appLock ? Theme.onPrimary : Theme.textPrimary)
                 .frame(width: 96, height: 96)
                 .background(draft.appLock ? Theme.green : Theme.card)
                 .clipShape(Circle())
@@ -532,7 +532,7 @@ extension OnboardingView {
                 }
             }
             .buttonStyle(PrimaryButtonStyle(color: notificationsAllowed ? Theme.green : Theme.textPrimary,
-                                            textColor: notificationsAllowed ? Color(hex: 0x000000) : Theme.onPrimary))
+                                            textColor: notificationsAllowed ? Theme.onPrimary : Theme.onPrimary))
             .disabled(notificationsAllowed)
             note("Bez upozornění Kept nemůže připomínat úkoly ani hlídat sérii. iPhone se zeptá jen jednou.")
         }

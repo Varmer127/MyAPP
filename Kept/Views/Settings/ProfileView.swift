@@ -481,7 +481,7 @@ struct StreakCalendar: View {
                     .overlay(Circle().stroke(isSelected || isToday ? Theme.textPrimary : .clear, lineWidth: 2))
                 Text("\(Calendar.app.component(.day, from: day))")
                     .scaledFont(.caption, weight: .bold)
-                    .foregroundStyle(state == .kept ? Color(hex: 0x000000) : (state == .broken ? Color(hex: 0xFFFFFF)
+                    .foregroundStyle(state == .kept ? Theme.onPrimary : (state == .broken ? Color(hex: 0xFFFFFF)
                         : dayColor(day)))
                 if milestone {
                     Image(systemName: "flame.fill")

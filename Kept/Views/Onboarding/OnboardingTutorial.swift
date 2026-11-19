@@ -140,7 +140,7 @@ private struct TaskDemo: View {
             switch phase {
             case .open:
                 HStack(spacing: 8) {
-                    demoButton("HOTOVO", fill: Theme.green, text: Color(hex: 0x000000)) { set(.confirm) }
+                    demoButton("HOTOVO", fill: Theme.green, text: Theme.onPrimary) { set(.confirm) }
                     demoButton("ČÁSTEČNĚ", fill: Theme.cardRaised, text: Theme.orange) { set(.partial) }
                     demoButton("PŘESKOČIT", fill: Theme.cardRaised, text: Theme.red) { set(.skip) }
                 }
@@ -151,7 +151,7 @@ private struct TaskDemo: View {
                         .scaledFont(.caption).foregroundStyle(Theme.textSecondary)
                     HStack(spacing: 8) {
                         demoButton("Ještě ne", fill: Theme.card, text: Theme.textPrimary) { set(.open) }
-                        demoButton("Ano, splnil", fill: Theme.green, text: Color(hex: 0x000000)) { set(.done) }
+                        demoButton("Ano, splnil", fill: Theme.green, text: Theme.onPrimary) { set(.done) }
                     }
                 }
             case .partial:
@@ -597,7 +597,7 @@ private struct PlannerDemo: View {
                 }
             }
             .buttonStyle(PrimaryButtonStyle(color: phase == .sealing ? Theme.orange : Theme.textPrimary,
-                                            textColor: phase == .sealing ? Color(hex: 0x000000) : Theme.onPrimary))
+                                            textColor: phase == .sealing ? Theme.onPrimary : Theme.onPrimary))
         }
         .frame(maxWidth: .infinity)
         .task(id: phase) {
@@ -679,7 +679,7 @@ private struct MissedDemo: View {
             switch phase {
             case .open:
                 HStack(spacing: 8) {
-                    demoButton("SPLNĚNO POZDĚ", fill: Theme.orange, text: Color(hex: 0x000000)) { set(.late) }
+                    demoButton("SPLNĚNO POZDĚ", fill: Theme.orange, text: Theme.onPrimary) { set(.late) }
                     demoButton("NESPLNIL JSEM", fill: Theme.cardRaised, text: Theme.red) { set(.reasons) }
                 }
             case .reasons:

@@ -7,7 +7,13 @@ struct CommitSummaryView: View {
     @Query private var allTasks: [TaskItem]
     let plan: WeeklyPlan
 
-    private var minimum: Int { settingsList.first?.minimumWeeklyTasks ?? UserSettings.defaultMinimumWeeklyTasks }
+    private var minimum: Int {
+        settingsList.first?.minimumWeeklyTasks(forWeekStarting: plan.weekStart) ?? UserSettings.defaultMinimumWeeklyTasks
+    }
+    /// A first week started mid-week has a smaller minimum, and says so.
+    private var isShortFirstWeek: Bool {
+        FirstWeek.daysCounted(weekStart: plan.weekStart, onboardedAt: settingsList.first?.onboardedAt) != nil
+    }
     private var missingActivities: Int { max(0, minimum - tasks.count) }
 
     /// The minimum is a hard rule for a week planned ahead (up to the end of its Monday).
@@ -87,7 +93,9 @@ struct CommitSummaryView: View {
                     if missingActivities > 0 {
                         VStack(alignment: .leading, spacing: 6) {
                             Text("POD MINIMEM").labelStyle(minimumBlocksCommit ? Theme.red : Theme.orange)
-                            Text("Minimum je \(minimum) aktivit týdně, v plánu máš \(tasks.count). Chybí \(missingActivities).")
+                            Text(isShortFirstWeek
+                                 ? "Minimum pro tvůj zkrácený první týden: \(minimum). V plánu máš \(tasks.count), chybí \(missingActivities)."
+                                 : "Minimum je \(minimum) aktivit týdně, v plánu máš \(tasks.count). Chybí \(missingActivities).")
                                 .scaledFont(.body)
                                 .foregroundStyle(Theme.textPrimary)
                             Text(minimumBlocksCommit

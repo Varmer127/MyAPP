@@ -14,6 +14,9 @@ final class NotificationRouter: NSObject, ObservableObject, UNUserNotificationCe
 
     @Published var route: AppRoute?
 
+    /// When a notification last opened a particular screen; overviews then do not open by themselves on top of it.
+    private(set) var specificRouteAt: Date?
+
     // The completion-handler forms on purpose: with the `async` forms the system's completion runs on a
     // background thread when the method returns, and UIKit aborts the app on every tapped notification.
 
@@ -27,6 +30,7 @@ final class NotificationRouter: NSObject, ObservableObject, UNUserNotificationCe
         let raw = response.notification.request.content.userInfo[Self.routeKey] as? String
         let route = raw.flatMap(AppRoute.init(rawValue:)) ?? .today
         DispatchQueue.main.async {
+            if route != .today { self.specificRouteAt = .now }
             self.route = route
             completionHandler()
         }

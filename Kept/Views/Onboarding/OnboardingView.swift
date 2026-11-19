@@ -27,6 +27,9 @@ struct OnboardingView: View {
 
     var isLast: Bool { step == Step.allCases.last }
 
+    /// Kept speaks to the user by name every day, so the guide does not go on without one.
+    var needsName: Bool { step == .name && draft.addressName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
     @State var showsRegistration = false
 
     /// The friends step offers the account first; the guide goes on once it exists or the step is skipped.
@@ -35,6 +38,7 @@ struct OnboardingView: View {
     var primaryTitle: String {
         if isLast { return "NAPLÁNOVAT PRVNÍ TÝDEN" }
         if step == .welcome { return "ZAČÍT" }
+        if needsName { return "NAPIŠ, JAK TI MÁM ŘÍKAT" }
         return offersAccount ? "VYTVOŘIT ÚČET" : "POKRAČOVAT"
     }
 
@@ -59,7 +63,9 @@ struct OnboardingView: View {
             .scrollDismissesKeyboard(.interactively)
             Button(primaryTitle, action: advance)
                 .buttonStyle(PrimaryButtonStyle(color: isLast ? Theme.green : Theme.textPrimary,
-                                                textColor: isLast ? Color(hex: 0x000000) : Theme.onPrimary))
+                                                textColor: Theme.onPrimary))
+                .disabled(needsName)
+                .animation(.easeOut(duration: 0.2), value: needsName)
                 .padding(.horizontal, Theme.screenPadding)
                 .padding(.vertical, 12)
         }
@@ -103,7 +109,7 @@ struct OnboardingView: View {
                     .accessibilityLabel("Zpět")
                 }
                 Spacer()
-                if !isLast {
+                if !isLast, step != .name {
                     Button("Přeskočit") { go(1) }
                         .scaledFont(.body, weight: .semibold)
                         .foregroundStyle(Theme.textSecondary)
@@ -193,6 +199,7 @@ struct OnboardingView: View {
     }
 
     func advance() {
+        guard !needsName else { return }
         if offersAccount {
             showsRegistration = true
             return

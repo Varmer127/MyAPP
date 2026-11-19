@@ -27,6 +27,11 @@ enum Theme {
     static let orange = Color(dark: 0xFF9F0A, light: 0x9C5700)
     static let red = Color(dark: 0xFF453A, light: 0xC8291E)
 
+    // The streak flame only, never text: a red-orange body and a yellow core, so it reads as fire in both appearances.
+    static let flameBody = Color(dark: 0xFF6A1F, light: 0xF0590E)
+    static let flameTip = Color(dark: 0xFF3B30, light: 0xD93A1E)
+    static let flameCore = Color(dark: 0xFFD60A, light: 0xFFC400)
+
     static let radius: CGFloat = 14
     static let screenPadding: CGFloat = 20
     static let sectionSpacing: CGFloat = 28

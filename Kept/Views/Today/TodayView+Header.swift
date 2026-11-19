@@ -138,27 +138,25 @@ extension TodayView {
         }
     }
 
-    /// Days in a row at 80 % or better. Lit only while the streak is alive, breathing slowly;
-    /// in the evening of a day that would break it, it pulses.
+    /// Days in a row at 80 % or better. Burns only while the streak is alive; on the evening of a day
+    /// that would break it, it flickers faster and gutters. A new day in the streak makes it jump and spark.
     func flame(streak: Int, atRisk: Bool) -> some View {
-        VStack(spacing: 0) {
-            Image(systemName: "flame.fill")
-                .scaledFont(.title)
-                .symbolEffect(.bounce, options: .nonRepeating, value: streak)
-                .symbolEffect(.pulse, options: .repeating, isActive: atRisk && !reduceMotion)
-                .symbolEffect(.breathe, options: .repeating, isActive: streak > 0 && !atRisk && !reduceMotion)
-            Text("\(streak)")
-                .scaledFont(.body, weight: .heavy)
-                .contentTransition(.numericText())
-        }
-        .foregroundStyle(streak > 0 ? Theme.orange : Theme.textTertiary)
-        .overlay { SparkBurst(trigger: sparkTrigger) }
-        .animation(.easeOut(duration: 0.4), value: streak)
-        .onChange(of: streak) { old, new in
-            if new > old { sparkTrigger += 1; Haptics.medium() }
-        }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(streak == 0 ? "Série zatím nezačala, začni ji dnes"
+        StreakFlame(streak: streak, atRisk: atRisk)
+            .scaleEffect(flameJump ? 1.15 : 1)
+            .overlay { SparkBurst(trigger: sparkTrigger) }
+            .animation(.easeOut(duration: 0.4), value: streak)
+            .onChange(of: streak) { old, new in
+                guard new > old else { return }
+                sparkTrigger += 1
+                Haptics.medium()
+                withAnimation(.spring(response: 0.25, dampingFraction: 0.45)) { flameJump = true }
+                Task {
+                    try? await Task.sleep(for: .seconds(0.3))
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) { flameJump = false }
+                }
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(streak == 0 ? "Série zatím nezačala, začni ji dnes"
                             : (atRisk ? "Série \(String.days(streak)), o půlnoci zhasne" : "Série \(String.days(streak))"))
     }
 
@@ -291,7 +289,7 @@ extension TodayView {
                                 Label(next.category == .gym ? "POKRAČOVAT V TRÉNINKU" : "POKRAČOVAT VE FOCUSU",
                                       systemImage: "arrow.up.left.and.arrow.down.right")
                             }
-                            .buttonStyle(PrimaryButtonStyle(color: Theme.green, textColor: Color(hex: 0x000000)))
+                            .buttonStyle(PrimaryButtonStyle(color: Theme.green, textColor: Theme.onPrimary))
                             // Stopping the clock for a while, right here; ending is inside the timer and on the task card.
                             let held = next.category == .gym
                                 ? next.activeFocusSession?.isHeld == true : next.activeFocusSession?.isPaused == true
@@ -310,7 +308,7 @@ extension TodayView {
                                 Image(systemName: held ? "play.fill" : "pause.fill")
                                     .contentTransition(.symbolEffect(.replace))
                                     .scaledFont(.body, weight: .heavy)
-                                    .foregroundStyle(held ? Color(hex: 0x000000) : Theme.textPrimary)
+                                    .foregroundStyle(held ? Theme.onPrimary : Theme.textPrimary)
                                     .frame(width: 52, height: 52)
                                     .background(held ? Theme.orange : Theme.cardRaised, in: RoundedRectangle(cornerRadius: 12))
                                     .contentShape(RoundedRectangle(cornerRadius: 12))
@@ -322,7 +320,7 @@ extension TodayView {
                         }
                     } else if !next.requiresProof, next.category != .gym {
                         Button("SPLNIL JSEM") { confirmDone = next }
-                            .buttonStyle(PrimaryButtonStyle(color: Theme.green, textColor: Color(hex: 0x000000)))
+                            .buttonStyle(PrimaryButtonStyle(color: Theme.green, textColor: Theme.onPrimary))
                     }
                 }
                 let others = open.filter { $0.uid != next?.uid }
