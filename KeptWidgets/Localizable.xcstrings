@@ -86,6 +86,16 @@
         }
       }
     },
+    "Dnes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today"
+          }
+        }
+      }
+    },
     "Dnes nic v plánu" : {
       "localizations" : {
         "en" : {
@@ -226,7 +236,8 @@
             "value" : "Gym · %lld%@ this week"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "JDI NA DALŠÍ SÉRII" : {
       "localizations" : {
@@ -638,7 +649,8 @@
             "value" : "Streak %lld %@"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Série %lld dní" : {
       "comment" : "Streak length in days, with plural forms",

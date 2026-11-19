@@ -27,9 +27,9 @@ enum GymService {
               let top = last.workingSets.filter({ ExerciseLog.plausibleWeight.contains($0.weight) }).max(by: { $0.weight < $1.weight }),
               top.weight > 0 else { return nil }
         if top.reps >= repsBeforeAddingWeight {
-            return "Minule \(top.weight.kilogramText) × \(top.reps) → zkus \((top.weight + weightStep).kilogramText) × \(top.reps)"
+            return String(localized: "Minule \(top.weight.kilogramText) × \(top.reps) → zkus \((top.weight + weightStep).kilogramText) × \(top.reps)", bundle: .kept)
         }
-        return "Minule \(top.weight.kilogramText) × \(top.reps) → zkus \(top.weight.kilogramText) × \(top.reps + 1)"
+        return String(localized: "Minule \(top.weight.kilogramText) × \(top.reps) → zkus \(top.weight.kilogramText) × \(top.reps + 1)", bundle: .kept)
     }
 }
 

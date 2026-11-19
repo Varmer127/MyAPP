@@ -12,7 +12,7 @@ struct BodyProgressView: View {
     @State private var comparing = false
     @State private var deleting: BodyEntry?
 
-    private static let poses: [(key: String, title: String)] = [("front", String(localized: "Zepředu")), ("side", String(localized: "Z boku")), ("back", String(localized: "Zezadu"))]
+    private static let poses: [(key: String, title: String)] = [("front", String(localized: "Zepředu", bundle: .kept)), ("side", String(localized: "Z boku", bundle: .kept)), ("back", String(localized: "Zezadu", bundle: .kept))]
 
     var body: some View {
         ScrollView {
@@ -40,7 +40,7 @@ struct BodyProgressView: View {
                 ForEach(entries) { entry in
                     Button { editing = entry } label: { entryCard(entry) }
                         .buttonStyle(.plain)
-                        .swipeToDelete(String(localized: "Smazat zápis"), cornerRadius: Theme.radius) { deleting = entry }
+                        .swipeToDelete(String(localized: "Smazat zápis", bundle: .kept), cornerRadius: Theme.radius) { deleting = entry }
                 }
             }
             .padding(.horizontal, Theme.screenPadding)
@@ -66,7 +66,7 @@ struct BodyProgressView: View {
                 Rectangle().fill(.ultraThickMaterial).ignoresSafeArea()
             }
         }
-        .modifier(FaceIDLock(isEnabled: true, title: String(localized: "Míry a fotky jsou zamčené"), reason: String(localized: "Odemknout míry a fotky")))
+        .modifier(FaceIDLock(isEnabled: true, title: String(localized: "Míry a fotky jsou zamčené", bundle: .kept), reason: String(localized: "Odemknout míry a fotky", bundle: .kept)))
     }
 
     private func entryCard(_ entry: BodyEntry) -> some View {
@@ -133,7 +133,7 @@ struct BodyProgressView: View {
         let points = entries.reversed().compactMap { entry in entry.waist.map { (entry.date, $0) } }
         if points.count >= 2 {
             VStack(spacing: 10) {
-                SectionLabel(text: "Pas (cm)")
+                SectionLabel(text: String(localized: "Pas (cm)", bundle: .kept))
                 Chart(points, id: \.0) { date, value in
                     LineMark(x: .value("Den", date), y: .value("cm", value))
                         .foregroundStyle(Theme.textPrimary)
@@ -149,8 +149,8 @@ struct BodyProgressView: View {
     }
 
     static func values(of entry: BodyEntry) -> [(String, Double, String)] {
-        [(String(localized: "Váha"), entry.weight, "kg"), (String(localized: "Pas"), entry.waist, "cm"), (String(localized: "Hrudník"), entry.chest, "cm"),
-         (String(localized: "Paže"), entry.arm, "cm"), (String(localized: "Stehno"), entry.thigh, "cm"), (String(localized: "Boky"), entry.hips, "cm")]
+        [(String(localized: "Váha", bundle: .kept), entry.weight, "kg"), (String(localized: "Pas", bundle: .kept), entry.waist, "cm"), (String(localized: "Hrudník", bundle: .kept), entry.chest, "cm"),
+         (String(localized: "Paže", bundle: .kept), entry.arm, "cm"), (String(localized: "Stehno", bundle: .kept), entry.thigh, "cm"), (String(localized: "Boky", bundle: .kept), entry.hips, "cm")]
             .compactMap { label, value, unit in value.map { (label, $0, unit) } }
     }
 }
@@ -183,18 +183,18 @@ private struct BodyEntryEditor: View {
     @State private var confirmsDelete = false
     @State private var noCamera = false
 
-    private static let poses: [(key: String, title: String)] = [("front", String(localized: "Zepředu")), ("side", String(localized: "Z boku")), ("back", String(localized: "Zezadu"))]
+    private static let poses: [(key: String, title: String)] = [("front", String(localized: "Zepředu", bundle: .kept)), ("side", String(localized: "Z boku", bundle: .kept)), ("back", String(localized: "Zezadu", bundle: .kept))]
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Míry") {
-                    field(String(localized: "Váha (kg)"), $entry.weight)
-                    field("Pas (cm)", $entry.waist)
-                    field(String(localized: "Hrudník (cm)"), $entry.chest)
-                    field(String(localized: "Paže (cm)"), $entry.arm)
-                    field("Stehno (cm)", $entry.thigh)
-                    field("Boky (cm)", $entry.hips)
+                    field(String(localized: "Váha (kg)", bundle: .kept), $entry.weight)
+                    field(String(localized: "Pas (cm)", bundle: .kept), $entry.waist)
+                    field(String(localized: "Hrudník (cm)", bundle: .kept), $entry.chest)
+                    field(String(localized: "Paže (cm)", bundle: .kept), $entry.arm)
+                    field(String(localized: "Stehno (cm)", bundle: .kept), $entry.thigh)
+                    field(String(localized: "Boky (cm)", bundle: .kept), $entry.hips)
                 }
                 .listRowBackground(Theme.card)
                 Section {

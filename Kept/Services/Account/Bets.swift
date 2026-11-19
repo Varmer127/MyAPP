@@ -137,6 +137,9 @@ final class BetsService {
     }
 
     func create(kind: Bet.Kind, title: String, terms: String, stake: Int, days: Int, invitees: [UUID]) async throws {
+        // The weekly duel has no name of its own; the server's fallback is Czech, so the app names it in its language.
+        let title = kind == .week && title.trimmingCharacters(in: .whitespaces).isEmpty
+            ? String(localized: "Kdo bude mít tento týden vyšší spolehlivost", bundle: .kept) : title
         try await account.perform {
             try await client.createBet(kind: kind, title: title, terms: terms, stake: stake, days: days, invitees: invitees, token: $0)
         }

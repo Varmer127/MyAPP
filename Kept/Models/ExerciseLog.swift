@@ -30,8 +30,8 @@ final class ExerciseLog {
 
     /// "80 kg × 8 · 3 série"
     var summary: String {
-        let load = weight > 0 ? weight.kilogramText : String(localized: "vlastní váha")
-        return String(localized: "\(load) × \(reps) · sérií: \(sets)")
+        let load = weight > 0 ? weight.kilogramText : String(localized: "vlastní váha", bundle: .kept)
+        return String(localized: "\(load) × \(reps) · sérií: \(sets)", bundle: .kept)
     }
 }
 

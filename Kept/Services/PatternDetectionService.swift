@@ -36,7 +36,7 @@ enum PatternDetectionService {
     static func warning(for task: TaskItem, tasks: [TaskItem], failures: [FailureRecord], now: Date = .now) -> String? {
         let history = history(of: task.title, tasks: tasks, failures: failures, now: now)
         guard history.attempts >= minimumAttempts, history.failures >= minimumFailures else { return nil }
-        return String(localized: "Z posledních \(history.attempts) pokusů jsi \(history.failures) nesplnil. Dnes ten vzorec můžeš přerušit.")
+        return String(localized: "Z posledních \(history.attempts) pokusů jsi \(history.failures) nesplnil. Dnes ten vzorec můžeš přerušit.", bundle: .kept)
     }
 
     /// Plain-language observations about the given tasks (already limited to a period by the caller).
@@ -45,7 +45,7 @@ enum PatternDetectionService {
         var insights: [String] = []
 
         if ScoreEngine.isBusyNotProductive(closed, now: now) {
-            insights.append(String(localized: "Splnil jsi hodně úkolů, ale ne ty důležité. Aktivita není produktivita."))
+            insights.append(String(localized: "Splnil jsi hodně úkolů, ale ne ty důležité. Aktivita není produktivita.", bundle: .kept))
         }
         insights += repeatedFailures(closed, failures: failures, now: now)
         if let contrast = categoryContrast(closed) { insights.append(contrast) }
@@ -55,16 +55,16 @@ enum PatternDetectionService {
 
         let late = closed.filter { $0.status == .completedLate && !$0.isRemoved }.count
         if late >= minimumSample {
-            insights.append(String(localized: "Pozdě dokončené úkoly: \(late). Děláš je, ale až po termínu."))
+            insights.append(String(localized: "Pozdě dokončené úkoly: \(late). Děláš je, ale až po termínu.", bundle: .kept))
         }
         let edits = plans.flatMap(\.edits)
         let removed = edits.filter { $0.kind == .removed }.count
         let moved = edits.filter { $0.kind == .moved }.count
         if removed > 0 {
-            insights.append(String(localized: "Po zavázání jsi odstranil úkoly: \(removed). Každý z nich je porušený slib."))
+            insights.append(String(localized: "Po zavázání jsi odstranil úkoly: \(removed). Každý z nich je porušený slib.", bundle: .kept))
         }
         if moved >= minimumSample {
-            insights.append(String(localized: "Přesunuté úkoly po zavázání: \(moved). Odkládáš, co sis naplánoval."))
+            insights.append(String(localized: "Přesunuté úkoly po zavázání: \(moved). Odkládáš, co sis naplánoval.", bundle: .kept))
         }
         return Array(insights.prefix(maxInsights))
     }
@@ -75,9 +75,9 @@ enum PatternDetectionService {
                 let lost = group.filter { $0.isLost(now) }.count
                 guard group.count >= minimumAttempts, lost >= minimumFailures, lost * 2 >= group.count,
                       let title = group.first?.title else { return nil }
-                var text = String(localized: "„\(title)“: nesplněno \(lost) z \(group.count).")
+                var text = String(localized: "„\(title)“: nesplněno \(lost) z \(group.count).", bundle: .kept)
                 if let reason = history(of: title, tasks: closed, failures: failures, now: now).topReason {
-                    text += String(localized: " Nejčastější důvod: \(reason.title).")
+                    text += String(localized: " Nejčastější důvod: \(reason.title).", bundle: .kept)
                 }
                 return (text, lost)
             }
@@ -90,7 +90,7 @@ enum PatternDetectionService {
         let rates = StatisticsService.categoryPerformance(closed).filter { $0.count >= minimumSample }
         guard let best = rates.max(by: { $0.rate < $1.rate }), let worst = rates.min(by: { $0.rate < $1.rate }),
               best.rate - worst.rate >= categoryGap else { return nil }
-        return String(localized: "\(best.category.title) plníš na \(best.rate.percentText), \(worst.category.title) jen na \(worst.rate.percentText).")
+        return String(localized: "\(best.category.title) plníš na \(best.rate.percentText), \(worst.category.title) jen na \(worst.rate.percentText).", bundle: .kept)
     }
 
     private static func weakestWeekday(_ closed: [TaskItem], now: Date) -> String? {
@@ -103,7 +103,7 @@ enum PatternDetectionService {
         }
         guard scored.count >= 2, let worst = scored.min(by: { $0.score < $1.score }),
               overall - worst.score >= weakDayGap else { return nil }
-        return String(localized: "Nejslabší den v týdnu: \(worst.day.weekdayText) (\(worst.score.percentText)). Kritické úkoly plánuj jinam.")
+        return String(localized: "Nejslabší den v týdnu: \(worst.day.weekdayText) (\(worst.score.percentText)). Kritické úkoly plánuj jinam.", bundle: .kept)
     }
 
     private static func eveningWeakness(_ closed: [TaskItem], now: Date) -> String? {
@@ -114,14 +114,14 @@ enum PatternDetectionService {
               let eveningRate = ScoreEngine.completionRate(evening),
               let earlierRate = ScoreEngine.completionRate(earlier),
               earlierRate - eveningRate >= categoryGap else { return nil }
-        return String(localized: "Po 19:00 plníš jen \(eveningRate.percentText) úkolů, dřív během dne \(earlierRate.percentText).")
+        return String(localized: "Po 19:00 plníš jen \(eveningRate.percentText) úkolů, dřív během dne \(earlierRate.percentText).", bundle: .kept)
     }
 
     private static func topExcuse(_ failures: [FailureRecord]) -> String? {
         guard let top = StatisticsService.excuseCounts(failures).first, top.count >= minimumFailures else { return nil }
-        var text = String(localized: "Nejčastější výmluva: „\(top.reason.title)“ (\(top.count)×).")
+        var text = String(localized: "Nejčastější výmluva: „\(top.reason.title)“ (\(top.count)×).", bundle: .kept)
         if top.highValue * 2 >= top.count, top.highValue > 0 {
-            text += String(localized: " Z toho \(top.highValue)× u toho nejdůležitějšího.")
+            text += String(localized: " Z toho \(top.highValue)× u toho nejdůležitějšího.", bundle: .kept)
         }
         return text
     }
@@ -147,7 +147,7 @@ enum PatternDetectionService {
             if average > 0, Double(planned.count) > average * oversizedPlanFactor {
                 let extra = Int(((Double(planned.count) / average - 1) * 100).rounded())
                 let averageText = average.formatted(.number.precision(.fractionLength(0...1)).locale(.app))
-                advice.append(String(localized: "Plánuješ \(planned.count) úkolů, v posledních týdnech jsi jich průměrně splnil \(averageText). To je o \(extra) % víc. Je to reálné?"))
+                advice.append(String(localized: "Plánuješ \(planned.count) úkolů, v posledních týdnech jsi jich průměrně splnil \(averageText). To je o \(extra) % víc. Je to reálné?", bundle: .kept))
             }
         }
 
@@ -163,7 +163,7 @@ enum PatternDetectionService {
                         && $0.priority.rank >= TaskPriority.high.rank
                 }
                 if let day = important.first?.scheduledDate {
-                    advice.append(String(localized: "\(day.weekdayText.capitalizedFirst) ti dlouhodobě nejde (\(score.percentText)). Důležité úkoly na ten den: \(important.count). Zvaž jiný den."))
+                    advice.append(String(localized: "\(day.weekdayText.capitalizedFirst) ti dlouhodobě nejde (\(score.percentText)). Důležité úkoly na ten den: \(important.count). Zvaž jiný den.", bundle: .kept))
                 }
             }
         }

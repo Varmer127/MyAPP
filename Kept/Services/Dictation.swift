@@ -25,7 +25,7 @@ final class Dictation: ObservableObject {
         stop()
         Task {
             guard await Self.requestPermissions() else {
-                errorMessage = String(localized: "Kept nemá přístup k mikrofonu nebo k rozpoznávání řeči. Povol je v Nastavení iPhonu → Aplikace → Kept.")
+                errorMessage = String(localized: "Kept nemá přístup k mikrofonu nebo k rozpoznávání řeči. Povol je v Nastavení iPhonu → Aplikace → Kept.", bundle: .kept)
                 return
             }
             start(field: field, text: text)
@@ -45,7 +45,7 @@ final class Dictation: ObservableObject {
 
     private func start(field: String, text: Binding<String>) {
         guard let recognizer, recognizer.isAvailable else {
-            errorMessage = String(localized: "Rozpoznávání češtiny teď není dostupné.")
+            errorMessage = String(localized: "Rozpoznávání češtiny teď není dostupné.", bundle: .kept)
             return
         }
         do {
@@ -75,7 +75,7 @@ final class Dictation: ObservableObject {
                 }
             }
         } catch {
-            errorMessage = String(localized: "Nahrávání se nepodařilo spustit.")
+            errorMessage = String(localized: "Nahrávání se nepodařilo spustit.", bundle: .kept)
             stop()
         }
     }

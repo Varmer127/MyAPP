@@ -153,7 +153,7 @@ struct SealNowSheet: View {
                                             .foregroundStyle(Theme.textPrimary)
                                             .lineLimit(1)
                                         Spacer()
-                                        Text([task.deadline.map { String(localized: "do \($0.timeText)") }, "\(task.plannedMinutes) min"].compactMap { $0 }.joined(separator: " · "))
+                                        Text([task.deadline.map { String(localized: "do \($0.timeText)", bundle: .kept) }, "\(task.plannedMinutes) min"].compactMap { $0 }.joined(separator: " · "))
                                             .scaledFont(.caption)
                                             .foregroundStyle(Theme.textSecondary)
                                     }
@@ -221,7 +221,7 @@ private extension SealingCard {
             HStack {
                 Text("CO JE V PLÁNOVAČI").labelStyle()
                 Spacer()
-                Text(String(localized: "\(duration(all.reduce(0) { $0 + $1.plannedMinutes })) · kritické: \(all.filter { $0.priority == .critical }.count)"))
+                Text(String(localized: "\(duration(all.reduce(0) { $0 + $1.plannedMinutes })) · kritické: \(all.filter { $0.priority == .critical }.count)", bundle: .kept))
                     .scaledFont(.caption)
                     .foregroundStyle(Theme.textSecondary)
             }
@@ -297,9 +297,9 @@ private extension SealingCard {
                         .lineLimit(1)
                     Spacer()
                     Text(isPledgeable(task)
-                         ? [task.deadline.map { String(localized: "do \($0.timeText)") }, duration(task.plannedMinutes)]
+                         ? [task.deadline.map { String(localized: "do \($0.timeText)", bundle: .kept) }, duration(task.plannedMinutes)]
                             .compactMap { $0 }.joined(separator: " · ")
-                         : (task.isDone ? "hotovo" : String(localized: "uzavřeno")))
+                         : (task.isDone ? "hotovo" : String(localized: "uzavřeno", bundle: .kept)))
                         .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary)
                 }
@@ -355,8 +355,8 @@ struct WeekTaskRow: View {
     var subtitle: String {
         var parts = [task.category.title, "\(task.plannedMinutes) min"]
         if let deadline = task.deadline { parts.append(deadline.timeText) }
-        if task.moveCount > 0 { parts.append(String(localized: "přesunuto")) }
-        if task.isAddedAfterCommitment { parts.append(String(localized: "přidáno později")) }
+        if task.moveCount > 0 { parts.append(String(localized: "přesunuto", bundle: .kept)) }
+        if task.isAddedAfterCommitment { parts.append(String(localized: "přidáno později", bundle: .kept)) }
         return parts.joined(separator: " · ")
     }
 }
@@ -372,13 +372,13 @@ struct PlanChangesView: View {
 
     var body: some View {
         VStack(spacing: 10) {
-            SectionLabel(text: String(localized: "Původní vs. aktuální plán"))
+            SectionLabel(text: String(localized: "Původní vs. aktuální plán", bundle: .kept))
             TileRow {
-                MetricTile(value: "\(plan.committedTasks.count)", label: String(localized: "Původní"))
-                MetricTile(value: "\(plan.activeTasks.count)", label: String(localized: "Aktuální"))
-                MetricTile(value: "\(removed.count)", label: String(localized: "Odstraněno"),
+                MetricTile(value: "\(plan.committedTasks.count)", label: String(localized: "Původní", bundle: .kept))
+                MetricTile(value: "\(plan.activeTasks.count)", label: String(localized: "Aktuální", bundle: .kept))
+                MetricTile(value: "\(removed.count)", label: String(localized: "Odstraněno", bundle: .kept),
                            color: removed.isEmpty ? Theme.textPrimary : Theme.red)
-                MetricTile(value: "\(movedCount)", label: String(localized: "Přesunuto"),
+                MetricTile(value: "\(movedCount)", label: String(localized: "Přesunuto", bundle: .kept),
                            color: movedCount == 0 ? Theme.textPrimary : Theme.orange)
             }
             if addedCount > 0 {

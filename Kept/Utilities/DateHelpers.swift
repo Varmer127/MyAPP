@@ -11,18 +11,39 @@ extension Calendar {
     }()
 }
 
-/// The language Kept speaks: the one iOS picked for it from the phone's languages, or the one chosen
-/// in Settings → Kept → Language. Czech unless English comes first.
-enum AppLanguage: String {
+/// The language Kept speaks: the one chosen in the app (in the guide or in Settings), otherwise the suggested one.
+enum AppLanguage: String, CaseIterable, Identifiable {
     case cs, en
 
-    static let current: AppLanguage = Bundle.main.preferredLocalizations.first.flatMap(AppLanguage.init(rawValue:)) ?? .cs
+    var id: String { rawValue }
+
+    /// The language's own name, never translated.
+    var title: String {
+        switch self {
+        case .cs: "Čeština"
+        case .en: "English"
+        }
+    }
+
+    static var current: AppLanguage {
+        KeptLanguage.chosen.flatMap(AppLanguage.init(rawValue:)) ?? suggested
+    }
+
+    /// English, unless the phone looks Czech: set to the Czech region, or with Czech among its languages.
+    /// Only the phone's own settings are read; nothing about the user leaves the device.
+    static var suggested: AppLanguage {
+        suggested(region: Locale.current.region?.identifier, languages: Locale.preferredLanguages)
+    }
+
+    static func suggested(region: String?, languages: [String]) -> AppLanguage {
+        region == "CZ" || languages.contains { $0.lowercased().hasPrefix("cs") } ? .cs : .en
+    }
 }
 
 extension Locale {
     /// Dates, numbers and speech in the app's language. English keeps the phone's region, so dates read
     /// the British or the American way as the user is used to.
-    static let app: Locale = {
+    static var app: Locale {
         switch AppLanguage.current {
         case .cs:
             return Locale(identifier: "cs_CZ")
@@ -30,7 +51,7 @@ extension Locale {
             let region = Locale.current.region?.identifier ?? "GB"
             return Locale(identifier: "en_\(region)")
         }
-    }()
+    }
 }
 
 extension Date {
@@ -94,7 +115,7 @@ extension String {
 
     /// "1 den", "3 dny", "5 dní" / "1 day", "5 days": the plural forms of both languages live in the string catalog.
     static func days(_ count: Int) -> String {
-        String(localized: "\(count) dní", comment: "A number of days, with plural forms")
+        String(localized: "\(count) dní", bundle: .kept, comment: "A number of days, with plural forms")
     }
 }
 

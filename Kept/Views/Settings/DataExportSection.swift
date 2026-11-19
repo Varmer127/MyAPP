@@ -62,7 +62,7 @@ struct DataExportSection: View {
 
     private func authenticate() async -> Bool {
         await withCheckedContinuation { continuation in
-            LAContext().evaluatePolicy(.deviceOwnerAuthentication, localizedReason: String(localized: "Zahrnout deník do exportu")) { success, _ in
+            LAContext().evaluatePolicy(.deviceOwnerAuthentication, localizedReason: String(localized: "Zahrnout deník do exportu", bundle: .kept)) { success, _ in
                 continuation.resume(returning: success)
             }
         }

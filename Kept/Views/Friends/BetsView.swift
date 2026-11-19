@@ -67,15 +67,15 @@ enum BetText {
     static func summary(_ bet: Bet) -> String {
         switch bet.status {
         case .open:
-            if bet.awaitsMyAnswer { return String(localized: "Pozvánka · vklad \(bet.stake) b.") }
-            if bet.awaitsMyVerdict { return String(localized: "\(bet.name(of: bet.claimant) ?? "") tvrdí, že to splnil") }
-            return String(localized: "V banku \(bet.pot) b. · do \(bet.endsAt.formatted(.dateTime.day().month().locale(.app)))")
+            if bet.awaitsMyAnswer { return String(localized: "Pozvánka · vklad \(bet.stake) b.", bundle: .kept) }
+            if bet.awaitsMyVerdict { return String(localized: "\(bet.name(of: bet.claimant) ?? "") tvrdí, že to splnil", bundle: .kept) }
+            return String(localized: "V banku \(bet.pot) b. · do \(bet.endsAt.formatted(.dateTime.day().month().locale(.app)))", bundle: .kept)
         case .settled:
             return bet.winner == bet.me?.id
-                ? String(localized: "Vyhrál jsi \(bet.pot) b.")
-                : String(localized: "Vyhrál \(bet.name(of: bet.winner) ?? "")")
-        case .refunded: return String(localized: "Bez vítěze, vklady vráceny")
-        case .cancelled: return String(localized: "Zrušeno, vklad vrácen")
+                ? String(localized: "Vyhrál jsi \(bet.pot) b.", bundle: .kept)
+                : String(localized: "Vyhrál \(bet.name(of: bet.winner) ?? "")", bundle: .kept)
+        case .refunded: return String(localized: "Bez vítěze, vklady vráceny", bundle: .kept)
+        case .cancelled: return String(localized: "Zrušeno, vklad vrácen", bundle: .kept)
         }
     }
 }
@@ -263,7 +263,7 @@ struct BetDetailView: View {
                     Section("Kdo hraje") {
                         ForEach(bet.participants) { person in
                             HStack {
-                                Text(person.isMe ? "Ty" : person.name).foregroundStyle(Theme.textPrimary)
+                                Text(person.isMe ? String(localized: "Ty", bundle: .kept) : person.name).foregroundStyle(Theme.textPrimary)
                                 Spacer()
                                 Text(state(of: person, in: bet)).scaledFont(.caption).foregroundStyle(Theme.textSecondary)
                             }

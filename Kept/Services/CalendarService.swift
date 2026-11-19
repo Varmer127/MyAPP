@@ -13,7 +13,7 @@ enum CalendarService {
 
         /// "10:00–12:00 Zkouška" or "celý den · Dovolená"
         var summary: String {
-            isAllDay ? String(localized: "celý den · \(title)") : "\(start.timeText)–\(end.timeText) \(title)"
+            isAllDay ? String(localized: "celý den · \(title)", bundle: .kept) : "\(start.timeText)–\(end.timeText) \(title)"
         }
     }
 
@@ -38,7 +38,7 @@ enum CalendarService {
         let predicate = store.predicateForEvents(withStart: start, end: end, calendars: nil)
         return store.events(matching: predicate)
             .filter { $0.status != .canceled }
-            .map { Event(id: "\($0.eventIdentifier ?? "")-\($0.startDate.timeIntervalSince1970)", title: $0.title ?? String(localized: "Událost"),
+            .map { Event(id: "\($0.eventIdentifier ?? "")-\($0.startDate.timeIntervalSince1970)", title: $0.title ?? String(localized: "Událost", bundle: .kept),
                          start: $0.startDate, end: $0.endDate, isAllDay: $0.isAllDay) }
             .sorted { $0.start < $1.start }
     }

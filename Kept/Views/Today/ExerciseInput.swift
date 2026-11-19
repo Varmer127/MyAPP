@@ -47,7 +47,7 @@ struct ExerciseInput: View {
                     Button {
                         toggle(name)
                     } label: {
-                        Text(name)
+                        Text(name.exerciseShown)
                             .scaledFont(.caption, weight: .semibold)
                             .foregroundStyle(isSelected ? Theme.onPrimary : Theme.textPrimary)
                             .lineLimit(1)
@@ -94,7 +94,7 @@ struct ExerciseInput: View {
     private func row(_ draft: Binding<ExerciseDraft>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(draft.wrappedValue.name)
+                Text(draft.wrappedValue.name.exerciseShown)
                     .scaledFont(.body, weight: .semibold)
                     .foregroundStyle(Theme.textPrimary)
                 Spacer()
@@ -116,7 +116,7 @@ struct ExerciseInput: View {
                         .scaledFont(.heading, weight: .semibold)
                         .multilineTextAlignment(.center)
                 }
-                column(String(localized: "OPAKOVÁNÍ")) {
+                column(String(localized: "OPAKOVÁNÍ", bundle: .kept)) {
                     Picker("Opakování", selection: draft.reps) {
                         ForEach(Self.repsRange, id: \.self) { Text("\($0)").tag($0) }
                     }
@@ -124,7 +124,7 @@ struct ExerciseInput: View {
                     .labelsHidden()
                     .tint(Theme.textPrimary)
                 }
-                column(String(localized: "SÉRIE")) {
+                column(String(localized: "SÉRIE", bundle: .kept)) {
                     Picker("Série", selection: draft.sets) {
                         ForEach(Self.setsRange, id: \.self) { Text("\($0)").tag($0) }
                     }
@@ -145,7 +145,7 @@ struct ExerciseInput: View {
             }
         }
         .card(padding: 12)
-        .swipeToDelete("Odebrat cvik", cornerRadius: Theme.radius) { toggle(draft.wrappedValue.name) }
+        .swipeToDelete(String(localized: "Odebrat cvik", bundle: .kept), cornerRadius: Theme.radius) { toggle(draft.wrappedValue.name) }
     }
 
     /// One labelled input cell of an exercise row.

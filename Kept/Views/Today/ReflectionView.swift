@@ -138,7 +138,7 @@ struct ReflectionView: View {
                     .buttonStyle(.plain)
                 }
             }
-            Text(satisfaction == 0 ? String(localized: "1 = vůbec, 5 = naprosto") : WeekReflection.satisfactionLabels[satisfaction - 1])
+            Text(satisfaction == 0 ? String(localized: "1 = vůbec, 5 = naprosto", bundle: .kept) : WeekReflection.satisfactionLabels[satisfaction - 1])
                 .scaledFont(.caption)
                 .foregroundStyle(Theme.textSecondary)
             Text("DENÍČEK").labelStyle().padding(.top, 6)

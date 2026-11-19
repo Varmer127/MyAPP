@@ -41,7 +41,7 @@ enum LegalLanguage: String, CaseIterable, Identifiable {
     /// The name of each language in that language, so it is not translated.
     var title: String {
         switch self {
-        case .cs: String(localized: "Česky")
+        case .cs: String(localized: "Česky", bundle: .kept)
         case .en: "English"
         }
     }

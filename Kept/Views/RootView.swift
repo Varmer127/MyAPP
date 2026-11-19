@@ -18,7 +18,7 @@ struct RootView: View {
     @Query private var plans: [WeeklyPlan]
     @Query private var settingsList: [UserSettings]
     @Query private var purchases: [PointsPurchase]
-    @State private var tab: AppTab = .today
+    @State private var tab: AppTab = LanguageSwitch.shared.takeReopensSettings() ? .settings : .today
     @State private var weekShowsNext = false
     @State private var showsRealityCheck = false
     /// Opened by a tapped notification from a friend.

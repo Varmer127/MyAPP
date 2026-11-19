@@ -8,6 +8,7 @@ struct KeptApp: App {
     @State private var showsIntro = true
     @State private var isReady = false
     init() {
+        LanguageSwitch.installAtLaunch()
         UNUserNotificationCenter.current().delegate = NotificationRouter.shared
         WidgetActions.complete = { await AppStore.completeFromWidget($0) }
         WidgetActions.gymRest = { await GymActivityManager.toggleRest(start: $0) }
@@ -28,6 +29,7 @@ struct KeptApp: App {
                     .zIndex(1)
                 }
             }
+            .id(LanguageSwitch.shared.revision)
             .appAppearance()
             .environment(\.locale, .app)
             .modifier(FriendLinkHandler())

@@ -31,7 +31,7 @@ struct Badge: View {
 /// Number over label, used in rows of three under the hero score.
 struct MetricTile: View {
     /// What a tile says when there is nothing to measure yet; also what the statistics say.
-    static let noData = String(localized: "po prvním týdnu")
+    static let noData = String(localized: "po prvním týdnu", bundle: .kept)
 
     let value: String
     let label: String

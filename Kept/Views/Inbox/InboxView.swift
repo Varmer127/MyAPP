@@ -140,37 +140,37 @@ struct InboxView: View {
                     .listRowBackground(Theme.card)
                 }
                 if let recap = items.yesterday {
-                    row("sunrise", "Jak dopadl včerejšek", String(localized: "Dodrženo \(recap.done) z \(recap.total). Shrnutí včerejšího dne.")) {
+                    row("sunrise", "Jak dopadl včerejšek", String(localized: "Dodrženo \(recap.done) z \(recap.total). Shrnutí včerejšího dne.", bundle: .kept)) {
                         dayRecap = recap
                     }
                 }
                 if let week = items.week {
-                    row("sparkles", "Tvůj týden je hotový", String(localized: "\(week.done) z \(week.total) slibů. Podívej se, jak to dopadlo.")) {
+                    row("sparkles", "Tvůj týden je hotový", String(localized: "\(week.done) z \(week.total) slibů. Podívej se, jak to dopadlo.", bundle: .kept)) {
                         weekStory = week
                     }
                 }
                 if let month = items.month {
-                    row("calendar.badge.checkmark", "Tvůj měsíc je hotový", String(localized: "\(month.done) z \(month.total) slibů. Podívej se, jak to dopadlo.")) {
+                    row("calendar.badge.checkmark", "Tvůj měsíc je hotový", String(localized: "\(month.done) z \(month.total) slibů. Podívej se, jak to dopadlo.", bundle: .kept)) {
                         monthStory = month
                     }
                 }
                 if items.bets > 0 {
-                    link("trophy", "Sázky čekají na tebe", String(localized: "Pozvánky a výsledky k potvrzení: \(items.bets)")) { BetsView() }
+                    link("trophy", "Sázky čekají na tebe", String(localized: "Pozvánky a výsledky k potvrzení: \(items.bets)", bundle: .kept)) { BetsView() }
                 }
                 if items.challenges > 0 {
-                    link("flag.2.crossed", "Pozvánka do výzvy", String(localized: "Čeká na odpověď: \(items.challenges)")) { ChallengesView() }
+                    link("flag.2.crossed", "Pozvánka do výzvy", String(localized: "Čeká na odpověď: \(items.challenges)", bundle: .kept)) { ChallengesView() }
                 }
                 if items.groups > 0 {
-                    link("person.3", "Pozvánka do skupiny", String(localized: "Čeká na odpověď: \(items.groups)")) { GroupsView() }
+                    link("person.3", "Pozvánka do skupiny", String(localized: "Čeká na odpověď: \(items.groups)", bundle: .kept)) { GroupsView() }
                 }
                 if items.activities > 0 {
-                    link("calendar.badge.plus", "Pozvánka na společnou aktivitu", String(localized: "Čeká na odpověď: \(items.activities)")) { ActivitiesView() }
+                    link("calendar.badge.plus", "Pozvánka na společnou aktivitu", String(localized: "Čeká na odpověď: \(items.activities)", bundle: .kept)) { ActivitiesView() }
                 }
                 if items.buddy > 0 {
                     link("figure.2", "Chtějí být tvoji parťáci", TogetherService.shared.incomingBuddies.map(\.name).joined(separator: ", ")) { BuddyView() }
                 }
                 if items.witness > 0 {
-                    link("person.badge.shield.checkmark", "Žádost o potvrzení", String(localized: "Čeká na tebe: \(items.witness)")) { WitnessInboxView() }
+                    link("person.badge.shield.checkmark", "Žádost o potvrzení", String(localized: "Čeká na tebe: \(items.witness)", bundle: .kept)) { WitnessInboxView() }
                 }
                 if items.pokes > 0 {
                     NavigationLink { FriendsView() } label: {
@@ -247,7 +247,7 @@ struct InboxView: View {
     /// The newest unread pokes in one line: who and what.
     private var latestPokes: String {
         friends.pokes.filter { !$0.seen }.prefix(2)
-            .map { $0.body.isEmpty ? $0.senderName : String(localized: "\($0.senderName): \($0.body)") }
+            .map { $0.body.isEmpty ? $0.senderName : String(localized: "\($0.senderName): \($0.body)", bundle: .kept) }
             .joined(separator: " · ")
     }
 

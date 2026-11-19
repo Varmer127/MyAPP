@@ -31,7 +31,7 @@ struct FriendsView: View {
         .confirmationDialog("Nahlásit pošťouchnutí", isPresented: Binding(get: { reportingPoke != nil }, set: { if !$0 { reportingPoke = nil } }),
                             titleVisibility: .visible) {
             ForEach(ReportReason.allCases) { reason in
-                Button(String(localized: reason.title)) { reportPoke(with: reason) }
+                Button(reason.title) { reportPoke(with: reason) }
             }
         } message: {
             Text("Text zmizí a my ho uvidíme. Ten člověk se nedozví, kdo ho nahlásil.")
@@ -267,7 +267,7 @@ struct FriendsView: View {
     /// The reason a friend chose to show, in words.
     private static func reasonText(_ friend: Friend) -> String {
         if let text = friend.dndReasonText, !text.isEmpty { return text }
-        return DNDReason(rawValue: friend.dndReasonKey ?? "").map { String(localized: $0.title) } ?? ""
+        return DNDReason(rawValue: friend.dndReasonKey ?? "").map { $0.title } ?? ""
     }
 
     private func reportPoke(with reason: ReportReason) {

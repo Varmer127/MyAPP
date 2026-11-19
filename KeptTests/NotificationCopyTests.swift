@@ -3,9 +3,11 @@ import Testing
 @testable import Kept
 
 struct NotificationCopyTests {
+    private let languages: [NotificationCopy.Type] = [CzechNotificationCopy.self, EnglishNotificationCopy.self]
+
     /// A banner shows two lines; a message longer than that is cut off mid-thought.
     @Test func gentleAndStrictMessagesFitABanner() {
-        for template in NotificationTemplates.gentleAndStrict {
+        for template in languages.flatMap({ NotificationTemplates.gentleAndStrict($0) }) {
             let filled = template
                 .replacingOccurrences(of: "{time}", with: "17:30")
                 .replacingOccurrences(of: "{why}", with: "Chci mluvit plynule")
@@ -18,8 +20,21 @@ struct NotificationCopyTests {
 
     /// The task's name is the title, so Normal and Strict bodies never have to decline it.
     @Test func gentleAndStrictBodiesDoNotBendTheTaskName() {
-        for template in NotificationTemplates.gentleAndStrict {
+        for template in languages.flatMap({ NotificationTemplates.gentleAndStrict($0) }) {
             #expect(!template.contains("{task}"), "Names the task in the body: \(template)")
+        }
+    }
+
+    /// English is written for the same moments: every list has the same number of messages,
+    /// and each message uses the same placeholders as its Czech counterpart.
+    @Test func englishMatchesTheCzechStructure() {
+        let czech = NotificationTemplates.all(CzechNotificationCopy.self)
+        let english = NotificationTemplates.all(EnglishNotificationCopy.self)
+        #expect(czech.count == english.count)
+        for (cs, en) in zip(czech, english) {
+            for placeholder in ["{task}", "{time}", "{why}", "{n}", "{days}"] {
+                #expect(cs.contains(placeholder) == en.contains(placeholder), "\(placeholder): \(cs) / \(en)")
+            }
         }
     }
 

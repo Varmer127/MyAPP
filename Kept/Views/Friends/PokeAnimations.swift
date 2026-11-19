@@ -81,7 +81,7 @@ struct PokeArrivedView: View {
                 Button("JASNĚ, JDU NA TO") { onDone() }
                     .buttonStyle(PrimaryButtonStyle())
                 if let sender = poke.actorId {
-                    Button("Ztlumit šťouchnutí od \(poke.actorName ?? String(localized: "tohoto přítele")) na týden") {
+                    Button("Ztlumit šťouchnutí od \(poke.actorName ?? String(localized: "tohoto přítele", bundle: .kept)) na týden") {
                         Task { try? await NotificationsService.shared.mutePokes(from: sender, days: 7) }
                         onDone()
                     }

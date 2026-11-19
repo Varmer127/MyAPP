@@ -168,7 +168,7 @@ struct ExerciseDetailView: View {
                 HStack(spacing: 14) {
                     ExerciseThumb(name: name, size: 64)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(name)
+                        Text(name.exerciseShown)
                             .scaledFont(.title, weight: .bold)
                             .foregroundStyle(Theme.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -237,7 +237,7 @@ struct ExerciseDetailView: View {
                     }
                     .card()
                 }
-                if let tip = info.catalog?.tip {
+                if let tip = info.catalog?.shownTip {
                     Label(tip, systemImage: "lightbulb.fill")
                         .scaledFont(.body)
                         .foregroundStyle(Theme.textSecondary)

@@ -47,7 +47,7 @@ struct WeekStory {
             bestDay: best.map { ($0.day.weekdayText.capitalizedFirst, Int(($0.value * 100).rounded())) },
             hardest: hardTask.map { task in
                 (task.title, task.icon,
-                 task.moveCount > 0 ? String(localized: "\(task.moveCount)× posunutý") + (task.isDone ? String(localized: ", a přece splněný.") : ".") : String(localized: "Tenhle slib se nepovedl."),
+                 task.moveCount > 0 ? String(localized: "\(task.moveCount)× posunutý", bundle: .kept) + (task.isDone ? String(localized: ", a přece splněný.", bundle: .kept) : ".") : String(localized: "Tenhle slib se nepovedl.", bundle: .kept),
                  task.isDone)
             },
             diaryQuote: quote.map { String($0.prefix(140)) },
@@ -59,9 +59,9 @@ struct WeekStory {
     /// A made-up week for trying the story out when there is no real one yet. Used only by the developer test.
     static var demo: WeekStory {
         WeekStory(weekStart: Date.now.weekStart, done: 9, total: 11, percent: 82, delta: 6,
-                  bestDay: (String(localized: "Středa"), 100),
-                  hardest: (String(localized: "Gym"), "dumbbell.fill", String(localized: "2× posunutý, a přece splněný."), true),
-                  diaryQuote: String(localized: "Dneska se mi chtělo nejmíň a stejně jsem to udělal. To je ten rozdíl."),
+                  bestDay: (String(localized: "Středa", bundle: .kept), 100),
+                  hardest: (String(localized: "Gym", bundle: .kept), "dumbbell.fill", String(localized: "2× posunutý, a přece splněný.", bundle: .kept), true),
+                  diaryQuote: String(localized: "Dneska se mi chtělo nejmíň a stejně jsem to udělal. To je ten rozdíl.", bundle: .kept),
                   streak: 9, dayValues: [1, 0.6, 1, 0.75, 1, 0.5, 0])
     }
 
@@ -157,8 +157,8 @@ struct WeekStoryView: View {
                 Text("slibů jsi dodržel.")
                     .scaledFont(.title, weight: .heavy)
                     .foregroundStyle(Theme.textPrimary)
-                Text(story.delta.map { $0 >= 0 ? String(localized: "\(story.percent) %, o \(abs($0)) % víc než minule")
-                                         : String(localized: "\(story.percent) %, o \(abs($0)) % méně než minule") } ?? "\(story.percent) %")
+                Text(story.delta.map { $0 >= 0 ? String(localized: "\(story.percent) %, o \(abs($0)) % víc než minule", bundle: .kept)
+                                         : String(localized: "\(story.percent) %, o \(abs($0)) % méně než minule", bundle: .kept) } ?? "\(story.percent) %")
                     .scaledFont(.body, weight: .bold)
                     .foregroundStyle((story.delta ?? 0) >= 0 ? Theme.green : Theme.orange)
             }
@@ -168,7 +168,7 @@ struct WeekStoryView: View {
                 Text(story.bestDay?.name ?? "")
                     .scaledFont(.hero, weight: .black)
                     .foregroundStyle(Theme.textPrimary)
-                Text(String(localized: "\(story.bestDay?.percent ?? 0) % splněno."))
+                Text(String(localized: "\(story.bestDay?.percent ?? 0) % splněno.", bundle: .kept))
                     .scaledFont(.heading)
                     .foregroundStyle(Theme.textSecondary)
                 HStack(alignment: .bottom, spacing: 10) {
@@ -268,7 +268,7 @@ struct WeekStoryShareCard: View {
             Text("\(story.percent) %")
                 .scaledFont(.hero, weight: .black)
                 .foregroundStyle(Color(red: 0.19, green: 0.82, blue: 0.35))
-            Text(String(localized: "\(story.done) z \(story.total) slibů") + (story.streak > 1 ? String(localized: " · série \(story.streak) dní") : ""))
+            Text(String(localized: "\(story.done) z \(story.total) slibů", bundle: .kept) + (story.streak > 1 ? String(localized: " · série \(story.streak) dní", bundle: .kept) : ""))
                 .scaledFont(.caption)
                 .foregroundStyle(Color(white: 0.6))
         }

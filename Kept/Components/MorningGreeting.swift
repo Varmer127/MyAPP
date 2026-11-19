@@ -151,27 +151,27 @@ struct MorningGreeting: View {
 
     private var greeting: String {
         switch freshStart {
-        case .week: name.isEmpty ? String(localized: "Nový týden. Čistá tabule.") : String(localized: "Nový týden, \(name). Čistá tabule.")
-        case .month: name.isEmpty ? String(localized: "Nový měsíc. Čistá tabule.") : String(localized: "Nový měsíc, \(name). Čistá tabule.")
-        case nil: name.isEmpty ? String(localized: "Dobré ráno.") : String(localized: "Dobré ráno, \(name).")
+        case .week: name.isEmpty ? String(localized: "Nový týden. Čistá tabule.", bundle: .kept) : String(localized: "Nový týden, \(name). Čistá tabule.", bundle: .kept)
+        case .month: name.isEmpty ? String(localized: "Nový měsíc. Čistá tabule.", bundle: .kept) : String(localized: "Nový měsíc, \(name). Čistá tabule.", bundle: .kept)
+        case nil: name.isEmpty ? String(localized: "Dobré ráno.", bundle: .kept) : String(localized: "Dobré ráno, \(name).", bundle: .kept)
         }
     }
 
     private var headline: String {
         if case let .week(done, total) = freshStart {
-            return total > 0 ? String(localized: "Minulý týden jsi dodržel \(done) z \(total) slibů. Teď to můžeš zopakovat, nebo přidat.") : String(localized: "Minulý týden nic nebylo. Dnes se dá začít.")
+            return total > 0 ? String(localized: "Minulý týden jsi dodržel \(done) z \(total) slibů. Teď to můžeš zopakovat, nebo přidat.", bundle: .kept) : String(localized: "Minulý týden nic nebylo. Dnes se dá začít.", bundle: .kept)
         }
-        if case .month = freshStart { return String(localized: "Dnes začíná nový měsíc. Co sis na něj slíbil?") }
+        if case .month = freshStart { return String(localized: "Dnes začíná nový měsíc. Co sis na něj slíbil?", bundle: .kept) }
         let count = open.count
         if count == 0 {
-            return openFromBefore > 0 ? String(localized: "Dnes nic v plánu, ale z minula čeká \(openFromBefore) otevřených.") : String(localized: "Dnes máš prázdno.")
+            return openFromBefore > 0 ? String(localized: "Dnes nic v plánu, ale z minula čeká \(openFromBefore) otevřených.", bundle: .kept) : String(localized: "Dnes máš prázdno.", bundle: .kept)
         }
-        return String(localized: "Dnes slibuješ \(count) věcí.", comment: "Number of promises today, with plural forms")
+        return String(localized: "Dnes slibuješ \(count) věcí.", bundle: .kept, comment: "Number of promises today, with plural forms")
     }
 
     private var streakLine: (text: String, isAlive: Bool)? {
-        if streak > 0 { return (String(localized: "Série \(String.days(streak)). Dnes ji prodloužíš."), true) }
-        return (String(localized: "Dnes můžeš začít novou sérii."), false)
+        if streak > 0 { return (String(localized: "Série \(String.days(streak)). Dnes ji prodloužíš.", bundle: .kept), true) }
+        return (String(localized: "Dnes můžeš začít novou sérii.", bundle: .kept), false)
     }
 }
 

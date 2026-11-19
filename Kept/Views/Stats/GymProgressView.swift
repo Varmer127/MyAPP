@@ -130,10 +130,10 @@ struct GymProgressView: View {
         let thisWeek = workouts.filter { Self.date(of: $0).weekStart == Date.now.weekStart }.count
         let target = settingsList.first?.weeklyTarget(for: .gym) ?? TaskCategory.gym.defaultWeeklyTarget
         return TileRow {
-            MetricTile(value: target > 0 ? "\(thisWeek) / \(target)" : "\(thisWeek)", label: String(localized: "Tento týden"),
+            MetricTile(value: target > 0 ? "\(thisWeek) / \(target)" : "\(thisWeek)", label: String(localized: "Tento týden", bundle: .kept),
                        color: target > 0 && thisWeek >= target ? Theme.green : Theme.textPrimary)
-            MetricTile(value: "\(recent.count)", label: String(localized: "Za 30 dní"))
-            MetricTile(value: "\(workouts.count)", label: "Celkem")
+            MetricTile(value: "\(recent.count)", label: String(localized: "Za 30 dní", bundle: .kept))
+            MetricTile(value: "\(workouts.count)", label: String(localized: "Celkem", bundle: .kept))
         }
     }
 
@@ -153,7 +153,7 @@ struct GymProgressView: View {
 
         if !presets.isEmpty {
             VStack(spacing: 10) {
-                SectionLabel(text: String(localized: "Co jsi jel za \(Self.recentDays) dní"))
+                SectionLabel(text: String(localized: "Co jsi jel za \(Self.recentDays) dní", bundle: .kept))
                 VStack(spacing: 14) {
                     ForEach(presets, id: \.self) { name in
                         let count = counts[name] ?? 0
@@ -233,9 +233,9 @@ struct GymProgressView: View {
     /// trained and then left for a long time gets the orange warning.
     private func splitNote(last: Date?) -> (text: String, isWarning: Bool)? {
         guard !workouts.isEmpty else { return nil }
-        guard let last else { return (String(localized: "Zatím ani jednou"), false) }
+        guard let last else { return (String(localized: "Zatím ani jednou", bundle: .kept), false) }
         let days = Calendar.app.dateComponents([.day], from: last.startOfDay, to: Date.now.startOfDay).day ?? 0
-        return days >= Self.neglectDays ? (String(localized: "Naposledy před \(days) dny. Vynecháváš to."), true) : nil
+        return days >= Self.neglectDays ? (String(localized: "Naposledy před \(days) dny. Vynecháváš to.", bundle: .kept), true) : nil
     }
 
     // MARK: Strength
@@ -266,7 +266,7 @@ struct GymProgressView: View {
         let all = lifts
         let names = all.keys.sorted()
         VStack(spacing: 10) {
-            SectionLabel(text: String(localized: "Cviky a síla"))
+            SectionLabel(text: String(localized: "Cviky a síla", bundle: .kept))
             if names.isEmpty {
                 Text("Při zápisu tréninku vyber cviky a zapiš váhu, opakování a série. Tady pak uvidíš, jak sílíš.")
                     .scaledFont(.body)
@@ -285,9 +285,9 @@ struct GymProgressView: View {
                         let best = entries.map(\.weight).max() ?? last.weight
                         let bestMax = entries.map(\.estimatedMax).max() ?? last.estimatedMax
                         TileRow {
-                            MetricTile(value: last.weight.kilogramText, label: "Naposledy × \(last.reps)")
-                            MetricTile(value: best.kilogramText, label: String(localized: "Nejtěžší váha"))
-                            MetricTile(value: bestMax.kilogramText, label: "Odhad maxima")
+                            MetricTile(value: last.weight.kilogramText, label: String(localized: "Naposledy × \(last.reps)", bundle: .kept))
+                            MetricTile(value: best.kilogramText, label: String(localized: "Nejtěžší váha", bundle: .kept))
+                            MetricTile(value: bestMax.kilogramText, label: String(localized: "Odhad maxima", bundle: .kept))
                         }
                         if entries.count > 1 {
                             let change = last.estimatedMax - first.estimatedMax
@@ -319,7 +319,7 @@ struct GymProgressView: View {
                         let entries = all[name] ?? []
                         HStack {
                             VStack(alignment: .leading, spacing: 3) {
-                                Text(name)
+                                Text(name.exerciseShown)
                                     .scaledFont(.body, weight: .semibold)
                                     .foregroundStyle(Theme.textPrimary)
                                 Text("\(entries.count)× · naposledy \(entries.last?.date.dayMonthText ?? "—")")
@@ -328,7 +328,7 @@ struct GymProgressView: View {
                             }
                             Spacer()
                             if let last = entries.last {
-                                Text("\(last.weight > 0 ? last.weight.kilogramText : String(localized: "vl. váha")) × \(last.reps)")
+                                Text("\(last.weight > 0 ? last.weight.kilogramText : String(localized: "vl. váha", bundle: .kept)) × \(last.reps)")
                                     .scaledFont(.body, weight: .bold)
                                     .foregroundStyle(Theme.textPrimary)
                             }
@@ -371,7 +371,7 @@ struct GymProgressView: View {
         if let first = entries.first, let last = entries.last {
             let change = last.1 - first.1
             VStack(spacing: 10) {
-                SectionLabel(text: String(localized: "Tělesná váha"))
+                SectionLabel(text: String(localized: "Tělesná váha", bundle: .kept))
                 VStack(alignment: .leading, spacing: 16) {
                     HStack(alignment: .firstTextBaseline, spacing: 10) {
                         Text(last.1.kilogramText)

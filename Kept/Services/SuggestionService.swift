@@ -24,9 +24,9 @@ struct Suggestion: Identifiable {
     var category: TaskCategory { goal.category }
 
     var reason: String {
-        let progress = String(localized: "Tento týden \(goal.done) / \(goal.target).")
-        if isUrgent { return String(localized: "\(progress) Dnes musíš, jinak týdenní cíl nesplníš.") }
-        return String(localized: "\(progress) Do konce týdne: \(String.days(daysLeft)).")
+        let progress = String(localized: "Tento týden \(goal.done) / \(goal.target).", bundle: .kept)
+        if isUrgent { return String(localized: "\(progress) Dnes musíš, jinak týdenní cíl nesplníš.", bundle: .kept) }
+        return String(localized: "\(progress) Do konce týdne: \(String.days(daysLeft)).", bundle: .kept)
     }
 }
 
@@ -86,6 +86,6 @@ enum SuggestionService {
         let lastTrained = Dictionary(grouping: logged, by: \.workoutType)
             .mapValues { $0.map { $0.completedAt ?? $0.scheduledDate }.max() ?? .distantPast }
         let next = presets.min { (lastTrained[$0] ?? .distantPast) < (lastTrained[$1] ?? .distantPast) }
-        return next.map { String(localized: "Na řadě: \($0)") }
+        return next.map { String(localized: "Na řadě: \($0)", bundle: .kept) }
     }
 }

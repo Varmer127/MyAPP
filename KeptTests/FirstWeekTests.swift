@@ -47,3 +47,17 @@ struct FirstWeekTests {
         #expect(!AutoOverview.isAllowed(onboardedAt: nil, now: day(18)))
     }
 }
+
+struct ExerciseEnglishTests {
+    /// Every built-in exercise has an English name and tip, and English technique when it has Czech technique.
+    @Test func everyExerciseHasEnglish() {
+        for exercise in ExerciseCatalog.all {
+            #expect(ExerciseCatalog.shownInEnglish[exercise.name] != nil, "No English for \(exercise.name)")
+        }
+        for (name, czech) in ExerciseTechnique.all.merging(ExerciseTechnique.more, uniquingKeysWith: { first, _ in first }) {
+            let english = ExerciseTechnique.english[name]
+            #expect(english?.steps.count == czech.steps.count, "Technique steps differ: \(name)")
+            #expect(english?.mistakes.count == czech.mistakes.count, "Technique mistakes differ: \(name)")
+        }
+    }
+}

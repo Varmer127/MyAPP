@@ -171,9 +171,9 @@ struct ChallengesView: View {
             ForEach(together.challenges) { challenge in
                 VStack(alignment: .leading, spacing: 14) {
                     CardTitle(symbol: "flag.2.crossed", title: challenge.title,
-                              meta: String(localized: "Cíl \(challenge.target) · do \(challenge.endsOn.formatted(.dateTime.day().month().locale(.app)))"))
+                              meta: String(localized: "Cíl \(challenge.target) · do \(challenge.endsOn.formatted(.dateTime.day().month().locale(.app)))", bundle: .kept))
                     ForEach(challenge.members.filter(\.isAccepted)) { member in
-                        ProgressLine(name: member.isMe ? String(localized: "Ty") : member.name, value: member.progress ?? 0, target: challenge.target)
+                        ProgressLine(name: member.isMe ? String(localized: "Ty", bundle: .kept) : member.name, value: member.progress ?? 0, target: challenge.target)
                     }
                     if challenge.isInvited {
                         InvitationButtons(accept: { try await together.respond(challenge, accept: true) },
@@ -209,18 +209,18 @@ struct GroupsView: View {
             ForEach(together.groups) { group in
                 VStack(alignment: .leading, spacing: 12) {
                     CardTitle(symbol: "person.3.fill", title: group.name,
-                              meta: String(localized: "Členů: \(group.members.filter(\.isAccepted).count)"))
+                              meta: String(localized: "Členů: \(group.members.filter(\.isAccepted).count)", bundle: .kept))
                     ForEach(Array(group.members.enumerated()), id: \.element.id) { index, member in
                         HStack(spacing: 10) {
                             Text(member.isAccepted ? "\(index + 1)." : "·")
                                 .scaledFont(.body, weight: .bold)
                                 .foregroundStyle(index == 0 && member.isAccepted ? Theme.orange : Theme.textSecondary)
                                 .frame(width: 26, alignment: .leading)
-                            Text(member.isMe ? String(localized: "Ty") : member.name)
+                            Text(member.isMe ? String(localized: "Ty", bundle: .kept) : member.name)
                                 .scaledFont(.body, weight: member.isMe ? .bold : .regular)
                                 .foregroundStyle(Theme.textPrimary)
                             Spacer()
-                            Text(member.isAccepted ? (member.reliability.map { "\($0) %" } ?? "—") : String(localized: "pozvánka"))
+                            Text(member.isAccepted ? (member.reliability.map { "\($0) %" } ?? "—") : String(localized: "pozvánka", bundle: .kept))
                                 .scaledFont(.body, weight: .semibold)
                                 .foregroundStyle(Theme.textSecondary)
                                 .monospacedDigit()
@@ -269,7 +269,7 @@ struct ActivitiesView: View {
                     }
                     .scaledFont(.caption, weight: .semibold)
                     .foregroundStyle(Theme.textSecondary)
-                    Text(activity.members.filter(\.isAccepted).map { $0.isMe ? String(localized: "ty") : $0.name }.joined(separator: ", "))
+                    Text(activity.members.filter(\.isAccepted).map { $0.isMe ? String(localized: "ty", bundle: .kept) : $0.name }.joined(separator: ", "))
                         .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary)
                     if activity.isInvited {
@@ -305,7 +305,7 @@ struct BuddyView: View {
                      subtitle: "Přátelé, kteří denně uvidí, kolik slibů máš splněno, a ty jejich. Můžeš jich mít až \(TogetherService.maxBuddies).") {
             ForEach(incoming) { request in
                 VStack(alignment: .leading, spacing: 14) {
-                    CardTitle(symbol: "figure.2", title: request.name, meta: String(localized: "chce být tvůj parťák"))
+                    CardTitle(symbol: "figure.2", title: request.name, meta: String(localized: "chce být tvůj parťák", bundle: .kept))
                     InvitationButtons(acceptTitle: "BERU", accept: { try await respond(request, accept: true) },
                                       decline: { try await respond(request, accept: false) })
                 }
@@ -460,7 +460,7 @@ struct WitnessInboxView: View {
             ForEach(together.witnessing.toAnswer) { request in
                 VStack(alignment: .leading, spacing: 14) {
                     CardTitle(symbol: "checkmark.seal", title: request.title,
-                              meta: String(localized: "\(request.ownerName) · \(request.day.longDayText)"))
+                              meta: String(localized: "\(request.ownerName) · \(request.day.longDayText)", bundle: .kept))
                     HStack(spacing: 10) {
                         ActionButton(title: "Nepotvrzuji", look: .bigSecondary(SecondaryButtonStyle(textColor: Theme.red))) {
                             try await together.answer(request, confirm: false)

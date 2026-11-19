@@ -6,9 +6,9 @@ enum NotificationTone: String, CaseIterable, Identifiable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .normal: "Normální"
-        case .strict: "Přísný"
-        case .savage: "Drsný"
+        case .normal: String(localized: "Normální", bundle: .kept)
+        case .strict: String(localized: "Přísný", bundle: .kept)
+        case .savage: String(localized: "Drsný", bundle: .kept)
         }
     }
 
@@ -23,9 +23,9 @@ enum NotificationTone: String, CaseIterable, Identifiable {
 
     var summary: String {
         switch self {
-        case .normal: "Věcný a neutrální."
-        case .strict: "Přímý a konfrontační."
-        case .savage: "Tvrdý. Míří na tvoje chování, nikdy na tebe jako člověka."
+        case .normal: String(localized: "Věcný a neutrální.", bundle: .kept)
+        case .strict: String(localized: "Přímý a konfrontační.", bundle: .kept)
+        case .savage: String(localized: "Tvrdý. Míří na tvoje chování, nikdy na tebe jako člověka.", bundle: .kept)
         }
     }
 }
@@ -41,7 +41,146 @@ enum NotificationTone: String, CaseIterable, Identifiable {
 ///   brings people back more reliably than self-criticism.
 /// - Task reminders can arrive before or after the deadline, so they never claim which side of it they are on.
 /// Savage copy attacks laziness, procrastination and broken promises — never appearance, health or self-worth.
+/// One language's notification copy. Czech is the original; English is written for it, not translated word by word.
+protocol NotificationCopy {
+    static var prep: [String] { get }
+    static var start: [String] { get }
+    static var direct: [String] { get }
+    static var strict: [String] { get }
+    static var savage: [String] { get }
+    static var punchlines: [String] { get }
+    static var whyStrict: [String] { get }
+    static var whySavage: [String] { get }
+    static var sundayOpening: [String] { get }
+    static var sundayLater: [NotificationTone: [String]] { get }
+    static var dayNudge: [NotificationTone: [String]] { get }
+    static var morningGood: [String] { get }
+    static var morningAverage: [String] { get }
+    static var morningBad: [String] { get }
+    static var morningNeutral: [String] { get }
+    static var realityCheck: [NotificationTone: [String]] { get }
+    static var streakAtRisk: [NotificationTone: [String]] { get }
+    static var streakLost: [NotificationTone: [String]] { get }
+    static var streakFollowUp: [NotificationTone: [String]] { get }
+    static var streakFinal: [NotificationTone: String] { get }
+    static var streakRepairHint: String { get }
+    static var streakRepairLastDay: String { get }
+    /// The user's own "when, then" plan: shortly before the task, and when it starts.
+    static func cue(_ cue: String, starting: Bool) -> String
+}
+
 enum NotificationTemplates {
+    /// The copy in the language the app speaks.
+    static var copy: NotificationCopy.Type { AppLanguage.current == .en ? EnglishNotificationCopy.self : CzechNotificationCopy.self }
+
+    static var prep: [String] { copy.prep }
+    static var start: [String] { copy.start }
+    static var direct: [String] { copy.direct }
+    static var strict: [String] { copy.strict }
+    static var savage: [String] { copy.savage }
+    static var punchlines: [String] { copy.punchlines }
+    static var whyStrict: [String] { copy.whyStrict }
+    static var whySavage: [String] { copy.whySavage }
+    static var dayNudge: [NotificationTone: [String]] { copy.dayNudge }
+    static var realityCheck: [NotificationTone: [String]] { copy.realityCheck }
+    static var streakAtRisk: [NotificationTone: [String]] { copy.streakAtRisk }
+    static var streakLost: [NotificationTone: [String]] { copy.streakLost }
+    static var streakFollowUp: [NotificationTone: [String]] { copy.streakFollowUp }
+    static var streakFinal: [NotificationTone: String] { copy.streakFinal }
+    static var streakRepairHint: String { copy.streakRepairHint }
+    static var streakRepairLastDay: String { copy.streakRepairLastDay }
+
+    static func sunday(tone: NotificationTone, index: Int) -> String {
+        let opening = copy.sundayOpening
+        if index < opening.count { return opening[index] }
+        let later = copy.sundayLater[tone] ?? []
+        guard !later.isEmpty else { return opening[0] }
+        return later[min(index - opening.count, later.count - 1)]
+    }
+
+    /// Yesterday's result for the title ("včera 67 %") and a short sentence for the end of the body.
+    static func morning(yesterday: Double?, seed: Int) -> (percent: Int?, sentence: String) {
+        guard let yesterday else { return (nil, pick(copy.morningNeutral, seed: seed)) }
+        let pool: [String]
+        if yesterday >= 0.8 {
+            pool = copy.morningGood
+        } else if yesterday >= 0.6 {
+            pool = copy.morningAverage
+        } else {
+            pool = copy.morningBad
+        }
+        return (Int((yesterday * 100).rounded()), pick(pool, seed: seed))
+    }
+
+    // MARK: Assembly
+
+    /// `namesTask`: the title is not the task's name (the savage headline), so the body has to say which task it is.
+    static func taskMessage(level: Int, title: String, time: String, why: String, failures: Int, seed: Int,
+                            namesTask: Bool = false) -> String {
+        var pool: [String]
+        switch level {
+        case ...0: pool = prep
+        case 1: pool = start
+        case 2: pool = direct
+        case 3: pool = strict
+        default: pool = savage
+        }
+        // The failure-count lines only make sense with a real history.
+        if failures < 2 {
+            pool = pool.filter { !$0.contains("{n}") }
+        }
+        // Every third high-level reminder throws the user's own motivation back at them.
+        if level >= 3, !why.isEmpty, seed % 3 == 0 {
+            pool = level == 3 ? whyStrict : whySavage
+        }
+        var template = pick(pool, seed: seed)
+        if namesTask, !template.contains("{task}") {
+            template = "{task}: " + template
+        }
+        return template
+            .replacingOccurrences(of: "{task}", with: title)
+            .replacingOccurrences(of: "{time}", with: time)
+            .replacingOccurrences(of: "{why}", with: why)
+            .replacingOccurrences(of: "{n}", with: "\(failures)")
+    }
+
+    /// Preparation and start with the user's own "when, then" plan, which says more than a clock time does.
+    /// The task's name is the title, so the body is only the plan.
+    static func cueMessage(level: Int, cue: String) -> String {
+        copy.cue(cue, starting: level > 0)
+    }
+
+    static func pick(_ pool: [String], seed: Int) -> String {
+        guard !pool.isEmpty else { return "" }
+        return pool[abs(seed) % pool.count]
+    }
+
+    /// Every message of the Normal and Strict tones in one language, for checking length and placeholders.
+    static func gentleAndStrict(_ c: NotificationCopy.Type = copy) -> [String] {
+        let tones: [NotificationTone] = [.normal, .strict]
+        let shared = c.prep + c.start + c.direct + c.strict + c.whyStrict + c.sundayOpening
+            + c.morningGood + c.morningAverage + c.morningBad + c.morningNeutral
+        let dictionaries = [c.sundayLater, c.dayNudge, c.realityCheck, c.streakAtRisk, c.streakLost, c.streakFollowUp]
+        return shared + dictionaries.flatMap { dictionary in tones.flatMap { dictionary[$0] ?? [] } }
+            + tones.compactMap { c.streakFinal[$0] } + [c.streakRepairHint, c.streakRepairLastDay]
+    }
+
+    static var gentleAndStrict: [String] { gentleAndStrict() }
+
+    /// Every message of one language, all tones.
+    static func all(_ c: NotificationCopy.Type = copy) -> [String] {
+        [c.prep, c.start, c.direct, c.strict, c.savage, c.punchlines, c.whyStrict, c.whySavage, c.sundayOpening,
+         c.morningGood, c.morningAverage, c.morningBad, c.morningNeutral].flatMap { $0 }
+            + [c.sundayLater, c.dayNudge, c.realityCheck, c.streakAtRisk, c.streakLost, c.streakFollowUp]
+                .flatMap { dictionary in NotificationTone.allCases.flatMap { dictionary[$0] ?? [] } }
+            + NotificationTone.allCases.compactMap { c.streakFinal[$0] } + [c.streakRepairHint, c.streakRepairLastDay]
+    }
+
+    static var totalCount: Int { all().count }
+}
+
+/// The original Czech copy.
+enum CzechNotificationCopy: NotificationCopy {
     // MARK: Task escalation, by level. The task's name is the title.
 
     /// Level 0 — preparation, 30 minutes before the task should start.
@@ -93,34 +232,34 @@ enum NotificationTemplates {
     /// Level 4 — savage.
     static let savage = [
         "Zase se chováš jako líný hovado. Otevři {task} a začni.",
-        "Furt meleš o tom, čeho chceš dosáhnout. Tak kde je ta práce? {task}.",
-        "Zamysli se nad svým životem. Tohle je přesně to chování, které tě drží na místě. {task}.",
-        "Dal sis závazek a zase před ním utíkáš. {task}.",
-        "Chceš výsledky lidí, kteří makají, ale dnes se tak nechováš. {task}.",
-        "Kolikrát ještě budeš říkat, že začneš později? {task}.",
-        "Další výmluva ti žádný výsledek nevytvoří. {task}.",
-        "Nikdo tě nepřijde zachránit. Udělej tu práci. {task}.",
-        "Včera sis slíbil, že se to nebude opakovat. A co děláš dnes? {task}.",
+        "Furt meleš o tom, čeho chceš dosáhnout. Tak kde je ta práce?",
+        "Zamysli se nad svým životem. Tohle je přesně to chování, které tě drží na místě.",
+        "Dal sis závazek a zase před ním utíkáš.",
+        "Chceš výsledky lidí, kteří makají, ale dnes se tak nechováš.",
+        "Kolikrát ještě budeš říkat, že začneš později?",
+        "Další výmluva ti žádný výsledek nevytvoří.",
+        "Nikdo tě nepřijde zachránit. Udělej tu práci.",
+        "Včera sis slíbil, že se to nebude opakovat. A co děláš dnes?",
         "Je {time}. {task} pořád nic. Tohle je flákání, ne odpočinek.",
-        "Tvoje plány jsou velké. Tvoje dnešní chování je ubohé. {task}.",
+        "Tvoje plány jsou velké. Tvoje dnešní chování je ubohé.",
         "Přesně takhle vypadá den, který tě nikam neposune. {task} leží ladem.",
-        "Mluvit umíš. Makat dnes očividně ne. {task}.",
+        "Mluvit umíš. Makat dnes očividně ne.",
         "{task} jsi nesplnil už {n}×. To není smůla, to je vzorec.",
-        "Scrolluješ, nebo pracuješ? Odpověď znáš. {task}.",
-        "Lenost tě stojí víc, než si přiznáváš. {task}. Hned.",
-        "Tohle není únava. Tohle je vyhýbání se práci. {task}.",
-        "Sliby sám sobě lámeš nejsnáz. Dokaž opak. {task}.",
+        "Scrolluješ, nebo pracuješ? Odpověď znáš.",
+        "Lenost tě stojí víc, než si přiznáváš. Začni hned.",
+        "Tohle není únava. Tohle je vyhýbání se práci.",
+        "Sliby sám sobě lámeš nejsnáz. Dokaž opak.",
         "Za rok budeš přesně tam, kde jsi teď, jestli budeš dál vynechávat {task}.",
         "Deadline je pryč a ty pořád nic. Zvedni se a udělej {task}.",
-        "Nejsi zaneprázdněný. Jen prokrastinuješ. {task}.",
-        "Tvoje slovo dnes nemá žádnou hodnotu. Změň to. {task}.",
-        "Přestaň si lhát, že to uděláš potom. Potom neexistuje. {task}.",
+        "Nejsi zaneprázdněný. Jen prokrastinuješ.",
+        "Tvoje slovo dnes nemá žádnou hodnotu. Změň to.",
+        "Přestaň si lhát, že to uděláš potom. Potom neexistuje.",
         "Takhle se disciplinovaný člověk nechová. {task} čeká.",
-        "Zatímco ty hledáš motivaci, někdo jiný už maká. {task}.",
-        "Zvedni tu prdel. Nikdo za tebe ten život neodmaká. {task}.",
-        "Chceš lepší život, ale nejsi ochotný obětovat ani hodinu? Prober se. {task}.",
-        "Pohodlí tě nikam nedostane. {task}. Teď.",
-        "Výmluvy nikoho nezajímají. {task}.",
+        "Zatímco ty hledáš motivaci, někdo jiný už maká.",
+        "Zvedni tu prdel. Nikdo za tebe ten život neodmaká.",
+        "Chceš lepší život, ale nejsi ochotný obětovat ani hodinu? Prober se.",
+        "Pohodlí tě nikam nedostane. Začni teď.",
+        "Výmluvy nikoho nezajímají.",
     ]
 
     /// Short, loud headlines used as the notification title in the savage tone.
@@ -156,10 +295,10 @@ enum NotificationTemplates {
 
     /// Savage copy that quotes the user's own "Why does this matter?".
     static let whySavage = [
-        "Říkal jsi: „{why}“ Dnes jsi pro to zase neudělal nic. {task}.",
-        "„{why}“ — hezká slova. Kde je práce? {task}.",
-        "Tvrdil jsi: „{why}“ Tvoje chování říká opak. {task}.",
-        "„{why}“ Tohle si chceš dál jen říkat, nebo to i udělat? {task}.",
+        "Říkal jsi: „{why}“ Dnes jsi pro to zase neudělal nic.",
+        "„{why}“ — hezká slova. Kde je práce?",
+        "Tvrdil jsi: „{why}“ Tvoje chování říká opak.",
+        "„{why}“ Tohle si chceš dál jen říkat, nebo to i udělat?",
         "Kdyby ti na „{why}“ opravdu záleželo, {task} by byl hotový.",
     ]
 
@@ -167,14 +306,14 @@ enum NotificationTemplates {
 
     /// First reminders are the same for every tone; later ones sharpen.
     /// None of them counts hours: the first one can come at whatever hour the user chose.
-    private static let sundayOpening = [
+    static let sundayOpening = [
         "Neděle je ideální chvíle na plán. Deset minut a týden máš srovnaný.",
         "Příští týden zatím nemá plán. Pojď ho poskládat.",
         "Co chceš příští týden opravdu dotáhnout? Napiš si to.",
         "Týden s plánem se drží líp. Stačí pár úkolů.",
     ]
 
-    private static let sundayLater: [NotificationTone: [String]] = [
+    static let sundayLater: [NotificationTone: [String]] = [
         .normal: [
             "Plán na příští týden pořád chybí. Zabere to deset minut.",
             "Stačí tři úkoly a týden má směr.",
@@ -207,12 +346,6 @@ enum NotificationTemplates {
         ],
     ]
 
-    static func sunday(tone: NotificationTone, index: Int) -> String {
-        if index < sundayOpening.count { return sundayOpening[index] }
-        let later = sundayLater[tone] ?? []
-        guard !later.isEmpty else { return sundayOpening[0] }
-        return later[min(index - sundayOpening.count, later.count - 1)]
-    }
 
     // MARK: Day nudges, morning brief, reality check
 
@@ -341,78 +474,7 @@ enum NotificationTemplates {
     static let streakRepairHint = "Starou sérii můžeš ještě vykoupit za body."
     static let streakRepairLastDay = "Dnes naposledy můžeš starou sérii vykoupit za body."
 
-    /// Yesterday's result for the title ("včera 67 %") and a short sentence for the end of the body.
-    static func morning(yesterday: Double?, seed: Int) -> (percent: Int?, sentence: String) {
-        guard let yesterday else { return (nil, pick(morningNeutral, seed: seed)) }
-        let pool: [String]
-        if yesterday >= 0.8 {
-            pool = morningGood
-        } else if yesterday >= 0.6 {
-            pool = morningAverage
-        } else {
-            pool = morningBad
-        }
-        return (Int((yesterday * 100).rounded()), pick(pool, seed: seed))
-    }
-
-    // MARK: Assembly
-
-    /// `namesTask`: the title is not the task's name (the savage headline), so the body has to say which task it is.
-    static func taskMessage(level: Int, title: String, time: String, why: String, failures: Int, seed: Int,
-                            namesTask: Bool = false) -> String {
-        var pool: [String]
-        switch level {
-        case ...0: pool = prep
-        case 1: pool = start
-        case 2: pool = direct
-        case 3: pool = strict
-        default: pool = savage
-        }
-        // The failure-count lines only make sense with a real history.
-        if failures < 2 {
-            pool = pool.filter { !$0.contains("{n}") }
-        }
-        // Every third high-level reminder throws the user's own motivation back at them.
-        if level >= 3, !why.isEmpty, seed % 3 == 0 {
-            pool = level == 3 ? whyStrict : whySavage
-        }
-        var template = pick(pool, seed: seed)
-        if namesTask, !template.contains("{task}") {
-            template = "{task}: " + template
-        }
-        return template
-            .replacingOccurrences(of: "{task}", with: title)
-            .replacingOccurrences(of: "{time}", with: time)
-            .replacingOccurrences(of: "{why}", with: why)
-            .replacingOccurrences(of: "{n}", with: "\(failures)")
-    }
-
-    /// Preparation and start with the user's own "when, then" plan, which says more than a clock time does.
-    /// The task's name is the title, so the body is only the plan.
-    static func cueMessage(level: Int, cue: String) -> String {
-        level <= 0 ? "Za chvíli to začíná. Tvůj plán: \(cue)" : "Je čas. Tvůj plán: \(cue)"
-    }
-
-    static func pick(_ pool: [String], seed: Int) -> String {
-        guard !pool.isEmpty else { return "" }
-        return pool[abs(seed) % pool.count]
-    }
-
-    /// Every message of the Normal and Strict tones, for checking length and placeholders.
-    static var gentleAndStrict: [String] {
-        let tones: [NotificationTone] = [.normal, .strict]
-        let shared = prep + start + direct + strict + whyStrict + sundayOpening
-            + morningGood + morningAverage + morningBad + morningNeutral
-        let dictionaries = [sundayLater, dayNudge, realityCheck, streakAtRisk, streakLost, streakFollowUp]
-        return shared + dictionaries.flatMap { dictionary in tones.flatMap { dictionary[$0] ?? [] } }
-            + tones.compactMap { streakFinal[$0] } + [streakRepairHint, streakRepairLastDay]
-    }
-
-    static var totalCount: Int {
-        [prep, start, direct, strict, savage, punchlines, whyStrict, whySavage, sundayOpening,
-         morningGood, morningAverage, morningBad, morningNeutral].reduce(0) { $0 + $1.count }
-            + [sundayLater, dayNudge, realityCheck, streakAtRisk, streakLost, streakFollowUp]
-                .reduce(0) { $0 + $1.values.reduce(0) { $0 + $1.count } }
-            + streakFinal.count + 2
+    static func cue(_ cue: String, starting: Bool) -> String {
+        starting ? "Je čas. Tvůj plán: \(cue)" : "Za chvíli to začíná. Tvůj plán: \(cue)"
     }
 }

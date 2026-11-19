@@ -47,12 +47,12 @@ struct GymModePreview: View {
                     .foregroundStyle(Theme.textSecondary)
             }
             HStack(spacing: 4) {
-                ForEach([String(localized: "Svaly"), String(localized: "Síla"), String(localized: "Vytrvalost")], id: \.self) { name in
+                ForEach([String(localized: "Svaly", bundle: .kept), String(localized: "Síla", bundle: .kept), String(localized: "Vytrvalost", bundle: .kept)], id: \.self) { name in
                     Text(name)
                         .scaledFont(.caption, weight: .semibold)
                         .foregroundStyle(Theme.textPrimary)
                         .frame(maxWidth: .infinity, minHeight: 28)
-                        .background(name == "Svaly" ? Theme.cardRaised : Color.clear)
+                        .background(name == String(localized: "Svaly", bundle: .kept) ? Theme.cardRaised : Color.clear)
                         .clipShape(RoundedRectangle(cornerRadius: 7))
                 }
             }

@@ -135,7 +135,7 @@ final class UserSettings {
         }
     }
 
-    static let defaultWorkoutPresets = [String(localized: "Ruce a ramena"), String(localized: "Záda a prsa"), String(localized: "Nohy")]
+    static let defaultWorkoutPresets = [String(localized: "Ruce a ramena", bundle: .kept), String(localized: "Záda a prsa", bundle: .kept), String(localized: "Nohy", bundle: .kept)]
     static let defaultExercisePresets = ["Bench press", "Dřep", "Mrtvý tah", "Tlaky nad hlavu", "Shyby", "Přítahy v předklonu"]
 
     var restPresets: [RestPreset] {
@@ -266,9 +266,9 @@ struct RestPreset: Codable, Hashable, Identifiable {
     static let secondsStep = 15
 
     static let defaults = [
-        RestPreset(name: String(localized: "Síla"), seconds: 180),
-        RestPreset(name: "Svaly", seconds: 90),
-        RestPreset(name: "Vytrvalost", seconds: 30),
+        RestPreset(name: String(localized: "Síla", bundle: .kept), seconds: 180),
+        RestPreset(name: String(localized: "Svaly", bundle: .kept), seconds: 90),
+        RestPreset(name: String(localized: "Vytrvalost", bundle: .kept), seconds: 30),
     ]
 }
 
@@ -281,22 +281,22 @@ enum GymMode: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .simple: String(localized: "Jednoduchý")
-        case .advanced: String(localized: "Pokročilý")
+        case .simple: String(localized: "Jednoduchý", bundle: .kept)
+        case .advanced: String(localized: "Pokročilý", bundle: .kept)
         }
     }
 
     var summary: String {
         switch self {
-        case .simple: String(localized: "Stopky tréninku a pauzy. Zapíšeš, co jsi jel, a hotovo.")
-        case .advanced: String(localized: "Cviky, série, váhy a opakování, rekordy, šablony a mapa svalů.")
+        case .simple: String(localized: "Stopky tréninku a pauzy. Zapíšeš, co jsi jel, a hotovo.", bundle: .kept)
+        case .advanced: String(localized: "Cviky, série, váhy a opakování, rekordy, šablony a mapa svalů.", bundle: .kept)
         }
     }
 
     var features: [String] {
         switch self {
-        case .simple: [String(localized: "Stopky celého tréninku"), String(localized: "Odpočet pauzy jedním klepnutím"), String(localized: "Co jsi jel a počet tréninků týdně")]
-        case .advanced: [String(localized: "Cviky série po sérii, s čísly z minula"), String(localized: "Knihovna cviků s mapou svalů"), String(localized: "Rekordy, síla v čase a týdenní mapa svalů"), String(localized: "Šablony tréninků a rozcvičky")]
+        case .simple: [String(localized: "Stopky celého tréninku", bundle: .kept), String(localized: "Odpočet pauzy jedním klepnutím", bundle: .kept), String(localized: "Co jsi jel a počet tréninků týdně", bundle: .kept)]
+        case .advanced: [String(localized: "Cviky série po sérii, s čísly z minula", bundle: .kept), String(localized: "Knihovna cviků s mapou svalů", bundle: .kept), String(localized: "Rekordy, síla v čase a týdenní mapa svalů", bundle: .kept), String(localized: "Šablony tréninků a rozcvičky", bundle: .kept)]
         }
     }
 }
@@ -310,17 +310,17 @@ enum GrammarGender: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .masculine: String(localized: "Mužský rod")
-        case .feminine: String(localized: "Ženský rod")
-        case .neutral: String(localized: "Neutrálně")
+        case .masculine: String(localized: "Mužský rod", bundle: .kept)
+        case .feminine: String(localized: "Ženský rod", bundle: .kept)
+        case .neutral: String(localized: "Neutrálně", bundle: .kept)
         }
     }
 
     var example: String {
         switch self {
-        case .masculine: String(localized: "„Splnil jsi to.“")
-        case .feminine: String(localized: "„Splnila jsi to.“")
-        case .neutral: String(localized: "„To je splněno.“")
+        case .masculine: String(localized: "„Splnil jsi to.“", bundle: .kept)
+        case .feminine: String(localized: "„Splnila jsi to.“", bundle: .kept)
+        case .neutral: String(localized: "„To je splněno.“", bundle: .kept)
         }
     }
 

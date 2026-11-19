@@ -94,7 +94,7 @@ struct FriendWeekSection: View {
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(String(localized: kind.title))
+                .accessibilityLabel(kind.title)
                 .accessibilityAddTraits(isOn ? .isSelected : [])
             }
             Spacer()
@@ -163,7 +163,7 @@ struct LeaderboardSection: View {
                         .scaledFont(.body, weight: .bold)
                         .foregroundStyle(index == 0 ? Theme.orange : Theme.textSecondary)
                         .frame(width: 28, alignment: .leading)
-                    Text(row.isMe ? "Ty" : row.displayName)
+                    Text(row.isMe ? String(localized: "Ty", bundle: .kept) : row.displayName)
                         .scaledFont(.body, weight: row.isMe ? .bold : .regular)
                         .foregroundStyle(Theme.textPrimary)
                     Spacer()

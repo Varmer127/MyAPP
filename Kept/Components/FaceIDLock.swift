@@ -56,11 +56,11 @@ struct FaceIDLock: ViewModifier {
 
 extension View {
     func diaryLock(_ isEnabled: Bool) -> some View {
-        modifier(FaceIDLock(isEnabled: isEnabled, title: String(localized: "Deník je zamčený"), reason: String(localized: "Odemknout deník")))
+        modifier(FaceIDLock(isEnabled: isEnabled, title: String(localized: "Deník je zamčený", bundle: .kept), reason: String(localized: "Odemknout deník", bundle: .kept)))
     }
 
     func appLock(_ isEnabled: Bool) -> some View {
-        modifier(FaceIDLock(isEnabled: isEnabled, title: String(localized: "Kept je zamčený"), reason: String(localized: "Odemknout Kept")))
+        modifier(FaceIDLock(isEnabled: isEnabled, title: String(localized: "Kept je zamčený", bundle: .kept), reason: String(localized: "Odemknout Kept", bundle: .kept)))
     }
 }
 

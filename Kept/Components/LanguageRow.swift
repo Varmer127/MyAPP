@@ -1,30 +1,16 @@
 import SwiftUI
-import UIKit
 
-/// Shows the app's language and opens Kept in the iPhone settings, where iOS lets each app have its own language.
-/// The app then restarts in the chosen language by itself.
+/// The app's language, switched right here in Settings; everything is drawn again in it at once.
 struct LanguageRow: View {
     var body: some View {
-        Button {
+        Picker(selection: Binding(get: { AppLanguage.current }, set: { language in
             Haptics.light()
-            Self.openSettings()
+            LanguageSwitch.shared.select(language, reopeningSettings: true)
+        })) {
+            ForEach(AppLanguage.allCases) { Text(verbatim: $0.title).tag($0) }
         } label: {
-            HStack {
-                Label("Jazyk", systemImage: "globe")
-                    .foregroundStyle(Theme.textPrimary)
-                Spacer()
-                Text(AppLanguage.current == .en ? "English" : "Čeština")
-                    .foregroundStyle(Theme.textSecondary)
-                Image(systemName: "arrow.up.forward.app")
-                    .scaledFont(.caption)
-                    .foregroundStyle(Theme.textTertiary)
-            }
+            Label("Jazyk", systemImage: "globe")
         }
-        .accessibilityHint("Otevře nastavení iPhonu, kde se jazyk aplikace mění")
-    }
-
-    static func openSettings() {
-        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-        UIApplication.shared.open(url)
+        .tint(Theme.textPrimary)
     }
 }

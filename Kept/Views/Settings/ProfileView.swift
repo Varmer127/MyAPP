@@ -23,8 +23,8 @@ struct ProfileCard: View {
                         .scaledFont(.heading, weight: .bold)
                         .foregroundStyle(Theme.textPrimary)
                     Text(streak > 0
-                         ? String(localized: "Držíš slovo \(String.days(streak)) · odznaky \(badges.filter(\.isEarned).count) / \(badges.count)")
-                         : String(localized: "Odznaky \(badges.filter(\.isEarned).count) / \(badges.count) · začni sérii dnes"))
+                         ? String(localized: "Držíš slovo \(String.days(streak)) · odznaky \(badges.filter(\.isEarned).count) / \(badges.count)", bundle: .kept)
+                         : String(localized: "Odznaky \(badges.filter(\.isEarned).count) / \(badges.count) · začni sérii dnes", bundle: .kept))
                         .scaledFont(.caption)
                         .foregroundStyle(Theme.textSecondary)
                 }
@@ -38,7 +38,7 @@ struct ProfileCard: View {
 enum ProfileData {
     static func displayName(_ settings: UserSettings?) -> String {
         let name = settings?.addressName.trimmingCharacters(in: .whitespaces) ?? ""
-        return name.isEmpty ? String(localized: "Tvůj profil") : name
+        return name.isEmpty ? String(localized: "Tvůj profil", bundle: .kept) : name
     }
 
     static func badges(tasks: [TaskItem], plans: [WeeklyPlan], failures: [FailureRecord], diary: [DiaryEntry],
@@ -103,7 +103,7 @@ struct ProfileView: View {
                 FriendsEntryCard()
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        SectionLabel(text: "Odznaky")
+                        SectionLabel(text: String(localized: "Odznaky", bundle: .kept))
                         Spacer()
                         Text("\(all.filter(\.isEarned).count) z \(all.count)")
                             .scaledFont(.body, weight: .bold)
@@ -127,7 +127,7 @@ struct ProfileView: View {
                 }
                 if let settings {
                     VStack(alignment: .leading, spacing: 10) {
-                        SectionLabel(text: String(localized: "Oslovení"))
+                        SectionLabel(text: String(localized: "Oslovení", bundle: .kept))
                         VStack(alignment: .leading, spacing: 0) {
                             TextField("Oslovení, např. Filipe", text: Bindable(settings).addressName)
                                 .scaledFont(.body)
@@ -231,16 +231,16 @@ struct ProfileView: View {
                     Text(ProfileData.displayName(settings))
                         .scaledFont(.title, weight: .bold)
                         .foregroundStyle(Theme.textPrimary)
-                    Text(streak > 0 ? String(localized: "Držíš slovo \(String.days(streak)) v řadě.") : String(localized: "Dnes můžeš začít novou sérii."))
+                    Text(streak > 0 ? String(localized: "Držíš slovo \(String.days(streak)) v řadě.", bundle: .kept) : String(localized: "Dnes můžeš začít novou sérii.", bundle: .kept))
                         .scaledFont(.body)
                         .foregroundStyle(Theme.textSecondary)
                 }
                 Spacer(minLength: 0)
             }
             TileRow {
-                MetricTile(value: "\(streak)", label: String(localized: "Série dní"))
-                MetricTile(value: "\(sealed)", label: String(localized: "Pečetí"))
-                MetricTile(value: points.formatted(.number.locale(.app)), label: String(localized: "Bodů"))
+                MetricTile(value: "\(streak)", label: String(localized: "Série dní", bundle: .kept))
+                MetricTile(value: "\(sealed)", label: String(localized: "Pečetí", bundle: .kept))
+                MetricTile(value: points.formatted(.number.locale(.app)), label: String(localized: "Bodů", bundle: .kept))
             }
         }
     }
@@ -289,7 +289,7 @@ private struct BadgeTile: View {
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(badge.shownName), \(badge.statusText.isEmpty ? String(localized: "zamčeno") : badge.statusText). \(badge.shownHow)")
+        .accessibilityLabel("\(badge.shownName), \(badge.statusText.isEmpty ? String(localized: "zamčeno", bundle: .kept) : badge.statusText). \(badge.shownHow)")
     }
 }
 
@@ -409,7 +409,7 @@ struct StreakCalendar: View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: 0), count: 7)
         return VStack(alignment: .leading, spacing: 14) {
             HStack {
-                SectionLabel(text: String(localized: "Kalendář série"))
+                SectionLabel(text: String(localized: "Kalendář série", bundle: .kept))
                 Spacer()
                 Button { shift(-1) } label: { Image(systemName: "chevron.left").frame(width: 36, height: 36) }
                     .accessibilityLabel("Předchozí měsíc")
@@ -423,7 +423,7 @@ struct StreakCalendar: View {
             }
             .foregroundStyle(Theme.textPrimary)
             LazyVGrid(columns: columns, spacing: 6) {
-                ForEach([String(localized: "Po"), String(localized: "Út"), String(localized: "St"), String(localized: "Čt"), String(localized: "Pá"), String(localized: "So"), String(localized: "Ne")], id: \.self) { name in
+                ForEach([String(localized: "Po", bundle: .kept), String(localized: "Út", bundle: .kept), String(localized: "St", bundle: .kept), String(localized: "Čt", bundle: .kept), String(localized: "Pá", bundle: .kept), String(localized: "So", bundle: .kept), String(localized: "Ne", bundle: .kept)], id: \.self) { name in
                     Text(name).scaledFont(.caption, weight: .bold).foregroundStyle(Theme.textTertiary)
                 }
                 ForEach(Array(days.enumerated()), id: \.offset) { _, day in
@@ -435,9 +435,9 @@ struct StreakCalendar: View {
                 }
             }
             HStack(spacing: 14) {
-                legend(Theme.green, String(localized: "den dodržen"))
-                legend(Theme.red, String(localized: "slib porušen"))
-                legend(Theme.orange.opacity(0.35), String(localized: "série"))
+                legend(Theme.green, String(localized: "den dodržen", bundle: .kept))
+                legend(Theme.red, String(localized: "slib porušen", bundle: .kept))
+                legend(Theme.orange.opacity(0.35), String(localized: "série", bundle: .kept))
                 Label("milník", systemImage: "flame.fill").scaledFont(.caption).foregroundStyle(Theme.orange)
             }
             .scaledFont(.caption)
@@ -505,10 +505,10 @@ struct StreakCalendar: View {
         let state = status(of: selected)
         let title: String = {
             switch state {
-            case .kept: String(localized: "Den dodržen")
-            case .broken: String(localized: "Slib porušen")
-            case .open: selected.isSameDay(as: .now) ? String(localized: "Dnes ještě není hotovo") : String(localized: "Ještě se nestalo")
-            case .none: String(localized: "Bez plánu")
+            case .kept: String(localized: "Den dodržen", bundle: .kept)
+            case .broken: String(localized: "Slib porušen", bundle: .kept)
+            case .open: selected.isSameDay(as: .now) ? String(localized: "Dnes ještě není hotovo", bundle: .kept) : String(localized: "Ještě se nestalo", bundle: .kept)
+            case .none: String(localized: "Bez plánu", bundle: .kept)
             }
         }()
         return VStack(alignment: .leading, spacing: 4) {

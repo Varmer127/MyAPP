@@ -8,16 +8,16 @@ enum TaskCategory: String, CaseIterable, Identifiable, Codable {
 
     var title: String {
         switch self {
-        case .newSkill: String(localized: "Nový skill")
-        case .building: String(localized: "Vlastní projekt")
-        case .work: String(localized: "Práce")
-        case .education: String(localized: "Škola")
-        case .reading: String(localized: "Čtení")
-        case .administration: "Administrativa"
-        case .gym: "Gym"
-        case .sport: "Sport"
-        case .nature: String(localized: "Příroda")
-        case .other: String(localized: "Ostatní")
+        case .newSkill: String(localized: "Nový skill", bundle: .kept)
+        case .building: String(localized: "Vlastní projekt", bundle: .kept)
+        case .work: String(localized: "Práce", bundle: .kept)
+        case .education: String(localized: "Škola", bundle: .kept)
+        case .reading: String(localized: "Čtení", bundle: .kept)
+        case .administration: String(localized: "Administrativa", bundle: .kept)
+        case .gym: String(localized: "Gym", bundle: .kept)
+        case .sport: String(localized: "Sport", bundle: .kept)
+        case .nature: String(localized: "Příroda", bundle: .kept)
+        case .other: String(localized: "Ostatní", bundle: .kept)
         }
     }
 
@@ -62,9 +62,9 @@ enum TaskCategory: String, CaseIterable, Identifiable, Codable {
 
     var suggestionTitle: String {
         switch self {
-        case .newSkill: String(localized: "Naučit se něco nového")
-        case .nature: String(localized: "Procházka v přírodě")
-        case .building: String(localized: "Práce na projektu")
+        case .newSkill: String(localized: "Naučit se něco nového", bundle: .kept)
+        case .nature: String(localized: "Procházka v přírodě", bundle: .kept)
+        case .building: String(localized: "Práce na projektu", bundle: .kept)
         default: title
         }
     }
@@ -84,20 +84,20 @@ enum TaskPriority: String, CaseIterable, Identifiable, Codable {
     var id: String { rawValue }
     var title: String {
         switch self {
-        case .low: String(localized: "Nízká")
-        case .medium: String(localized: "Střední")
-        case .high: String(localized: "Vysoká")
-        case .critical: String(localized: "Kritická")
+        case .low: String(localized: "Nízká", bundle: .kept)
+        case .medium: String(localized: "Střední", bundle: .kept)
+        case .high: String(localized: "Vysoká", bundle: .kept)
+        case .critical: String(localized: "Kritická", bundle: .kept)
         }
     }
 
     /// Short label shown on a task.
     var badge: String {
         switch self {
-        case .low: String(localized: "Nízká priorita")
-        case .medium: String(localized: "Střední priorita")
-        case .high: String(localized: "Vysoká priorita")
-        case .critical: String(localized: "Kritický")
+        case .low: String(localized: "Nízká priorita", bundle: .kept)
+        case .medium: String(localized: "Střední priorita", bundle: .kept)
+        case .high: String(localized: "Vysoká priorita", bundle: .kept)
+        case .critical: String(localized: "Kritický", bundle: .kept)
         }
     }
 
@@ -133,15 +133,15 @@ enum FailureReason: String, CaseIterable, Identifiable, Codable {
 
     var title: String {
         switch self {
-        case .forgot: String(localized: "Zapomněl jsem")
-        case .procrastinated: "Prokrastinoval jsem"
-        case .lazy: String(localized: "Byl jsem líný")
-        case .didNotFeelLikeIt: String(localized: "Nechtělo se mi")
-        case .plannedBadly: String(localized: "Špatně jsem si to naplánoval")
-        case .noTime: String(localized: "Neměl jsem dost času")
-        case .unexpected: String(localized: "Nečekaná situace")
-        case .health: String(localized: "Zdraví")
-        case .other: String(localized: "Jiné")
+        case .forgot: String(localized: "Zapomněl jsem", bundle: .kept)
+        case .procrastinated: String(localized: "Prokrastinoval jsem", bundle: .kept)
+        case .lazy: String(localized: "Byl jsem líný", bundle: .kept)
+        case .didNotFeelLikeIt: String(localized: "Nechtělo se mi", bundle: .kept)
+        case .plannedBadly: String(localized: "Špatně jsem si to naplánoval", bundle: .kept)
+        case .noTime: String(localized: "Neměl jsem dost času", bundle: .kept)
+        case .unexpected: String(localized: "Nečekaná situace", bundle: .kept)
+        case .health: String(localized: "Zdraví", bundle: .kept)
+        case .other: String(localized: "Jiné", bundle: .kept)
         }
     }
 }
@@ -158,14 +158,14 @@ enum EditKind: String, Codable {
 
     var title: String {
         switch self {
-        case .removed: String(localized: "Odstraněno")
-        case .moved: String(localized: "Přesunuto")
-        case .priorityLowered: String(localized: "Snížená priorita")
-        case .priorityRaised: String(localized: "Zvýšená priorita")
-        case .deadlineChanged: String(localized: "Změněný deadline")
-        case .weightLowered: String(localized: "Snížená váha")
-        case .weightRaised: String(localized: "Zvýšená váha")
-        case .addedLater: String(localized: "Přidáno po závazku")
+        case .removed: String(localized: "Odstraněno", bundle: .kept)
+        case .moved: String(localized: "Přesunuto", bundle: .kept)
+        case .priorityLowered: String(localized: "Snížená priorita", bundle: .kept)
+        case .priorityRaised: String(localized: "Zvýšená priorita", bundle: .kept)
+        case .deadlineChanged: String(localized: "Změněný deadline", bundle: .kept)
+        case .weightLowered: String(localized: "Snížená váha", bundle: .kept)
+        case .weightRaised: String(localized: "Zvýšená váha", bundle: .kept)
+        case .addedLater: String(localized: "Přidáno po závazku", bundle: .kept)
         }
     }
 

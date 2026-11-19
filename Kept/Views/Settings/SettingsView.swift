@@ -9,6 +9,10 @@ struct SettingsView: View {
     @State private var authorization: UNAuthorizationStatus = .notDetermined
     /// The system permission question was just answered with "no".
     @State private var calendarDenied = false
+    /// The tab someone just tried to add to a full bar, and how many times each row has shaken.
+    @State private var blockedTab: String?
+    @State private var tabShakes: [String: Int] = [:]
+    @State private var fullBarShakes = 0
     @AppStorage(AppAppearance.storageKey) private var appearanceRaw = AppAppearance.dark.rawValue
 
     fileprivate static let multiplierRange = 0.2...1.0
@@ -78,7 +82,7 @@ struct SettingsView: View {
                 Section("O aplikaci") {
                     LabeledContent("Verze", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "—")
                     // With an account the profile and the shared features live on the server, so this names what really stays here.
-                    LabeledContent("Úkoly, deník a zdraví", value: String(localized: "Jen v tomto zařízení"))
+                    LabeledContent("Úkoly, deník a zdraví", value: String(localized: "Jen v tomto zařízení", bundle: .kept))
                     LabeledContent("Šablony notifikací", value: "\(NotificationTemplates.totalCount)")
                 }
                 .listRowBackground(Theme.card)
@@ -180,22 +184,22 @@ struct SettingsView: View {
     private func summary(of page: Page, _ settings: UserSettings) -> String {
         switch page {
         case .tabs:
-            return String(localized: "Navíc \(settings.optionalTabCount) ze \(UserSettings.maxOptionalTabs)")
+            return String(localized: "Navíc \(settings.optionalTabCount) ze \(UserSettings.maxOptionalTabs)", bundle: .kept)
         case .notifications:
-            guard settings.taskRemindersEnabled || settings.realityCheckEnabled || settings.morningBriefEnabled else { return "Vypnuto" }
-            let nudges = settings.nudgesPerDay > 0 ? String(localized: "úkoly bez termínu \(settings.nudgesPerDay)× denně") : String(localized: "úkoly bez termínu bez připomínek")
+            guard settings.taskRemindersEnabled || settings.realityCheckEnabled || settings.morningBriefEnabled else { return String(localized: "Vypnuto", bundle: .kept) }
+            let nudges = settings.nudgesPerDay > 0 ? String(localized: "úkoly bez termínu \(settings.nudgesPerDay)× denně", bundle: .kept) : String(localized: "úkoly bez termínu bez připomínek", bundle: .kept)
             return "\(settings.tone.title) · \(nudges)"
         case .activities:
-            return "Aktivit: \(settings.enabledCategories.count - 1 + settings.customActivities.count)"
+            return String(localized: "Aktivit: \(settings.enabledCategories.count - 1 + settings.customActivities.count)", bundle: .kept)
         case .gym:
-            return "Partie, cviky, pauzy"
+            return String(localized: "Partie, cviky, pauzy", bundle: .kept)
         case .health:
-            return settings.healthEnabled ? String(localized: "Propojeno, cíl \(settings.stepGoal.formatted(.number.locale(.app))) kroků") : String(localized: "Nepropojeno")
+            return settings.healthEnabled ? String(localized: "Propojeno, cíl \(settings.stepGoal.formatted(.number.locale(.app))) kroků", bundle: .kept) : String(localized: "Nepropojeno", bundle: .kept)
         case .calendar:
-            return settings.calendarEnabled ? "Zapnuto" : "Vypnuto"
+            return settings.calendarEnabled ? String(localized: "Zapnuto", bundle: .kept) : String(localized: "Vypnuto", bundle: .kept)
         case .diary:
-            let lock = settings.diaryLockEnabled || settings.appLockEnabled ? String(localized: "zámek zapnutý") : String(localized: "bez zámku")
-            return (settings.diaryEnabled ? String(localized: "Deník zapnutý") : String(localized: "Deník vypnutý")) + " · " + lock
+            let lock = settings.diaryLockEnabled || settings.appLockEnabled ? String(localized: "zámek zapnutý", bundle: .kept) : String(localized: "bez zámku", bundle: .kept)
+            return (settings.diaryEnabled ? String(localized: "Deník zapnutý", bundle: .kept) : String(localized: "Deník vypnutý", bundle: .kept)) + " · " + lock
         }
     }
 
@@ -499,6 +503,8 @@ struct SettingsView: View {
             .listRowInsets(EdgeInsets(top: 10, leading: 14, bottom: 10, trailing: 14))
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Spodní lišta")
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.red, lineWidth: 2).opacity(blockedTab == nil ? 0 : 1))
+            .modifier(ShakeEffect(amount: 5, animatableData: CGFloat(fullBarShakes)))
         } header: {
             Text("Spodní lišta teď")
         }
@@ -508,17 +514,19 @@ struct SettingsView: View {
     private func tabsSection(_ settings: UserSettings) -> some View {
         let isFull = settings.optionalTabCount >= UserSettings.maxOptionalTabs
         return Section {
-            LabeledContent("Vždy v liště", value: String(localized: "Dnes · Týden · Nastavení"))
-            tabToggle("Statistiky", "chart.bar", Bindable(settings).showsStatsTab, isFull: isFull)
-            tabToggle("Gym", TaskCategory.gym.symbol, Bindable(settings).showsGymTab, isFull: isFull)
+            LabeledContent("Vždy v liště", value: String(localized: "Dnes · Týden · Nastavení", bundle: .kept))
+            tabToggle(String(localized: "Statistiky", bundle: .kept), "chart.bar", Bindable(settings).showsStatsTab, isFull: isFull)
+            tabToggle(String(localized: "Gym", bundle: .kept), TaskCategory.gym.symbol, Bindable(settings).showsGymTab, isFull: isFull)
             if HealthService.isAvailable {
-                tabToggle(String(localized: "Zdraví"), "heart", Bindable(settings).showsHealthTab, isFull: isFull)
+                tabToggle(String(localized: "Zdraví", bundle: .kept), "heart", Bindable(settings).showsHealthTab, isFull: isFull)
             }
             if settings.diaryEnabled {
-                tabToggle(String(localized: "Deník"), "book.closed", Bindable(settings).showsDiaryTab, isFull: isFull)
+                tabToggle(String(localized: "Deník", bundle: .kept), "book.closed", Bindable(settings).showsDiaryTab, isFull: isFull)
             }
         } header: {
             Text("Navíc v liště: \(settings.optionalTabCount) ze \(UserSettings.maxOptionalTabs)")
+                .foregroundStyle(blockedTab == nil ? Theme.textSecondary : Theme.red)
+                .scaleEffect(blockedTab == nil ? 1 : 1.08, anchor: .leading)
         } footer: {
             Text(isFull
                  ? "Navíc můžeš mít nejvýš \(UserSettings.maxOptionalTabs) záložky. Pro další nejdřív jednu vypni. Vypnuté obrazovky otevřeš níž v části Další obrazovky."
@@ -527,13 +535,51 @@ struct SettingsView: View {
         .listRowBackground(Theme.card)
     }
 
-    /// A tab that is off cannot be switched on once the limit is reached.
+    /// A tab that is off cannot be switched on once the limit is reached. Trying anyway shakes the row,
+    /// flashes the counter and the bar red and says what to do, instead of a switch that silently does nothing.
     private func tabToggle(_ title: String, _ symbol: String, _ isOn: Binding<Bool>, isFull: Bool) -> some View {
-        Toggle(isOn: isOn) {
-            Label(title, systemImage: symbol)
+        let isBlocked = isFull && !isOn.wrappedValue
+        return VStack(alignment: .leading, spacing: 8) {
+            Toggle(isOn: Binding(get: { isOn.wrappedValue }, set: { turnsOn in
+                if turnsOn && isBlocked {
+                    refuseTab(title)
+                } else {
+                    Haptics.light()
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        isOn.wrappedValue = turnsOn
+                        blockedTab = nil
+                    }
+                }
+            })) {
+                Label(title, systemImage: symbol)
+                    .opacity(isBlocked ? 0.55 : 1)
+            }
+            .tint(Theme.textSecondary)
+            if blockedTab == title {
+                Label(String(localized: "Lišta je plná. Nejdřív jednu záložku vypni.", bundle: .kept), systemImage: "hand.raised.fill")
+                    .scaledFont(.caption, weight: .semibold)
+                    .foregroundStyle(Theme.red)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
         }
-        .tint(Theme.textSecondary)
-        .disabled(isFull && !isOn.wrappedValue)
+        .modifier(ShakeEffect(animatableData: CGFloat(tabShakes[title] ?? 0)))
+    }
+
+    private func refuseTab(_ title: String) {
+        Haptics.warning()
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { blockedTab = title }
+        withAnimation(.linear(duration: 0.45)) {
+            tabShakes[title, default: 0] += 1
+            fullBarShakes += 1
+        }
+        UIAccessibility.post(notification: .announcement,
+                             argument: String(localized: "Lišta je plná. Nejdřív jednu záložku vypni.", bundle: .kept))
+        Task {
+            try? await Task.sleep(for: .seconds(2.5))
+            if blockedTab == title {
+                withAnimation(.easeOut(duration: 0.3)) { blockedTab = nil }
+            }
+        }
     }
 
     @ViewBuilder

@@ -6,19 +6,19 @@ enum ShareLevel: String, CaseIterable, Identifiable, Codable {
     case none, summary, plan
     var id: String { rawValue }
 
-    var title: LocalizedStringResource {
+    var title: String {
         switch self {
-        case .none: "Nic"
-        case .summary: "Souhrn týdne"
-        case .plan: "Celý plán týdne"
+        case .none: String(localized: "Nic", bundle: .kept)
+        case .summary: String(localized: "Souhrn týdne", bundle: .kept)
+        case .plan: String(localized: "Celý plán týdne", bundle: .kept)
         }
     }
 
-    var detail: LocalizedStringResource {
+    var detail: String {
         switch self {
-        case .none: "Přátelé uvidí jen tvoje jméno."
-        case .summary: "Spolehlivost, kolik slibů máš splněno a sérii. Bez názvů úkolů."
-        case .plan: "Navíc názvy úkolů, dny a jestli jsou splněné. Poznámky, důvody a sázky nikdy."
+        case .none: String(localized: "Přátelé uvidí jen tvoje jméno.", bundle: .kept)
+        case .summary: String(localized: "Spolehlivost, kolik slibů máš splněno a sérii. Bez názvů úkolů.", bundle: .kept)
+        case .plan: String(localized: "Navíc názvy úkolů, dny a jestli jsou splněné. Poznámky, důvody a sázky nikdy.", bundle: .kept)
         }
     }
 }
@@ -36,12 +36,12 @@ enum ReactionKind: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    var title: LocalizedStringResource {
+    var title: String {
         switch self {
-        case .fire: "Hoříš"
-        case .clap: "Potlesk"
-        case .strong: "Síla"
-        case .heart: "Fandím ti"
+        case .fire: String(localized: "Hoříš", bundle: .kept)
+        case .clap: String(localized: "Potlesk", bundle: .kept)
+        case .strong: String(localized: "Síla", bundle: .kept)
+        case .heart: String(localized: "Fandím ti", bundle: .kept)
         }
     }
 }

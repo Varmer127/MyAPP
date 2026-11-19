@@ -64,12 +64,12 @@ extension TodayView {
                     .fixedSize(horizontal: false, vertical: true)
                 streakCountdown(until: broken.repairEnds, now: now)
                 if balance < cost {
-                    Text(String(localized: "Máš \(balance.formatted(.number.locale(.app))) bodů, chybí ti \((cost - balance).formatted(.number.locale(.app)))."))
+                    Text(String(localized: "Máš \(balance.formatted(.number.locale(.app))) bodů, chybí ti \((cost - balance).formatted(.number.locale(.app))).", bundle: .kept))
                         .scaledFont(.caption, weight: .semibold)
                         .foregroundStyle(Theme.orange)
                 }
                 HStack(spacing: 10) {
-                    Button(String(localized: "VRÁTIT ZA \(cost.formatted(.number.locale(.app))) BODŮ")) { confirmRepair = broken }
+                    Button(String(localized: "VRÁTIT ZA \(cost.formatted(.number.locale(.app))) BODŮ", bundle: .kept)) { confirmRepair = broken }
                         .buttonStyle(PrimaryButtonStyle(color: Theme.orange))
                         .disabled(balance < cost)
                     Button("ZAČÍT OD NULY") {
@@ -107,7 +107,7 @@ extension TodayView {
             .background(Theme.card)
             .clipShape(RoundedRectangle(cornerRadius: Theme.radius))
             .overlay(RoundedRectangle(cornerRadius: Theme.radius).stroke(Theme.orange.opacity(0.5), lineWidth: 1))
-            .alert(String(localized: "Vrátit sérii za \(cost.formatted(.number.locale(.app))) bodů?"),
+            .alert(String(localized: "Vrátit sérii za \(cost.formatted(.number.locale(.app))) bodů?", bundle: .kept),
                    isPresented: Binding(get: { confirmRepair != nil }, set: { if !$0 { confirmRepair = nil } }),
                    presenting: confirmRepair) { broken in
                 Button("Vrátit sérii") {
@@ -166,8 +166,8 @@ extension TodayView {
             VStack(alignment: .leading, spacing: 14) {
                 Text(comeback.succeeded ? "COMEBACK SE POVEDL" : "COMEBACK DAY").labelStyle(color)
                 HStack(spacing: 28) {
-                    comebackFigure(String(localized: "Včera"), comeback.yesterday.percentText, Theme.textSecondary)
-                    comebackFigure("Dnes", comeback.today.percentText, color)
+                    comebackFigure(String(localized: "Včera", bundle: .kept), comeback.yesterday.percentText, Theme.textSecondary)
+                    comebackFigure(String(localized: "Dnes", bundle: .kept), comeback.today.percentText, color)
                 }
                 Text(comeback.succeeded ? "Včerejšek jsi nezměnil. Dnešek ano." : "Včerejšek nezměníš. Dnešek ano.")
                     .scaledFont(.body, weight: .semibold)
@@ -288,7 +288,7 @@ extension TodayView {
             VStack(alignment: .leading, spacing: 12) {
                 Label("SÉRIE JE V OHROŽENÍ", systemImage: item.symbol)
                     .labelStyle(Theme.orange)
-                Text(String(localized: "Máš za sebou \(String.days(day.streak)) v řadě a dnešek zatím na 80 % nevypadá. Pojistka za \(item.cost) bodů plamínek podrží, i kdyby to dnes nevyšlo."))
+                Text(String(localized: "Máš za sebou \(String.days(day.streak)) v řadě a dnešek zatím na 80 % nevypadá. Pojistka za \(item.cost) bodů plamínek podrží, i kdyby to dnes nevyšlo.", bundle: .kept))
                     .scaledFont(.body)
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)

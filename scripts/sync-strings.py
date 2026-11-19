@@ -23,6 +23,9 @@ FORMAT = __import__("re").compile(r"%(?:\d+\$)?(?:lld|ld|d|@|f|\.\d+f|lf|%)")
 
 
 def derived_data():
+    # A build made with -derivedDataPath names its own folder: KEPT_OBJROOT=build/sim/Build/Intermediates.noindex
+    if os.environ.get("KEPT_OBJROOT"):
+        return os.path.join(ROOT, os.environ["KEPT_OBJROOT"])
     out = subprocess.run(["xcodebuild", "-scheme", "Kept", "-showBuildSettings", "-json"], cwd=ROOT,
                          capture_output=True, text=True).stdout
     settings = json.loads(out)

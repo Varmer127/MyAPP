@@ -102,7 +102,7 @@ struct NewActivitySheet: View {
             .toolbarBackground(Theme.background, for: .navigationBar)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Zavřít") { dismiss() } } }
             .sheet(isPresented: $picksIcon) {
-                ActivityIconPicker(activity: trimmed.isEmpty ? String(localized: "nová aktivita") : trimmed, selected: symbol) { picked in
+                ActivityIconPicker(activity: trimmed.isEmpty ? String(localized: "nová aktivita", bundle: .kept) : trimmed, selected: symbol) { picked in
                     withAnimation { symbol = picked }
                     Haptics.light()
                 }

@@ -120,7 +120,7 @@ struct WorkoutLogView: View {
                 weightText = kilograms.formatted(.number.precision(.fractionLength(0...1)).locale(.app))
             }
             if task.requiresProof, proof.note.isEmpty, let minutes = await HealthService.gymMinutesToday() {
-                proof.note = String(localized: "Apple Health: trénink \(minutes) min")
+                proof.note = String(localized: "Apple Health: trénink \(minutes) min", bundle: .kept)
             }
         }
     }
@@ -148,7 +148,7 @@ struct WorkoutLogView: View {
                     } label: {
                         HStack(alignment: .top) {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(log.name).scaledFont(.body, weight: .semibold).foregroundStyle(Theme.textPrimary)
+                                Text(log.name.exerciseShown).scaledFont(.body, weight: .semibold).foregroundStyle(Theme.textPrimary)
                                 Text(log.workingSets.map { $0.weight > 0 ? "\($0.weight.kilogramText) × \($0.reps)" : "\($0.reps) opak." }
                                     .joined(separator: " · "))
                                     .scaledFont(.caption)

@@ -38,19 +38,19 @@ enum DNDReason: String, CaseIterable, Identifiable {
     case work, school, training, trip, vacation, sleep, illness, calm, family, focus, custom
     var id: String { rawValue }
 
-    var title: LocalizedStringResource {
+    var title: String {
         switch self {
-        case .work: "Práce"
-        case .school: "Škola"
-        case .training: "Trénink"
-        case .trip: "Cesta"
-        case .vacation: "Dovolená"
-        case .sleep: "Spánek"
-        case .illness: "Nemoc"
-        case .calm: "Klid"
-        case .family: "Rodina"
-        case .focus: "Soustředění"
-        case .custom: "Vlastní důvod"
+        case .work: String(localized: "Práce", bundle: .kept)
+        case .school: String(localized: "Škola", bundle: .kept)
+        case .training: String(localized: "Trénink", bundle: .kept)
+        case .trip: String(localized: "Cesta", bundle: .kept)
+        case .vacation: String(localized: "Dovolená", bundle: .kept)
+        case .sleep: String(localized: "Spánek", bundle: .kept)
+        case .illness: String(localized: "Nemoc", bundle: .kept)
+        case .calm: String(localized: "Klid", bundle: .kept)
+        case .family: String(localized: "Rodina", bundle: .kept)
+        case .focus: String(localized: "Soustředění", bundle: .kept)
+        case .custom: String(localized: "Vlastní důvod", bundle: .kept)
         }
     }
 
@@ -101,14 +101,14 @@ enum ReportReason: String, CaseIterable, Identifiable {
     case abuse, threat, sexual, spam, impersonation, other
     var id: String { rawValue }
 
-    var title: LocalizedStringResource {
+    var title: String {
         switch self {
-        case .abuse: "Urážky nebo šikana"
-        case .threat: "Výhrůžky"
-        case .sexual: "Nevhodný sexuální obsah"
-        case .spam: "Spam nebo reklama"
-        case .impersonation: "Vydává se za někoho jiného"
-        case .other: "Něco jiného"
+        case .abuse: String(localized: "Urážky nebo šikana", bundle: .kept)
+        case .threat: String(localized: "Výhrůžky", bundle: .kept)
+        case .sexual: String(localized: "Nevhodný sexuální obsah", bundle: .kept)
+        case .spam: String(localized: "Spam nebo reklama", bundle: .kept)
+        case .impersonation: String(localized: "Vydává se za někoho jiného", bundle: .kept)
+        case .other: String(localized: "Něco jiného", bundle: .kept)
         }
     }
 }

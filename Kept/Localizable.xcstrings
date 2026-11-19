@@ -159,7 +159,8 @@
             "value" : "%@ wants to be your buddy"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "%@ dne" : {
       "localizations" : {
@@ -219,7 +220,8 @@
             "value" : "%@ is your buddy now"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "%@ ji už máš naplánovanou. Opravdu ji tam chceš ještě jednou? Třeba když jdeš do gymu dvakrát za den." : {
       "localizations" : {
@@ -259,7 +261,8 @@
             "value" : "%@ didn't confirm"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "%@ odpověděl(a) na tvoji žádost o potvrzení" : {
       "localizations" : {
@@ -269,7 +272,8 @@
             "value" : "%@ answered your confirmation request"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "%@ plníš na %@, %@ jen na %@." : {
       "localizations" : {
@@ -289,7 +293,8 @@
             "value" : "%@ accepted your friend request"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "%@ svůj týden nesdílí." : {
       "localizations" : {
@@ -369,7 +374,8 @@
             "value" : "%@ says they won the bet"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "%@ tvrdí, že to splnil" : {
       "localizations" : {
@@ -449,7 +455,8 @@
             "value" : "%@ poked you"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "%@ tě žádá o potvrzení" : {
       "localizations" : {
@@ -459,7 +466,8 @@
             "value" : "%@ asks you to confirm"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "%@ v řadě nad cílem" : {
       "localizations" : {
@@ -682,7 +690,8 @@
             "value" : "%lld %%, %@ %lld %% %@ than last time"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "%lld %%, o %lld %% méně než minule" : {
       "localizations" : {
@@ -1466,6 +1475,16 @@
         }
       }
     },
+    "Administrativa" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Admin"
+          }
+        }
+      }
+    },
     "Ahoj, %@." : {
       "localizations" : {
         "en" : {
@@ -1482,6 +1501,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ACTIVITIES A WEEK"
+          }
+        }
+      }
+    },
+    "Aktivit: %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activities: %lld"
           }
         }
       }
@@ -1601,7 +1630,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Current"
+            "value" : "Active"
           }
         }
       }
@@ -1981,7 +2010,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "POINTS TO START"
+            "value" : "STARTING POINTS"
           }
         }
       }
@@ -1992,6 +2021,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Hips"
+          }
+        }
+      }
+    },
+    "Boky (cm)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hips (cm)"
           }
         }
       }
@@ -2061,7 +2100,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Running"
+            "value" : "Active"
           }
         }
       }
@@ -2071,7 +2110,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Running: %lld"
+            "value" : "Active: %lld"
           }
         }
       }
@@ -2096,6 +2135,16 @@
         }
       }
     },
+    "Celkem" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total"
+          }
+        }
+      }
+    },
     "Celá aplikace i upozornění česky" : {
       "localizations" : {
         "en" : {
@@ -2104,7 +2153,8 @@
             "value" : "Celá aplikace i upozornění česky"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Celé tělo při každém tréninku" : {
       "localizations" : {
@@ -2166,6 +2216,16 @@
         }
       }
     },
+    "Cesta ke zvyku" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Road to a habit"
+          }
+        }
+      }
+    },
     "chce být tvůj parťák" : {
       "localizations" : {
         "en" : {
@@ -2191,7 +2251,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Walking"
+            "value" : "I work out"
           }
         }
       }
@@ -2262,6 +2322,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "WHAT"
+          }
+        }
+      }
+    },
+    "Co" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "What"
           }
         }
       }
@@ -2361,7 +2431,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "WHAT YOU'RE TRAINING TODAY"
+            "value" : "TODAY'S WORKOUT"
           }
         }
       }
@@ -2421,7 +2491,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "What I did"
+            "value" : "What I trained"
           }
         }
       }
@@ -2503,7 +2573,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "What did you do?"
+            "value" : "What did you train?"
           }
         }
       }
@@ -2763,7 +2833,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "COMEBACK DONE"
+            "value" : "COMEBACK MADE"
           }
         }
       }
@@ -2926,7 +2996,8 @@
             "value" : "Goal reached."
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Cíl, třeba „Bench 100 kg“" : {
       "localizations" : {
@@ -3063,7 +3134,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Next demo: %@"
+            "value" : "Next example: %@"
           }
         }
       }
@@ -3076,7 +3147,8 @@
             "value" : "Data"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Data se nepodařilo otevřít" : {
       "localizations" : {
@@ -3104,6 +3176,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "DEADLINE"
+          }
+        }
+      }
+    },
+    "Deadline %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deadline %@"
           }
         }
       }
@@ -3323,7 +3405,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "DEAR DIARY"
+            "value" : "JOURNAL"
           }
         }
       }
@@ -3353,7 +3435,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ten"
+            "value" : "10K"
           }
         }
       }
@@ -3642,7 +3724,8 @@
             "value" : "Nothing's come in yet today."
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Dnes začíná nový měsíc. Co sis na něj slíbil?" : {
       "localizations" : {
@@ -4209,7 +4292,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Side deal"
+            "value" : "Terms"
           }
         }
       }
@@ -4270,6 +4353,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Holiday"
+          }
+        }
+      }
+    },
+    "Drsný" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Harsh"
           }
         }
       }
@@ -4352,7 +4445,8 @@
             "value" : "You've kept your word %lld %@ in a row."
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Držíš slovo %lld %@ · odznaky %lld / %lld" : {
       "localizations" : {
@@ -4362,7 +4456,8 @@
             "value" : "Keeping your word %lld %@ · badges %lld / %lld"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Držíš slovo. Takhle dál." : {
       "localizations" : {
@@ -4409,7 +4504,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Twenty"
+            "value" : "20K"
           }
         }
       }
@@ -4594,6 +4689,16 @@
         }
       }
     },
+    "Energie %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Energy %lld"
+          }
+        }
+      }
+    },
     "energie %lld/5" : {
       "localizations" : {
         "en" : {
@@ -4612,7 +4717,8 @@
             "value" : "English"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Export se nepovedl" : {
       "localizations" : {
@@ -5074,7 +5180,8 @@
             "value" : "Search exercises"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Hledat v zápisech" : {
       "localizations" : {
@@ -5356,6 +5463,16 @@
         }
       }
     },
+    "Jak dopadly sliby" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How the promises went"
+          }
+        }
+      }
+    },
     "Jak jsem se sebou spokojený" : {
       "localizations" : {
         "en" : {
@@ -5541,7 +5658,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "WHICH SPLIT YOU RUN"
+            "value" : "YOUR SPLIT"
           }
         }
       }
@@ -5654,7 +5771,8 @@
             "value" : "One friend who sees every day how many of your promises are done, and you see theirs. Nothing more."
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Jeden slib zůstal otevřený. Uzavři ho a skóre se zvedne." : {
       "localizations" : {
@@ -5684,7 +5802,8 @@
             "value" : "One of you already has a buddy."
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Jeden úkol" : {
       "localizations" : {
@@ -5851,7 +5970,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Only partly"
+            "value" : "Partly"
           }
         }
       }
@@ -6014,7 +6133,8 @@
             "value" : "The name needs 1 to 24 characters."
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Jméno pro přátele" : {
       "localizations" : {
@@ -6134,7 +6254,8 @@
             "value" : "Your friend scans it with the iPhone camera and Kept opens."
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Kamarád ho naskenuje v Kept tlačítkem níže, nebo foťákem v iPhonu." : {
       "localizations" : {
@@ -6142,6 +6263,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Your friend scans it in Kept with the button below, or with the iPhone camera."
+          }
+        }
+      }
+    },
+    "Kardio" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cardio"
           }
         }
       }
@@ -6216,12 +6347,32 @@
         }
       }
     },
+    "Kde sis dnes lhal?" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Where did you lie to yourself today?"
+          }
+        }
+      }
+    },
     "Kdo bude mít na konci tohoto týdne vyšší spolehlivost, vyhrává. Při shodě se vklady vrátí." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Whoever has the higher reliability at the end of this week wins. If it's a tie, the stakes are returned."
+          }
+        }
+      }
+    },
+    "Kdo bude mít tento týden vyšší spolehlivost" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Who will have the higher reliability this week"
           }
         }
       }
@@ -6836,6 +6987,16 @@
         }
       }
     },
+    "Konzistence" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consistency"
+          }
+        }
+      }
+    },
     "Kopie týdne" : {
       "localizations" : {
         "en" : {
@@ -7086,6 +7247,16 @@
         }
       }
     },
+    "Legs (nohy)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legs"
+          }
+        }
+      }
+    },
     "Lehký začátek. Hlavně se hýbat." : {
       "localizations" : {
         "en" : {
@@ -7102,6 +7273,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Tab bar"
+          }
+        }
+      }
+    },
+    "Lišta je plná. Nejdřív jednu záložku vypni." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The bar is full. Switch one tab off first."
           }
         }
       }
@@ -7318,6 +7499,16 @@
         }
       }
     },
+    "Minule %@ × %lld → zkus %@ × %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last time %@ × %lld → try %@ × %lld"
+          }
+        }
+      }
+    },
     "Minule (%@ %@) jsi zvolil „%@“ a napsal:" : {
       "localizations" : {
         "en" : {
@@ -7516,7 +7707,8 @@
             "value" : "YOU'RE AT THE MAXIMUM"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Máš moc nevyřízených žádostí. Počkej, až je někdo přijme." : {
       "localizations" : {
@@ -7996,7 +8188,8 @@
             "value" : "Type your friend's full tag, like Jane#4827, or scan their QR code with the iPhone camera. You can't find anyone by name alone."
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Napiš si, kde chceš být za měsíc a co si teď slibuješ. Otevřít ho půjde až za %lld dní." : {
       "localizations" : {
@@ -8170,6 +8363,16 @@
         }
       }
     },
+    "Naposledy %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last time %@"
+          }
+        }
+      }
+    },
     "Naposledy %lld %%" : {
       "localizations" : {
         "en" : {
@@ -8198,6 +8401,16 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Naposledy × %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last time × %lld"
           }
         }
       }
@@ -8609,7 +8822,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Not walking"
+            "value" : "Not for me"
           }
         }
       }
@@ -9124,6 +9337,16 @@
         }
       }
     },
+    "Nesplnil jsem" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "I missed it"
+          }
+        }
+      }
+    },
     "Nesplnil jsem to – vrátit" : {
       "localizations" : {
         "en" : {
@@ -9350,6 +9573,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Legs"
+          }
+        }
+      }
+    },
+    "Normální" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Normal"
           }
         }
       }
@@ -9762,7 +9995,8 @@
             "value" : "Someone wants to be your buddy"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "O %lld p. b. míň než %@" : {
       "localizations" : {
@@ -10622,7 +10856,8 @@
             "value" : "Opens iPhone settings, where the app's language is changed"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Otevře obchod s odměnami" : {
       "localizations" : {
@@ -10814,6 +11049,16 @@
         }
       }
     },
+    "Partie, cviky, pauzy" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Splits, exercises, rests"
+          }
+        }
+      }
+    },
     "Partie, cviky, týdenní cíl a pauzy" : {
       "localizations" : {
         "en" : {
@@ -10852,7 +11097,8 @@
             "value" : "Buddy"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Pas" : {
       "localizations" : {
@@ -10860,6 +11106,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Waist"
+          }
+        }
+      }
+    },
+    "Pas (cm)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Waist (cm)"
           }
         }
       }
@@ -10880,6 +11136,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rest %@, %@"
+          }
+        }
+      }
+    },
+    "Pauza %lld×" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Paused %lld×"
           }
         }
       }
@@ -10910,6 +11176,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rest in workout"
+          }
+        }
+      }
+    },
+    "Pauzy" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pauses"
           }
         }
       }
@@ -11684,7 +11960,8 @@
             "value" : "Confirmed by %@"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "POTVRDIT KÓD" : {
       "localizations" : {
@@ -11904,7 +12181,8 @@
             "value" : "invited"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "pozvánka" : {
       "localizations" : {
@@ -12136,6 +12414,16 @@
         }
       }
     },
+    "Pro tebe" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "For you"
+          }
+        }
+      }
+    },
     "Procházka v přírodě" : {
       "localizations" : {
         "en" : {
@@ -12162,6 +12450,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "PRODUCTIVITY"
+          }
+        }
+      }
+    },
+    "Produktivita po dnech" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Productivity by day"
           }
         }
       }
@@ -12522,6 +12820,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "GUIDE"
+          }
+        }
+      }
+    },
+    "Pull (tahy)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pull"
+          }
+        }
+      }
+    },
+    "Push (tlaky)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Push"
           }
         }
       }
@@ -13114,7 +13432,8 @@
             "value" : "Add your own exercise “%@”"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Přidat vlastní pauzu" : {
       "localizations" : {
@@ -13434,7 +13753,8 @@
             "value" : "Friends are for ages 16 and up. Check your date of birth. The rest of Kept works without limits."
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Přátelé od" : {
       "localizations" : {
@@ -13526,6 +13846,16 @@
         }
       }
     },
+    "Přímý a konfrontační." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Direct and confrontational."
+          }
+        }
+      }
+    },
     "Přímý a konfrontační. Výchozí volba." : {
       "localizations" : {
         "en" : {
@@ -13552,6 +13882,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nature and home"
+          }
+        }
+      }
+    },
+    "Přísný" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strict"
           }
         }
       }
@@ -13672,6 +14012,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Morning brief, evening check and Sunday planning reminders."
+          }
+        }
+      }
+    },
+    "Recovery" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recovery"
           }
         }
       }
@@ -14176,6 +14526,16 @@
         }
       }
     },
+    "Sliby" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Promises"
+          }
+        }
+      }
+    },
     "Sliby, týdny a selhání jako jeden soubor, který si můžeš nechat jako zálohu. Fotky v něm nejsou. Soubor jde jen tam, kam ho pošleš sám přes systémové sdílení." : {
       "localizations" : {
         "en" : {
@@ -14212,6 +14572,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "It only makes Kept's sentences fit. It's never sent anywhere and you can change it in Settings."
+          }
+        }
+      }
+    },
+    "Slovo" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Word"
           }
         }
       }
@@ -14541,7 +14911,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "DONE IT"
+            "value" : "I DID IT"
           }
         }
       }
@@ -14956,6 +15326,26 @@
         }
       }
     },
+    "Sport" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sport"
+          }
+        }
+      }
+    },
+    "Sport a pohyb" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sport and movement"
+          }
+        }
+      }
+    },
     "Sport, čtení a ostatní jsi splnil na %@." : {
       "localizations" : {
         "en" : {
@@ -15126,6 +15516,16 @@
         }
       }
     },
+    "Stehno (cm)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thigh (cm)"
+          }
+        }
+      }
+    },
     "Sto dní" : {
       "localizations" : {
         "en" : {
@@ -15164,7 +15564,8 @@
             "value" : "STOP"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Stopky celého tréninku" : {
       "localizations" : {
@@ -15194,7 +15595,8 @@
             "value" : "The stopwatch stops and the task stays open. What you logged is saved."
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Stopky tréninku a pauzy. Zapíšeš, co jsi jel, a hotovo." : {
       "localizations" : {
@@ -15394,7 +15796,8 @@
             "value" : "The bet is over"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Sázku se nepodařilo založit. Zkus to prosím znovu." : {
       "localizations" : {
@@ -15966,6 +16369,16 @@
         }
       }
     },
+    "Tlaky, tahy, nohy" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Push, pull, legs"
+          }
+        }
+      }
+    },
     "Tmavý" : {
       "localizations" : {
         "en" : {
@@ -16072,6 +16485,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Traps"
+          }
+        }
+      }
+    },
+    "Trend produktivity" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Productivity trend"
           }
         }
       }
@@ -16236,6 +16659,16 @@
         }
       }
     },
+    "Turistika" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hiking"
+          }
+        }
+      }
+    },
     "TVOJE AKTIVITY" : {
       "localizations" : {
         "en" : {
@@ -16366,6 +16799,16 @@
         }
       }
     },
+    "Tvrdý. Míří na tvoje chování, nikdy na tebe jako člověka." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tough. Goes after your behaviour, never you as a person."
+          }
+        }
+      }
+    },
     "Tvrdý. Pro ty, kdo potřebují kopanec." : {
       "localizations" : {
         "en" : {
@@ -16404,7 +16847,8 @@
             "value" : "Your buddy"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Tvůj profil" : {
       "localizations" : {
@@ -17796,7 +18240,8 @@
             "value" : "You have %lld %@ planned. The overview fills up as you complete them."
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "V plánu máš %lld úkolů. Přehled se naplní, jak je budeš plnit." : {
       "comment" : "Planned task count, with plural forms",
@@ -18629,7 +19074,8 @@
             "value" : "By creating an account you agree to Kept's rules: no insults or threats, no other people's details or photos. Reported content may be deleted and the account blocked."
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Vytvořit" : {
       "localizations" : {
@@ -19086,6 +19532,16 @@
     },
     "věci" : {
       "extractionState" : "stale"
+    },
+    "Věcný a neutrální." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Matter-of-fact and neutral."
+          }
+        }
+      }
     },
     "Věcný a neutrální. Připomene, ale netlačí." : {
       "localizations" : {
@@ -19960,7 +20416,8 @@
             "value" : "Stop the stopwatch"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Zastavit trénink?" : {
       "localizations" : {
@@ -19970,7 +20427,8 @@
             "value" : "Stop the workout?"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Zastavit čas" : {
       "localizations" : {
@@ -20020,7 +20478,8 @@
             "value" : "Stop the timer?"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Zatím ani jednou" : {
       "localizations" : {
@@ -21418,7 +21877,8 @@
             "value" : "The task stays open and the time worked is saved."
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Úkol zůstane otevřený a odpracovaný čas se uloží. Dodělat ho můžeš později." : {
       "localizations" : {
@@ -21428,7 +21888,8 @@
             "value" : "The task stays open and the time worked is saved. You can finish it later."
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Úkol zůstane otevřený a odpracovaný čas se uloží. Jen na chvíli přerušit můžeš tlačítkem Pauza." : {
       "localizations" : {
@@ -21838,7 +22299,8 @@
             "value" : "Čeština"
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Čistý týden" : {
       "localizations" : {
@@ -22238,7 +22700,8 @@
             "value" : "Couldn't handle the request. Please try again."
           }
         }
-      }
+      },
+      "extractionState" : "stale"
     },
     "Žádost už jsi poslal. Počkej na odpověď." : {
       "localizations" : {

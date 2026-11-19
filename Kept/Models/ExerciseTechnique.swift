@@ -8,10 +8,18 @@ struct ExerciseTechnique {
 }
 
 extension ExerciseTechnique {
+    /// The technique for an exercise in the app's language.
     static func of(_ name: String) -> ExerciseTechnique? {
-        all[name] ?? more[name]
-            ?? all.first { $0.key.activityKey == name.activityKey }?.value
-            ?? more.first { $0.key.activityKey == name.activityKey }?.value
+        guard let key = czechKey(name) else { return nil }
+        if AppLanguage.current == .en, let english = english[key] { return english }
+        return all[key] ?? more[key]
+    }
+
+    /// The exercise's name as the Czech technique knows it, also when it was typed with other letter case or accents.
+    static func czechKey(_ name: String) -> String? {
+        if all[name] != nil || more[name] != nil { return name }
+        return all.keys.first { $0.activityKey == name.activityKey }
+            ?? more.keys.first { $0.activityKey == name.activityKey }
     }
 
     private static func t(_ steps: [String], _ mistakes: [String]) -> ExerciseTechnique {
